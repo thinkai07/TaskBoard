@@ -19,6 +19,7 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
+import RulesButton from "../Automation/RulePage";
 
 const initialBoard = {
   columns: [],
@@ -111,7 +112,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3001");
+    const newSocket = io("http://13.235.16.113");
     setSocket(newSocket);
   }, []);
 
@@ -1701,6 +1702,7 @@ function KanbanBoard() {
           >
             Teams
           </button> */}
+          {/* <RulesButton /> */}
           <button
             onClick={openGitModal}
             className="bg-green-500 text-white px-4 py-2 rounded-full"

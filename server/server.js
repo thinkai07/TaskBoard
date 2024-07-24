@@ -78,6 +78,26 @@ const organizationSchema = new Schema({
   teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
 });
 
+const ruleSchema = new Schema({
+  name: { type: String, required: true },
+  trigger: { type: String, required: true }, // e.g., 'cardMoved', 'taskUpdated'
+  conditions: [
+    {
+      field: { type: String }, // e.g., 'status', 'label'
+      operator: { type: String }, // e.g., 'equals', 'contains'
+      value: { type: Schema.Types.Mixed }, // e.g., 'completed', 'urgent'
+    },
+  ],
+  actions: [
+    {
+      type: { type: String, required: true }, // e.g., 'moveCard', 'sendNotification'
+      params: Schema.Types.Mixed, // Additional parameters for actions
+    },
+  ],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  createdAt: { type: Date, default: Date.now },
+});
+
 //project schema
 const projectSchema = new Schema(
   {
@@ -303,6 +323,7 @@ const AuditLog = mongoose.model("AuditLog", auditLogSchema);
 const Comment = mongoose.model("Comment", commentSchema);
 const Activity = mongoose.model("Activity", activitySchema);
 const Notification = mongoose.model("Notification", NotificationSchema);
+const Rule = mongoose.model("Rule", ruleSchema);
 module.exports = {
   User,
   Task,
@@ -314,6 +335,7 @@ module.exports = {
   Comment,
   Activity,
   Notification,
+  Rule
 };
 
 const tempOrganizationSchema = new Schema({
@@ -356,7 +378,7 @@ const transporter = nodemailer.createTransport({
 
 // // Send Registration Email with Token Function
 const sendRegistrationEmail = (email, name, token) => {
-  const link = `http://localhost:3000/success?token=${token}`;
+  const link = `http://13.235.16.113/success?token=${token}`;
   const mailOptions = {
     from: "thinkailabs111@gmail.com",
     to: email,
@@ -706,7 +728,7 @@ app.post(
       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
         expiresIn: "3d",
       });
-      const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+      const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
 
       sendResetEmail(email, resetLink);
 
@@ -960,7 +982,7 @@ app.post("/api/projects", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    const link = `http://localhost:3000/project?token=${token}`;
+    const link = `http://13.235.16.113/project?token=${token}`;
     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
     await sendEmail(projectManager, "New Project Created", emailText);
@@ -1060,173 +1082,6 @@ app.post("/api/projects", async (req, res) => {
       .json({ message: "Error creating project", error: error.message });
   }
 });
-
-// app.post("/api/projects", async (req, res) => {
-//   const {
-//     organizationId,
-//     name,
-//     description,
-//     projectManager,
-//     startDate,
-//     createdBy,
-//     teams,
-//   } = req.body;
-
-//   try {
-//     console.log("Received request to create project:", req.body);
-
-//     const organization = await Organization.findById(organizationId);
-//     if (!organization) {
-//       console.log("Organization not found");
-//       return res.status(404).json({ message: "Organization not found" });
-//     }
-
-//     const projectManagerUser = await User.findOne({ email: projectManager });
-//     if (!projectManagerUser) {
-//       console.log("Project manager not found");
-//       return res.status(404).json({ message: "Project manager not found" });
-//     }
-
-//     const createProjectUser = await User.findOne({ email: createdBy });
-//     if (!createProjectUser) {
-//       console.log("Creator not found");
-//       return res.status(404).json({ message: "Creator not found" });
-//     }
-
-//     // Validate that all team IDs exist and fetch team names
-//     let teamNames = [];
-//     if (teams && teams.length > 0) {
-//       const existingTeams = await Team.find({ _id: { $in: teams } });
-//       if (existingTeams.length !== teams.length) {
-//         console.log("Some teams not found");
-//         return res.status(404).json({ message: "Some teams not found" });
-//       }
-//       teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
-//     }
-//     console.log("Team names:", teamNames); // Add a log to check team names
-
-//     const newProject = new Project({
-//       name,
-//       description,
-//       projectManager,
-//       organization: organization._id,
-//       teams: teams || [],
-//       tasks: [],
-//       startDate,
-//       createdBy,
-//       bgUrl: "",
-//       repository: "", // Initialize repository field
-//     });
-
-//     await newProject.save();
-//     console.log("New project created:", newProject);
-
-//     const auditLog = new AuditLog({
-//       entityType: "Project",
-//       entityId: newProject._id,
-//       actionType: "create",
-//       actionDate: new Date(),
-//       performedBy: createProjectUser.name,
-//       changes: [],
-//     });
-
-//     await auditLog.save();
-//     console.log("Audit log created:", auditLog);
-
-//     organization.projects.push(newProject._id);
-//     await organization.save();
-//     console.log("Organization updated with new project");
-
-//     // Update teams with the new project
-//     if (teams && teams.length > 0) {
-//       await Team.updateMany(
-//         { _id: { $in: teams } },
-//         { $push: { projects: newProject._id } }
-//       );
-//       console.log("Teams updated with new project");
-//     }
-
-//     const token = jwt.sign(
-//       {
-//         projectId: newProject._id,
-//         name: newProject.name,
-//         description: newProject.description,
-//         projectManager: newProject.projectManager,
-//       },
-//       secretKey,
-//       { expiresIn: "1h" }
-//     );
-
-//     const link = `http://localhost:3000/project?token=${token}`;
-//     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
-
-//     await sendEmail(projectManager, "New Project Created", emailText);
-//     console.log("Email sent to project manager");
-
-//     // Create GitHub repository
-//     const repoName = `${organization.name}-${newProject.name}-repo`.replace(/\s+/g, '-').toLowerCase();
-//     let githubResponse;
-//     try {
-//       githubResponse = await axios.post(
-//         'https://api.github.com/orgs/Tail-Demo/repos',
-//         {
-//           name: repoName,
-//           private: true,
-//           description: `Repository for ${organization.name} project ${newProject.name}`,
-//         },
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             'Content-Type': 'application/json',
-//           },
-//         }
-//       );
-//       console.log('GitHub repository created:', githubResponse.data);
-
-//       // Update project with repository info
-//       newProject.repository = githubResponse.data.html_url;
-//       await newProject.save();
-//       console.log("Project repository URL updated:", newProject.repository);
-//     } catch (error) {
-//       console.error('Error creating GitHub repository:', error.response ? error.response.data : error.message);
-//       return res.status(500).json({ message: "Error creating GitHub repository", error: error.message });
-//     }
-
-//     // Assign team to the repository
-//     if (teamNames && teamNames.length > 0) {
-//       for (const teamName of teamNames) {
-//         try {
-//           const teamAssignResponse = await axios.put(
-//             `https://api.github.com/orgs/Tail-Demo/teams/${teamName}/repos/Tail-Demo/${repoName}`,
-//             { permission: 'push' }, // 'push' gives write access, you can change to 'admin' for admin access
-//             {
-//               headers: {
-//                 Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//                 'Content-Type': 'application/json',
-//                 'Accept': 'application/vnd.github.v3+json'
-//               },
-//             }
-//           );
-//           console.log(`Team ${teamName} assigned to GitHub repository:`, teamAssignResponse.data);
-//         } catch (error) {
-//           console.error(`Error assigning team ${teamName} to GitHub repository:`, error.response ? error.response.data : error.message);
-//           return res.status(500).json({ message: `Error assigning team ${teamName} to GitHub repository`, error: error.message });
-//         }
-//       }
-//     }
-
-//     res.status(201).json({
-//       message: "Project created, email sent to project manager, GitHub repository created, and team assigned",
-//       project: newProject,
-//       projectManagerStatus: projectManagerUser.status,
-//       repository: githubResponse.data,
-//       teamNames, // Include team names in the response
-//     });
-//   } catch (error) {
-//     console.error("Error creating project:", error);
-//     res.status(500).json({ message: "Error creating project", error: error.message });
-//   }
-// });
 
 app.put(
   "/api/projects/:projectId/bgImage",

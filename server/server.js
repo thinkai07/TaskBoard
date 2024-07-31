@@ -989,7 +989,7 @@ app.post("/api/projects", async (req, res) => {
 
     await sendEmail(projectManager, "New Project Created", emailText);
     console.log("Email sent to project manager");
-
+ 
     // Create GitHub repository
     const repoName = `${organization.name}-${newProject.name}-repo`
       .replace(/\s+/g, "-")

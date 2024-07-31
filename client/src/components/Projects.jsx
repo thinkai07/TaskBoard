@@ -53,6 +53,7 @@ const Projects = () => {
     setShowTeamDropdown(true);
   };
 
+
   const handleTeamInputChange = (event) => {
     const value = event.target.value;
     setTeamInputValue(value);
@@ -63,16 +64,27 @@ const Projects = () => {
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
   };
+  const handleRemoveTeam = (teamId) => {
+    setSelectedTeams(selectedTeams.filter(id => id !== teamId));
+    setTeamInputValue('');
+    setSelectedTeamName('');
+  };
 
   const [selectedTeams, setSelectedTeams] = useState([]);
+
+
 
   const handleTeamSelect = (team) => {
     if (!selectedTeams.includes(team._id)) {
       setSelectedTeams([...selectedTeams, team._id]);
-      setSelectedTeamName(team.name);
-      setTeamInputValue(team.name);
     }
+    setTeamInputValue(team.name);
+    setSelectedTeamName(team.name);
     setShowTeamDropdown(false);
+  };
+
+  const handleTeamHover = (teamName) => {
+    setTeamInputValue(teamName);
   };
 
   const handleClearTeamInput = () => {
@@ -551,7 +563,7 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-screen bg-light-white rounded-3xl p-8">
+    <div className="min-h-full bg-light-white rounded-3xl p-8 ">
       <div className="flex justify-between items-center mb-4">
         {userRole === "ADMIN" && (
           <button
@@ -637,8 +649,8 @@ const Projects = () => {
                     });
                   }}
                   className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError
-                      ? "border-red-500"
-                      : ""
+                    ? "border-red-500"
+                    : ""
                     }`}
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -691,47 +703,28 @@ const Projects = () => {
 
                 <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
                 <div className="relative">
+
                   <input
-                    type="text"
-                    value={teamInputValue}
-                    onChange={handleTeamInputChange}
-                    onFocus={handleTeamInputFocus}
-                    onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
-                    placeholder="Type to select a team..."
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                  {showTeamDropdown && filteredTeams.length > 0 && (
-                    <ul
-                      style={{
-                        position: 'absolute',
-                        zIndex: 10,
-                        width: '100%',
-                        backgroundColor: 'white',
-                        border: '1px solid #e2e8f0',
-                        marginTop: '4px',
-                        borderRadius: '0.375rem',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                        maxHeight: '120px',
-                        overflowY: 'auto'
-                      }}
-                    >
-                      {filteredTeams.map((team) => (
-                        <li
-                          key={team._id}
-                          onClick={() => handleTeamSelect(team)}
-                          style={{
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #e2e8f0',
-                            ':hover': {
-                              backgroundColor: '#f7fafc'
-                            }
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
-                        >
-                          {team.name}
-                        </li>
+                      type="text"
+                      value={teamInputValue}
+                      onChange={handleTeamInputChange}
+                      onFocus={handleTeamInputFocus}
+                      onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
+                      placeholder="Type to select a team..."
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                    {showTeamDropdown && filteredTeams.length > 0 && (
+                      <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {filteredTeams.map((team) => (
+                          <li
+                            key={team._id}
+                            onClick={() => handleTeamSelect(team)}
+                            onMouseEnter={() => handleTeamHover(team.name)}
+                            onMouseLeave={() => setTeamInputValue(selectedTeamName)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {team.name}
+                          </li>
                       ))}
                     </ul>
                   )}
@@ -739,17 +732,6 @@ const Projects = () => {
                 <div className="mt-2">
                   {selectedTeams.map(teamId => {
                     const team = availableTeams.find(t => t._id === teamId);
-                    // return (
-                    //   <span key={teamId} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
-                    //     {team ? team.name : 'Unknown Team'}
-                    //     <button
-                    //       onClick={() => handleRemoveTeam(teamId)}
-                    //       className="ml-2 text-red-500 font-bold"
-                    //     >
-                    //       &times;
-                    //     </button>
-                    //   </span>
-                    // );
                   })}
                 </div>
 
@@ -952,5 +934,4 @@ const Projects = () => {
     </div>
   );
 };
-
 export default Projects;

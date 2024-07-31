@@ -1,23 +1,14 @@
 //rulespage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  ChevronDown,
-  ArrowRight,
-  PlusCircle,
-  Clock,
-  CheckSquare,
-  Trash2,
-  ArrowLeft,
-} from "lucide-react";
+import { X, ChevronDown, ArrowRight, PlusCircle, Clock, CheckSquare, Trash2, ArrowLeft, } from "lucide-react";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
 
 const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
   <button
-    className={`flex items-center space-x-2 p-2 hover:bg-gray-100 w-full text-left ${
-      isSelected ? "bg-blue-100" : ""
-    }`}
+    className={`flex items-center space-x-2 p-2 hover:bg-gray-100 w-full text-left ${isSelected ? "bg-blue-100" : ""
+      }`}
     onClick={onClick}
   >
     <Icon size={18} />
@@ -52,10 +43,11 @@ function RulesButton() {
   const [conditions, setConditions] = useState([]);
   const [actions, setActions] = useState([]);
   const [rules, setRules] = useState([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState(null);
   const { projectId } = useParams();
   const [boardData, setBoardData] = useState({ columns: [] });
   const [cardStatuses, setCardStatuses] = useState([]);
-
   const [tasks, setTasks] = useState([]);
   const [createdByCondition, setCreatedByCondition] = useState("");
 
@@ -78,6 +70,16 @@ function RulesButton() {
 
     fetchTasks();
   }, [projectId]);
+
+  const openDeleteConfirmation = (ruleId) => {
+    setRuleToDelete(ruleId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const closeDeleteConfirmation = () => {
+    setShowDeleteConfirmation(false);
+    setRuleToDelete(null);
+  };
 
   useEffect(() => {
     const fetchUserEmail = async () => {
@@ -113,63 +115,6 @@ function RulesButton() {
       fetchRules();
     }
   }, [projectId]);
-
-  // Update fetchTasks function to include cards
-  async function fetchTasks() {
-    try {
-      const response = await fetch(
-        `${server}/api/projects/${projectId}/tasks`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
-      }
-      const { tasks } = await response.json();
-
-      const columns = await Promise.all(
-        tasks.map(async (task) => {
-          const cardsResponse = await fetch(
-            `${server}/api/tasks/${task.id}/cards`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          const { cards } = await cardsResponse.json();
-          console.log(cards);
-          return {
-            id: task.id,
-            title: task.name,
-            cards: cards.map((card) => ({
-              id: card.id,
-              title: card.name || "",
-              description: card.description || "",
-              columnId: task.id,
-              assignedTo: card.assignedTo,
-              status: card.status,
-              assignDate: card.assignDate,
-              dueDate: card.dueDate,
-              comments: card.comments || [],
-            })),
-          };
-        })
-      );
-
-      setBoardData({ columns });
-      console.log(columns);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
-  }
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
@@ -273,14 +218,17 @@ function RulesButton() {
     }
   };
 
-  const handleDeleteRule = async (ruleId) => {
-    try {
-      await axios.delete(`${server}/api/rules/${ruleId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setRules(rules.filter((rule) => rule._id !== ruleId));
-    } catch (error) {
-      console.error("Error deleting rule:", error);
+  const confirmDelete = async () => {
+    if (ruleToDelete) {
+      try {
+        await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setRules(rules.filter((rule) => rule._id !== ruleToDelete));
+        closeDeleteConfirmation();
+      } catch (error) {
+        console.error("Error deleting rule:", error);
+      }
     }
   };
 
@@ -327,34 +275,33 @@ function RulesButton() {
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
               onClick={() => setShowRulesUI(false)}
             >
-              x
+              <X size={20} />
             </button>
+
+
             <h2 className="text-2xl font-bold mb-4">Create a Rule</h2>
             <div className="flex items-center space-x-4 mb-4">
               <div
-                className={`rounded-full px-4 py-2 text-sm ${
-                  currentStep >= 1
-                    ? "bg-green-200 text-green-800"
-                    : "bg-gray-200"
-                }`}
+                className={`rounded-full px-4 py-2 text-sm ${currentStep >= 1
+                  ? "bg-green-200 text-green-800"
+                  : "bg-gray-200"
+                  }`}
               >
                 1 Select trigger {currentStep > 1 && "✓"}
               </div>
               <div className="text-gray-400">&gt;</div>
               <div
-                className={`rounded-full px-4 py-2 text-sm ${
-                  currentStep >= 2 ? "bg-blue-200 text-blue-800" : "bg-gray-200"
-                }`}
+                className={`rounded-full px-4 py-2 text-sm ${currentStep >= 2 ? "bg-blue-200 text-blue-800" : "bg-gray-200"
+                  }`}
               >
                 2 Select action {currentStep > 2 && "✓"}
               </div>
               <div className="text-gray-400">&gt;</div>
               <div
-                className={`rounded-full px-4 py-2 text-sm ${
-                  currentStep === 3
-                    ? "bg-blue-200 text-blue-800"
-                    : "bg-gray-200"
-                }`}
+                className={`rounded-full px-4 py-2 text-sm ${currentStep === 3
+                  ? "bg-blue-200 text-blue-800"
+                  : "bg-gray-200"
+                  }`}
               >
                 3 Review and save
               </div>
@@ -371,34 +318,11 @@ function RulesButton() {
                   >
                     <div className="flex items-center space-x-4">
                       <p className="font-semibold">
-                        {rule.triggerSentence
-                          ? rule.triggerSentence
-                          : "No trigger sentence"}{" "}
-                        -
-                      </p>{" "}
-                      <p>
-                        {rule.actionSentence
-                          ? rule.actionSentence
-                          : "No action sentence"}
+                        {rule.triggerSentence || "No trigger sentence"} -
                       </p>
-                      {/* {rule.actionDetails && (
-                        <div className="flex items-center space-x-2">
-                          {Object.entries(rule.actionDetails).map(
-                            ([key, value], index) => (
-                              <React.Fragment key={key}>
-                                <span>
-                                  {key} {value}
-                                </span>
-                                {index <
-                                  Object.entries(rule.actionDetails).length -
-                                    1 && <span>, </span>}
-                              </React.Fragment>
-                            )
-                          )}
-                        </div>
-                      )} */}
+                      <p>{rule.actionSentence || "No action sentence"}</p>
                     </div>
-                    <button onClick={() => handleDeleteRule(rule._id)}>
+                    <button onClick={() => openDeleteConfirmation(rule._id)}>
                       <Trash2 className="text-gray-400 hover:text-red-600" />
                     </button>
                   </div>
@@ -479,20 +403,24 @@ function RulesButton() {
                         </>
                       )}
                     </div>
+                  </div>
+                )}
+                {showTriggers && (
+                  <div className="flex space-x-4 mt-4">
                     <button
-                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                      className="bg-green-500 text-white py-2 px-4 rounded"
+                      onClick={handleAddButtonClick}
+                    >
+                      Add Trigger
+                    </button>
+                    <button
+                      className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
                       onClick={() => setShowTriggers(false)}
                     >
-                      x
+                      Back
                     </button>
                   </div>
                 )}
-                <button
-                  className="bg-green-500 text-white py-2 px-4 rounded mt-4"
-                  onClick={handleAddButtonClick}
-                >
-                  Add Trigger
-                </button>
               </>
             )}
 
@@ -628,6 +556,7 @@ function RulesButton() {
                     )}
                   </p>
                 </div>
+
                 <button
                   className="bg-blue-500 text-white py-2 px-4 rounded"
                   onClick={handleSaveRule}
@@ -641,6 +570,29 @@ function RulesButton() {
                   Back
                 </button>
               </>
+            )}
+
+            {showDeleteConfirmation && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg w-1/3">
+                  <h3 className="text-xl font-semibold mb-4">Confirm Deletion</h3>
+                  <p className="mb-6">Are you sure you want to delete this rule?</p>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                      onClick={closeDeleteConfirmation}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={confirmDelete}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

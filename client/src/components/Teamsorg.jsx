@@ -174,7 +174,7 @@ const TeamsPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-light-white rounded-3xl p-8">
+        <div className="min-h-full bg-light-white rounded-3xl p-8 h-auto">
             <div className="flex justify-between items-center mb-4">
                 <button
                     className="border border-blue-500 text-blue-500 py-2 px-4 rounded-full flex items-center hover:bg-blue-500 hover:text-white"

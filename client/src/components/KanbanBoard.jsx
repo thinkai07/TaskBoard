@@ -82,7 +82,6 @@ function KanbanBoard() {
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
 
-
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
@@ -112,7 +111,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3001");
+    const newSocket = io("http://13.235.16.113:3001");
     setSocket(newSocket);
   }, []);
 
@@ -261,6 +260,45 @@ function KanbanBoard() {
           ),
         }));
       });
+
+      socket.on(
+        "backgroundJobCardMoved",
+        ({ cardId, sourceTaskId, destinationTaskId, projectId }) => {
+          if (projectId === projectId) {
+            // Make sure it's for the current project
+            setBoardData((prevState) => {
+              const updatedColumns = prevState.columns.map((column) => {
+                if (column.id === sourceTaskId) {
+                  return {
+                    ...column,
+                    cards: column.cards.filter((card) => card.id !== cardId),
+                  };
+                }
+                if (column.id === destinationTaskId) {
+                  const movedCard = prevState.columns
+                    .find((col) => col.id === sourceTaskId)
+                    ?.cards.find((card) => card.id === cardId);
+
+                  if (!movedCard) {
+                    console.error("Moved card not found:", {
+                      cardId,
+                      sourceTaskId,
+                    });
+                    return column;
+                  }
+
+                  return {
+                    ...column,
+                    cards: [...column.cards, movedCard],
+                  };
+                }
+                return column;
+              });
+              return { ...prevState, columns: updatedColumns };
+            });
+          }
+        }
+      );
     }
     return () => {
       if (socket) {
@@ -272,6 +310,7 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
+        socket.off("backgroundJobCardMoved");
       }
     };
   }, [socket, projectId]);
@@ -722,7 +761,6 @@ function KanbanBoard() {
   //   }
   // }
 
-
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
     setBoardData(updatedBoard);
@@ -779,7 +817,6 @@ function KanbanBoard() {
       setBoardData(boardData);
     }
   };
-
 
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
@@ -1459,149 +1496,176 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-3xl"
+      className="p-4 overflow-y-auto min-h-full bg-light-multicolor rounded-3xl"
       style={
         bgUrl
           ? {
               backgroundImage: `url(${bgUrl})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              height: "100vh",
+              // height: "100vh",
               width: "100%",
+              scrollbarWidth: "none", 
+              minHeight:'100%'
             }
           : {}
       }
     >
       <div>
-        {renameCardModalVisible && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12">
-              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
-              <form onSubmit={handleRenameCard}>
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    value={renameCardTitle}
-                    onChange={(e) => {
-                      setRenameCardTitle(e.target.value);
-                      setRenameCardErrors((prev) => ({ ...prev, title: "" }));
-                    }}
-                    className={`border ${
-                      renameCardErrors.title
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Title"
-                  />
-                  {renameCardErrors.title && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {renameCardErrors.title}
-                    </p>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <textarea
-                    value={renameCardDescription}
-                    onChange={(e) => {
-                      setRenameCardDescription(e.target.value);
-                      setRenameCardErrors((prev) => ({
-                        ...prev,
-                        description: "",
-                      }));
-                    }}
-                    className={`border ${
-                      renameCardErrors.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Description"
-                  />
-                  {renameCardErrors.description && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {renameCardErrors.description}
-                    </p>
-                  )}
-                </div>
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenameCardModalVisible(false);
-                      setRenameCardErrors({ title: "", description: "" });
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-              <div className="mt-4 h-96 overflow-y-auto">
-                <div className="flex items-center mb-4 pt-6">
-                  <RxActivityLog size={24} className="mr-2" />
-                  <h2 className="text-lg font-bold">Activity</h2>
-                  <button
-                    onClick={() => setCommentsVisible(!commentsVisible)}
-                    className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    {commentsVisible ? "Hide Comments" : "Show Comments"}
-                  </button>
-                </div>
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    V
-                  </div>
-                  <input
-                    type="text"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Write your comment"
-                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-                  />
-                </div>
+      {renameCardModalVisible && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded-3xl w-5/12 relative">
+      {/* Close Icon */}
+      <button
+        onClick={() => {
+          setRenameCardModalVisible(false);
+          setRenameCardErrors({ title: "", description: "" });
+        }}
+        className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
 
-                <button
-                  onClick={handleSaveComment}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+      <h2 className="text-lg font-bold mb-4">Rename Card</h2>
+      <form onSubmit={handleRenameCard}>
+        <div className="mb-4">
+          <input
+            type="text"
+            value={renameCardTitle}
+            onChange={(e) => {
+              setRenameCardTitle(e.target.value);
+              setRenameCardErrors((prev) => ({ ...prev, title: "" }));
+            }}
+            className={`border ${
+              renameCardErrors.title
+                ? "border-red-500"
+                : "border-gray-300"
+            } rounded-3xl px-4 py-2 w-full`}
+            placeholder="Card Title"
+          />
+          {renameCardErrors.title && (
+            <p className="text-red-500 text-sm mt-1">
+              {renameCardErrors.title}
+            </p>
+          )}
+        </div>
+        <div className="mb-4">
+          <textarea
+            value={renameCardDescription}
+            onChange={(e) => {
+              setRenameCardDescription(e.target.value);
+              setRenameCardErrors((prev) => ({
+                ...prev,
+                description: "",
+              }));
+            }}
+            className={`border ${
+              renameCardErrors.description
+                ? "border-red-500"
+                : "border-gray-300"
+            } rounded-3xl px-4 py-2 w-full`}
+            placeholder="Card Description"
+          />
+          {renameCardErrors.description && (
+            <p className="text-red-500 text-sm mt-1">
+              {renameCardErrors.description}
+            </p>
+          )}
+        </div>
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              setRenameCardModalVisible(false);
+              setRenameCardErrors({ title: "", description: "" });
+            }}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+      <div className="mt-4 h-96 overflow-y-auto">
+        <div className="flex items-center mb-4 pt-6">
+          <RxActivityLog size={24} className="mr-2" />
+          <h2 className="text-lg font-bold">Activity</h2>
+          <button
+            onClick={() => setCommentsVisible(!commentsVisible)}
+            className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+          >
+            {commentsVisible ? "Hide Comments" : "Show Comments"}
+          </button>
+        </div>
+        <div className="flex items-center mb-2">
+        <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+  {userEmail.charAt(0).toUpperCase()}
+</div>
+
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Write your comment"
+            className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+          />
+        </div>
+
+        <button
+          onClick={handleSaveComment}
+          className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+        >
+          Save Comment
+        </button>
+        {commentsVisible && (
+          <div className="flex flex-col space-y-4 pt-6">
+            {comments
+              .slice()
+              .reverse()
+              .map((comment, idx) => (
+                <div
+                  key={idx}
+                  className={`ml-2 text-gray-700 mt-2 flex items-start ${
+                    idx === 0
+                      ? "bg-gray-100 p-2 rounded-lg"
+                      : "bg-white p-2 rounded-lg"
+                  }`}
                 >
-                  Save Comment
-                </button>
-                {commentsVisible && (
-                  <div className="flex flex-col space-y-4 pt-6">
-                    {comments
-                      .slice()
-                      .reverse()
-                      .map((comment, idx) => (
-                        <div
-                          key={idx}
-                          className={`ml-2 text-gray-700 mt-2 flex items-start ${
-                            idx === 0
-                              ? "bg-gray-100 p-2 rounded-lg"
-                              : "bg-white p-2 rounded-lg"
-                          }`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                            {comment.commentBy[0].toUpperCase()}
-                          </div>
-                          <p className="ml-2">
-                            <span className="font-bold">
-                              {comment.commentBy}
-                            </span>
-                            : {comment.comment}
-                          </p>
-                        </div>
-                      ))}
+                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                    {comment.commentBy[0].toUpperCase()}
                   </div>
-                )}
-              </div>
-            </div>
+                  <p className="ml-2">
+                    <span className="font-bold">
+                      {comment.commentBy}
+                    </span>
+                    : {comment.comment}
+                  </p>
+                </div>
+              ))}
           </div>
         )}
+      </div>
+    </div>
+  </div>
+)}
 
         {showSuccessPopup && (
           <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
@@ -1613,7 +1677,7 @@ function KanbanBoard() {
           </div>
         )}
       </div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 overflow-auto"  style={{ scrollbarWidth: "none" }}>
         <div>
           <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
@@ -1718,7 +1782,7 @@ function KanbanBoard() {
           </button>
         </div>
       </div>
-      <div ref={containerRef} className="overflow-x-auto">
+      <div ref={containerRef} className="overflow-x-auto ">
         <Board
           onCardDragEnd={handleCardMove}
           onColumnDragEnd={handleColumnMove}
@@ -1736,6 +1800,7 @@ function KanbanBoard() {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: "20px",
+                
               }}
             >
               <div style={{ marginBottom: "0.5rem" }}>
@@ -1795,6 +1860,7 @@ function KanbanBoard() {
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
+                  marginBottom:"5px"
                 }}
               >
                 +

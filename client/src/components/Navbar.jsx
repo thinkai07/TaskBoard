@@ -18,6 +18,10 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const notificationCount = notifications.filter((notification) => !notification.readStatus).length;
+  const [organizationName, setOrganizationName] = useState("");
+  const [userRole, setUserRole] = useState('');
+  const [organizationId, setOrganizationId] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null); //added
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
@@ -72,36 +76,30 @@ const [notifications, setNotifications] = useState([]);
 
     fetchNotifications();
   }, [user, server]);
-  // useEffect(() => {
-  //   const fetchNotifications = async () => {
-  //     try {
-  //       const userId = user?._id;
-  //       if (!userId) {
-  //         console.error("User ID is not available");
-  //         return;
-  //       }
 
-  //       const response = await axios.post(
-  //         `${server}/api/notifications`,
-  //         { userId },
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //           },
-  //         }
-  //       );
+  
 
-  //       if (response.data.notifications) {
-  //         setNotifications(response.data.notifications);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching notifications:", error);
-  //     }
-  //   };
-
-  //   fetchNotifications();
-  // }, [user, server]);
-
+  useEffect(() => {
+    const fetchUserRoleAndOrganization = async () => {
+      try {
+        const response = await axios.get(`${server}/api/role`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUserRole(response.data.role);
+        setOrganizationId(response.data.organizationId);
+        setOrganizationName(response.data.organizationName)
+        console.log("org",response.data)
+      
+        
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+    fetchUserRoleAndOrganization();
+  }, []);
+  
   const handleNotificationClick = async (notificationId) => {
     try {
       await axios.patch(
@@ -161,7 +159,7 @@ const [notifications, setNotifications] = useState([]);
 
   const handleSelectBackground = (image) => {
     const projectId = location.pathname.split("/")[2];
-
+    setSelectedImage(image);
     axios
       .put(
         `${server}/api/projects/${projectId}/bgImage`,
@@ -253,8 +251,11 @@ const [notifications, setNotifications] = useState([]);
       </div>
 
       <div className="flex items-center flex-grow justify-center space-x-20">
-        <div className="relative w-full max-w-xs">{/* Search bar and other elements can go here */}</div>
+        <div className="relative w-full max-w-xs">  </div>
       </div>
+      <h1 className="font-bold text-1xl m-4">
+       {organizationName}
+      </h1>
 
       {isProjectRoute && (
            <div className="relative inline-block group">
@@ -330,11 +331,11 @@ const [notifications, setNotifications] = useState([]);
         </div>
       )}
 
-      {showSidebar && (
+{showSidebar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
           <div className="bg-white w-80 p-4 rounded-tl-3xl shadow-lg relative overflow-y-auto" style={{ maxHeight: "100vh" }}>
             <button
-              className="absolute top-4 right-4  p-2 rounded"
+              className="absolute top-4 right-4 p-2 rounded"
               onClick={handleCloseSidebar}
             >
               <MdOutlineCancel size={30} />
@@ -350,12 +351,11 @@ const [notifications, setNotifications] = useState([]);
                     key={index}
                     src={image}
                     alt={`Background ${index + 1}`}
-                    className="w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer"
+                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${selectedImage === image ? 'border-4 border-green-500' : 'border-gray-300'}`}
                     onClick={() => handleSelectBackground(image)}
                   />
                 ))}
               </div>
-
               <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover mb-4 justify-center mb-4">
                 <label htmlFor="file-upload" className="cursor-pointer">
                   <AiOutlinePlus size={30} />
@@ -367,17 +367,20 @@ const [notifications, setNotifications] = useState([]);
                   onChange={handleFileChange}
                 />
               </div>
-              <button
-                onClick={handleSetReload}
-                className="bg-green-500 text-white py-2 px-4 rounded-xl"
-              >
-                Set as Background Image
-              </button>
-            </div>
 
+              {selectedImage && (
+                <button
+                  onClick={handleSetReload}
+                  className="bg-green-500 text-white py-2 px-4 rounded-xl mt-4"
+                >
+                  Set as Background Image
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
+
       {showNotificationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end pr-4 pt-16">
           <div

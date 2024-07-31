@@ -119,7 +119,7 @@ const TeamMembersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-light-white rounded-3xl p-8">
+    <div className="min-h-full bg-light-white rounded-3xl p-8">
       <h1 className="text-2xl text-gray-500 font-semibold mb-4">
         Team Name: {teamName}
       </h1>

@@ -156,6 +156,7 @@ const [notifications, setNotifications] = useState([]);
 
   const handleCloseSidebar = () => {
     setShowSidebar(false);
+   
   };
 
   const handleSelectBackground = (image) => {
@@ -220,6 +221,10 @@ const [notifications, setNotifications] = useState([]);
   const toggleNotificationModal = () => {
     setShowNotificationModal(!showNotificationModal);
   };
+  const handleSetReload = () => {
+    window.location.reload();
+
+  }
 
   const images = [
     // "https://img.lovepik.com/element/40156/3639.png_1200.png",
@@ -362,6 +367,12 @@ const [notifications, setNotifications] = useState([]);
                   onChange={handleFileChange}
                 />
               </div>
+              <button
+                onClick={handleSetReload}
+                className="bg-green-500 text-white py-2 px-4 rounded-xl"
+              >
+                Set as Background Image
+              </button>
             </div>
 
           </div>

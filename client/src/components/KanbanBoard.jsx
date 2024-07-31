@@ -1702,7 +1702,7 @@ function KanbanBoard() {
           >
             Teams
           </button> */}
-          {/* <RulesButton /> */}
+          <RulesButton />
           <button
             onClick={openGitModal}
             className="bg-green-500 text-white px-4 py-2 rounded-full"

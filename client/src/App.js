@@ -87,7 +87,7 @@ const App = () => {
                   <Route path="/Auditlog" element={<AuditLog/>} /> 
                   <Route path="/Teamsorg" element={<TeamsPage/>} /> 
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
-                  {/* <Route path="/Rules" element={<RulesButton/>} />  */}
+                  <Route path="/Rules" element={<RulesButton/>} /> 
                 </Routes>
               </Layout>
             ) : ( 

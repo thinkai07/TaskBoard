@@ -111,7 +111,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://13.235.16.113:3001");
+    const newSocket = io("http://localhost:3001");
     setSocket(newSocket);
   }, []);
 
@@ -761,62 +761,77 @@ function KanbanBoard() {
   //   }
   // }
 
-  const handleCardMove = async (card, source, destination) => {
-    const updatedBoard = moveCard(boardData, source, destination);
-    setBoardData(updatedBoard);
+ // Polling function
+ const pollForUpdates = async () => {
+  await fetchTasks();
+};
 
-    const movedBy = await fetchUserEmail();
+// Set up polling
+useEffect(() => {
+  const intervalId = setInterval(pollForUpdates, 5000);
 
-    try {
-      if (source.fromColumnId === destination.toColumnId) {
-        // Card is reordered within the same task
-        const response = await axios.put(
-          `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
-          {
-            newIndex: destination.toPosition,
-            movedBy,
-            movedDate: new Date().toISOString(),
+  // Clean up the interval when the component unmounts
+  return () => clearInterval(intervalId);
+}, []);
+
+
+const handleCardMove = async (card, source, destination) => {
+  const updatedBoard = moveCard(boardData, source, destination);
+  setBoardData(updatedBoard);
+
+  const movedBy = await fetchUserEmail();
+
+  try {
+    if (source.fromColumnId === destination.toColumnId) {
+      // Card is reordered within the same task
+      const response = await axios.put(
+        `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
+        {
+          newIndex: destination.toPosition,
+          movedBy,
+          movedDate: new Date().toISOString(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (response.status !== 200) {
-          throw new Error("Failed to reorder card");
         }
-      } else {
-        // Card is moved to a different task
-        const response = await axios.put(
-          `${server}/api/cards/${card.id}/move`,
-          {
-            sourceTaskId: source.fromColumnId,
-            destinationTaskId: destination.toColumnId,
-            movedBy,
-            movedDate: new Date().toISOString(),
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+      );
 
-        if (response.status !== 200) {
-          throw new Error("Failed to move card");
-        }
+      if (response.status !== 200) {
+        throw new Error("Failed to reorder card");
       }
+    } else {
+      // Card is moved to a different task
+      const response = await axios.put(
+        `${server}/api/cards/${card.id}/move`,
+        {
+          sourceTaskId: source.fromColumnId,
+          destinationTaskId: destination.toColumnId,
+          movedBy,
+          movedDate: new Date().toISOString(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-      // Refetch the board data to ensure frontend and backend are in sync
-      await fetchTasks();
-    } catch (error) {
-      console.error("Error moving/reordering card:", error);
-      // Revert the frontend state if the backend update fails
-      setBoardData(boardData);
+      if (response.status !== 200) {
+        throw new Error("Failed to move card");
+      }
     }
-  };
+
+    // Refetch the board data to ensure frontend and backend are in sync
+    await fetchTasks();
+  } catch (error) {
+    console.error("Error moving/reordering card:", error);
+    // Revert the frontend state if the backend update fails
+    setBoardData(boardData);
+  }
+};
+
 
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
@@ -1496,17 +1511,15 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto min-h-full bg-light-multicolor rounded-3xl"
+      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-3xl"
       style={
         bgUrl
           ? {
               backgroundImage: `url(${bgUrl})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              // height: "100vh",
+              height: "100vh",
               width: "100%",
-              scrollbarWidth: "none", 
-              minHeight:'100%'
             }
           : {}
       }
@@ -1677,7 +1690,7 @@ function KanbanBoard() {
           </div>
         )}
       </div>
-      <div className="flex justify-between items-center mb-4 overflow-auto"  style={{ scrollbarWidth: "none" }}>
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
@@ -1782,7 +1795,7 @@ function KanbanBoard() {
           </button>
         </div>
       </div>
-      <div ref={containerRef} className="overflow-x-auto ">
+      <div ref={containerRef} className="overflow-x-auto">
         <Board
           onCardDragEnd={handleCardMove}
           onColumnDragEnd={handleColumnMove}
@@ -1800,7 +1813,6 @@ function KanbanBoard() {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: "20px",
-                
               }}
             >
               <div style={{ marginBottom: "0.5rem" }}>

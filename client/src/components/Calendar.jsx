@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { server } from '../constant';
 import useTokenValidation from './UseTockenValidation';
+import { MdOutlineCancel } from "react-icons/md";
 
 const Calendar = () => {
   useTokenValidation();
@@ -181,7 +182,13 @@ const Calendar = () => {
       </div>
       {showModal && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center z-50 justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white w-3/4 h-3/4 p-8 rounded-lg shadow-lg overflow-auto">
+          <div className="bg-white w-3/4 h-3/4 p-8 rounded-lg shadow-lg overflow-auto relative">
+            <button
+              onClick={handleModalClose}
+              className="absolute top-2 right-2 px-2 py-1 text-2xl text-black rounded-md"
+            >
+              <MdOutlineCancel />
+            </button>
             <h3 className="text-lg font-semibold mb-4">Project, Column, and Card Details</h3>
             <p className="mb-4"><strong>Date:</strong> {selectedDate}</p>
             <table className="table-auto w-full">
@@ -215,9 +222,9 @@ const Calendar = () => {
                 ))}
               </tbody>
             </table>
-            <div className="flex justify-end mt-4">
+            {/* <div className="flex justify-end mt-4">
               <button onClick={handleModalClose} className="px-4 py-2 mr-2 bg-gray-400 text-white rounded-md">Close</button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}
@@ -226,10 +233,6 @@ const Calendar = () => {
 };
 
 export default Calendar;
-
-
-
-
 
 
 

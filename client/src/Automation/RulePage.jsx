@@ -26,7 +26,7 @@ const ActionOption = ({ icon: Icon, label, onClick }) => (
   </button>
 );
 
-function RulesButton() {
+function RulesButton({tasks}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showRulesUI, setShowRulesUI] = useState(false);
   const [showTriggers, setShowTriggers] = useState(false);
@@ -48,28 +48,28 @@ function RulesButton() {
   const { projectId } = useParams();
   const [boardData, setBoardData] = useState({ columns: [] });
   const [cardStatuses, setCardStatuses] = useState([]);
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]);
   const [createdByCondition, setCreatedByCondition] = useState("");
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get(
-          `${server}/api/projects/${projectId}/tasks`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setTasks(response.data.tasks);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchTasks = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         `${server}/api/projects/${projectId}/tasks`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           },
+  //         }
+  //       );
+  //       setTasks(response.data.tasks);
+  //     } catch (error) {
+  //       console.error("Error fetching tasks:", error);
+  //     }
+  //   };
 
-    fetchTasks();
-  }, [projectId]);
+  //   fetchTasks();
+  // }, [projectId]);
 
   const openDeleteConfirmation = (ruleId) => {
     setRuleToDelete(ruleId);
@@ -169,7 +169,7 @@ function RulesButton() {
       // Determine the actionSentence
       let actionSentence = "";
       if (selectedAction === "Move to List") {
-        actionSentence = `Move to list ${moveToList}`;
+        actionSentence = `Move to column ${moveToList}`;
       } else if (selectedAction === "Complete Task") {
         actionSentence = `Mark the task as completed`;
       } else if (selectedAction === "Delete Task") {
@@ -454,14 +454,14 @@ function RulesButton() {
                     {selectedAction === "Move to List" && (
                       <>
                         <h4 className="font-semibold mb-2">
-                          Move to List Details
+                          Move to column 
                         </h4>
                         <select
                           className="border rounded w-full px-2 py-1 mb-2"
                           value={moveToList}
                           onChange={(e) => setMoveToList(e.target.value)}
                         >
-                          <option value="">Select a list</option>
+                          <option value="">Select a column</option>
                           {tasks.map((task) => (
                             <option key={task.id} value={task.name}>
                               {task.name}
@@ -470,7 +470,7 @@ function RulesButton() {
                         </select>
 
                         <p className="text-sm text-gray-600">
-                          The card will be moved to the specified list.
+                          The card will be moved to the specified column.
                         </p>
                       </>
                     )}
@@ -542,7 +542,7 @@ function RulesButton() {
                   <p>
                     {selectedAction === "Move to List" && (
                       <>
-                        Move to list <strong>{moveToList}</strong>
+                        Move to column <strong>{moveToList}</strong>
                       </>
                     )}
                     {selectedAction === "Complete Task" && (

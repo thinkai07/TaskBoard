@@ -300,7 +300,7 @@
     organization: { type: Schema.Types.ObjectId, ref: "Organization" },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
-    status: { type: String, default: "unverify" },
+    status: { type: String, default: "UNVERIFY" },
   });
 
   // Audit log schema
@@ -403,7 +403,7 @@
 
   // // Send Registration Email with Token Function
   const sendRegistrationEmail = (email, name, token) => {
-    const link = `http://localhost:3001/success?token=${token}`;
+    const link = `http://13.235.16.113:3001/success?token=${token}`;
     const mailOptions = {
       from: "thinkailabs111@gmail.com",
       to: email,
@@ -456,7 +456,7 @@
         password: hashedPassword, // Save the hashed password
         organization: newOrganization._id,
         role: "ADMIN",
-        status: "verified",
+        status: "VERIFIED",
       });
 
       await newUser.save();
@@ -547,7 +547,8 @@
       const users = await User.find({
         email: { $regex: email, $options: "i" },
         organization: req.user.organizationId,
-      }).select("email");
+        
+      }).select("email status");
 
       res.status(200).json({ users });
     } catch (error) {
@@ -752,7 +753,7 @@
           email,
           role: "USER",
           organization: req.user.organizationId,
-          status: "unverify", // Set default status as 'unverify'
+          status: "UNVERIFY", // Set default status as 'unverify'
         });
         // Find the organization by ID
         const organization = await Organization.findById(req.user.organizationId);
@@ -765,7 +766,7 @@
         const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
           expiresIn: "3d",
         });
-        const resetLink = `http://localhost:3001/reset-password?token=${token}`;
+        const resetLink = `http://13.235.16.113:3001/reset-password?token=${token}`;
 
         sendResetEmail(email, resetLink);
 
@@ -844,7 +845,7 @@
 
       const user = await User.findByIdAndUpdate(
         decoded.userId,
-        { password: hashedPassword, status: "Verified" },
+        { password: hashedPassword, status: "VERIFIED" },
         { new: true }
       ); // Update status to 'Verified'
 
@@ -984,7 +985,7 @@
         { expiresIn: "1h" }
       );
 
-      const link = `http://localhost:3001/project?token=${token}`;
+      const link = `http://13.235.16.113:3001/project?token=${token}`;
       const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
       await sendEmail(projectManager, "New Project Created", emailText);
@@ -1939,7 +1940,7 @@
       }
 
       const newComment = new Comment({
-        comment: `Card moved by ${movedByUser.name} from task ${sourceTask.name} to task ${destinationTask.name}`,
+        comment: `Card moved by ${movedByUser.name} from  column ${sourceTask.name} to column ${destinationTask.name}`,
         commentBy: movedByUser.name,
         card: card._id,
       });
@@ -2345,7 +2346,7 @@
         }
 
         // Check if the user status is 'unverify'
-        if (user.status === "unverify") {
+        if (user.status === "UNVERIFY") {
           return res.status(400).json({
             message:
               "This user email is not verified. Please verify the email before adding into team.",
@@ -2718,7 +2719,7 @@
         }
 
         // Check if the user status is 'unverify'
-        if (user.status === "unverify") {
+        if (user.status === "UNVERIFY") {
           return res.status(400).json({
             message:
               "This user email is not verified. Please verify the email before adding into team.",
@@ -3411,83 +3412,6 @@
     }
   };
 
-
-
-
-  // const executeBackgroundJob = async () => {
-  //   try {
-  //     console.log('Running scheduled background job...');
-
-  //     // Find rules related to 'Card Move' that need to be executed
-  //     const rules = await Rule.find({ trigger: 'Card Move' });
-
-  //     for (const rule of rules) {
-  //       console.log(`Processing rule ${rule._id}:`);
-
-  //       // Fetch the project by ID
-  //       const project = await Project.findById(rule.projectId);
-  //       if (!project) {
-  //         console.error(`Project ${rule.projectId} not found.`);
-  //         continue; // Skip to the next rule if the project is not found
-  //       }
-
-  //       // Fetch all cards associated with the project
-  //       let cardsToMove = await Card.find({ project: rule.projectId });
-
-  //       // Apply filter based on createdByCondition
-  //       for (const card of cardsToMove) {
-  //         // Get the user ID based on the updatedBy email
-  //         const user = await User.findOne({ email: card.updatedBy });
-  //         if (!user) {
-  //           console.error(`User with email ${card.updatedBy} not found.`);
-  //           continue; // Skip to the next card if the user is not found
-  //         }
-
-  //         // Check the createdByCondition
-  //         if (rule.createdByCondition === 'by me') {
-  //           if (!rule.createdBy.includes(user._id.toString())) {
-  //             continue; // Skip this card if the user ID doesn't match
-  //           }
-  //         } else if (rule.createdByCondition === 'by anyone except me') {
-  //           if (rule.createdBy.includes(user._id.toString())) {
-  //             continue; // Skip this card if the user ID matches
-  //           }
-  //         }
-
-  //         // Fetch the destination list by name
-  //         const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
-  //         if (!destinationList) {
-  //           console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
-  //           continue; // Skip to the next rule if the destination list is not found
-  //         }
-
-  //         // Check if the rule applies to this card based on triggerCondition
-  //         if (!rule.triggerCondition || card.status === rule.triggerCondition) {
-  //           // Find the current task (list) of the card
-  //           const currentTask = await Task.findById(card.task);
-
-  //           // Remove the card from the current list
-  //           if (currentTask) {
-  //             currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
-  //             await currentTask.save();
-  //           }
-
-  //           // Add the card to the destination list
-  //           destinationList.card.push(card._id);
-  //           await destinationList.save();
-
-  //           // Update the card's task field
-  //           card.task = destinationList._id;
-  //           await card.save();
-
-  //           console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Error running scheduled job:', error);
-  //   }
-  // };
 
 
 

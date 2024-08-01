@@ -50,7 +50,7 @@ function KanbanBoard() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [memberAdded, setMemberAdded] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(true);
-
+  const [tasks,setTasks] = useState([]);
   const [renameCardDescription, setRenameCardDescription] = useState("");
   const [selectedCardId, setSelectedCardId] = useState(null);
   const suggestionListRef = useRef(null);
@@ -82,6 +82,7 @@ function KanbanBoard() {
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
 
+
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
@@ -111,7 +112,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3001");
+    const newSocket = io("http://13.235.16.113:3001");
     setSocket(newSocket);
   }, []);
 
@@ -136,48 +137,6 @@ function KanbanBoard() {
         }));
       });
 
-      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
-        console.log("Card moved event received:", {
-          cardId,
-          sourceTaskId,
-          destinationTaskId,
-        });
-        setBoardData((prevState) => {
-          if (!prevState || !prevState.columns) {
-            console.error("Invalid board state:", prevState);
-            return prevState;
-          }
-
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === sourceTaskId) {
-              return {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              };
-            }
-            if (column.id === destinationTaskId) {
-              const movedCard = prevState.columns
-                .find((col) => col.id === sourceTaskId)
-                ?.cards.find((card) => card.id === cardId);
-
-              if (!movedCard) {
-                console.error("Moved card not found:", {
-                  cardId,
-                  sourceTaskId,
-                });
-                return column;
-              }
-
-              return {
-                ...column,
-                cards: [...column.cards, movedCard],
-              };
-            }
-            return column;
-          });
-          return { ...prevState, columns: updatedColumns };
-        });
-      });
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
         setBoardData((prevState) => ({
@@ -253,52 +212,57 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
       });
 
-      socket.on(
-        "backgroundJobCardMoved",
-        ({ cardId, sourceTaskId, destinationTaskId, projectId }) => {
-          if (projectId === projectId) {
-            // Make sure it's for the current project
-            setBoardData((prevState) => {
-              const updatedColumns = prevState.columns.map((column) => {
-                if (column.id === sourceTaskId) {
-                  return {
-                    ...column,
-                    cards: column.cards.filter((card) => card.id !== cardId),
-                  };
-                }
-                if (column.id === destinationTaskId) {
-                  const movedCard = prevState.columns
-                    .find((col) => col.id === sourceTaskId)
-                    ?.cards.find((card) => card.id === cardId);
-
-                  if (!movedCard) {
-                    console.error("Moved card not found:", {
-                      cardId,
-                      sourceTaskId,
-                    });
-                    return column;
-                  }
-
-                  return {
-                    ...column,
-                    cards: [...column.cards, movedCard],
-                  };
-                }
-                return column;
-              });
-              return { ...prevState, columns: updatedColumns };
-            });
+      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
+        console.log("Card moved event received:", {
+          cardId,
+          sourceTaskId,
+          destinationTaskId,
+        });
+        setBoardData((prevState) => {
+          if (!prevState || !prevState.columns) {
+            console.error("Invalid board state:", prevState);
+            return prevState;
           }
-        }
-      );
+
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === sourceTaskId) {
+              return {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              };
+            }
+            if (column.id === destinationTaskId) {
+              const movedCard = prevState.columns
+                .find((col) => col.id === sourceTaskId)
+                ?.cards.find((card) => card.id === cardId);
+
+              if (!movedCard) {
+                console.error("Moved card not found:", {
+                  cardId,
+                  sourceTaskId,
+                });
+                return column;
+              }
+
+              return {
+                ...column,
+                cards: [...column.cards, movedCard],
+              };
+            }
+            return column;
+          });
+          return { ...prevState, columns: updatedColumns };
+        });
+      });
+
     }
     return () => {
       if (socket) {
@@ -310,10 +274,12 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
-        socket.off("backgroundJobCardMoved");
+
       }
     };
   }, [socket, projectId]);
+
+
 
   //
   useEffect(() => {
@@ -428,7 +394,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -723,114 +689,80 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
-  // Update the handleCardMove function
-  // async function handleCardMove(card, source, destination) {
-  //   // Update the frontend state
-  //   const updatedBoard = moveCard(boardData, source, destination);
-  //   setBoardData(updatedBoard);
-
-  //   const movedBy = await fetchUserEmail();
-
-  //   // Update the backend
-  //   try {
-  //     const response = await fetch(`${server}/api/cards/${card.id}/move`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //       },
-  //       body: JSON.stringify({
-  //         sourceTaskId: source.fromColumnId,
-  //         destinationTaskId: destination.toColumnId,
-  //         movedBy: movedBy,
-  //         movedDate: new Date().toISOString(),
-  //       }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to move card");
-  //     }
-
-  //     // If the move was successful, you might want to refetch the board data
-  //     // to ensure frontend and backend are in sync
-  //     await fetchTasks();
-  //   } catch (error) {
-  //     console.error("Error moving card:", error);
-  //     // Optionally, revert the frontend state if the backend update fails
-  //     setBoardData(boardData);
-  //   }
-  // }
-
- // Polling function
- const pollForUpdates = async () => {
-  await fetchTasks();
-};
-
-// Set up polling
-useEffect(() => {
-  const intervalId = setInterval(pollForUpdates, 5000);
-
-  // Clean up the interval when the component unmounts
-  return () => clearInterval(intervalId);
-}, []);
 
 
-const handleCardMove = async (card, source, destination) => {
-  const updatedBoard = moveCard(boardData, source, destination);
-  setBoardData(updatedBoard);
-
-  const movedBy = await fetchUserEmail();
-
-  try {
-    if (source.fromColumnId === destination.toColumnId) {
-      // Card is reordered within the same task
-      const response = await axios.put(
-        `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
-        {
-          newIndex: destination.toPosition,
-          movedBy,
-          movedDate: new Date().toISOString(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.status !== 200) {
-        throw new Error("Failed to reorder card");
-      }
-    } else {
-      // Card is moved to a different task
-      const response = await axios.put(
-        `${server}/api/cards/${card.id}/move`,
-        {
-          sourceTaskId: source.fromColumnId,
-          destinationTaskId: destination.toColumnId,
-          movedBy,
-          movedDate: new Date().toISOString(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.status !== 200) {
-        throw new Error("Failed to move card");
-      }
-    }
-
-    // Refetch the board data to ensure frontend and backend are in sync
+  // Polling function
+  const pollForUpdates = async () => {
     await fetchTasks();
-  } catch (error) {
-    console.error("Error moving/reordering card:", error);
-    // Revert the frontend state if the backend update fails
-    setBoardData(boardData);
-  }
-};
+  };
+
+  // Set up polling
+  useEffect(() => {
+    const intervalId = setInterval(pollForUpdates, 5000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []);
+
+
+  const handleCardMove = async (card, source, destination) => {
+    const updatedBoard = moveCard(boardData, source, destination);
+    setBoardData(updatedBoard);
+
+    const movedBy = await fetchUserEmail();
+
+    try {
+      if (source.fromColumnId === destination.toColumnId) {
+        // Card is reordered within the same task
+        const response = await axios.put(
+          `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
+          {
+            newIndex: destination.toPosition,
+            movedBy,
+            movedDate: new Date().toISOString(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (response.status !== 200) {
+          throw new Error("Failed to reorder card");
+        }
+      } else {
+        // Card is moved to a different task
+        const response = await axios.put(
+          `${server}/api/cards/${card.id}/move`,
+          {
+            sourceTaskId: source.fromColumnId,
+            destinationTaskId: destination.toColumnId,
+            movedBy,
+            movedDate: new Date().toISOString(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (response.status !== 200) {
+          throw new Error("Failed to move card");
+        }
+      }
+
+      // Refetch the board data to ensure frontend and backend are in sync
+      await fetchTasks();
+    } catch (error) {
+      console.error("Error moving/reordering card:", error);
+      // Revert the frontend state if the backend update fails
+      setBoardData(boardData);
+    }
+  };
+
+
 
 
   const confirmRemoveCard = (columnId, cardId) => {
@@ -867,9 +799,9 @@ const handleCardMove = async (card, source, destination) => {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -1357,6 +1289,26 @@ const handleCardMove = async (card, source, destination) => {
   );
 
   ////
+  const fetchTasks1 = async () => {
+    try {
+      const response = await axios.get(
+        `${server}/api/projects/${projectId}/tasks`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setTasks(response.data.tasks);
+      console.log("tasks1 done")
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+  useEffect(()=>{
+    fetchTasks1()
+
+  },[boardData])
 
   const handleSaveComment = async () => {
     if (comment.trim()) {
@@ -1481,10 +1433,10 @@ const handleCardMove = async (card, source, destination) => {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1511,174 +1463,171 @@ const handleCardMove = async (card, source, destination) => {
 
   return (
     <div
-      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-3xl"
+      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
       style={
         bgUrl
           ? {
-              backgroundImage: `url(${bgUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              height: "100vh",
-              width: "100%",
-            }
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "100vh",
+            width: "100%",
+          }
           : {}
       }
     >
       <div>
-      {renameCardModalVisible && (
-  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-    <div className="bg-white p-6 rounded-3xl w-5/12 relative">
-      {/* Close Icon */}
-      <button
-        onClick={() => {
-          setRenameCardModalVisible(false);
-          setRenameCardErrors({ title: "", description: "" });
-        }}
-        className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-
-      <h2 className="text-lg font-bold mb-4">Rename Card</h2>
-      <form onSubmit={handleRenameCard}>
-        <div className="mb-4">
-          <input
-            type="text"
-            value={renameCardTitle}
-            onChange={(e) => {
-              setRenameCardTitle(e.target.value);
-              setRenameCardErrors((prev) => ({ ...prev, title: "" }));
-            }}
-            className={`border ${
-              renameCardErrors.title
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-3xl px-4 py-2 w-full`}
-            placeholder="Card Title"
-          />
-          {renameCardErrors.title && (
-            <p className="text-red-500 text-sm mt-1">
-              {renameCardErrors.title}
-            </p>
-          )}
-        </div>
-        <div className="mb-4">
-          <textarea
-            value={renameCardDescription}
-            onChange={(e) => {
-              setRenameCardDescription(e.target.value);
-              setRenameCardErrors((prev) => ({
-                ...prev,
-                description: "",
-              }));
-            }}
-            className={`border ${
-              renameCardErrors.description
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-3xl px-4 py-2 w-full`}
-            placeholder="Card Description"
-          />
-          {renameCardErrors.description && (
-            <p className="text-red-500 text-sm mt-1">
-              {renameCardErrors.description}
-            </p>
-          )}
-        </div>
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={() => {
-              setRenameCardModalVisible(false);
-              setRenameCardErrors({ title: "", description: "" });
-            }}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-      <div className="mt-4 h-96 overflow-y-auto">
-        <div className="flex items-center mb-4 pt-6">
-          <RxActivityLog size={24} className="mr-2" />
-          <h2 className="text-lg font-bold">Activity</h2>
-          <button
-            onClick={() => setCommentsVisible(!commentsVisible)}
-            className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-          >
-            {commentsVisible ? "Hide Comments" : "Show Comments"}
-          </button>
-        </div>
-        <div className="flex items-center mb-2">
-        <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-  {userEmail.charAt(0).toUpperCase()}
-</div>
-
-          <input
-            type="text"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Write your comment"
-            className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-          />
-        </div>
-
-        <button
-          onClick={handleSaveComment}
-          className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
-        >
-          Save Comment
-        </button>
-        {commentsVisible && (
-          <div className="flex flex-col space-y-4 pt-6">
-            {comments
-              .slice()
-              .reverse()
-              .map((comment, idx) => (
-                <div
-                  key={idx}
-                  className={`ml-2 text-gray-700 mt-2 flex items-start ${
-                    idx === 0
-                      ? "bg-gray-100 p-2 rounded-lg"
-                      : "bg-white p-2 rounded-lg"
-                  }`}
+        {renameCardModalVisible && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-3xl w-5/12 relative">
+              {/* Close Icon */}
+              <button
+                onClick={() => {
+                  setRenameCardModalVisible(false);
+                  setRenameCardErrors({ title: "", description: "" });
+                }}
+                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    {comment.commentBy[0].toUpperCase()}
-                  </div>
-                  <p className="ml-2">
-                    <span className="font-bold">
-                      {comment.commentBy}
-                    </span>
-                    : {comment.comment}
-                  </p>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
+              <form onSubmit={handleRenameCard}>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={renameCardTitle}
+                    onChange={(e) => {
+                      setRenameCardTitle(e.target.value);
+                      setRenameCardErrors((prev) => ({ ...prev, title: "" }));
+                    }}
+                    className={`border ${renameCardErrors.title
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      } rounded-3xl px-4 py-2 w-full`}
+                    placeholder="Card Title"
+                  />
+                  {renameCardErrors.title && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {renameCardErrors.title}
+                    </p>
+                  )}
                 </div>
-              ))}
+                <div className="mb-4">
+                  <textarea
+                    value={renameCardDescription}
+                    onChange={(e) => {
+                      setRenameCardDescription(e.target.value);
+                      setRenameCardErrors((prev) => ({
+                        ...prev,
+                        description: "",
+                      }));
+                    }}
+                    className={`border ${renameCardErrors.description
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      } rounded-3xl px-4 py-2 w-full`}
+                    placeholder="Card Description"
+                  />
+                  {renameCardErrors.description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {renameCardErrors.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRenameCardModalVisible(false);
+                      setRenameCardErrors({ title: "", description: "" });
+                    }}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+              <div className="mt-4 h-96 overflow-y-auto">
+                <div className="flex items-center mb-4 pt-6">
+                  <RxActivityLog size={24} className="mr-2" />
+                  <h2 className="text-lg font-bold">Activity</h2>
+                  <button
+                    onClick={() => setCommentsVisible(!commentsVisible)}
+                    className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+                  >
+                    {commentsVisible ? "Hide Comments" : "Show Comments"}
+                  </button>
+                </div>
+                <div className="flex items-center mb-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                    {userEmail.charAt(0).toUpperCase()}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Write your comment"
+                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSaveComment}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+                >
+                  Save Comment
+                </button>
+                {commentsVisible && (
+                  <div className="flex flex-col space-y-4 pt-6">
+                    {comments
+                      .slice()
+                      .reverse()
+                      .map((comment, idx) => (
+                        <div
+                          key={idx}
+                          className={`ml-2 text-gray-700 mt-2 flex items-start ${idx === 0
+                            ? "bg-gray-100 p-2 rounded-lg"
+                            : "bg-white p-2 rounded-lg"
+                            }`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                            {comment.commentBy[0].toUpperCase()}
+                          </div>
+                          <p className="ml-2">
+                            <span className="font-bold">
+                              {comment.commentBy}
+                            </span>
+                            : {comment.comment}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
 
         {showSuccessPopup && (
           <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
@@ -1779,7 +1728,7 @@ const handleCardMove = async (card, source, destination) => {
           >
             Teams
           </button> */}
-          <RulesButton />
+          <RulesButton tasks={tasks} />
           <button
             onClick={openGitModal}
             className="bg-green-500 text-white px-4 py-2 rounded-full"
@@ -1872,7 +1821,6 @@ const handleCardMove = async (card, source, destination) => {
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
-                  marginBottom:"5px"
                 }}
               >
                 +
@@ -2045,9 +1993,8 @@ const handleCardMove = async (card, source, destination) => {
                   setNewColumnName(e.target.value.trimStart());
                   setNewColumnError(false);
                 }}
-                className={`border ${
-                  newColumnError ? "border-red-500" : "border-gray-300"
-                } rounded-xl px-3 py-3 mb-4 w-full`}
+                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
+                  } rounded-xl px-3 py-3 mb-4 w-full`}
                 placeholder="Column Name"
                 required
               />
@@ -2140,9 +2087,8 @@ const handleCardMove = async (card, source, destination) => {
                     setNewColumnName(e.target.value.trimStart());
                     setRenameColumnError(false);
                   }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${
-                    renameColumnError ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="Enter the new name for the column"
                 />
                 {renameColumnError && (

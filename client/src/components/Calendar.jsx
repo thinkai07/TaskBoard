@@ -139,6 +139,20 @@ const Calendar = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4 text-blue-600">Calendar</h2>
+      <div className="fixed bottom-12 right-12 flex flex-row space-x-2 pr-[40%] pt-6 pb-12">
+        <div className="flex justify items-center space-x-2">
+          <div className="w-5 h-5 bg-orange-500 rounded-full"></div>
+          <span className="text-black">Pending</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-5 h-5 bg-yellow-500 rounded-full"></div>
+          <span className="text-black">In Progress</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-5 h-5 bg-green-500 rounded-full"></div>
+          <span className="text-black">Completed</span>
+        </div>
+      </div>
       <div className="flex justify-between mb-4">
         <div className="flex items-center">
           <button onClick={handlePrevMonth} className="px-4 py-2 bg-blue-500 text-white rounded">Previous</button>
@@ -189,7 +203,7 @@ const Calendar = () => {
             >
               <MdOutlineCancel />
             </button>
-            <h3 className="text-lg font-semibold mb-4">Project, Column, and Card Details</h3>
+            <h3 className="text-lg font-semibold mb-4">Project, Column, and Task Details</h3>
             <p className="mb-4"><strong>Date:</strong> {selectedDate}</p>
             <table className="table-auto w-full">
               <thead>

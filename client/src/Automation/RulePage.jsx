@@ -26,7 +26,7 @@ const ActionOption = ({ icon: Icon, label, onClick }) => (
   </button>
 );
 
-function RulesButton({tasks}) {
+function RulesButton({tasks,}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showRulesUI, setShowRulesUI] = useState(false);
   const [showTriggers, setShowTriggers] = useState(false);

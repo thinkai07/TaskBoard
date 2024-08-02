@@ -310,10 +310,8 @@ const Projects = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        params: {
-          email: card.projectManager,
-          fields: 'email status name', // Specify the fields you want to retrieve
-        },   });
+        params: { email: card.projectManager, organizationId: organizationId },
+      });
 
       if (response.data.users.length === 0) {
         setNewCardErrors({ ...newErrors, email: true });
@@ -335,7 +333,7 @@ const Projects = () => {
       params: { email: card.projectManager },
     });
 
-    if (statusResponse.data.status === "UNVERIFY") {
+    if (statusResponse.data.status === "unverified") {
       setNewCardErrors({ ...newErrors, email: true });
       //   alert(
       //     "The project manager's email is not verified. Please verify the email before creating the project."
@@ -565,7 +563,7 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-full bg-light-white rounded-3xl p-8 ">
+    <div className="min-h-screen bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
         {userRole === "ADMIN" && (
           <button
@@ -680,31 +678,28 @@ const Projects = () => {
                   </span>
                 )}
                 {emailSuggestions.length > 0 &&
-  card.projectManager.length > 0 && (
-    <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-      {emailSuggestions
-        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
-        .map((user) => (
-          <li
-            key={user._id}
-            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            onClick={() => {
-              setCards((prevCards) => {
-                const updatedCards = [...prevCards];
-                updatedCards[index].projectManager = user.email;
-                return updatedCards;
-              });
-              setProjectManager(user.email);
-              setEmailSuggestions([]);
-              setProjectManagerError(false);
-            }}
-          >
-            {user.email}
-          </li>
-        ))}
-    </ul>
-  )}
-
+                  card.projectManager.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {emailSuggestions.map((user) => (
+                        <li
+                          key={user._id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setCards((prevCards) => {
+                              const updatedCards = [...prevCards];
+                              updatedCards[index].projectManager = user.email;
+                              return updatedCards;
+                            });
+                            setProjectManager(user.email);
+                            setEmailSuggestions([]);
+                            setProjectManagerError(false);
+                          }}
+                        >
+                          {user.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                 <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
                 <div className="relative">

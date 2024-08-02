@@ -193,19 +193,19 @@ const TeamMembersPage = () => {
         contentLabel="Delete Confirmation"
         className="flex items-center justify-center fixed inset-0 z-50 outline-none focus:outline-none bg-black bg-opacity-50"
       >
-        <div className="bg-white rounded-lg p-6 w-96">
+        <div className="bg-white rounded-3xl p-6 w-96">
           <h2 className="text-xl font-semibold mb-4">Delete Confirmation</h2>
-          <p className="mb-4">Are you sure you want to delete this member?</p>
-          <div className="flex justify-end">
+          <p className="mb-4">Are you want to delete this member?</p>
+          <div className="flex justify-between">
             <button
               onClick={closeModal}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded-2xl mr-2"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteMember}
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-2 rounded-2xl"
             >
               Delete
             </button>

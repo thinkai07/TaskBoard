@@ -648,6 +648,71 @@
     }
   );
 
+  // Function to delete user from both database and GitHub
+const deleteUser = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log(`User not found: ${userId}`);
+      return;
+    }
+
+    const organization = await Organization.findById(user.organization);
+    if (!organization) {
+      console.log(`Organization not found for user: ${userId}`);
+      return;
+    }
+
+    try {
+      const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
+
+      const githubResponse = await axios.delete(
+        `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
+
+      console.log("GitHub membership deletion response:", githubResponse.data);
+    } catch (error) {
+      console.error(
+        "Error removing user from GitHub organization:",
+        error.response ? error.response.data : error.message
+      );
+      // Proceeding with database deletion even if GitHub deletion fails
+    }
+
+    await User.findByIdAndDelete(userId);
+    console.log(`User ${userId} deleted successfully from both database and GitHub`);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+  }
+};
+
+// Schedule the job to run every minute
+cron.schedule("* * * * *", async () => {
+  console.log("Running scheduled job to delete unverified users...");
+
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  
+  try {
+    const usersToDelete = await User.find({
+      status: "UNVERIFY",
+      createdAt: { $lt: fiveMinutesAgo },
+    });
+
+    for (const user of usersToDelete) {
+      await deleteUser(user._id);
+    }
+  } catch (error) {
+    console.error("Error fetching users for deletion:", error);
+  }
+});
+
 
   // Login route
   app.post("/api/login", async (req, res) => {
@@ -2541,11 +2606,12 @@
         // Update the team with the GitHub slug
         team.slug = githubTeamResponse.data.slug;
         await team.save();
-
+         console.log('teams created')
         res.status(200).json({
           message: "Team created successfully",
           team,
           githubTeam: githubTeamResponse.data,
+
         });
       } catch (error) {
         console.error("Error creating team:", error);

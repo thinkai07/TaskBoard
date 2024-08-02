@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { server } from '../constant';
-import useTokenValidation from './UseTockenValidation';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { server } from "../constant";
+import useTokenValidation from "./UseTockenValidation";
 
 const AuditLog = () => {
   useTokenValidation();
-  const [selectedProject, setSelectedProject] = useState('');
-  const [userRole, setUserRole] = useState('');
-  const [organizationId, setOrganizationId] = useState('');
+  const [selectedProject, setSelectedProject] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [organizationId, setOrganizationId] = useState("");
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
@@ -60,7 +60,7 @@ const AuditLog = () => {
       setTasks(tasksResponse.data.tasks);
 
       // Fetch cards for all tasks
-      const cardsPromises = tasksResponse.data.tasks.map(task =>
+      const cardsPromises = tasksResponse.data.tasks.map((task) =>
         axios.get(`${server}/api/tasks/${task.id}/cards`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -68,7 +68,9 @@ const AuditLog = () => {
         })
       );
       const cardsResponses = await Promise.all(cardsPromises);
-      const allCards = cardsResponses.flatMap(response => response.data.cards);
+      const allCards = cardsResponses.flatMap(
+        (response) => response.data.cards
+      );
       setCards(allCards);
     } catch (error) {
       console.error("Error fetching tasks and cards:", error);
@@ -151,15 +153,19 @@ const AuditLog = () => {
               {auditLogs.map((log) => (
                 <tr key={log._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {projects.find(p => p._id === selectedProject)?.name}
+                    {projects.find((p) => p._id === selectedProject)?.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === 'Task' ? tasks.find(t => t.id === log.entityId)?.name || 'Unknown Task' : ''}
+                    {log.entityType === "Task"
+                      ? tasks.find((t) => t.id === log.entityId)?.name ||
+                        `#${log.entityId.slice(-6)}` 
+                      : ""}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === 'Card' 
-                      ? cards.find(c => c.id === log.entityId)?.name || 'Unknown Card' 
-                      : ''}
+                    {log.entityType === "Card"
+                      ? cards.find((c) => c.id === log.entityId)?.name ||
+                        `#${log.entityId.slice(-6)}` 
+                      : ""}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {log.performedBy}

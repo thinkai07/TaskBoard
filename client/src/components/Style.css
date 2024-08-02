@@ -3,7 +3,10 @@
   border-radius: 20px;
   background-color: #eee;
   margin: 5px;
+  height: 300px; /* Set a fixed height */
+  overflow-x: auto; /* Enable vertical scrollbar */
 }
+
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 250px;

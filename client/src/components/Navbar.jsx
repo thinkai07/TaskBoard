@@ -15,9 +15,11 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [customImages, setCustomImages] = useState([]);
   const profileDropdownRef = useRef(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const location = useLocation();
-  const notificationCount = notifications.filter((notification) => !notification.readStatus).length;
+  const notificationCount = notifications.filter(
+    (notification) => !notification.readStatus
+  ).length;
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
@@ -72,35 +74,6 @@ const [notifications, setNotifications] = useState([]);
 
     fetchNotifications();
   }, [user, server]);
-  // useEffect(() => {
-  //   const fetchNotifications = async () => {
-  //     try {
-  //       const userId = user?._id;
-  //       if (!userId) {
-  //         console.error("User ID is not available");
-  //         return;
-  //       }
-
-  //       const response = await axios.post(
-  //         `${server}/api/notifications`,
-  //         { userId },
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //           },
-  //         }
-  //       );
-
-  //       if (response.data.notifications) {
-  //         setNotifications(response.data.notifications);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching notifications:", error);
-  //     }
-  //   };
-
-  //   fetchNotifications();
-  // }, [user, server]);
 
   const handleNotificationClick = async (notificationId) => {
     try {
@@ -116,7 +89,9 @@ const [notifications, setNotifications] = useState([]);
 
       // Remove the notification from the state after marking it as read
       setNotifications((prevNotifications) =>
-        prevNotifications.filter((notification) => notification._id !== notificationId)
+        prevNotifications.filter(
+          (notification) => notification._id !== notificationId
+        )
       );
     } catch (error) {
       console.error("Error updating notification read status:", error);
@@ -228,7 +203,7 @@ const [notifications, setNotifications] = useState([]);
     // "https://i.pinimg.com/originals/b9/df/24/b9df243c15b372d33ade268c538dde2d.jpg",
     "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQA/AMBIgACEQEDEQH/xAAbAAADAQEBAQEAAAAAAAAAAAAAAgMBBAUGB//EACgQAAICAgICAgICAgMAAAAAAAABAhEDIRIxBEEiURNhMnEjgUKRkv/EABoBAAMBAQEBAAAAAAAAAAAAAAECAwAEBQb/xAAfEQEBAQEBAAMBAAMAAAAAAAAAARECIQMSMUEEE2H/2gAMAwEAAhEDEQA/APqseJ3/ABX/AEdHAyMZf8SmXlw+Wj2bXzU8ifXRSWNTinWyMJ/5lA64oFDn1HHHjNI68cW+gxYeUkztxYOMmyfXS/HCUYyS2OkdLx/Ej+OmT3VOphGMDibFDJ08CiESHQtNAAAKINMAzKYy8GQiyliWLc1dM1slCQ5PFZW2aKajC0GDMszMTpjp2Tb2ambG1RgKpByBhthgkK50KslujYH2OYaYZnykSXku0h1Im1znXo9GT15nXPmE8dRWf5fyrR3Rx8zk/DU00umdmKVV9m7b4+ZPHThxSx1Xs64Nta69iYWnDb2ZCXCVHPfXV5zF9VsSVLozmxHO2CQOuoZbGolZvIZPVUAsJJrsYAgAADAAAzNTKKcSQJmsGXFVIpCZz2PB/sWxTnpaUzYzItv7KQkktsXD/ZVy0LYkppqhUwYN6PYyMW0bQADC6AWd+jGrHI2EtkXf0xsd30NnhJfXVYWI+gi1QmK6+Tj/AAS9/ZZ4r+UdMSEVr9j5s8cc9els7rXFsz1sMbfs1RcGnZmHJLJLT0dEoJpfYLSyabHmlW60UlO2mckm46QfllFWD6j9r/XY5uiDzNS0cObyMrnaehlmU1fsacYl18s16KnaQylZ52LPJypHZhbk6X+wXnB5610ReyiESSKJaJ1WNXQAgsAgAADAACjNgNh2goaCNRkU46YqRrloTkJFdjXphjZOUm2ClWxsLvrrjoOS9shjy3dvaKOcVTbEsPsxQEcOfyPx207+jfG8iclb3fX6D9LmhPkm47JRsWKoFkUl9Vph+WK7Yptn6zLb6E+RRuzE1Wwh+vAUVkVq19bMniTWttoeEZRcGl8TshiU0pcdp6rtHTesQ+muTBgfNbaOhqKTjFb+yuOLUqfvofgozal3ViXraf65HnvHNSUm/jQNJxO2ShLG4vr2cM4uKSj0PLqdmOfLGulY/jYYNrnG7Em2rtM3x87jNLiUu2OfOft67l4MYyUlOlXQ906T/ox5JZHukv0bjhsl7/VpJPxeCbVsohY1SoeIlPAFGtbAGjgoyhlvRjVA02NUTaQyaaGjGwaeTSqFg4tdFUqNaQn2VvDnaZnFnRJJL+zKVB1O8xytU9m0nH9M3L7pWc2TO4cYNLr16KT1O5Eskmk0ntlFJxxpcm9GwUXG37+xMk1OMeCG/wCJez1HK+TV9DZs34sairv9EpycbT0c+aXJ6ZScpXvHVi8vIoJT+ST9spLynOSro4U6iapUrD9IX/ZY9vHnuKrY/KL25JP6s8JeQ+rB5XemxL8Ks/yHsYfGePG4ZEn9UUhBQlSWjracuw/GrOb769H6RD8S1WjlnifNu2enxRHNj+jTr0nXHjy80HeuvYn41yO7JhlT0Rjje9XRadRz3m65c2OEY/s4J6l6o9TN4+SceSWmjkfiTaXxd32W46mOf5Obv4r4+4UvR04lsfx8Cxpp7Zbik7RLrtXnnxOCrQ6RtALTwBWxkhkti6aQsYq7YzRWK0FIXT/VFKiuMHFGR0bRnlX4g0EWn7Bk1tTyRuOiW+i8npkvY8TsI4Nrs4vLx8YdJ1tv7PSS0S8pR4O16G569T743l42Ty4LDKPBwv3d6OaXmPK1HHFpIp5OP/ivslj/AMfezs5kef31dc3kSlycbl+9koZJxaVuv2Vndv8AsSmyskc/W66I5HavoMkr3Ho5/ktWMm+LSRsa2seVp7HjmXHbOWbbdsxdDfVK93X6FQUbRh4z6djM9DMVhLWUJxjG6WmOJPaDCXA+KjS6Itekb/saI/4ncqTXysbjfsaa6oVOglzCyRiG7Yyj8Ta2MS2OlWxE+LKJ2gGjUwaBGSYDaHoI0xWxU6Dhd9dCSRjbsIys17EUjOzOI6A2iyqRy+bNcNF8s+Kr7OHP002U4nqXydZPHDk+VujiyJqR6Gk2jlzxXZ1815/yTXJL+jIo3tmWk2VQbNJRutkY8r70VyTTjRFTVNJ7GheiSTk3Ssnf6K8ZJN2TpDz1Dr9foloSzAo8XH0/2aYzTGYKUSQ7Ju7GhKzjYqtMrGvYr7CWwu2Y4mpoa0EEX2PCTqgkr6FppWEPyq0jJL6Gj1tg+hT/AMJFsyQOSUnYspJjQlpW2FitgNidqsJtFVJnLFnTFfFMTqYrxdNFs2T0CaXZOc10KfcTySt7OXO7Rab2RybLcxz93XJKOzHj5Roq1s1ItqFjhl4/0cOWE4zdHryjv2Rz4043RTnvEe/j1wwhapu7F/HBS62dHClekLpj6l9XL5KlFa6OW2vr/bPRyRjKLUnX0efKoScW0U5rn+Xn1+hWZbADx30jbYrYyRjRmo9E5q+x70JNhheqm3TG5a2Kqb2M0kMmWVGJ0K+wW2NgavHoScbGj0bQv4b9R+X2UjdUbRqRq0hJ9Emizi2xZxoModRGjGyvESUGPKnhUzqxS1s5GNHJKOgdTR5uV0ZJIjOQksjYvI05broN2K1YXsLKJpSTTFui7SfYsoRa6DpLHPdvQZF/jf2FVJhLaGDHBlUqtsWN8TpzJVTRzt8VS2VlQsK199HLmX+R04pftHc2uNtHNJSvSGlT6mvtUBoI8t7oB9GiyAFK96JzVIb2bL+I0LfUDUKxk9FE05II6ZrMCVeLGuyCdFIS0JYfmqUAJ2a0Kdi7CaVdBQUZiUDiEuRilIYviGSNS0ZHa2PkX/ohzcdDxK+VXIviQbo1zsST0PIS1jkamSb+Q8ZDYTVG6QspaM5WY3aNg1NNWwbVaJZXWxFlXHY8id6Zkdpo5ck1FpaOiU1pr26OPzHSdWq+inKXd8Y816sFkaRy4uT3t/2dKT9lMTltfctAAHjvdYLI0AhUn2En8QAZOoyFACkToGQAFoGakAC0YpEcAEUhWAAZhIiADQlK2QmzAKRLpOTEk3RgFIl0jNuwUmloAHTDnL7FlkkloADGqLm3dkn0wAeJdJqUk3s3IuWG5bdgAYT+Odr2MtrtgA5Y/9k=",
     // "https://besthqwallpapers.com/Uploads/11-11-2019/111139/white-wood-boards-4k-macro-white-wooden-texture-wooden-lines.jpg",
-  
+
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQYAAACUCAMAAABGMnfyAAAAA1BMVEWt2eZvScryAAAAPElEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8G5gMAAGN/kBAAAAAAElFTkSuQmCC",
 
     ...customImages,
@@ -248,22 +223,23 @@ const [notifications, setNotifications] = useState([]);
       </div>
 
       <div className="flex items-center flex-grow justify-center space-x-20">
-        <div className="relative w-full max-w-xs">{/* Search bar and other elements can go here */}</div>
+        <div className="relative w-full max-w-xs">
+          {/* Search bar and other elements can go here */}
+        </div>
       </div>
 
       {isProjectRoute && (
-           <div className="relative inline-block group">
-           <button
-             className="text-black text-xl pr-6"
-             onClick={handleOpenSidebar}
-           >
-             <TbMenuOrder />
-           </button>
-           <span className="invisible absolute right-full mr-2 px-2 py-1 bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
-        Change background
-      </span>
-         </div>
-         
+        <div className="relative inline-block group">
+          <button
+            className="text-black text-xl pr-6"
+            onClick={handleOpenSidebar}
+          >
+            <TbMenuOrder />
+          </button>
+          <span className="invisible absolute right-full mr-2 px-2 py-1 bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+            Change background
+          </span>
+        </div>
       )}
       <div className="relative">
         <AiOutlineBell
@@ -327,7 +303,10 @@ const [notifications, setNotifications] = useState([]);
 
       {showSidebar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
-          <div className="bg-white w-80 p-4 rounded-tl-3xl shadow-lg relative overflow-y-auto" style={{ maxHeight: "100vh" }}>
+          <div
+            className="bg-white w-80 p-4 rounded-tl-3xl shadow-lg relative overflow-y-auto"
+            style={{ maxHeight: "100vh" }}
+          >
             <button
               className="absolute top-4 right-4  p-2 rounded"
               onClick={handleCloseSidebar}
@@ -363,7 +342,6 @@ const [notifications, setNotifications] = useState([]);
                 />
               </div>
             </div>
-
           </div>
         </div>
       )}
@@ -397,34 +375,25 @@ const [notifications, setNotifications] = useState([]);
                   </div>
                   <div className="text-gray-700">
                     <p>
-                      <strong>{notification.assignedByEmail}</strong> {notification.message}
+                      <strong>{notification.assignedByEmail}</strong>{" "}
+                      {notification.message}
                     </p>
                     {notification.createdAt && (
-          <div className="text-sm text-gray-500">
-            {" "}
-            {new Date(notification.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
-          </div>
-        )}
-                    {/* {notification.createdAt && (
                       <div className="text-sm text-gray-500">
-                        Created At:{" "}
-                        {new formatDate(notification.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        })}
+                        {" "}
+                        {new Date(notification.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true,
+                          }
+                        )}
                       </div>
-                    )} */}
+                    )}
                   </div>
                 </div>
               ))
@@ -437,28 +406,3 @@ const [notifications, setNotifications] = useState([]);
 };
 
 export default Navbar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

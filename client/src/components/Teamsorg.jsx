@@ -5,6 +5,7 @@ import axios from "axios";
 import { server } from "../constant";
 import { FaTrash, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import { Modal, notification } from 'antd';
+import { Link } from 'react-router-dom';
 const TeamsPage = () => {
     const [teams, setTeams] = useState([]);
     const [isAddingTeam, setIsAddingTeam] = useState(false);
@@ -16,6 +17,16 @@ const TeamsPage = () => {
     const [editingTeamName, setEditingTeamName] = useState("");
 
     const navigate = useNavigate();
+
+    const handleCardClick = (team) => {
+        navigate(`/teams/${team._id}/members`, {
+          state: {
+            teamName: team.name,
+            teamId: team._id,
+            organizationId: organizationId
+          }
+        });
+      };
 
     useEffect(() => {
         const fetchUserRoleAndOrganization = async () => {
@@ -174,7 +185,7 @@ const TeamsPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-light-white rounded-3xl p-8">
+        <div className="min-h-full bg-light-white rounded-3xl p-8 h-auto">
             <div className="flex justify-between items-center mb-4">
                 <button
                     className="border border-blue-500 text-blue-500 py-2 px-4 rounded-full flex items-center hover:bg-blue-500 hover:text-white"
@@ -198,108 +209,118 @@ const TeamsPage = () => {
                
             </div>
             <div className="flex flex-wrap justify-start">
-                {teams.map((team) => (
-                    <div
-                        key={team._id}
-                        className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer"
-                    >
-                        <div className="relative group">
-                            {editingTeamId === team._id ? (
-                                <input
-                                    type="text"
-                                    value={editingTeamName}
-                                    onChange={(e) => setEditingTeamName(e.target.value)}
-                                    className="block w-full text-xl font-semibold mb-2 border-b border-gray-300 focus:outline-none focus:border-blue-500"
-                                />
-                            ) : (
-                                <span 
-                                    className="block truncate max-w-[200px] text-xl font-semibold mb-2" 
-                                    onClick={() => navigate(`/teams/${team._id}/members`, { 
-                                        state: { 
-                                            teamName: team.name, 
-                                            teamId: team._id, 
-                                            organizationId: organizationId 
-                                        } 
-                                    })}
-                                >
-                                    {team.name}
-                                </span>
-                            )}
-                            <div className="flex justify-between mt-2">
-                                {editingTeamId === team._id ? (
-                                    <>
-                                        <button
-                                            onClick={() => handleSaveUpdatedTeam(team._id)}
-                                            className="text-green-500 hover:text-green-700 mr-4"
-                                        >
-                                            <FaSave className="inline mr-1" /> Save
-                                        </button>
-                                        <button
-                                            onClick={handleCancelUpdateTeam}
-                                            className="text-gray-500 hover:text-gray-700"
-                                        >
-                                            <FaTimes className="inline mr-1" /> Cancel
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={() => handleUpdateTeam(team._id, team.name)}
-                                            className="text-gray-500 hover:text-blue-700 mr-4"
-                                        >
-                                            <FaEdit className="inline mr-1" /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteTeam(team._id)}
-                                            className="text-gray-500 hover:text-red-700"
-                                        >
-                                            <FaTrash className="inline mr-1" /> Delete
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-                {isAddingTeam && (
-                    <div className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-96">
-                        <label
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="text"
-                        >
-                            Team Name
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Enter team name"
-                            value={newTeamName}
-                            onChange={(e) => {
-                                setNewTeamName(e.target.value);
-                                setNewTeamError(false);
-                            }}
-                            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newTeamError ? "border-red-500" : ""
-                                }`}
-                        />
-                        {newTeamError && (
-                            <span className="text-red-500 text-sm">This field is required</span>
-                        )}
-                        <div className="flex justify-between mt-4">
-                            <button
-                                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                onClick={handleSaveNewTeam}
-                            >
-                                Save
-                            </button>
-                            <button
-                                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                                onClick={handleCancelNewTeam}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                )}
+      {teams.map((team) => (
+        <div
+          key={team._id}
+          onClick={() => {
+            if (editingTeamId !== team._id) {
+              handleCardClick(team);
+            }
+          }}
+          className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer block"
+        >
+          <div className="relative group">
+            {editingTeamId === team._id ? (
+              <input
+                type="text"
+                value={editingTeamName}
+                onChange={(e) => setEditingTeamName(e.target.value)}
+                className="block w-full text-xl font-semibold mb-2 border-b border-gray-300 focus:outline-none focus:border-blue-500"
+              />
+            ) : (
+              <span className="block truncate max-w-[200px] text-xl font-semibold mb-2">
+                {team.name}
+              </span>
+            )}
+            <div className="flex justify-between mt-2">
+              {editingTeamId === team._id ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the button click from triggering the card navigation
+                      handleSaveUpdatedTeam(team._id);
+                    }}
+                    className="text-green-500 hover:text-green-700 mr-4"
+                  >
+                    <FaSave className="inline mr-1" /> Save
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the button click from triggering the card navigation
+                      handleCancelUpdateTeam();
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimes className="inline mr-1" /> Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the button click from triggering the card navigation
+                      handleUpdateTeam(team._id, team.name);
+                    }}
+                    className="text-gray-500 hover:text-blue-700 mr-4"
+                  >
+                    <FaEdit className="inline mr-1" /> Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents the button click from triggering the card navigation
+                      handleDeleteTeam(team._id);
+                    }}
+                    className="text-gray-500 hover:text-red-700"
+                  >
+                    <FaTrash className="inline mr-1" /> Delete
+                  </button>
+                </>
+              )}
             </div>
+          </div>
+        </div>
+      ))}
+
+      {isAddingTeam && (
+        <div className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-96">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="text"
+          >
+            Team Name
+          </label>
+          <input
+            type="text"
+            placeholder="Enter team name"
+            value={newTeamName}
+            onChange={(e) => {
+              setNewTeamName(e.target.value);
+              setNewTeamError(false);
+            }}
+            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+              newTeamError ? "border-red-500" : ""
+            }`}
+          />
+          {newTeamError && (
+            <span className="text-red-500 text-sm">This field is required</span>
+          )}
+          <div className="flex justify-between mt-4">
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              onClick={handleSaveNewTeam}
+            >
+              Save
+            </button>
+            <button
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              onClick={handleCancelNewTeam}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
         </div>
     );
 };

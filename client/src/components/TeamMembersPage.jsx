@@ -46,7 +46,7 @@ const TeamMembersPage = () => {
     if (event.target.value.length > 0) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
-          params: { email: event.target.value },
+          params: { email: event.target.value ,fields: 'email status name',},
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -145,7 +145,9 @@ const TeamMembersPage = () => {
           </div>
           {emailSuggestions.length > 0 && newMemberEmail.length > 0 && (
             <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
-              {emailSuggestions.map((user) => (
+              {emailSuggestions
+        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
+        .map((user) =>  (
                 <li
                   key={user.id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"

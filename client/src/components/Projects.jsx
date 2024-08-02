@@ -310,8 +310,10 @@ const Projects = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        params: { email: card.projectManager, organizationId: organizationId },
-      });
+        params: {
+          email: card.projectManager,
+          fields: 'email status name', // Specify the fields you want to retrieve
+        }, });
 
       if (response.data.users.length === 0) {
         setNewCardErrors({ ...newErrors, email: true });
@@ -680,24 +682,26 @@ const Projects = () => {
                 {emailSuggestions.length > 0 &&
                   card.projectManager.length > 0 && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {emailSuggestions.map((user) => (
-                        <li
-                          key={user._id}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setCards((prevCards) => {
-                              const updatedCards = [...prevCards];
-                              updatedCards[index].projectManager = user.email;
-                              return updatedCards;
-                            });
-                            setProjectManager(user.email);
-                            setEmailSuggestions([]);
-                            setProjectManagerError(false);
-                          }}
-                        >
-                          {user.email}
-                        </li>
-                      ))}
+                    {emailSuggestions
+        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
+        .map((user) => (
+          <li
+            key={user._id}
+            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+            onClick={() => {
+              setCards((prevCards) => {
+                const updatedCards = [...prevCards];
+                updatedCards[index].projectManager = user.email;
+                return updatedCards;
+              });
+              setProjectManager(user.email);
+              setEmailSuggestions([]);
+              setProjectManagerError(false);
+            }}
+          >
+            {user.email}
+          </li>
+        ))}
                     </ul>
                   )}
 

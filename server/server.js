@@ -1064,7 +1064,7 @@ cron.schedule("* * * * *", async () => {
       try {
         console.log(organization)
         githubResponse = await axios.post(
-          `https://api.github.com/orgs/${organization.name}/repos`,
+          `https://api.github.com/orgs/${organization.name}/repos`, 
           {
             name: repoName,
             private: true,

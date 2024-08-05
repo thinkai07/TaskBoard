@@ -112,7 +112,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3001");
+    const newSocket = io("http://13.235.16.113:3001");
     setSocket(newSocket);
   }, []);
 
@@ -585,6 +585,10 @@ function KanbanBoard() {
 
       // Refresh board data
       await fetchTasks();
+      notification.success({
+        message: 'Task added Successfully',
+
+    });
     } catch (error) {
       console.error("Error adding card:", error);
       alert(error.message);
@@ -631,37 +635,7 @@ function KanbanBoard() {
     }
   };
 
-  // //cardmove
-  // Update handleCardMove function
-  // async function handleCardMove(card, source, destination) {
-  //   const updatedBoard = moveCard(boardData, source, destination);
-  //   setBoardData(updatedBoard);
-
-  //   const movedBy = await fetchUserEmail();
-
-  //   try {
-  //     const response = await fetch(`${server}/api/cards/${card.id}/move`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //       },
-  //       body: JSON.stringify({
-  //         sourceTaskId: source.fromColumnId,
-  //         destinationTaskId: destination.toColumnId,
-  //         movedBy: movedBy,
-  //         movedDate: new Date().toISOString(),
-  //       }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to move card");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error moving card:", error);
-  //     setBoardData(boardData);
-  //   }
-  // }
+ 
 
   useEffect(() => {
     if (projectId) {
@@ -816,6 +790,10 @@ function KanbanBoard() {
         setTimeout(() => {
           setShowSuccessMessage(false);
         }, 3000);
+        notification.success({
+          message: 'task deleted Successfully',
+  
+      });
       } catch (error) {
         console.error("Error removing card:", error);
       }
@@ -930,6 +908,10 @@ function KanbanBoard() {
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
+      notification.success({
+        message: 'Column created  Successfully',
+
+    });
     } catch (error) {
       console.error("Error adding task:", error);
     }
@@ -970,6 +952,10 @@ function KanbanBoard() {
               : column
           ),
         }));
+        notification.success({
+          message: 'Column Renamed Successfully',
+  
+      });
       } catch (error) {
         console.error("Error renaming column:", error);
       }
@@ -1018,6 +1004,10 @@ function KanbanBoard() {
         setTimeout(() => {
           setShowDeleteSuccess(false);
         }, 3000);
+        notification.success({
+          message: 'Column Deleted Successfully',
+  
+      });
       } catch (error) {
         console.error("Error removing column:", error);
       }

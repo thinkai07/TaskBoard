@@ -1,5 +1,5 @@
   // //server.js
-  require("dotenv/config");
+  require('dotenv').config();
   const cron = require('node-cron');
   const express = require("express");
   const mongoose = require("mongoose");
@@ -403,7 +403,7 @@
 
   // // Send Registration Email with Token Function
   const sendRegistrationEmail = (email, name, token) => {
-    const link = `http://localhost:3001/success?token=${token}`;
+    const link = `http://13.235.16.113/success?token=${token}`;
     const mailOptions = {
       from: "thinkailabs111@gmail.com",
       to: email,
@@ -831,7 +831,7 @@ cron.schedule("* * * * *", async () => {
         const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
           expiresIn: "3d",
         });
-        const resetLink = `http://localhost:3001/reset-password?token=${token}`;
+        const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
 
         sendResetEmail(email, resetLink);
 
@@ -1050,7 +1050,7 @@ cron.schedule("* * * * *", async () => {
         { expiresIn: "1h" }
       );
 
-      const link = `http://localhost:3001/project?token=${token}`;
+      const link = `http://13.235.16.113/project?token=${token}`;
       const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
       await sendEmail(projectManager, "New Project Created", emailText);
@@ -1272,31 +1272,69 @@ cron.schedule("* * * * *", async () => {
   app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      const { name, description, updatedBy } = req.body; // Include updatedBy in the request body
-
+      const { name, description, updatedBy } = req.body;
+  
       // Find the user by email to get their ObjectId and email
       const updatedByUser = await User.findOne({ email: updatedBy });
       if (!updatedByUser) {
         return res.status(404).json({ message: "User not found for updatedBy" });
       }
-
+  
       // Find the existing project to get the old values
       const oldProject = await Project.findById(projectId);
       if (!oldProject) {
         return res.status(404).json({ message: "Project not found" });
       }
-
-      // Update the project
-      const updatedProject = await Project.findByIdAndUpdate(
-        projectId,
-        { name, description, updatedBy },
-        { new: true }
-      );
-
-      if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found" });
+  
+      const organization = await Organization.findById(oldProject.organization);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
       }
-
+  
+      // Update the GitHub repository name if the project name has changed
+      if (oldProject.name !== name) {
+        const oldRepoName = `${organization.name}-${oldProject.name}-repo`
+          .replace(/\s+/g, "-")
+          .toLowerCase();
+        const newRepoName = `${organization.name}-${name}-repo`
+          .replace(/\s+/g, "-")
+          .toLowerCase();
+  
+        try {
+          // Update the GitHub repository name
+          await axios.patch(
+            `https://api.github.com/repos/${organization.name}/${oldRepoName}`,
+            { name: newRepoName },
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
+  
+          // Update the repository URL in the project document
+          oldProject.repository = `https://github.com/${organization.name}/${newRepoName}`;
+          oldProject.repoName = newRepoName;
+        } catch (error) {
+          console.error(
+            "Error updating GitHub repository:",
+            error.response ? error.response.data : error.message
+          );
+          return res.status(500).json({
+            message: "Error updating GitHub repository",
+            error: error.message,
+          });
+        }
+      }
+  
+      // Update the project document
+      oldProject.name = name;
+      oldProject.description = description;
+      oldProject.updatedBy = updatedBy;
+      const updatedProject = await oldProject.save();
+  
       // Prepare changes array for audit log
       const changes = [];
       if (oldProject.name !== name) {
@@ -1313,26 +1351,26 @@ cron.schedule("* * * * *", async () => {
           newValue: description,
         });
       }
-
+  
       // Create a new audit log entry
       const newAuditLog = new AuditLog({
         entityType: "Project",
         entityId: projectId,
         actionType: "update",
         actionDate: new Date(),
-        performedBy: updatedByUser.name, // Use the ObjectId of the user
+        performedBy: updatedByUser.name,
         changes: changes,
       });
-
+  
       await newAuditLog.save();
-
+  
       // Check if the project name has changed and send an email if it has
       if (oldProject.name !== name) {
         const projectManager = oldProject.projectManager;
         const emailText = `Dear Project Manager,\n\nThe project name has been changed.\n\nOld Project Name: ${oldProject.name}\nNew Project Name: ${name}\n\nBest Regards,\nTeam`;
         sendEmail(projectManager, "Project Name Changed", emailText);
       }
-
+  
       res.status(200).json({
         message: "Project updated successfully",
         project: updatedProject,
@@ -1342,6 +1380,8 @@ cron.schedule("* * * * *", async () => {
       res.status(500).json({ message: "Error updating project" });
     }
   });
+  
+  
 
   // Delete a project
   app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {

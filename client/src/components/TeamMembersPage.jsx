@@ -6,6 +6,7 @@ import { server } from "../constant";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import Modal from "react-modal";
+import { notification } from "antd";
 
 const TeamMembersPage = () => {
   const location = useLocation();
@@ -80,6 +81,10 @@ const TeamMembersPage = () => {
       setNewMemberEmail("");
       setEmailSuggestions([]);
       setAddMemberError(false);
+      notification.success({
+        message: 'Team member added Successfully',
+
+    });
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -109,6 +114,10 @@ const TeamMembersPage = () => {
       );
       setMembers((prevMembers) => prevMembers.filter((member) => member.id !== selectedUserId));
       closeModal();
+      notification.success({
+        message: 'Team member deleted Successfully',
+
+    });
     } catch (error) {
       console.error("Error deleting member:", error);
     }

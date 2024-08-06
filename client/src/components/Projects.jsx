@@ -19,6 +19,7 @@ const Projects = () => {
   const [renameIndex, setRenameIndex] = useState(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
+  
   const navigate = useNavigate();
   const menuRef = useRef(null);
   const [userRole, setUserRole] = useState("");
@@ -42,6 +43,8 @@ const Projects = () => {
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [availableTeams, setAvailableTeams] = useState([]);
+  const [teamInputError, setTeamInputError] = useState(false);
+  const [teamInputErrorMessage, setTeamInputErrorMessage] = useState("");
 
   const [teamInputValue, setTeamInputValue] = useState("");
 
@@ -54,8 +57,18 @@ const Projects = () => {
   };
 
 
+  // const handleTeamInputChange = (event) => {
+  //   const value = event.target.value.replace(/^\s+/, '');
+  //   setTeamInputValue(value);
+  //   setSelectedTeamName(value);
+  //   const filtered = availableTeams.filter(team =>
+  //     team.name.toLowerCase().includes(value.toLowerCase())
+  //   );
+  //   setFilteredTeams(filtered);
+  //   setShowTeamDropdown(true);
+  // };
   const handleTeamInputChange = (event) => {
-    const value = event.target.value;
+    const value = event.target.value.replace(/^\s+/, '');
     setTeamInputValue(value);
     setSelectedTeamName(value);
     const filtered = availableTeams.filter(team =>
@@ -63,7 +76,15 @@ const Projects = () => {
     );
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
+    setTeamInputError(false);
+    setTeamInputErrorMessage("");
   };
+
+
+
+
+
+
   const handleRemoveTeam = (teamId) => {
     setSelectedTeams(selectedTeams.filter(id => id !== teamId));
     setTeamInputValue('');
@@ -74,6 +95,15 @@ const Projects = () => {
 
 
 
+  // const handleTeamSelect = (team) => {
+  //   if (!selectedTeams.includes(team._id)) {
+  //     setSelectedTeams([...selectedTeams, team._id]);
+  //   }
+  //   setTeamInputValue(team.name);
+  //   setSelectedTeamName(team.name);
+  //   setShowTeamDropdown(false);
+  //   setTeamInputError(false);  // Clear the error state
+  // };
   const handleTeamSelect = (team) => {
     if (!selectedTeams.includes(team._id)) {
       setSelectedTeams([...selectedTeams, team._id]);
@@ -81,6 +111,21 @@ const Projects = () => {
     setTeamInputValue(team.name);
     setSelectedTeamName(team.name);
     setShowTeamDropdown(false);
+    setTeamInputError(false);
+    setTeamInputErrorMessage("");
+  };
+
+  const validateTeamInput = () => {
+    const selectedTeam = availableTeams.find(
+      team => team.name.toLowerCase() === teamInputValue.toLowerCase()
+    );
+    
+    if (!selectedTeam) {
+      setTeamInputError(true);
+      setTeamInputErrorMessage("Please enter valid team name");
+      return false;
+    }
+    return true;
   };
 
   const handleTeamHover = (teamName) => {
@@ -222,6 +267,7 @@ const Projects = () => {
     if (isAddingCard) return;
 
     resetTeamsState(); // Add this line
+    setTeamInputError(false);
 
     const newCard = {
       _id: uuidv4(),
@@ -241,6 +287,7 @@ const Projects = () => {
     setTeamInputValue("");
     setFilteredTeams([]);
     setShowTeamDropdown(false);
+    
   };
 
   const handleCancelNewCard = () => {
@@ -270,6 +317,15 @@ const Projects = () => {
     const newErrors = { ...newCardErrors };
     let hasError = false;
 
+    if (!validateTeamInput()) {
+      hasError = true;
+    }
+
+    if (hasError) {
+      setNewCardErrors(newErrors);
+      return;
+    }
+
     if (!card.name.trim()) {
       newErrors.name = true;
       hasError = true;
@@ -285,6 +341,18 @@ const Projects = () => {
     if (!card.startDate) {
       newErrors.startDate = true;
       hasError = true;
+    }
+
+    if (hasError) {
+      setNewCardErrors(newErrors);
+      return;
+    }
+
+    if (selectedTeams.length === 0) {
+      setTeamInputError(true);
+      hasError = true;
+    } else {
+      setTeamInputError(false);
     }
 
     if (hasError) {
@@ -313,7 +381,8 @@ const Projects = () => {
         params: {
           email: card.projectManager,
           fields: 'email status name', // Specify the fields you want to retrieve
-        }, });
+        },
+      });
 
       if (response.data.users.length === 0) {
         setNewCardErrors({ ...newErrors, email: true });
@@ -682,53 +751,58 @@ const Projects = () => {
                 {emailSuggestions.length > 0 &&
                   card.projectManager.length > 0 && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-                    {emailSuggestions
-        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
-        .map((user) => (
-          <li
-            key={user._id}
-            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            onClick={() => {
-              setCards((prevCards) => {
-                const updatedCards = [...prevCards];
-                updatedCards[index].projectManager = user.email;
-                return updatedCards;
-              });
-              setProjectManager(user.email);
-              setEmailSuggestions([]);
-              setProjectManagerError(false);
-            }}
-          >
-            {user.email}
-          </li>
-        ))}
+                      {emailSuggestions
+                        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
+                        .map((user) => (
+                          <li
+                            key={user._id}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setCards((prevCards) => {
+                                const updatedCards = [...prevCards];
+                                updatedCards[index].projectManager = user.email;
+                                return updatedCards;
+                              });
+                              setProjectManager(user.email);
+                              setEmailSuggestions([]);
+                              setProjectManagerError(false);
+                            }}
+                          >
+                            {user.email}
+                          </li>
+                        ))}
                     </ul>
                   )}
 
                 <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
                 <div className="relative">
 
-                  <input
-                      type="text"
-                      value={teamInputValue}
-                      onChange={handleTeamInputChange}
-                      onFocus={handleTeamInputFocus}
-                      onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
-                      placeholder="Type to select a team..."
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                    {showTeamDropdown && filteredTeams.length > 0 && (
-                      <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-                        {filteredTeams.map((team) => (
-                          <li
-                            key={team._id}
-                            onClick={() => handleTeamSelect(team)}
-                            onMouseEnter={() => handleTeamHover(team.name)}
-                            onMouseLeave={() => setTeamInputValue(selectedTeamName)}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          >
-                            {team.name}
-                          </li>
+                <input
+                  type="text"
+                  value={teamInputValue}
+                  onChange={handleTeamInputChange}
+                  onFocus={handleTeamInputFocus}
+                  onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
+                  placeholder="Type to select a team..."
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+                    teamInputError ? "border-red-500" : ""
+                  }`}
+                />
+                {teamInputError && (
+                  <p className="text-red-500 text-xs italic mt-1">{teamInputErrorMessage}</p>
+                )}
+                {showTeamDropdown && filteredTeams.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {filteredTeams.map((team) => (
+                      <li
+                        key={team._id}
+                        onClick={() => handleTeamSelect(team)}
+                        onMouseEnter={() => handleTeamHover(team.name)}
+                        onMouseLeave={() => setTeamInputValue(selectedTeamName)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {team.name}
+                        </li>
                       ))}
                     </ul>
                   )}

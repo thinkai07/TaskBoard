@@ -97,7 +97,7 @@ const AdminPanel = () => {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Error adding user:", error);
-      setError("Failed to add user. Please try again.");
+      setError("Please enter user name.");
     } finally {
       setLoading(false);
     }
@@ -257,7 +257,7 @@ const AdminPanel = () => {
                             setError(null);
                           }
                         }}
-                        className={`mt-2 p-2 border ${error ? "border-red-500" : "border-gray-300"
+                        className={`mt-2 p-2 border ${error ? "border-black-500" : "border-gray-300"
                           } rounded-2xl w-full`}
                       />
 
@@ -347,15 +347,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
-
-
-
-
-
-
-
-
-
-
-

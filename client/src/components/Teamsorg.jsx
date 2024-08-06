@@ -104,6 +104,10 @@ const TeamsPage = () => {
             setIsAddingTeam(false);
             setNewTeamName("");
             setNewTeamError(false);
+            notification.success({
+              message: 'Team Created Successfully',
+
+          });
         } catch (error) {
             console.error("Error creating team:", error);
             setNewTeamError(true);

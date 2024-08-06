@@ -183,7 +183,11 @@ const Calendar = () => {
           const eventsForDay = events.filter(event => dayjs(event.date).format('YYYY-MM-DD') === formattedDate);
 
           return (
-            <div key={formattedDate} className={`border p-2 rounded-lg ${isToday ? 'bg-blue-100' : 'bg-white'} shadow-md`} onClick={() => handleDateClick(formattedDate)}>
+            <div
+              key={formattedDate}
+              className={`border p-2 rounded-lg ${isToday ? 'bg-blue-100' : 'bg-white'} shadow-md hover:bg-blue-200 hover:animate-pulse hover:-translate-y-1 transition duration-300 ease-in-out cursor-pointer`}
+              onClick={() => handleDateClick(formattedDate)}
+            >
               <div className={`font-medium ${isToday ? 'text-blue-600' : 'text-gray-800'}`}>
                 {dayjs(date).format('D')}
               </div>
@@ -236,9 +240,6 @@ const Calendar = () => {
                 ))}
               </tbody>
             </table>
-            {/* <div className="flex justify-end mt-4">
-              <button onClick={handleModalClose} className="px-4 py-2 mr-2 bg-gray-400 text-white rounded-md">Close</button>
-            </div> */}
           </div>
         </div>
       )}
@@ -247,7 +248,3 @@ const Calendar = () => {
 };
 
 export default Calendar;
-
-
-
-

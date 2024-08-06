@@ -1,396 +1,98 @@
-  // //server.js
-  require('dotenv').config();
-  const cron = require('node-cron');
-  const express = require("express");
-  const mongoose = require("mongoose");
-  const cors = require("cors");
-  const bodyParser = require("body-parser");
-  const crypto = require("crypto");
-  const bcrypt = require("bcrypt");
-  const jwt = require("jsonwebtoken");
-  const moment = require("moment-timezone");
-  const nodemailer = require("nodemailer");
-  const { type } = require("os");
-  const http = require("http");
-  const socketIo = require("socket.io");
-  const axios = require("axios");
-  // Initialize the Express app
-  const port = process.env.PORT ;
-  const app = express();
-  const server = http.createServer(app);
-  const io = socketIo(server, {
-    cors: {
-      origin: true,
-      methods: ["GET", "POST", "PUT", "DELETE"],
-    },
+//server.js
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const http = require("http");
+const socketIo = require("socket.io");
+const cron = require('node-cron');
+const cloudinary = require("cloudinary").v2;
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const moment = require("moment-timezone");
+const axios = require("axios");   
+
+const connectDB = require('./config/db');
+const executeBackgroundJob = require('./jobs/backgroundJob');
+
+// Import models
+const Activity = require('./models/Activity');
+const AuditLog = require('./models/Auditlog');
+const Card = require('./models/Card');
+const Comment = require('./models/Comment');
+const Notification = require('./models/Notification');
+const Organization = require('./models/Organization');
+const Project = require('./models/Project');
+const Rule = require('./models/Rule');
+const Task = require('./models/Task');
+const Team = require('./models/Team');
+const User = require('./models/User');
+const { TempOrganization, TempUser } = require('./models/TempModels');
+
+// Initialize the Express app
+const port = process.env.PORT || 3001;
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+});
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// Connect to MongoDB
+connectDB();
+
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: "dygueetvc",
+  api_key: "427358345394463",
+  api_secret: "hH5AUqdzvhNz8s7kZoGL2QTf6RQ",
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "document",
+    allowedFormats: ["jpg", "png", "jpeg"],
+  },
+});
+
+const upload = multer({ storage: storage });
+
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("New client connected");
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
   });
+});
 
-  app.use(cors());
-  app.use(bodyParser.json());
+// Schedule background job
+cron.schedule('*/5 * * * *', executeBackgroundJob);
 
-  const cloudinary = require("cloudinary").v2;
-  const multer = require("multer");
-  const { CloudinaryStorage } = require("multer-storage-cloudinary");
-  const streamifier = require("streamifier");
-  const { url } = require("inspector");
-
-  const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: "document",
-      allowedFormats: ["jpg", "png", "jpeg"],
-    },
-  });
-
-  const upload = multer({ storage: storage });
-
-  cloudinary.config({
-    cloud_name: "dygueetvc",
-    api_key: "427358345394463",
-    api_secret: "hH5AUqdzvhNz8s7kZoGL2QTf6RQ",
-  });
-
-  const GITHUB_PERSONAL_ACCESS_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
-
-  // Connect to MongoDB
-  mongoose
-    .connect(
-      "mongodb+srv://meenakumarimaligeli:Meena%40123@cluster0.ba469xs.mongodb.net/taskBoard",
-      { useNewUrlParser: true, useUnifiedTopology: true }
-    )
-    .then(() => console.log("MongoDB Connected"))
-    .catch((err) => console.log(err));
-
-  const Schema = mongoose.Schema;
-
-  const usedTokenSchema = new Schema({
-    token: String,
-    createdAt: { type: Date, expires: "1h", default: Date.now }, // Token expires after 1 hour
-  });
-  const UsedToken = mongoose.model("UsedToken", usedTokenSchema);
-
-  // Organization schema
-  const organizationSchema = new Schema({
-    id: String,
-    name: String,
-    email: String,
-
-    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-    teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
-  });
-
-
-  const ruleSchema = new Schema({
-    projectId: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-    name: { type: String, required: true },
-    trigger: {
-      type: String,
-      enum: [
-        "Card Move",
-        "Card Changes",
-        "Dates",
-        "Checklists",
-        "Card Content",
-        "Fields",
-      ],
-    },
-    triggerCondition: { type: String },
-    listName: { type: String },
-    action: {
-      type: String,
-      enum: [
-        "Move",
-        "Add/Remove",
-        "Dates",
-        "Checklists",
-        "Move to List",
-        "Complete Task",
-        "Members",
-        "Content",
-        "Fields",
-      ],
-    },
-    actionDetails: { type: Map, of: String },
-    createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    createdByCondition: {
-      type: String,
-      enum: ["by me", "by anyone", "by anyone except me"],
-      required: true,
-    },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    triggerSentence:{type:String},
-    actionSentence:{type:String}
-  });
-
-  const projectSchema = new Schema(
-    {
-      id: String,
-      name: String,
-      description: String,
-      projectManager: String,
-      teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
-      tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
-      organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-      rules: [{ type: Schema.Types.ObjectId, ref: "Rule" }],
-      createdBy: String,
-      updatedBy: String,
-      deletedBy: String,
-
-      startDate: { type: Date },
-
-      bgUrl: { type: String },
-      repository: { type: String, default: "" },
-      repoName: { type: String, default: "" },
-    },
-    {
-      timestamps: {
-        createdAt: "createdDate",
-        updatedAt: "updatedDate",
-        deletedDate: "deletedDate",
-      },
-    }
-  );
-  const NotificationSchema = new mongoose.Schema({
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    // userEmail: { type: String },
-    projectId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Project",
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-    },
-    // type: {
-    //   type: String,
-    //   enum: ['TASK_ASSIGNED', 'TASK_RENAMED'],
-    //   required: true
-    // },
-    type: { type: String, required: true },
-    assignedByEmail: {
-      type: String,
-      required: true,
-    },
-    cardId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-    },
-    readStatus: {
-      type: Boolean,
-      default: false,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
-  });
-
-  //teams schema
-  const teamSchema = new Schema(
-    {
-      id: String,
-      name: String,
-      organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-      slug: { type: String },
-
-      users: [
-        { user: { type: Schema.Types.ObjectId, ref: "User" }, role: String },
-      ],
-      addedBy: String,
-      removedBy: String,
-    },
-    {
-      timestamps: { addedDate: "addedDate", removedDate: "removedDate" },
-    }
-  );
-  const activitySchema = new Schema(
-    {
-      commentBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-      comment: { type: String, required: true },
-    },
-    {
-      timestamps: true,
-    }
-  );
-
-  //cards schema
-  const cardSchema = new Schema(
-    {
-      name: String,
-      description: String,
-      assignedTo: { type: String },
-      status: {
-        type: String,
-        enum: ["inprogress", "completed", "pending"],
-        default: "pending",
-      },
-
-      createdDate: { type: Date },
-      updatedDate: [{ type: Date }],
-      project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
-      assignDate: { type: Date },
-      dueDate: { type: Date },
-      task: { type: mongoose.Schema.Types.ObjectId, ref: "Task" },
-      createdBy: String,
-      updatedBy: [{ type: String }],
-      movedBy: [{ type: String }],
-      movedDate: [{ type: Date }],
-      deletedBy: String,
-      comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }], // Add comments field
-    },
-    {
-      timestamps: { deletedDate: "deletedDate" },
-    }
-  );
-
-  // Comment schema
-  const commentSchema = new Schema(
-    {
-      comment: { type: String, required: true },
-      commentBy: { type: String, required: true },
-      card: { type: mongoose.Schema.Types.ObjectId, ref: "Card", required: true },
-    },
-    {
-      timestamps: true,
-    }
-  );
-
-  // Task schema
-  const taskSchema = new Schema(
-    {
-      id: String,
-      name: String,
-      project: { type: Schema.Types.ObjectId, ref: "Project" },
-      card: [{ type: Schema.Types.ObjectId, ref: "Card" }],
-      createdBy: String,
-      updatedBy: String,
-      movedBy: [{ type: String }],
-      deletedBy: String,
-      movedDate: [{ type: Date }],
-    },
-    {
-      timestamps: {
-        createdAt: "createdDate",
-        updatedAt: "updatedDate",
-      },
-    }
-  );
-
-  // User schema
-  const userSchema = new Schema({
-    id: String,
-    name: String,
-    email: String,
-    password: String,
-    role: { type: String },
-    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    status: { type: String, default: "UNVERIFY" },
-  });
-
-  // Audit log schema
-  const auditLogSchema = new Schema(
-    {
-      entityType: {
-        type: String,
-        enum: ["Project", "Task", "Card", "Team"],
-        required: true,
-      },
-      entityId: { type: Schema.Types.ObjectId, required: true },
-      actionType: {
-        type: String,
-        enum: ["create", "update", "delete", "move"],
-        required: true,
-      },
-      actionDate: { type: Date, default: Date.now },
-      performedBy: { type: String }, // Use ObjectId and reference the User model
-
-      changes: [
-        {
-          field: { type: String },
-          oldValue: { type: Schema.Types.Mixed },
-          newValue: { type: Schema.Types.Mixed },
-        },
-      ],
-      projectId: { type: Schema.Types.ObjectId, ref: "Project" }, // Add projectId reference
-      // Optional fields to store taskId and cardId
-      taskId: { type: Schema.Types.ObjectId, ref: "Task" },
-      cardId: { type: Schema.Types.ObjectId, ref: "Card" },
-    },
-    {
-      timestamps: true,
-    }
-  );
-
-  // Creating models
-  const User = mongoose.model("User", userSchema);
-  const Task = mongoose.model("Task", taskSchema);
-  const Team = mongoose.model("Team", teamSchema);
-  const Project = mongoose.model("Project", projectSchema);
-  const Organization = mongoose.model("Organization", organizationSchema);
-  const Card = mongoose.model("Card", cardSchema);
-  const AuditLog = mongoose.model("AuditLog", auditLogSchema);
-  const Comment = mongoose.model("Comment", commentSchema);
-  const Activity = mongoose.model("Activity", activitySchema);
-  const Notification = mongoose.model("Notification", NotificationSchema);
-  const Rule = mongoose.model("Rule", ruleSchema);
-  module.exports = {
-    User,
-    Task,
-    Team,
-    Project,
-    Organization,
-    Card,
-    AuditLog,
-    Comment,
-    Activity,
-    Notification,
-    Rule,
-  };
-
-  const tempOrganizationSchema = new Schema({
-    name: String,
-    email: String,
-    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-  });
-
-  const TempOrganization = mongoose.model(
-    "TempOrganization",
-    tempOrganizationSchema
-  );
-
-  const tempUserSchema = new Schema({
-    name: String,
-    email: String,
-    password: String,
-    role: { type: String },
-    organization: { type: Schema.Types.ObjectId, ref: "TempOrganization" },
-    status: { type: String },
-  });
-  const TempUser = mongoose.model("TempUser", tempUserSchema);
-
-  // Socket.IO connection handling
-  io.on("connection", (socket) => {
-    console.log("New client connected");
-    socket.on("disconnect", () => {
-      console.log("Client disconnected");
+// Post-save hooks for models
+const models = [Task, Team, Card];
+models.forEach(model => {
+  ['save', 'remove', 'update'].forEach(action => {
+    model.schema.post(action, async function(doc) {
+      await executeBackgroundJob();
     });
   });
+});
+
+// GitHub personal access token
+const GITHUB_PERSONAL_ACCESS_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+  
 
   // Create a transporter
   const transporter = nodemailer.createTransport({
@@ -403,7 +105,7 @@
 
   // // Send Registration Email with Token Function
   const sendRegistrationEmail = (email, name, token) => {
-    const link = `http://13.235.16.113/success?token=${token}`;
+    const link = `http://localhost:5000/success?token=${token}`;
     const mailOptions = {
       from: "thinkailabs111@gmail.com",
       to: email,
@@ -831,7 +533,7 @@ cron.schedule("* * * * *", async () => {
         const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
           expiresIn: "3d",
         });
-        const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
+        const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
         sendResetEmail(email, resetLink);
 
@@ -1050,7 +752,7 @@ cron.schedule("* * * * *", async () => {
         { expiresIn: "1h" }
       );
 
-      const link = `http://13.235.16.113/project?token=${token}`;
+      const link = `http://localhost:5000/project?token=${token}`;
       const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
       await sendEmail(projectManager, "New Project Created", emailText);
@@ -3407,124 +3109,126 @@ cron.schedule("* * * * *", async () => {
     }
   });
 
-  taskSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Task is saved
-    await executeBackgroundJob();
-  });
+  
 
-  taskSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Task is removed
-    await executeBackgroundJob();
-  });
+  // taskSchema.post('save', async function(doc) {
+  //   // Trigger rule execution when a Task is saved
+  //   await executeBackgroundJob();
+  // });
 
-  teamSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Team is saved
-    await executeBackgroundJob();
-  });
+  // taskSchema.post('remove', async function(doc) {
+  //   // Trigger rule execution when a Task is removed
+  //   await executeBackgroundJob();
+  // });
 
-  teamSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Team is removed
-    await executeBackgroundJob();
-  });
-  cardSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Card is saved
-    await executeBackgroundJob();
-  });
+  // teamSchema.post('save', async function(doc) {
+  //   // Trigger rule execution when a Team is saved
+  //   await executeBackgroundJob();
+  // });
 
-  cardSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Card is removed
-    await executeBackgroundJob();
-  });
+  // teamSchema.post('remove', async function(doc) {
+  //   // Trigger rule execution when a Team is removed
+  //   await executeBackgroundJob();
+  // });
+  // cardSchema.post('save', async function(doc) {
+  //   // Trigger rule execution when a Card is saved
+  //   await executeBackgroundJob();
+  // });
 
-  cardSchema.post('update', async function(doc) {
-    // Trigger rule execution when a Card is removed
-    await executeBackgroundJob();
-  });
+  // cardSchema.post('remove', async function(doc) {
+  //   // Trigger rule execution when a Card is removed
+  //   await executeBackgroundJob();
+  // });
 
-
-  const executeBackgroundJob = async () => {
-    try {
-      console.log('Running scheduled background job...');
-
-      // Find rules related to 'Card Move' that need to be executed
-      const rules = await Rule.find({ trigger: 'Card Move' });
-
-      for (const rule of rules) {
-        // console.log(`Processing rule ${rule._id}:`);
-
-        // Fetch the project by ID
-        const project = await Project.findById(rule.projectId);
-        if (!project) {
-          console.error(`Project ${rule.projectId} not found.`);
-          continue; // Skip to the next rule if the project is not found
-        }
-
-        // Fetch all cards associated with the project
-        let cardsToMove = await Card.find({ project: rule.projectId });
-
-        for (const card of cardsToMove) {
-          // Get the user ID based on the updatedBy email
-          const user = await User.findOne({ email: card.updatedBy });
-          if (!user) {
-            console.error(`User with email ${card.updatedBy} not found.`);
-            continue; // Skip to the next card if the user is not found
-          }
-
-          // Check the createdByCondition
-          if (rule.createdByCondition === 'by me') {
-            if (!rule.createdBy.includes(user._id.toString())) {
-              console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
-              continue; // Skip this card if the user ID doesn't match
-            }
-          } else if (rule.createdByCondition === 'by anyone except me') {
-            if (rule.createdBy.includes(user._id.toString())) {
-              console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
-              continue; // Skip this card if the user ID matches the excluded user
-            }
-          }
-
-          // Fetch the destination list by name
-          const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
-          if (!destinationList) {
-            console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
-            continue; // Skip to the next rule if the destination list is not found
-          }
-
-          // Check if the rule applies to this card based on triggerCondition
-          if (!rule.triggerCondition || card.status === rule.triggerCondition) {
-            // Find the current task (list) of the card
-            const currentTask = await Task.findById(card.task);
-
-            // Remove the card from the current list
-            if (currentTask) {
-              currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
-              await currentTask.save();
-            }
-
-            // Add the card to the destination list
-            destinationList.card.push(card._id);
-            await destinationList.save();
-
-            // Update the card's task field
-            card.task = destinationList._id;
-            await card.save();
-
-            // console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error running scheduled job:', error);
-    }
-  };
+  // cardSchema.post('update', async function(doc) {
+  //   // Trigger rule execution when a Card is removed
+  //   await executeBackgroundJob();
+  // });
 
 
+  // const executeBackgroundJob = async () => {
+  //   try {
+  //     console.log('Running scheduled background job...');
 
+  //     // Find rules related to 'Card Move' that need to be executed
+  //     const rules = await Rule.find({ trigger: 'Card Move' });
 
+  //     for (const rule of rules) {
+  //       // console.log(`Processing rule ${rule._id}:`);
+
+  //       // Fetch the project by ID
+  //       const project = await Project.findById(rule.projectId);
+  //       if (!project) {
+  //         console.error(`Project ${rule.projectId} not found.`);
+  //         continue; // Skip to the next rule if the project is not found
+  //       }
+
+  //       // Fetch all cards associated with the project
+  //       let cardsToMove = await Card.find({ project: rule.projectId });
+
+  //       for (const card of cardsToMove) {
+  //         // Get the user ID based on the updatedBy email
+  //         const user = await User.findOne({ email: card.updatedBy });
+  //         if (!user) {
+  //           console.error(`User with email ${card.updatedBy} not found.`);
+  //           continue; // Skip to the next card if the user is not found
+  //         }
+
+  //         // Check the createdByCondition
+  //         if (rule.createdByCondition === 'by me') {
+  //           if (!rule.createdBy.includes(user._id.toString())) {
+  //             console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
+  //             continue; // Skip this card if the user ID doesn't match
+  //           }
+  //         } else if (rule.createdByCondition === 'by anyone except me') {
+  //           if (rule.createdBy.includes(user._id.toString())) {
+  //             console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
+  //             continue; // Skip this card if the user ID matches the excluded user
+  //           }
+  //         }
+
+  //         // Fetch the destination list by name
+  //         const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
+  //         if (!destinationList) {
+  //           console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
+  //           continue; // Skip to the next rule if the destination list is not found
+  //         }
+
+  //         // Check if the rule applies to this card based on triggerCondition
+  //         if (!rule.triggerCondition || card.status === rule.triggerCondition) {
+  //           // Find the current task (list) of the card
+  //           const currentTask = await Task.findById(card.task);
+
+  //           // Remove the card from the current list
+  //           if (currentTask) {
+  //             currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
+  //             await currentTask.save();
+  //           }
+
+  //           // Add the card to the destination list
+  //           destinationList.card.push(card._id);
+  //           await destinationList.save();
+
+  //           // Update the card's task field
+  //           card.task = destinationList._id;
+  //           await card.save();
+
+  //           // console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Error running scheduled job:', error);
+  //   }
+  // };
 
 
 
-  setInterval(executeBackgroundJob, 5000);
+
+
+
+
+  // setInterval(executeBackgroundJob, 5000);
 
   // Schedule the job to run every minute
   // cron.schedule('* * * * *', executeBackgroundJob);

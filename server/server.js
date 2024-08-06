@@ -485,8 +485,7 @@
       res
         .status(500)
         .json({ message: "Error registering organization and user" });
-    }
-  });
+    }});
 
   // Validate email token and store data permanently
   app.get("/validate-email", async (req, res) => {
@@ -872,8 +871,7 @@ cron.schedule("* * * * *", async () => {
         console.error("Error adding user:", error);
         res.status(500).json({ message: "Error adding user" });
       }
-    }
-  );
+    });
 
 
   const sendResetEmail = (email, link) => {

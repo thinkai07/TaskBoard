@@ -403,7 +403,7 @@
 
   // // Send Registration Email with Token Function
   const sendRegistrationEmail = (email, name, token) => {
-    const link = `http://13.235.16.113/success?token=${token}`;
+    const link = `http://localhost:5000/success?token=${token}`;
     const mailOptions = {
       from: "thinkailabs111@gmail.com",
       to: email,
@@ -831,7 +831,7 @@ cron.schedule("* * * * *", async () => {
         const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
           expiresIn: "3d",
         });
-        const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
+        const resetLink = `http://localhost:5000/reset-password?token=${token}`;
 
         sendResetEmail(email, resetLink);
 
@@ -1050,7 +1050,7 @@ cron.schedule("* * * * *", async () => {
         { expiresIn: "1h" }
       );
 
-      const link = `http://13.235.16.113/project?token=${token}`;
+      const link = `http://localhost:5000/project?token=${token}`;
       const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
       await sendEmail(projectManager, "New Project Created", emailText);

@@ -91,7 +91,7 @@ function KanbanBoard() {
     navigate(`/projects/${projectId}/teams`);
   };
 
-  const [userRole, setUserRole] = useState("");
+  const [userRole, setUserRole] = useState(""); 
 
   useEffect(() => {
     const fetchUserRole = async () => {

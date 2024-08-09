@@ -6,6 +6,7 @@ import { server } from "../constant";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import Modal from "react-modal";
+import { notification } from "antd";
 
 const TeamMembersPage = () => {
   const location = useLocation();
@@ -39,14 +40,14 @@ const TeamMembersPage = () => {
     };
 
     fetchMembers();
-  }, [organizationId, teamId]);
+  }, [organizationId, teamId,members]);
 
   const handleEmailChange = async (event) => {
     setNewMemberEmail(event.target.value);
     if (event.target.value.length > 0) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
-          params: { email: event.target.value },
+          params: { email: event.target.value ,fields: 'email status name',},
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -80,6 +81,10 @@ const TeamMembersPage = () => {
       setNewMemberEmail("");
       setEmailSuggestions([]);
       setAddMemberError(false);
+      notification.success({
+        message: 'Team member added Successfully',
+
+    });
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -109,6 +114,10 @@ const TeamMembersPage = () => {
       );
       setMembers((prevMembers) => prevMembers.filter((member) => member.id !== selectedUserId));
       closeModal();
+      notification.success({
+        message: 'Team member deleted Successfully',
+
+    });
     } catch (error) {
       console.error("Error deleting member:", error);
     }
@@ -119,7 +128,7 @@ const TeamMembersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-light-white rounded-3xl p-8">
+    <div className="min-h-full bg-light-white rounded-3xl p-8">
       <h1 className="text-2xl text-gray-500 font-semibold mb-4">
         Team Name: {teamName}
       </h1>
@@ -145,7 +154,9 @@ const TeamMembersPage = () => {
           </div>
           {emailSuggestions.length > 0 && newMemberEmail.length > 0 && (
             <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
-              {emailSuggestions.map((user) => (
+              {emailSuggestions
+        .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
+        .map((user) =>  (
                 <li
                   key={user.id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -193,19 +204,19 @@ const TeamMembersPage = () => {
         contentLabel="Delete Confirmation"
         className="flex items-center justify-center fixed inset-0 z-50 outline-none focus:outline-none bg-black bg-opacity-50"
       >
-        <div className="bg-white rounded-lg p-6 w-96">
+        <div className="bg-white rounded-3xl p-6 w-96">
           <h2 className="text-xl font-semibold mb-4">Delete Confirmation</h2>
-          <p className="mb-4">Are you sure you want to delete this member?</p>
-          <div className="flex justify-end">
+          <p className="mb-4">Are you want to delete this member?</p>
+          <div className="flex justify-between">
             <button
               onClick={closeModal}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded-2xl mr-2"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteMember}
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-2 rounded-2xl"
             >
               Delete
             </button>

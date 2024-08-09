@@ -97,7 +97,7 @@ const AdminPanel = () => {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Error adding user:", error);
-      setError("Failed to add user. Please try again.");
+      setError("Please enter user name.");
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl overflow-hidden">
+    <div className="bg-white rounded-xl text-md overflow-hidden ">
       {successMessage && (
         <div className="flex justify-center items-center p-4 bg-green-100 w-96 text-green-800 rounded-2xl">
           <AiOutlineCheckCircle className="mr-2" />
@@ -148,14 +148,7 @@ const AdminPanel = () => {
       )}
 
       <div className="flex justify-between p-4">
-        {userRole === "ADMIN" && (
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-2xl"
-            onClick={() => setIsModalOpen(true)}
-          >
-            Add User
-          </button>
-        )}
+       
         <input
           type="text"
           placeholder="Search by name or email"
@@ -163,8 +156,16 @@ const AdminPanel = () => {
           onChange={handleSearch}
           className="px-4 py-2 border border-gray-300 rounded-2xl"
         />
+         {userRole === "ADMIN" && (
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-2xl"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add User
+          </button>
+        )}
       </div>
-      <table className="min-w-full divide-y bg-gray-200 divide-gray-1000">
+      <table className="min-w-full divide-y bg-gray-200 divide-gray-1000 ">
         <thead>
           <tr>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Name</th>
@@ -257,7 +258,7 @@ const AdminPanel = () => {
                             setError(null);
                           }
                         }}
-                        className={`mt-2 p-2 border ${error ? "border-red-500" : "border-gray-300"
+                        className={`mt-2 p-2 border ${error ? "border-black-500" : "border-gray-300"
                           } rounded-2xl w-full`}
                       />
 
@@ -347,15 +348,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
-
-
-
-
-
-
-
-
-
-
-

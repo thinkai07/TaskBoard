@@ -30,19 +30,16 @@ const Projects = () => {
   });
   const [projectManager, setProjectManager] = useState("");
   const [emailSuggestions, setEmailSuggestions] = useState([]);
-
   const [isAddingCard, setIsAddingCard] = useState(false);
-
   const [renameInputError, setRenameInputError] = useState(false);
   const [descriptionInputError, setDescriptionInputError] = useState(false);
   const [projectManagerError, setProjectManagerError] = useState(false);
-
-
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [availableTeams, setAvailableTeams] = useState([]);
-
+  const [teamInputError, setTeamInputError] = useState(false);
+  const [teamInputErrorMessage, setTeamInputErrorMessage] = useState("");
   const [teamInputValue, setTeamInputValue] = useState("");
 
   const handleTeamInputFocus = () => {
@@ -52,9 +49,8 @@ const Projects = () => {
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
   };
-
   const handleTeamInputChange = (event) => {
-    const value = event.target.value;
+    const value = event.target.value.replace(/^\s+/, '');
     setTeamInputValue(value);
     setSelectedTeamName(value);
     const filtered = availableTeams.filter(team =>
@@ -62,17 +58,42 @@ const Projects = () => {
     );
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
+    setTeamInputError(false);
+    setTeamInputErrorMessage("");
+  };
+  const handleRemoveTeam = (teamId) => {
+    setSelectedTeams(selectedTeams.filter(id => id !== teamId));
+    setTeamInputValue('');
+    setSelectedTeamName('');
   };
 
   const [selectedTeams, setSelectedTeams] = useState([]);
-
   const handleTeamSelect = (team) => {
     if (!selectedTeams.includes(team._id)) {
       setSelectedTeams([...selectedTeams, team._id]);
-      setSelectedTeamName(team.name);
-      setTeamInputValue(team.name);
     }
+    setTeamInputValue(team.name);
+    setSelectedTeamName(team.name);
     setShowTeamDropdown(false);
+    setTeamInputError(false);
+    setTeamInputErrorMessage("");
+  };
+
+  const validateTeamInput = () => {
+    const selectedTeam = availableTeams.find(
+      team => team.name.toLowerCase() === teamInputValue.toLowerCase()
+    );
+
+    if (!selectedTeam) {
+      setTeamInputError(true);
+      setTeamInputErrorMessage("Please enter valid team name");
+      return false;
+    }
+    return true;
+  };
+
+  const handleTeamHover = (teamName) => {
+    setTeamInputValue(teamName);
   };
 
   const handleClearTeamInput = () => {
@@ -210,6 +231,7 @@ const Projects = () => {
     if (isAddingCard) return;
 
     resetTeamsState(); // Add this line
+    setTeamInputError(false);
 
     const newCard = {
       _id: uuidv4(),
@@ -229,6 +251,7 @@ const Projects = () => {
     setTeamInputValue("");
     setFilteredTeams([]);
     setShowTeamDropdown(false);
+
   };
 
   const handleCancelNewCard = () => {
@@ -258,6 +281,15 @@ const Projects = () => {
     const newErrors = { ...newCardErrors };
     let hasError = false;
 
+    if (!validateTeamInput()) {
+      hasError = true;
+    }
+
+    if (hasError) {
+      setNewCardErrors(newErrors);
+      return;
+    }
+
     if (!card.name.trim()) {
       newErrors.name = true;
       hasError = true;
@@ -280,6 +312,18 @@ const Projects = () => {
       return;
     }
 
+    if (selectedTeams.length === 0) {
+      setTeamInputError(true);
+      hasError = true;
+    } else {
+      setTeamInputError(false);
+    }
+
+    if (hasError) {
+      setNewCardErrors(newErrors);
+      return;
+    }
+
     // Check for duplicate project name
     const isDuplicate = await checkDuplicateProjectName(card.name);
     if (isDuplicate) {
@@ -291,14 +335,16 @@ const Projects = () => {
       });
       return;
     }
-
     // Check if email is part of the organization
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        params: { email: card.projectManager, organizationId: organizationId },
+        params: {
+          email: card.projectManager,
+          fields: 'email status name', // Specify the fields you want to retrieve
+        },
       });
 
       if (response.data.users.length === 0) {
@@ -579,7 +625,7 @@ const Projects = () => {
         {cards.map((card, index) => (
           <div
             key={card._id}
-            className=" bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer"
+            className={`bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl ${editableCard === card._id ? 'h-auto' : 'h-48'}`}
           >
             {editableCard === card._id ? (
               <div>
@@ -591,11 +637,10 @@ const Projects = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder=" project name"
+                  placeholder="project name"
                   value={card.name}
                   onChange={(event) => handleTitleChange(event, index)}
-                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline${newCardErrors.name ? "border-red-500" : ""
-                    }`}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.name ? "border-red-500" : ""}`}
                   onClick={(e) => e.stopPropagation()}
                 />
                 {newCardErrors.name && (
@@ -611,8 +656,7 @@ const Projects = () => {
                   placeholder="Project description"
                   value={card.description}
                   onChange={(event) => handleDescriptionChange(event, index)}
-                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.description ? "border-red-500" : ""
-                    }`}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.description ? "border-red-500" : ""}`}
                   onClick={(e) => e.stopPropagation()}
                 />
                 {newCardErrors.description && (
@@ -636,10 +680,7 @@ const Projects = () => {
                       return updatedCards;
                     });
                   }}
-                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError
-                      ? "border-red-500"
-                      : ""
-                    }`}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError ? "border-red-500" : ""}`}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -651,8 +692,7 @@ const Projects = () => {
                   onChange={(event) =>
                     handleDateChange(event, index, "startDate")
                   }
-                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.startDate ? "border-red-500" : ""
-                    }`}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.startDate ? "border-red-500" : ""}`}
                 />
                 {newCardErrors.startDate && (
                   <span className="text-red-500">Start date is required</span>
@@ -668,28 +708,59 @@ const Projects = () => {
                 {emailSuggestions.length > 0 &&
                   card.projectManager.length > 0 && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {emailSuggestions.map((user) => (
-                        <li
-                          key={user._id}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setCards((prevCards) => {
-                              const updatedCards = [...prevCards];
-                              updatedCards[index].projectManager = user.email;
-                              return updatedCards;
-                            });
-                            setProjectManager(user.email);
-                            setEmailSuggestions([]);
-                            setProjectManagerError(false);
-                          }}
-                        >
-                          {user.email}
-                        </li>
-                      ))}
+                      {emailSuggestions
+                        .filter((user) => user.status === 'VERIFIED')
+                        .map((user) => (
+                          <li
+                            key={user._id}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setCards((prevCards) => {
+                                const updatedCards = [...prevCards];
+                                updatedCards[index].projectManager = user.email;
+                                return updatedCards;
+                              });
+                              setProjectManager(user.email);
+                              setEmailSuggestions([]);
+                              setProjectManagerError(false);
+                            }}
+                          >
+                            {user.email}
+                          </li>
+                        ))}
                     </ul>
                   )}
 
                 <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
+                {/* <div className="relative">
+            <input
+              type="text"
+              value={teamInputValue}
+              onChange={handleTeamInputChange}
+              onFocus={handleTeamInputFocus}
+              onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
+              placeholder="Type to select a team..."
+              className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${teamInputError ? "border-red-500" : ""}`}
+            />
+            {teamInputError && (
+              <p className="text-red-500 text-xs italic mt-1">{teamInputErrorMessage}</p>
+            )}
+            {showTeamDropdown && filteredTeams.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                {filteredTeams.map((team) => (
+                  <li
+                    key={team._id}
+                    onClick={() => handleTeamSelect(team)}
+                    onMouseEnter={() => handleTeamHover(team.name)}
+                    onMouseLeave={() => setTeamInputValue(selectedTeamName)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {team.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div> */}
                 <div className="relative">
                   <input
                     type="text"
@@ -698,37 +769,21 @@ const Projects = () => {
                     onFocus={handleTeamInputFocus}
                     onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
                     placeholder="Type to select a team..."
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${teamInputError ? "border-red-500" : ""
+                      }`}
                   />
+                  {teamInputError && (
+                    <p className="text-red-500 text-xs italic mt-1">{teamInputErrorMessage}</p>
+                  )}
                   {showTeamDropdown && filteredTeams.length > 0 && (
-                    <ul
-                      style={{
-                        position: 'absolute',
-                        zIndex: 10,
-                        width: '100%',
-                        backgroundColor: 'white',
-                        border: '1px solid #e2e8f0',
-                        marginTop: '4px',
-                        borderRadius: '0.375rem',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                        maxHeight: '120px',
-                        overflowY: 'auto'
-                      }}
-                    >
+                    <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-40 overflow-y-auto">
                       {filteredTeams.map((team) => (
                         <li
                           key={team._id}
                           onClick={() => handleTeamSelect(team)}
-                          style={{
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #e2e8f0',
-                            ':hover': {
-                              backgroundColor: '#f7fafc'
-                            }
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
+                          onMouseEnter={() => handleTeamHover(team.name)}
+                          onMouseLeave={() => setTeamInputValue(selectedTeamName)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {team.name}
                         </li>
@@ -736,20 +791,11 @@ const Projects = () => {
                     </ul>
                   )}
                 </div>
+
                 <div className="mt-2">
                   {selectedTeams.map(teamId => {
                     const team = availableTeams.find(t => t._id === teamId);
-                    // return (
-                    //   <span key={teamId} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
-                    //     {team ? team.name : 'Unknown Team'}
-                    //     <button
-                    //       onClick={() => handleRemoveTeam(teamId)}
-                    //       className="ml-2 text-red-500 font-bold"
-                    //     >
-                    //       &times;
-                    //     </button>
-                    //   </span>
-                    // );
+                    //  return team && <span key={team._id} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">{team.name}</span>;
                   })}
                 </div>
 
@@ -775,7 +821,7 @@ const Projects = () => {
               <>
                 <div onClick={() => handleCardClick(card._id)}>
                   <div className="relative group">
-                    <span className="block truncate max-w-[200px]">
+                    <span className="block font-bold text-black truncate max-w-[200px]">
                       {card.name}
                     </span>
                     {card.name.length > 20 && (
@@ -795,9 +841,8 @@ const Projects = () => {
                     )}
                     <div className="flex items-center justify-between mt-2">
                       <div>
-                        <p className="text-gray-500 text-sm">Start Date</p>
-                        <p className="font-medium">
-                          {dayjs(card.startDate).format("DD, MMM YYYY")}
+                        <p className="font-semi" style={{ backgroundColor: '#9ceb9b ', color: 'black', padding: '2px 5px', borderRadius: '4px', display: 'inline-block' }}>
+                          {"Start Dt: " + dayjs(card.startDate).format("DD/MM/YYYY")}
                         </p>
                       </div>
                     </div>
@@ -811,7 +856,7 @@ const Projects = () => {
                         ? card.projectManager.substring(0, 20) + "..."
                         : card.projectManager}
                       {card.projectManager.length > 20 && (
-                        <span className="absolute hidden group-hover:block bg-black text-white p-2 rounded z-10 left-0 mt-1">
+                        <span className="absolute hidden group-hover:block bg-black text-white p-1 rounded z-10 left-0 mt-1">
                           {card.projectManager}
                         </span>
                       )}
@@ -952,5 +997,4 @@ const Projects = () => {
     </div>
   );
 };
-
 export default Projects;

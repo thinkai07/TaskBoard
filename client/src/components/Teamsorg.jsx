@@ -1,10 +1,13 @@
-// // //Teamspage.jsx
+// TeamsPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { server } from "../constant";
-import { FaTrash, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaSave, FaTimes,FaPlus  } from 'react-icons/fa';
 import { Modal, notification } from 'antd';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+
 const TeamsPage = () => {
     const [teams, setTeams] = useState([]);
     const [isAddingTeam, setIsAddingTeam] = useState(false);
@@ -170,50 +173,47 @@ const TeamsPage = () => {
     };
 
     if (loading) {
-        return <p>Loading teams...</p>;
-    }
+      return (
+          <div style={{
+              display: 'flex',
+              justifyContent: 'center', // Center horizontally
+              alignItems: 'center', // Center vertically
+              height: '100vh' // Full height of the viewport
+          }}>
+              <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+              Loading...
+          </div>
+      );
+  }
 
     return (
-        <div className="min-h-screen bg-light-white rounded-3xl p-8">
-            <div className="flex justify-between items-center mb-4">
+        <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 p-8">
+            <div className="flex justify-between items-center mb-6">
                 <button
-                    className="border border-blue-500 text-blue-500 py-2 px-4 rounded-full flex items-center hover:bg-blue-500 hover:text-white"
+                    className="bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition"
                     onClick={handleAddTeam}
                     disabled={isAddingTeam}
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                    Create Team
+                    <FaPlus  className="inline mr-2" /> Create Team
                 </button>
-               
             </div>
             <div className="flex flex-wrap justify-start">
                 {teams.map((team) => (
                     <div
                         key={team._id}
-                        className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer"
+                        className="bg-white rounded-3xl border border-gray-300 shadow-lg overflow-hidden m-4 w-72 transition-transform transform hover:scale-105 hover:shadow-2xl"
                     >
-                        <div className="relative group">
+                        <div className="p-6 relative">
                             {editingTeamId === team._id ? (
                                 <input
                                     type="text"
                                     value={editingTeamName}
                                     onChange={(e) => setEditingTeamName(e.target.value)}
-                                    className="block w-full text-xl font-semibold mb-2 border-b border-gray-300 focus:outline-none focus:border-blue-500"
+                                    className="block w-full text-xl font-semibold mb-4 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                                 />
                             ) : (
                                 <span 
-                                    className="block truncate max-w-[200px] text-xl font-semibold mb-2" 
+                                    className="block text-xl font-semibold mb-4 cursor-pointer truncate"
                                     onClick={() => navigate(`/teams/${team._id}/members`, { 
                                         state: { 
                                             teamName: team.name, 
@@ -225,35 +225,35 @@ const TeamsPage = () => {
                                     {team.name}
                                 </span>
                             )}
-                            <div className="flex justify-between mt-2">
+                            <div className="flex justify-between">
                                 {editingTeamId === team._id ? (
                                     <>
                                         <button
                                             onClick={() => handleSaveUpdatedTeam(team._id)}
-                                            className="text-green-500 hover:text-green-700 mr-4"
+                                            className="text-green-500 hover:text-green-600 transition"
                                         >
-                                            <FaSave className="inline mr-1" /> Save
+                                            <FaSave className="inline mr-2" /> Save
                                         </button>
                                         <button
                                             onClick={handleCancelUpdateTeam}
-                                            className="text-gray-500 hover:text-gray-700"
+                                            className="text-gray-500 hover:text-gray-600 transition"
                                         >
-                                            <FaTimes className="inline mr-1" /> Cancel
+                                            <FaTimes className="inline mr-2" /> Cancel
                                         </button>
                                     </>
                                 ) : (
                                     <>
                                         <button
                                             onClick={() => handleUpdateTeam(team._id, team.name)}
-                                            className="text-gray-500 hover:text-blue-700 mr-4"
+                                            className="text-blue-500 hover:text-blue-600 transition"
                                         >
-                                            <FaEdit className="inline mr-1" /> Edit
+                                            <FaEdit className="inline mr-2" /> Edit
                                         </button>
                                         <button
                                             onClick={() => handleDeleteTeam(team._id)}
-                                            className="text-gray-500 hover:text-red-700"
+                                            className="text-red-500 hover:text-red-600 transition"
                                         >
-                                            <FaTrash className="inline mr-1" /> Delete
+                                            <FaTrash className="inline mr-2" /> Delete
                                         </button>
                                     </>
                                 )}
@@ -262,36 +262,33 @@ const TeamsPage = () => {
                     </div>
                 ))}
                 {isAddingTeam && (
-                    <div className="bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-96">
-                        <label
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="text"
-                        >
+                    <div className="bg-white rounded-3xl border border-gray-300 shadow-lg overflow-hidden m-4 w-96 p-6">
+                        <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="teamName">
                             Team Name
                         </label>
                         <input
                             type="text"
+                            id="teamName"
                             placeholder="Enter team name"
                             value={newTeamName}
                             onChange={(e) => {
                                 setNewTeamName(e.target.value);
                                 setNewTeamError(false);
                             }}
-                            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newTeamError ? "border-red-500" : ""
-                                }`}
+                            className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${newTeamError ? "border-red-500" : "border-gray-300"}`}
                         />
                         {newTeamError && (
                             <span className="text-red-500 text-sm">This field is required</span>
                         )}
                         <div className="flex justify-between mt-4">
                             <button
-                                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-md hover:from-blue-700 hover:to-blue-600 transition"
                                 onClick={handleSaveNewTeam}
                             >
                                 Save
                             </button>
                             <button
-                                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                                className="bg-gradient-to-r from-gray-600 to-gray-500 text-white px-4 py-2 rounded-md hover:from-gray-700 hover:to-gray-600 transition"
                                 onClick={handleCancelNewTeam}
                             >
                                 Cancel

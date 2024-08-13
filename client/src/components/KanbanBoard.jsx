@@ -9,6 +9,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
+import { Tooltip } from 'antd';
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
@@ -20,10 +21,68 @@ import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "../Automation/RulePage";
+import { FaPlus } from "react-icons/fa";
+import { FcEmptyTrash } from "react-icons/fc";
+import { MdCancel } from "react-icons/md";
+
 
 const initialBoard = {
   columns: [],
 };
+
+const TimeProgressBar = ({ assignDate, dueDate }) => {
+  const [progress, setProgress] = useState(0);
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    const updateProgress = () => {
+      const now = new Date();
+      const start = new Date(assignDate);
+      const end = new Date(dueDate);
+      const total = end - start;
+      const elapsed = now - start;
+
+      if (now > end) {
+        setProgress(100);
+        setIsOverdue(true);
+      } else {
+        const calculatedProgress = (elapsed / total) * 100;
+        setProgress(Math.min(calculatedProgress, 100));
+        setIsOverdue(false);
+      }
+    };
+
+    updateProgress();
+    const timer = setInterval(updateProgress, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [assignDate, dueDate]);
+
+  return (
+    <div
+      className="relative h-3 w-full rounded-lg"
+      style={{
+        background: isOverdue
+          ? '#ff4d4d' 
+          : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
+      }}
+    >
+
+      <div
+        className="absolute inset-0 flex items-center justify-center text-black font-bold"
+        style={{ fontSize: '0.75rem' }} 
+      >
+        {Math.round(progress)}%
+      </div>
+    </div>
+  );
+};
+
+
+
+
+
+
 
 function KanbanBoard() {
   useTokenValidation();
@@ -112,7 +171,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://13.235.16.113:3001");
+    const newSocket = io("http://localhost:5000");
     setSocket(newSocket);
   }, []);
 
@@ -279,8 +338,6 @@ function KanbanBoard() {
     };
   }, [socket, projectId]);
 
-
-
   //
   useEffect(() => {
     const fetchUserEmail = async () => {
@@ -300,7 +357,6 @@ function KanbanBoard() {
   }, []);
 
   //
-
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
       try {
@@ -1175,105 +1231,215 @@ function KanbanBoard() {
     }
   };
 
+  // const renderCard = (card, { dragging }) => (
+  //   <div
+  //     className={`react-kanban-card ${dragging ? "dragging" : ""}`}
+  //     style={{ borderRadius: "20px", maxWidth: "750px" }}
+  //   >
+  //     <div className="react-kanban-card__title truncate" title={card.title}>
+  //       {card.title && card.title.length > 20
+  //         ? card.title.slice(0, 28) + "..."
+  //         : card.title}
+  //     </div>
+  //     <div
+  //       className="react-kanban-card__description truncate"
+  //       title={card.description || ""}
+  //     >
+  //       {card.description && card.description.length > 35
+  //         ? card.description.slice(0, 35) + "..."
+  //         : card.description || ""}
+  //     </div>
+  //     <div className="react-kanban-card__assignedTo flex items-center justify-end">
+  //       {card.assignedTo && (
+  //         <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
+  //           <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+  //             {card.assignedTo}
+  //           </span>
+  //           {card.assignedTo.charAt(0).toUpperCase()}
+  //         </div>
+  //       )}
+  //     </div>
+
+  //     <div className="react-kanban-card__assignDate">
+  //       {card.assignDate && (
+  //         <div className="text-sm text-gray-500">
+  //           Assign Date:{" "}
+  //           {new Date(card.assignDate).toLocaleDateString("en-US", {
+  //             year: "numeric",
+  //             month: "short",
+  //             day: "numeric",
+  //             hour: "numeric",
+  //             minute: "numeric",
+  //             hour12: true,
+  //           })}
+  //         </div>
+  //       )}
+  //     </div>
+  //     <div className="react-kanban-card__dueDate">
+  //       {card.dueDate && (
+  //         <div className="text-sm text-gray-500">
+  //           Due Date:{" "}
+  //           {new Date(card.dueDate).toLocaleDateString("en-US", {
+  //             year: "numeric",
+  //             month: "short",
+  //             day: "numeric",
+  //             hour: "numeric",
+  //             minute: "numeric",
+  //             hour12: true,
+  //           })}
+  //         </div>
+  //       )}
+  //     </div>
+  //     <div className="react-kanban-card__status">
+  //       <select
+  //         value={card.status}
+  //         onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+  //       >
+  //         <option value="pending">Pending</option>
+  //         <option value="inprogress">Inprogress</option>
+  //         <option value="completed">Completed</option>
+  //       </select>
+  //     </div>
+  //     <div
+  //       style={{
+  //         display: "flex",
+  //         justifyContent: "space-between",
+  //         padding: "10px",
+  //       }}
+  //     >
+  //       {canShowActions && (
+  //         <button
+  //           className="delete-card-button"
+  //           onClick={() => confirmRemoveCard(card.columnId, card.id)}
+  //         >
+  //           <BsTrash />
+  //         </button>
+  //       )}
+
+  //       <button
+  //         className="delete-card-button"
+  //         onClick={() =>
+  //           openRenameCardModal(
+  //             card.columnId,
+  //             card.id,
+  //             card.title,
+  //             card.description,
+  //             card.comments
+  //           )
+  //         }
+  //       >
+  //         <BsPencilSquare />
+  //       </button>
+  //     </div>
+  //   </div>
+  // );
   const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "20px", maxWidth: "750px" }}
+      style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <div className="react-kanban-card__title truncate" title={card.title}>
-        {card.title && card.title.length > 20
-          ? card.title.slice(0, 28) + "..."
-          : card.title}
-      </div>
-      <div
-        className="react-kanban-card__description truncate"
-        title={card.description || ""}
-      >
-        {card.description && card.description.length > 35
-          ? card.description.slice(0, 35) + "..."
-          : card.description || ""}
-      </div>
-      <div className="react-kanban-card__assignedTo flex items-center justify-end">
-        {card.assignedTo && (
-          <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-            <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-              {card.assignedTo}
-            </span>
-            {card.assignedTo.charAt(0).toUpperCase()}
+      <TimeProgressBar
+        assignDate={card.assignDate}
+        dueDate={card.dueDate}
+      />
+      <div className="p-4">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="react-kanban-card__title truncate" title={card.title}>
+          {card.title && card.title.length > 20
+            ? card.title.slice(0, 28) + "..."
+            : card.title}
+        </div>
+        <div className="react-kanban-card__assignedTo flex items-center">
+            {card.assignedTo && (
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
+                <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                  {card.assignedTo}
+                </span>
+                {card.assignedTo.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+       </div>
+          <div
+            className="react-kanban-card__description truncate"
+            title={card.description || ""}
+            style={{ flex: 1, marginRight: "10px" }}
+          >
+            {card.description && card.description.length > 35
+              ? card.description.slice(0, 35) + "..."
+              : card.description || ""}
+          </div>
+         
+       
 
-      <div className="react-kanban-card__assignDate">
-        {card.assignDate && (
-          <div className="text-sm text-gray-500">
-            Assign Date:{" "}
-            {new Date(card.assignDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
+
+        {/* <div className="react-kanban-card__assignDate">
+          {card.assignDate && (
+            <div className="text-sm text-gray-500">
+              Assign Date:{" "}
+              {new Date(card.assignDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </div>
+          )}
+        </div> */}
+        <div className="react-kanban-card__dueDate">
+          {card.dueDate && (
+            <div className="text-sm text-gray-500">
+              Due Date:{" "}
+              {new Date(card.dueDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </div>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems:'flex-start', justifyContent: "space-between" }}>
+          <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
+            <select
+              value={card.status}
+              onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+            >
+              <option value="pending">Pending</option>
+              <option value="inprogress">Inprogress</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
-        )}
-      </div>
-      <div className="react-kanban-card__dueDate">
-        {card.dueDate && (
-          <div className="text-sm text-gray-500">
-            Due Date:{" "}
-            {new Date(card.dueDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
-          </div>
-        )}
-      </div>
-      <div className="react-kanban-card__status">
-        <select
-          value={card.status}
-          onChange={(e) => handleChangeStatus(card.id, e.target.value)}
-        >
-          <option value="pending">Pending</option>
-          <option value="inprogress">Inprogress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "10px",
-        }}
-      >
-        {canShowActions && (
+          {canShowActions && (
+            <button
+              className="delete-card-button"
+              onClick={() => confirmRemoveCard(card.columnId, card.id)}
+              style={{ marginRight: "10px", color: "red" }}
+            >
+             <BsTrash/>
+            </button>
+          )}
           <button
             className="delete-card-button"
-            onClick={() => confirmRemoveCard(card.columnId, card.id)}
+            onClick={() =>
+              openRenameCardModal(
+                card.columnId,
+                card.id,
+                card.title,
+                card.description,
+                card.comments
+              )
+            }
+            style={{ color: 'blue' }}
           >
-            <BsTrash />
+            <BsPencilSquare />
           </button>
-        )}
+        </div>
 
-        <button
-          className="delete-card-button"
-          onClick={() =>
-            openRenameCardModal(
-              card.columnId,
-              card.id,
-              card.title,
-              card.description,
-              card.comments
-            )
-          }
-        >
-          <BsPencilSquare />
-        </button>
       </div>
     </div>
   );
@@ -1805,15 +1971,16 @@ function KanbanBoard() {
                 onClick={() => openModal(id, "addCard")}
                 style={{
                   width: "100%",
-                  backgroundColor: "#EDF2F7",
+                  backgroundColor: "white",
                   borderBottomLeftRadius: "0.375rem",
                   borderBottomRightRadius: "0.375rem",
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
+                  paddingLeft: "50%"
                 }}
               >
-                +
+                <FaPlus />
               </button>
             </div>
           )}
@@ -2143,12 +2310,19 @@ function KanbanBoard() {
         </div>
       )}
 
-      {isGitModalOpen && (
+{isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto"
+            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
             style={{ scrollbarWidth: "none" }}
           >
+            <button
+              onClick={closeGitModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+              aria-label="Close modal"
+            >
+              <MdCancel size={30} />
+            </button>
             <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p>Quick setup — if you've done this kind of thing before</p>
@@ -2220,15 +2394,16 @@ git push -u origin main`}
                 )}
               </button>
             </div>
-            <button
+            {/* <button
               onClick={closeGitModal}
               className="bg-red-600 text-white p-2 rounded mt-4 w-full text-center"
             >
-              Close
-            </button>
+              close
+            </button> */}
           </div>
         </div>
       )}
+
     </div>
   );
 }

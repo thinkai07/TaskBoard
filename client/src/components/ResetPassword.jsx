@@ -57,7 +57,7 @@ const ResetPage = () => {
       <div className="flex flex-col w-full md:w-3/5 items-center h-4/5 bg-white shadow-md rounded-3xl p-8 md:flex-row">
         <div className="md:w-1/2 md:pr-8">
           <div className="flex justify-left items-left">
-            <h1 className="text-4xl font-bold mb-6 text-gray-700 text-center">Reset Your Password</h1>
+            <h1 className="text-4xl font-semibold mb-6 text-gray-700 text-center">Create Your Password</h1>
           </div>
           {error && (
             <div className=" text-red-500 px-4 py-3 rounded mb-6">
@@ -70,10 +70,10 @@ const ResetPage = () => {
             </div>
           )}
           <h1 className="text-3xl mb-2">Hello,</h1>
-          <h1 className="text-3xl font-bold mb-6 text-blue-500">Welcome!</h1>
+          <h1 className="text-3xl font-semibold mb-6 text-blue-500">Welcome!</h1>
           <form onSubmit={handleReset}>
             <div className="mb-6 relative">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
                 Password
               </label>
               <input
@@ -101,7 +101,7 @@ const ResetPage = () => {
               </div>
             </div>
             <div className="mb-6 relative">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="confirmPassword">
                 Confirm Password
               </label>
               <input
@@ -133,7 +133,7 @@ const ResetPage = () => {
                 className="px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:bg-blue-700"
                 type="submit"
               >
-                Reset
+                Create
               </button>
             </div>
           </form>

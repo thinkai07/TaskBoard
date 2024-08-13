@@ -30,7 +30,7 @@ const Sidebar = () => {
 
   if (collapsed) {
     return (
-      <div className="w-8 h-full bg-white flex justify-center items-start pt-6 shadow-md shadow-gray-400">
+      <div className="w-6 h-full bg-white flex justify-center items-start pt-6 shadow-md shadow-gray-400">
         <button
           onClick={toggleSidebar}
           className="text-gray-500 hover:text-black"

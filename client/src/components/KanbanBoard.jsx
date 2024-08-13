@@ -9,6 +9,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
+import { X } from 'lucide-react';
 import { Tooltip } from 'antd';
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
@@ -28,6 +29,8 @@ import { Popover, Button,Space,Modal,Form,Input,notification } from 'antd';
 import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
 import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
+import { Dropdown, Menu, Button } from 'antd';  //added
+import { DownOutlined } from '@ant-design/icons'; //added
 
 const initialBoard = {
   columns: [],
@@ -153,6 +156,9 @@ function KanbanBoard() {
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
+
+
+
 
   const [userRole, setUserRole] = useState(""); 
 
@@ -378,6 +384,7 @@ function KanbanBoard() {
   const openGitModal = () => {
     setIsGitModalOpen(true);
   };
+
   const closeGitModal = () => {
     setIsGitModalOpen(false);
   };
@@ -1211,6 +1218,18 @@ function KanbanBoard() {
     }
   }
 
+  //added
+  const statusMenu = (cardId) => (
+    <Menu
+      onClick={(e) => handleChangeStatus(cardId, e.key)}
+      items={[
+        { key: 'pending', label: 'Pending' },
+        { key: 'inprogress', label: 'Inprogress' },
+        { key: 'completed', label: 'Completed' },
+      ]}
+    />
+  );
+
   const handleaddmember = async (event) => {
     const value = event.target.value;
     setEmail(value);
@@ -1338,9 +1357,12 @@ function KanbanBoard() {
   const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
+      style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <TimeProgressBar assignDate={card.assignDate} dueDate={card.dueDate} />
+      <TimeProgressBar
+        assignDate={card.assignDate}
+        dueDate={card.dueDate}
+      />
       <div className="p-4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div className="react-kanban-card__title truncate" title={card.title}>
@@ -1358,35 +1380,17 @@ function KanbanBoard() {
               </div>
             )}
           </div>
-       </div>
-          <div
-            className="react-kanban-card__description truncate"
-            title={card.description || ""}
-            style={{ flex: 1, marginRight: "10px" }}
-          >
-            {card.description && card.description.length > 35
-              ? card.description.slice(0, 35) + "..."
-              : card.description || ""}
-          </div>
-         
-       
+        </div>
+        <div
+          className="react-kanban-card__description truncate"
+          title={card.description || ""}
+          style={{ flex: 1, marginRight: "10px" }}
+        >
+          {card.description && card.description.length > 35
+            ? card.description.slice(0, 35) + "..."
+            : card.description || ""}
+        </div>
 
-
-        {/* <div className="react-kanban-card__assignDate">
-          {card.assignDate && (
-            <div className="text-sm text-gray-500">
-              Assign Date:{" "}
-              {new Date(card.assignDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-              })}
-            </div>
-          )}
-        </div> */}
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
             <div className="text-sm text-gray-500">
@@ -1402,8 +1406,8 @@ function KanbanBoard() {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", alignItems:'flex-start', justifyContent: "space-between" }}>
-          <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
+        <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
+          <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
             <select
               value={card.status}
               onChange={(e) => handleChangeStatus(card.id, e.target.value)}
@@ -1412,12 +1416,19 @@ function KanbanBoard() {
               <option value="inprogress">Inprogress</option>
               <option value="completed">Completed</option>
             </select>
-          </div>
+          </div> */}
+          <Dropdown overlay={statusMenu(card.id)} trigger={['click']} >
+            <Button style={{ width: '100px', marginTop: '3%' }}>
+              {card.status.charAt(0).toUpperCase() + card.status.slice(1)} <DownOutlined />
+            </Button>
+          </Dropdown>
+
+
           {canShowActions && (
             <button
               className="delete-card-button"
               onClick={() => confirmRemoveCard(card.columnId, card.id)}
-              style={{ marginRight: "10px", color: "red" }}
+              style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%", marginTop: '3%' }}
             >
              <BsTrash/>
             </button>
@@ -1433,7 +1444,7 @@ function KanbanBoard() {
                 card.comments
               )
             }
-            style={{ color: 'blue' }}
+            style={{ color: 'black', marginTop: "4%" }}
           >
             <BsPencilSquare />
           </button>
@@ -1921,6 +1932,7 @@ function KanbanBoard() {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: "20px",
+
               }}
             >
               <div style={{ marginBottom: "0.5rem", }}>
@@ -1930,9 +1942,9 @@ function KanbanBoard() {
                 >
                   {card.title}
                 </h3>
-                <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
+                {/* <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
                   {card.description}
-                </p>
+                </p> */}
               </div>
               <div
                 style={{ display: "flex", justifyContent: "space-between" }}
@@ -2312,24 +2324,24 @@ function KanbanBoard() {
 {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
-            style={{ scrollbarWidth: "none" }}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
+              }`}
           >
             <button
               onClick={closeGitModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
               aria-label="Close modal"
             >
-              <MdCancel size={30} />
+              <X size={24} />
             </button>
-            <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p>Quick setup — if you've done this kind of thing before</p>
-              <div className="flex justify-between items-center bg-gray-200 p-2 rounded">
+            <h2 className="text-xl font-semibold mb-6 border-b pb-2">Git Configuration</h2>
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-2">Quick setup — if you've done this kind of thing before</p>
+              <div className="flex justify-between items-center bg-gray-100 p-3 rounded-md shadow-sm">
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
                 >
                   {copiedButton === "button1" ? (
                     "Copied"
@@ -2344,66 +2356,44 @@ function KanbanBoard() {
                 </button>
               </div>
             </div>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p className="font-semibold">
-                ...or create a new repository on the command line
-              </p>
-              <pre
-                ref={newRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`echo "# ${repoName}" >> README.md
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-800 mb-2">...or create a new repository on the command line</p>
+              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
+                <pre ref={newRepoRef} className="whitespace-pre-wrap">
+                  <code>
+                    {`echo "# ${repoName}" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git branch -M main
 git remote add origin ${repository}
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(newRepoRef.current.innerText, "button2")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button2" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                  </code>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
+                >
+                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p className="font-semibold">
-                ...or push an existing repository from the command line
-              </p>
-              <pre
-                ref={existingRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`git remote add origin ${repository}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 mb-2">...or push an existing repository from the command line</p>
+              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
+                <pre ref={existingRepoRef} className="whitespace-pre-wrap">
+                  {`git remote add origin ${repository}
 git branch -M main
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(existingRepoRef.current.innerText, "button3")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button3" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
+                  className="absolute right-2 bottom-2 bg-transparent border-none cursor-pointer  rounded  bg-gray-300 hover:bg-gray-400 p-1"
+                >
+                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
-            {/* <button
-              onClick={closeGitModal}
-              className="bg-red-600 text-white p-2 rounded mt-4 w-full text-center"
-            >
-              close
-            </button> */}
           </div>
         </div>
       )}

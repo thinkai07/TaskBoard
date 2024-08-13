@@ -128,11 +128,7 @@ const AuditLog = () => {
       render: (_, log) =>
         log.entityType === "Task"
           ? tasks.find((t) => t.id === log.entityId)?.name ||
-<<<<<<< HEAD
             `#${log.entityId.slice(-6)}`
-=======
-          `#${log.entityId.slice(-6)}`
->>>>>>> 8153153255c5360b0a271a54212e5094728a3356
           : "-",
     },
     {
@@ -142,11 +138,7 @@ const AuditLog = () => {
       render: (_, log) =>
         log.entityType === "Card"
           ? cards.find((c) => c.id === log.entityId)?.name ||
-<<<<<<< HEAD
             `#${log.entityId.slice(-6)}`
-=======
-          `#${log.entityId.slice(-6)}`
->>>>>>> 8153153255c5360b0a271a54212e5094728a3356
           : "-",
     },
     {
@@ -185,7 +177,6 @@ const AuditLog = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-<<<<<<< HEAD
     <Card bordered={false} style={{ marginBottom: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Title level={4} style={{ fontWeight: 600 }}> {/* Semi-bold font */}
@@ -228,50 +219,6 @@ const AuditLog = () => {
       </div>
     )}
   </div>
-=======
-      <Card bordered={false} style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <Title level={4} style={{ fontWeight: 600 }}> {/* Semi-bold font */}
-            Audit Logs
-          </Title>
-          <Select
-            value={selectedProject}
-            onChange={handleProjectChange}
-            style={{ width: 200, fontWeight: 600 }}
-            placeholder="Select a Project"
-          >
-            <Option value="" disabled>
-              Select a Project
-            </Option>
-            {projects.map((project) => (
-              <Option key={project._id} value={project._id}>
-                {project.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      </Card>
-
-      {selectedProject ? (
-        <Card bordered={false}>
-          <Table
-            columns={columns}
-            dataSource={auditLogs.map((log) => ({
-              ...log,
-              key: log._id,
-            }))}
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
-      ) : (
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
-          <Title level={5} style={{ color: "#888", fontWeight: 600 }}> {/* Semi-bold font */}
-            No project selected. Please select a project.
-          </Title>
-        </div>
-      )}
-    </div>
->>>>>>> 8153153255c5360b0a271a54212e5094728a3356
   );
 };
 

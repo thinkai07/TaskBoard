@@ -19,7 +19,7 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
-import RulesButton from './components/RulePage';
+
 
 
 
@@ -85,7 +85,7 @@ const App = () => {
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
                   <Route path="/Auditlog" element={<AuditLog/>} /> 
-                  <Route path="/Teamsorg" element={<TeamsPage/>} /> 
+                  <Route path="/Teamsorg" element={<Teamsorg/>} /> 
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
                   <Route path="/Rules" element={<RulesButton/>} /> 
                 </Routes>

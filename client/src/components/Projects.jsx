@@ -5,22 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
 import dayjs from "dayjs";
-import {
-  Card,
-  Modal,
-  Input,
-  Button,
-  DatePicker,
-  Select,
-  notification,
-  Tooltip,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EllipsisOutlined,
-} from "@ant-design/icons";
+import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,} from "antd";
+import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 const { TextArea } = Input;
 const { Option } = Select;
@@ -471,7 +457,6 @@ const Projects = () => {
           </Button>
         )}
       </div>
-
       <div className="flex flex-wrap justify-start">
   {cards.map((card, index) => (
     <Card
@@ -551,14 +536,13 @@ const Projects = () => {
     </Card>
   ))}
 </div>
-
-
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
         onOk={handleSaveNewCard}
         onCancel={() => setAddProjectModalVisible(false)}
         width={600}
+        maskClosable={false} 
       >
         <Input
           placeholder="Project Name"
@@ -606,13 +590,11 @@ const Projects = () => {
             </Option>
           ))}
         </Select>
-
         {newCardErrors.email && (
           <p className="text-red-500">
             Valid Project Manager email is required
           </p>
         )}
-
         <DatePicker
           className="mt-4 w-full"
           placeholder="Start Date"
@@ -647,7 +629,6 @@ const Projects = () => {
           <p className="text-red-500">At least one team is required</p>
         )}
       </Modal>
-
       <Modal
         title="Rename Project"
         visible={renameDialogVisible}
@@ -695,7 +676,6 @@ const Projects = () => {
           </p>
         )}
       </Modal>
-
       <Modal
         title="Confirm Project Deletion"
         visible={deleteDialogVisible}

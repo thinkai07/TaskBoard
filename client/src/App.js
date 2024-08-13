@@ -13,12 +13,13 @@ import AdminPanel from './components/AdminPanel';
 import Organization from './components/Organization';
 import ResetPassword from './components/ResetPassword';
 import KanbanBoard from './components/KanbanBoard';
-import Teams from './components/Teams';
+// import Teams from './components/Teams';
 import SuccessPage from './components/SuccessPage';
 import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
-import TeamsPage from './components/Teamsorg';
+import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
+import RulesButton from './components/RulePage';
 
 
 
@@ -65,9 +66,9 @@ const App = () => {
       <Routes>
         <Route path='/login' element={<LoginPage onLogin={handleLogin} />} />
         <Route path='/register' element={<RegistrationPage />} />
-        <Route path='/Organization' element={<Organization />} /> 
+        <Route path='/Organization' element={<Organization />} />
         <Route path='/reset-password' element={<ResetPassword />} />
-        <Route path='/success' element= {<SuccessPage />} />
+        <Route path='/success' element={<SuccessPage />} />
 
         <Route
           path="/*"
@@ -78,17 +79,18 @@ const App = () => {
                   <Route path="projects" element={<Projects />} />
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
                   <Route path="/" element={<Overview />} />
-                  <Route path='/tasks' element={<TasksPage user={user} />} /> 
-                  <Route path='/members' element={<AdminPanel />} /> 
-                  <Route path="/projects/:projectId/teams" element={<Teams/>} />
+                  <Route path='/tasks' element={<TasksPage user={user} />} />
+                  <Route path='/members' element={<AdminPanel />} />
+                  {/* <Route path="/projects/:projectId/teams" element={<Teams />} /> */}
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/Auditlog" element={<AuditLog/>} /> 
-                  <Route path="/Teamsorg" element={<TeamsPage/>} /> 
-                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
+                  <Route path="/Auditlog" element={<AuditLog />} />
+                  <Route path="/Teamsorg" element={<Teamsorg/>}/>
+                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
+                  <Route path="/Rules" element={<RulesButton />} />
                 </Routes>
               </Layout>
-            ) : ( 
+            ) : (
               <Navigate to="/login" />
             )
           }

@@ -1,5 +1,5 @@
 //kanban.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
 import {
@@ -19,6 +19,14 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
+import RulesButton from "./RulePage";
+import { Tooltip } from 'antd';
+import Column from "antd/es/table/Column";
+import { MdCancel } from "react-icons/md";
+import { CiCirclePlus } from "react-icons/ci";
+import { FaPlus } from "react-icons/fa";
+import { FcEmptyTrash } from "react-icons/fc";
+import { BsFillPencilFill } from "react-icons/bs";
 
 const initialBoard = {
   columns: [],
@@ -136,48 +144,6 @@ function KanbanBoard() {
         }));
       });
 
-      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
-        console.log("Card moved event received:", {
-          cardId,
-          sourceTaskId,
-          destinationTaskId,
-        });
-        setBoardData((prevState) => {
-          if (!prevState || !prevState.columns) {
-            console.error("Invalid board state:", prevState);
-            return prevState;
-          }
-
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === sourceTaskId) {
-              return {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              };
-            }
-            if (column.id === destinationTaskId) {
-              const movedCard = prevState.columns
-                .find((col) => col.id === sourceTaskId)
-                ?.cards.find((card) => card.id === cardId);
-
-              if (!movedCard) {
-                console.error("Moved card not found:", {
-                  cardId,
-                  sourceTaskId,
-                });
-                return column;
-              }
-
-              return {
-                ...column,
-                cards: [...column.cards, movedCard],
-              };
-            }
-            return column;
-          });
-          return { ...prevState, columns: updatedColumns };
-        });
-      });
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
         setBoardData((prevState) => ({
@@ -253,13 +219,57 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
       });
+
+      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
+        console.log("Card moved event received:", {
+          cardId,
+          sourceTaskId,
+          destinationTaskId,
+        });
+        setBoardData((prevState) => {
+          if (!prevState || !prevState.columns) {
+            console.error("Invalid board state:", prevState);
+            return prevState;
+          }
+
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === sourceTaskId) {
+              return {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              };
+            }
+            if (column.id === destinationTaskId) {
+              const movedCard = prevState.columns
+                .find((col) => col.id === sourceTaskId)
+                ?.cards.find((card) => card.id === cardId);
+
+              if (!movedCard) {
+                console.error("Moved card not found:", {
+                  cardId,
+                  sourceTaskId,
+                });
+                return column;
+              }
+
+              return {
+                ...column,
+                cards: [...column.cards, movedCard],
+              };
+            }
+            return column;
+          });
+          return { ...prevState, columns: updatedColumns };
+        });
+      });
+
     }
     return () => {
       if (socket) {
@@ -271,11 +281,107 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
+
       }
     };
   }, [socket, projectId]);
 
-  //
+
+
+  //time progress
+  // const TimeProgressBar = ({ assignDate, dueDate }) => {
+  //   const [progress, setProgress] = useState(0);
+  //   const [isOverdue, setIsOverdue] = useState(false);
+
+  //   useEffect(() => {
+  //     const updateProgress = () => {
+  //       const now = new Date();
+  //       const start = new Date(assignDate);
+  //       const end = new Date(dueDate);
+  //       const total = end - start;
+  //       const elapsed = now - start;
+
+  //       if (now > end) {
+  //         setProgress(100);
+  //         setIsOverdue(true);
+  //       } else {
+  //         const calculatedProgress = (elapsed / total) * 100;
+  //         setProgress(Math.min(calculatedProgress, 100));
+  //         setIsOverdue(false);
+  //       }
+  //     };
+
+  //     updateProgress();
+  //     const timer = setInterval(updateProgress, 60000);
+
+  //     return () => clearInterval(timer);
+  //   }, [assignDate, dueDate]);
+
+  //   return (
+  //     <Tooltip title={`${Math.round(progress)}%`} placement="top">
+  //       <div
+  //         className="h-3 w-full rounded-lg"
+  //         style={{
+  //           background: isOverdue
+  //             ? 'red'
+  //             : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
+  //         }}
+  //       />
+  //     </Tooltip>
+  //   );
+  // };
+
+  const TimeProgressBar = ({ assignDate, dueDate }) => {
+    const [progress, setProgress] = useState(0);
+    const [isOverdue, setIsOverdue] = useState(false);
+
+    useEffect(() => {
+      const updateProgress = () => {
+        const now = new Date();
+        const start = new Date(assignDate);
+        const end = new Date(dueDate);
+        const total = end - start;
+        const elapsed = now - start;
+
+        if (now > end) {
+          setProgress(100);
+          setIsOverdue(true);
+        } else {
+          const calculatedProgress = (elapsed / total) * 100;
+          setProgress(Math.min(calculatedProgress, 100));
+          setIsOverdue(false);
+        }
+      };
+
+      updateProgress();
+      const timer = setInterval(updateProgress, 60000); // Update every minute
+
+      return () => clearInterval(timer);
+    }, [assignDate, dueDate]);
+
+    return (
+      <div
+        className="relative h-3 w-full rounded-lg"
+        style={{
+          background: isOverdue
+            ? '#ff4d4d' // Darker red color for decreased brightness
+            : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
+        }}
+      >
+
+        <div
+          className="absolute inset-0 flex items-center justify-center text-black font-bold"
+          style={{ fontSize: '0.75rem' }} // Adjust font size as needed
+        >
+          {Math.round(progress)}%
+        </div>
+      </div>
+    );
+  };
+
+
+
+
   useEffect(() => {
     const fetchUserEmail = async () => {
       try {
@@ -293,7 +399,7 @@ function KanbanBoard() {
     fetchUserEmail();
   }, []);
 
-  //
+
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -388,7 +494,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -446,6 +552,9 @@ function KanbanBoard() {
       console.error("Error fetching tasks:", error);
     }
   }
+
+
+
 
   useEffect(() => {
     console.log("Current bgUrl:", bgUrl);
@@ -576,6 +685,7 @@ function KanbanBoard() {
 
       // Close the modal
       setModalVisible(false);
+      notification.success({ message: "Card Added successfully" });
 
       // Refresh board data
       await fetchTasks();
@@ -584,6 +694,9 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+
+
+
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -683,43 +796,20 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
-  // Update the handleCardMove function
-  // async function handleCardMove(card, source, destination) {
-  //   // Update the frontend state
-  //   const updatedBoard = moveCard(boardData, source, destination);
-  //   setBoardData(updatedBoard);
 
-  //   const movedBy = await fetchUserEmail();
 
-  //   // Update the backend
-  //   try {
-  //     const response = await fetch(`${server}/api/cards/${card.id}/move`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //       },
-  //       body: JSON.stringify({
-  //         sourceTaskId: source.fromColumnId,
-  //         destinationTaskId: destination.toColumnId,
-  //         movedBy: movedBy,
-  //         movedDate: new Date().toISOString(),
-  //       }),
-  //     });
+  // Polling function
+  const pollForUpdates = async () => {
+    await fetchTasks();
+  };
 
-  //     if (!response.ok) {
-  //       throw new Error("Failed to move card");
-  //     }
+  // Set up polling
+  useEffect(() => {
+    const intervalId = setInterval(pollForUpdates, 5000);
 
-  //     // If the move was successful, you might want to refetch the board data
-  //     // to ensure frontend and backend are in sync
-  //     await fetchTasks();
-  //   } catch (error) {
-  //     console.error("Error moving card:", error);
-  //     // Optionally, revert the frontend state if the backend update fails
-  //     setBoardData(boardData);
-  //   }
-  // }
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []);
 
 
   const handleCardMove = async (card, source, destination) => {
@@ -780,6 +870,8 @@ function KanbanBoard() {
   };
 
 
+
+
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
     setShowDeleteConfirmation(true);
@@ -814,9 +906,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -831,6 +923,7 @@ function KanbanBoard() {
         setTimeout(() => {
           setShowSuccessMessage(false);
         }, 3000);
+        notification.success({ message: "Card Removed successfully" });
       } catch (error) {
         console.error("Error removing card:", error);
       }
@@ -945,6 +1038,7 @@ function KanbanBoard() {
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
+      notification.success({ message: "Column created Successfully" });
     } catch (error) {
       console.error("Error adding task:", error);
     }
@@ -985,6 +1079,7 @@ function KanbanBoard() {
               : column
           ),
         }));
+        notification.success({ message: "Column Renamed successfully" });
       } catch (error) {
         console.error("Error renaming column:", error);
       }
@@ -1033,6 +1128,7 @@ function KanbanBoard() {
         setTimeout(() => {
           setShowDeleteSuccess(false);
         }, 3000);
+        notification.success({ message: "Column Deleted Successfully" });
       } catch (error) {
         console.error("Error removing column:", error);
       }
@@ -1200,110 +1296,215 @@ function KanbanBoard() {
     }
   };
 
+
+
+  //added for render card
+  // const renderCard = (card, { dragging }) => (
+  //   <div
+  //     className={`react-kanban-card ${dragging ? "dragging" : ""}`}
+  //     style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
+  //   >
+  //     <TimeProgressBar
+  //       assignDate={card.assignDate}
+  //       dueDate={card.dueDate}
+  //     />
+  //     <div className="p-4">
+  //       <div className="react-kanban-card__title truncate" title={card.title}>
+  //         {card.title && card.title.length > 20
+  //           ? card.title.slice(0, 28) + "..."
+  //           : card.title}
+  //       </div>
+  //       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingRight: "20%", paddingBottom: "10%" }}>
+  //         <div
+  //           className="react-kanban-card__description truncate"
+  //           title={card.description || ""}
+  //           style={{ flex: 1, marginRight: "10px" }}
+  //         >
+  //           {card.description && card.description.length > 35
+  //             ? card.description.slice(0, 35) + "..."
+  //             : card.description || ""}
+  //         </div>
+  //         <div className="react-kanban-card__assignedTo flex items-center">
+  //           {card.assignedTo && (
+  //             <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
+  //               <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+  //                 {card.assignedTo}
+  //               </span>
+  //               {card.assignedTo.charAt(0).toUpperCase()}
+  //             </div>
+  //           )}
+  //         </div>
+  //       </div>
+
+
+  //       <div className="react-kanban-card__assignDate">
+  //         {/* {card.assignDate && (
+  //           <div className="text-sm text-gray-500">
+  //             Assign Date:{" "}
+  //             {new Date(card.assignDate).toLocaleDateString("en-US", {
+  //               year: "numeric",
+  //               month: "short",
+  //               day: "numeric",
+  //               hour: "numeric",
+  //               minute: "numeric",
+  //               hour12: true,
+  //             })}
+  //           </div>
+  //         )} */}
+  //       </div>
+  //       <div className="react-kanban-card__dueDate">
+  //         {card.dueDate && (
+  //           <div className="text-sm text-gray-500">
+  //             Due Date:{" "}
+  //             {new Date(card.dueDate).toLocaleDateString("en-US", {
+  //               year: "numeric",
+  //               month: "short",
+  //               day: "numeric",
+  //               hour: "numeric",
+  //               minute: "numeric",
+  //               hour12: true,
+  //             })}
+  //           </div>
+  //         )}
+  //       </div>
+  //       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px" }}>
+  //         <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
+  //           <select
+  //             value={card.status}
+  //             onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+  //           >
+  //             <option value="pending">Pending</option>
+  //             <option value="inprogress">Inprogress</option>
+  //             <option value="completed">Completed</option>
+  //           </select>
+  //         </div>
+  //         {canShowActions && (
+  //           <button
+  //             className="delete-card-button"
+  //             onClick={() => confirmRemoveCard(card.columnId, card.id)}
+  //             style={{ marginRight: "10px", color: "red" }}
+  //           >
+  //             <FcEmptyTrash />
+  //           </button>
+  //         )}
+  //         <button
+  //           className="delete-card-button"
+  //           onClick={() =>
+  //             openRenameCardModal(
+  //               card.columnId,
+  //               card.id,
+  //               card.title,
+  //               card.description,
+  //               card.comments
+  //             )
+  //           }
+  //           style={{ color: 'blue' }}
+  //         >
+  //           <BsPencilSquare />
+  //         </button>
+  //       </div>
+
+  //     </div>
+  //   </div>
+  // );
+
   const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "20px", maxWidth: "750px" }}
+      style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <div className="react-kanban-card__title truncate" title={card.title}>
-        {card.title && card.title.length > 20
-          ? card.title.slice(0, 28) + "..."
-          : card.title}
-      </div>
-      <div
-        className="react-kanban-card__description truncate"
-        title={card.description || ""}
-      >
-        {card.description && card.description.length > 35
-          ? card.description.slice(0, 35) + "..."
-          : card.description || ""}
-      </div>
-      <div className="react-kanban-card__assignedTo flex items-center justify-end">
-        {card.assignedTo && (
-          <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-            <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-              {card.assignedTo}
-            </span>
-            {card.assignedTo.charAt(0).toUpperCase()}
+      <TimeProgressBar
+        assignDate={card.assignDate}
+        dueDate={card.dueDate}
+      />
+      <div className="p-4">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="react-kanban-card__title truncate" title={card.title}>
+            {card.title && card.title.length > 20
+              ? card.title.slice(0, 28) + "..."
+              : card.title}
           </div>
-        )}
-      </div>
-
-      <div className="react-kanban-card__assignDate">
-        {card.assignDate && (
-          <div className="text-sm text-gray-500">
-            Assign Date:{" "}
-            {new Date(card.assignDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
+          <div className="react-kanban-card__assignedTo flex items-center">
+            {card.assignedTo && (
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
+                <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                  {card.assignedTo}
+                </span>
+                {card.assignedTo.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      <div className="react-kanban-card__dueDate">
-        {card.dueDate && (
-          <div className="text-sm text-gray-500">
-            Due Date:{" "}
-            {new Date(card.dueDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
-          </div>
-        )}
-      </div>
-      <div className="react-kanban-card__status">
-        <select
-          value={card.status}
-          onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+        </div>
+        <div
+          className="react-kanban-card__description truncate"
+          title={card.description || ""}
+          style={{ flex: 1, marginRight: "10px" }}
         >
-          <option value="pending">Pending</option>
-          <option value="inprogress">Inprogress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "10px",
-        }}
-      >
-        {canShowActions && (
+          {card.description && card.description.length > 35
+            ? card.description.slice(0, 35) + "..."
+            : card.description || ""}
+        </div>
+
+        <div className="react-kanban-card__dueDate">
+          {card.dueDate && (
+            <div className="text-sm text-gray-500">
+              Due Date:{" "}
+              {new Date(card.dueDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </div>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
+          <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
+            <select
+              value={card.status}
+              onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+            >
+              <option value="pending">Pending</option>
+              <option value="inprogress">Inprogress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          {canShowActions && (
+            <button
+              className="delete-card-button"
+              onClick={() => confirmRemoveCard(card.columnId, card.id)}
+              style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%" }}
+            >
+              <BsTrash />
+            </button>
+          )}
           <button
             className="delete-card-button"
-            onClick={() => confirmRemoveCard(card.columnId, card.id)}
+            onClick={() =>
+              openRenameCardModal(
+                card.columnId,
+                card.id,
+                card.title,
+                card.description,
+                card.comments
+              )
+            }
+            style={{ color: 'black', marginTop: "2%" }}
           >
-            <BsTrash />
+            <BsFillPencilFill />
           </button>
-        )}
+        </div>
 
-        <button
-          className="delete-card-button"
-          onClick={() =>
-            openRenameCardModal(
-              card.columnId,
-              card.id,
-              card.title,
-              card.description,
-              card.comments
-            )
-          }
-        >
-          <BsPencilSquare />
-        </button>
       </div>
     </div>
   );
 
-  ////
+
+
+
+
 
   const handleSaveComment = async () => {
     if (comment.trim()) {
@@ -1428,10 +1629,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1451,6 +1652,7 @@ function KanbanBoard() {
         setShowSuccessPopup(false);
         setRenameCardModalVisible(false); // Close the modal after showing success message
       }, 1000);
+      notification.success({ message: "Card Renamed Successfully" });
     } catch (error) {
       console.error("Error renaming card:", error);
     }
@@ -1458,167 +1660,222 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-3xl"
+      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
       style={
         bgUrl
           ? {
-              backgroundImage: `url(${bgUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              height: "100vh",
-              width: "100%",
-            }
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "100vh",
+            width: "100%",
+          }
           : {}
       }
     >
       <div>
         {renameCardModalVisible && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12">
-              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
-              <form onSubmit={handleRenameCard}>
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    value={renameCardTitle}
-                    onChange={(e) => {
-                      setRenameCardTitle(e.target.value);
-                      setRenameCardErrors((prev) => ({ ...prev, title: "" }));
-                    }}
-                    className={`border ${
-                      renameCardErrors.title
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Title"
-                  />
-                  {renameCardErrors.title && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {renameCardErrors.title}
-                    </p>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <textarea
-                    value={renameCardDescription}
-                    onChange={(e) => {
-                      setRenameCardDescription(e.target.value);
-                      setRenameCardErrors((prev) => ({
-                        ...prev,
-                        description: "",
-                      }));
-                    }}
-                    className={`border ${
-                      renameCardErrors.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Description"
-                  />
-                  {renameCardErrors.description && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {renameCardErrors.description}
-                    </p>
-                  )}
-                </div>
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenameCardModalVisible(false);
-                      setRenameCardErrors({ title: "", description: "" });
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-              <div className="mt-4 h-96 overflow-y-auto">
-                <div className="flex items-center mb-4 pt-6">
-                  <RxActivityLog size={24} className="mr-2" />
-                  <h2 className="text-lg font-bold">Activity</h2>
-                  <button
-                    onClick={() => setCommentsVisible(!commentsVisible)}
-                    className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    {commentsVisible ? "Hide Comments" : "Show Comments"}
-                  </button>
-                </div>
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    V
-                  </div>
-                  <input
-                    type="text"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Write your comment"
-                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSaveComment}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+            <div className="bg-white p-6 rounded-3xl w-8/12 relative flex">
+              {/* Close Icon */}
+              <button
+                onClick={() => {
+                  setRenameCardModalVisible(false);
+                  setRenameCardErrors({ title: "", description: "" });
+                }}
+                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  Save Comment
-                </button>
-                {commentsVisible && (
-                  <div className="flex flex-col space-y-4 pt-6">
-                    {comments
-                      .slice()
-                      .reverse()
-                      .map((comment, idx) => (
-                        <div
-                          key={idx}
-                          className={`ml-2 text-gray-700 mt-2 flex items-start ${
-                            idx === 0
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Content Column */}
+              <div className="flex-1 mr-6">
+                <h2 className="text-lg font-bold mb-4">Rename Card</h2>
+                <form onSubmit={handleRenameCard}>
+                  <div className="mb-4">
+                    <input
+                      type="text"
+                      value={renameCardTitle}
+                      onChange={(e) => {
+                        setRenameCardTitle(e.target.value);
+                        setRenameCardErrors((prev) => ({ ...prev, title: "" }));
+                      }}
+                      className={`border ${renameCardErrors.title
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        } rounded-3xl px-4 py-2 w-full`}
+                      placeholder="Card Title"
+                    />
+                    {renameCardErrors.title && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {renameCardErrors.title}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <textarea
+                      value={renameCardDescription}
+                      onChange={(e) => {
+                        setRenameCardDescription(e.target.value);
+                        setRenameCardErrors((prev) => ({
+                          ...prev,
+                          description: "",
+                        }));
+                      }}
+                      className={`border ${renameCardErrors.description
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        } rounded-3xl px-4 py-2 w-full`}
+                      placeholder="Card Description"
+                    />
+                    {renameCardErrors.description && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {renameCardErrors.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRenameCardModalVisible(false);
+                        setRenameCardErrors({ title: "", description: "" });
+                      }}
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+                <div className="mt-4 h-96 overflow-y-auto">
+                  <div className="flex items-center mb-4 pt-6">
+                    <RxActivityLog size={24} className="mr-2" />
+                    <h2 className="text-lg font-bold">Activity</h2>
+                    <button
+                      onClick={() => setCommentsVisible(!commentsVisible)}
+                      className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+                    >
+                      {commentsVisible ? "Hide Comments" : "Show Comments"}
+                    </button>
+                  </div>
+                  <div className="flex items-center mb-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                      {userEmail.charAt(0).toUpperCase()}
+                    </div>
+
+                    <input
+                      type="text"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Write your comment"
+                      className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSaveComment}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+                  >
+                    Save Comment
+                  </button>
+                  {commentsVisible && (
+                    <div className="flex flex-col space-y-4 pt-6">
+                      {comments
+                        .slice()
+                        .reverse()
+                        .map((comment, idx) => (
+                          <div
+                            key={idx}
+                            className={`ml-2 text-gray-700 mt-2 flex items-start ${idx === 0
                               ? "bg-gray-100 p-2 rounded-lg"
                               : "bg-white p-2 rounded-lg"
-                          }`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                            {comment.commentBy[0].toUpperCase()}
+                              }`}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                              {comment.commentBy[0].toUpperCase()}
+                            </div>
+                            <p className="ml-2">
+                              <span className="font-bold">
+                                {comment.commentBy}
+                              </span>
+                              : {comment.comment}
+                            </p>
                           </div>
-                          <p className="ml-2">
-                            <span className="font-bold">
-                              {comment.commentBy}
-                            </span>
-                            : {comment.comment}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Assignee and Assigner Column */}
+              <div className="w-80">
+                <div className="flex items-center mb-4">
+                  <span className="mr-4 text-gray-700">Assignee:</span>
+                  <input
+                    type="text"
+                    // value={assigneeName}
+                    // onChange={(e) => setAssigneeName(e.target.value)}
+                    placeholder="Assignee Name"
+                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full"
+                  />
+                </div>
+                <div className="flex items-center mb-4">
+                  <span className="mr-4 text-gray-700">Assigner:</span>
+                  <input
+                    type="text"
+                    // value={assignerName}
+                    // onChange={(e) => setAssignerName(e.target.value)}
+                    placeholder="Assigner Name"
+                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full"
+                  />
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {showSuccessPopup && (
-          <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
-            <div className="bg-green-400 p-2 rounded-xl">
-              <h2 className="text-lg text-white font-bold mb-2">
-                Card renamed successfully
-              </h2>
-            </div>
-          </div>
-        )}
+        {/* {showSuccessPopup && (
+    <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
+      <div className="bg-green-400 p-2 rounded-xl">
+        <h2 className="text-lg text-white font-bold mb-2">
+          Card renamed successfully
+        </h2>
       </div>
+    </div>
+  )} */}
+      </div>
+
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
-            Project Manager : {projectManager}
+            Project : <span className="font-normal">{projectName}</span>
+          </h1>
+          <h1 className="text-xl font-semibold">
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
+
         <div className="flex space-x-2 ">
           {/* {canShowActions && (
             <button
@@ -1701,6 +1958,7 @@ function KanbanBoard() {
           >
             Teams
           </button> */}
+          <RulesButton />
           <button
             onClick={openGitModal}
             className="bg-green-500 text-white px-4 py-2 rounded-full"
@@ -1787,15 +2045,16 @@ function KanbanBoard() {
                 onClick={() => openModal(id, "addCard")}
                 style={{
                   width: "100%",
-                  backgroundColor: "#EDF2F7",
+                  backgroundColor: "white",
                   borderBottomLeftRadius: "0.375rem",
                   borderBottomRightRadius: "0.375rem",
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
+                  paddingLeft: "50%"
                 }}
               >
-                +
+                <FaPlus />
               </button>
             </div>
           )}
@@ -1937,20 +2196,20 @@ function KanbanBoard() {
           </div>
         </div>
       )}
-      {showDeleteSuccess && (
+      {/* {showDeleteSuccess && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
             <p className="font-semibold">Column deleted successfully</p>
           </div>
         </div>
-      )}
-      {showSuccessMessage && (
+      )} */}
+      {/* {showSuccessMessage && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
             <p className="font-semibold">Card deleted successfully</p>
           </div>
         </div>
-      )}
+      )} */}
 
       {newColumnModalVisible && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
@@ -1965,9 +2224,8 @@ function KanbanBoard() {
                   setNewColumnName(e.target.value.trimStart());
                   setNewColumnError(false);
                 }}
-                className={`border ${
-                  newColumnError ? "border-red-500" : "border-gray-300"
-                } rounded-xl px-3 py-3 mb-4 w-full`}
+                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
+                  } rounded-xl px-3 py-3 mb-4 w-full`}
                 placeholder="Column Name"
                 required
               />
@@ -2060,9 +2318,8 @@ function KanbanBoard() {
                     setNewColumnName(e.target.value.trimStart());
                     setRenameColumnError(false);
                   }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${
-                    renameColumnError ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="Enter the new name for the column"
                 />
                 {renameColumnError && (
@@ -2130,9 +2387,16 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto"
+            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
             style={{ scrollbarWidth: "none" }}
           >
+            <button
+              onClick={closeGitModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+              aria-label="Close modal"
+            >
+              <MdCancel size={30} />
+            </button>
             <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p>Quick setup — if you've done this kind of thing before</p>
@@ -2140,13 +2404,9 @@ function KanbanBoard() {
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  className="ml-2  p-1 rounded hover:bg-gray-400"
                 >
-                  {copiedButton === "button1" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
+                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
                 </button>
               </div>
             </div>
@@ -2154,67 +2414,72 @@ function KanbanBoard() {
               <p className="font-semibold">
                 ...or create a new repository on the command line
               </p>
-              <pre
-                ref={newRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`echo "# ${repoName}" >> README.md
+              <div className="relative">
+                <pre
+                  ref={newRepoRef}
+                  className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+                >
+                  <code>
+                    {`echo "# ${repoName}" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git branch -M main
 git remote add origin ${repository}
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(newRepoRef.current.innerText, "button2")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button2" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                  </code>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  className="absolute right-2 bottom-2 bg-transparent border-none cursor-pointer bg-gray-300 rounded hover:bg-gray-400 p-1"
+                >
+                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p className="font-semibold">
                 ...or push an existing repository from the command line
               </p>
-              <pre
-                ref={existingRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`git remote add origin ${repository}
+              <div className="relative">
+                <pre
+                  ref={existingRepoRef}
+                  className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+                >
+                  {`git remote add origin ${repository}
 git branch -M main
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(existingRepoRef.current.innerText, "button3")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button3" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
+                  className="absolute right-2 bottom-2 bg-transparent border-none cursor-pointer  rounded  bg-gray-300 hover:bg-gray-400 p-1"
+                >
+                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
-            <button
-              onClick={closeGitModal}
-              className="bg-red-600 text-white p-2 rounded mt-4 w-full text-center"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }
 
 export default KanbanBoard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

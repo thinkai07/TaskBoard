@@ -166,16 +166,12 @@ const AuditLog = () => {
                     {projects.find((p) => p._id === selectedProject)?.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Task"
-                      ? tasks.find((t) => t.id === log.entityId)?.name ||
-                        `#${log.entityId.slice(-6)}`
-                      : ""}
+                    {log.entityType === 'Task' ? tasks.find(t => t.id === log.entityId)?.name || 'Unknown Task' : ''}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Card"
-                      ? cards.find((c) => c.id === log.entityId)?.name ||
-                        `#${log.entityId.slice(-6)}`
-                      : ""}
+                    {log.entityType === 'Card' 
+                      ? cards.find(c => c.id === log.entityId)?.name || 'Unknown Card' 
+                      : ''}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {log.performedBy}

@@ -20,11 +20,6 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
-import RulesButton from "./RulePage";
-import { FaPlus } from "react-icons/fa";
-import { FcEmptyTrash } from "react-icons/fc";
-import { MdCancel } from "react-icons/md";
-
 
 const initialBoard = {
   columns: [],
@@ -171,7 +166,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://13.235.16.113:5000");
+    const newSocket = io("http://localhost:3001");
     setSocket(newSocket);
   }, []);
 
@@ -337,6 +332,8 @@ function KanbanBoard() {
       }
     };
   }, [socket, projectId]);
+
+
 
   //
   useEffect(() => {
@@ -1633,32 +1630,8 @@ function KanbanBoard() {
       <div>
         {renameCardModalVisible && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12 relative">
-              {/* Close Icon */}
-              <button
-                onClick={() => {
-                  setRenameCardModalVisible(false);
-                  setRenameCardErrors({ title: "", description: "" });
-                }}
-                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              <h2 className="text-lg font-semibold mb-4">Rename Card</h2>
+            <div className="bg-white p-6 rounded-3xl w-5/12">
+              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
               <form onSubmit={handleRenameCard}>
                 <div className="mb-4">
                   <input
@@ -1733,8 +1706,8 @@ function KanbanBoard() {
                   </button>
                 </div>
                 <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-semibold">
-                    {userEmail.charAt(0).toUpperCase()}
+                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                    V
                   </div>
 
                   <input

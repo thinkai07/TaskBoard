@@ -19,6 +19,7 @@ const Projects = () => {
   const [renameIndex, setRenameIndex] = useState(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
+  
   const navigate = useNavigate();
   const menuRef = useRef(null);
   const [userRole, setUserRole] = useState("");
@@ -38,8 +39,7 @@ const Projects = () => {
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [availableTeams, setAvailableTeams] = useState([]);
-  const [teamInputError, setTeamInputError] = useState(false);
-  const [teamInputErrorMessage, setTeamInputErrorMessage] = useState("");
+
   const [teamInputValue, setTeamInputValue] = useState("");
 
   const handleTeamInputFocus = () => {
@@ -49,6 +49,7 @@ const Projects = () => {
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
   };
+
   const handleTeamInputChange = (event) => {
     const value = event.target.value.replace(/^\s+/, '');
     setTeamInputValue(value);
@@ -58,16 +59,10 @@ const Projects = () => {
     );
     setFilteredTeams(filtered);
     setShowTeamDropdown(true);
-    setTeamInputError(false);
-    setTeamInputErrorMessage("");
-  };
-  const handleRemoveTeam = (teamId) => {
-    setSelectedTeams(selectedTeams.filter(id => id !== teamId));
-    setTeamInputValue('');
-    setSelectedTeamName('');
   };
 
   const [selectedTeams, setSelectedTeams] = useState([]);
+
   const handleTeamSelect = (team) => {
     if (!selectedTeams.includes(team._id)) {
       setSelectedTeams([...selectedTeams, team._id]);
@@ -75,25 +70,6 @@ const Projects = () => {
     setTeamInputValue(team.name);
     setSelectedTeamName(team.name);
     setShowTeamDropdown(false);
-    setTeamInputError(false);
-    setTeamInputErrorMessage("");
-  };
-
-  const validateTeamInput = () => {
-    const selectedTeam = availableTeams.find(
-      team => team.name.toLowerCase() === teamInputValue.toLowerCase()
-    );
-
-    if (!selectedTeam) {
-      setTeamInputError(true);
-      setTeamInputErrorMessage("Please enter valid team name");
-      return false;
-    }
-    return true;
-  };
-
-  const handleTeamHover = (teamName) => {
-    setTeamInputValue(teamName);
   };
 
   const handleClearTeamInput = () => {
@@ -251,7 +227,6 @@ const Projects = () => {
     setTeamInputValue("");
     setFilteredTeams([]);
     setShowTeamDropdown(false);
-
   };
 
   const handleCancelNewCard = () => {
@@ -680,7 +655,10 @@ const Projects = () => {
                       return updatedCards;
                     });
                   }}
-                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError ? "border-red-500" : ""}`}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError
+                      ? "border-red-500"
+                      : ""
+                    }`}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -708,59 +686,28 @@ const Projects = () => {
                 {emailSuggestions.length > 0 &&
                   card.projectManager.length > 0 && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {emailSuggestions
-                        .filter((user) => user.status === 'VERIFIED')
-                        .map((user) => (
-                          <li
-                            key={user._id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => {
-                              setCards((prevCards) => {
-                                const updatedCards = [...prevCards];
-                                updatedCards[index].projectManager = user.email;
-                                return updatedCards;
-                              });
-                              setProjectManager(user.email);
-                              setEmailSuggestions([]);
-                              setProjectManagerError(false);
-                            }}
-                          >
-                            {user.email}
-                          </li>
-                        ))}
+                      {emailSuggestions.map((user) => (
+                        <li
+                          key={user._id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setCards((prevCards) => {
+                              const updatedCards = [...prevCards];
+                              updatedCards[index].projectManager = user.email;
+                              return updatedCards;
+                            });
+                            setProjectManager(user.email);
+                            setEmailSuggestions([]);
+                            setProjectManagerError(false);
+                          }}
+                        >
+                          {user.email}
+                        </li>
+                      ))}
                     </ul>
                   )}
 
                 <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
-                {/* <div className="relative">
-            <input
-              type="text"
-              value={teamInputValue}
-              onChange={handleTeamInputChange}
-              onFocus={handleTeamInputFocus}
-              onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
-              placeholder="Type to select a team..."
-              className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${teamInputError ? "border-red-500" : ""}`}
-            />
-            {teamInputError && (
-              <p className="text-red-500 text-xs italic mt-1">{teamInputErrorMessage}</p>
-            )}
-            {showTeamDropdown && filteredTeams.length > 0 && (
-              <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                {filteredTeams.map((team) => (
-                  <li
-                    key={team._id}
-                    onClick={() => handleTeamSelect(team)}
-                    onMouseEnter={() => handleTeamHover(team.name)}
-                    onMouseLeave={() => setTeamInputValue(selectedTeamName)}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    {team.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div> */}
                 <div className="relative">
                   <input
                     type="text"
@@ -769,21 +716,37 @@ const Projects = () => {
                     onFocus={handleTeamInputFocus}
                     onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
                     placeholder="Type to select a team..."
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${teamInputError ? "border-red-500" : ""
-                      }`}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   />
-                  {teamInputError && (
-                    <p className="text-red-500 text-xs italic mt-1">{teamInputErrorMessage}</p>
-                  )}
                   {showTeamDropdown && filteredTeams.length > 0 && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    <ul
+                      style={{
+                        position: 'absolute',
+                        zIndex: 10,
+                        width: '100%',
+                        backgroundColor: 'white',
+                        border: '1px solid #e2e8f0',
+                        marginTop: '4px',
+                        borderRadius: '0.375rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        maxHeight: '120px',
+                        overflowY: 'auto'
+                      }}
+                    >
                       {filteredTeams.map((team) => (
                         <li
                           key={team._id}
                           onClick={() => handleTeamSelect(team)}
-                          onMouseEnter={() => handleTeamHover(team.name)}
-                          onMouseLeave={() => setTeamInputValue(selectedTeamName)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          style={{
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #e2e8f0',
+                            ':hover': {
+                              backgroundColor: '#f7fafc'
+                            }
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
                         >
                           {team.name}
                         </li>
@@ -795,7 +758,17 @@ const Projects = () => {
                 <div className="mt-2">
                   {selectedTeams.map(teamId => {
                     const team = availableTeams.find(t => t._id === teamId);
-                    //  return team && <span key={team._id} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">{team.name}</span>;
+                    // return (
+                    //   <span key={teamId} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+                    //     {team ? team.name : 'Unknown Team'}
+                    //     <button
+                    //       onClick={() => handleRemoveTeam(teamId)}
+                    //       className="ml-2 text-red-500 font-bold"
+                    //     >
+                    //       &times;
+                    //     </button>
+                    //   </span>
+                    // );
                   })}
                 </div>
 

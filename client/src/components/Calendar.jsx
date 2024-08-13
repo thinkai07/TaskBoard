@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
-import dayjs from "dayjs";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { server } from "../constant";
-import useTokenValidation from "./UseTockenValidation";
-import { MdOutlineCancel } from "react-icons/md";
+import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { server } from '../constant';
+import useTokenValidation from './UseTockenValidation';
 
 const Calendar = () => {
   useTokenValidation();
@@ -140,22 +139,8 @@ const Calendar = () => {
   };
 
   return (
-    <div className="p-4 text-md">
-      <h2 className="text-2xl font-semibold mb-4 text-blue-600">Calendar</h2>
-      <div className="fixed bottom-12 right-12 flex flex-row space-x-2 pr-[40%] pt-6 pb-24 justify-center">
-        <div className="flex justify items-center space-x-2 ">
-          <div className="w-5 h-5 bg-orange-500 rounded-full "></div>
-          <span className="text-black">Pending</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-yellow-500 rounded-full"></div>
-          <span className="text-black">In Progress</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-green-500 rounded-full"></div>
-          <span className="text-black">Completed</span>
-        </div>
-      </div>
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4 text-blue-600">Calendar</h2>
       <div className="flex justify-between mb-4">
         <div className="flex items-center">
           <button
@@ -207,20 +192,9 @@ const Calendar = () => {
           const hasEvents = eventsForDay.length > 0;
 
           return (
-            <div
-              key={formattedDate}
-              className={`border p-2 rounded-lg ${
-                isToday ? "bg-blue-100" : "bg-white"
-              } shadow-md hover:bg-blue-200 hover:animate-pulse hover:-translate-y-1 transition duration-300 ease-in-out cursor-pointer`}
-              onClick={() => handleDateClick(formattedDate)}
-              title={hasEvents ? "" : "No tasks on this date"}
-            >
-              <div
-                className={`font-medium ${
-                  isToday ? "text-blue-600" : "text-gray-800"
-                }`}
-              >
-                {dayjs(date).format("D")}
+            <div key={formattedDate} className={`border p-2 rounded-lg ${isToday ? 'bg-blue-100' : 'bg-white'} shadow-md`} onClick={() => handleDateClick(formattedDate)}>
+              <div className={`font-medium ${isToday ? 'text-blue-600' : 'text-gray-800'}`}>
+                {dayjs(date).format('D')}
               </div>
               <div className="flex mt-1">{generateDots(eventsForDay)}</div>
             </div>
@@ -230,18 +204,10 @@ const Calendar = () => {
 
       {showModal && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center z-50 justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white w-3/4 h-3/4 p-8 rounded-lg shadow-lg overflow-auto relative">
-            <button
-              onClick={handleModalClose}
-              className="absolute top-2 right-2 px-2 py-1 text-2xl text-black rounded-md"
-            >
-              <MdOutlineCancel />
-            </button>
-            <h3 className="text-lg font-semibold mb-4">Project Details</h3>
-            <p className="mb-4">
-              <strong>Date:</strong> {selectedDate}
-            </p>
-            <table className="table-auto w-full border-collapse">
+          <div className="bg-white w-3/4 h-3/4 p-8 rounded-lg shadow-lg overflow-auto">
+            <h3 className="text-lg font-semibold mb-4">Project, Column, and Card Details</h3>
+            <p className="mb-4"><strong>Date:</strong> {selectedDate}</p>
+            <table className="table-auto w-full">
               <thead>
                 <tr
                   style={{
@@ -355,3 +321,11 @@ const Calendar = () => {
 };
 
 export default Calendar;
+
+
+
+
+
+
+
+

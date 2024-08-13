@@ -18,7 +18,11 @@ import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
 import TeamsPage from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
+<<<<<<< HEAD
 import RulesButton from './components/RulePage';
+=======
+import RulesButton from './Automation/RulePage';
+>>>>>>> e2080dec6c5ef2d42c0feb4e3c203f5c14403dfe
 
 
 

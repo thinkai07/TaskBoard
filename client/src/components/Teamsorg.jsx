@@ -6,13 +6,14 @@ import { server } from "../constant";
 import { FaTrash, FaEdit, FaSave, FaTimes, FaPlus } from 'react-icons/fa';
 import { Modal, notification, Button, Card } from 'antd';
 import { BsFillPencilFill } from "react-icons/bs";
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const TeamsPage = () => {
     const [teams, setTeams] = useState([]);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [modalType, setModalType] = useState(""); // 'add' or 'edit'
-    const [currentTeam, setCurrentTeam] = useState(null);
-    const [teamName, setTeamName] = useState("");
+    const [isAddingTeam, setIsAddingTeam] = useState(false);
+    const [newTeamName, setNewTeamName] = useState("");
+    const [newTeamError, setNewTeamError] = useState(false);
     const [organizationId, setOrganizationId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editingTeamId, setEditingTeamId] = useState(null);
@@ -36,10 +37,6 @@ const TeamsPage = () => {
             }
         };
 
-        fetchUserRoleAndOrganization();
-    }, []);
-
-    useEffect(() => {
         const fetchTeams = async () => {
             if (!organizationId) return;
             try {
@@ -56,83 +53,12 @@ const TeamsPage = () => {
             }
         };
 
+        fetchUserRoleAndOrganization();
         fetchTeams();
     }, [organizationId]);
 
-    const showModal = (type, team = null) => {
-        setModalType(type);
-        setCurrentTeam(team);
-        setTeamName(team ? team.name : "");
-        setIsModalVisible(true);
-    };
-
-    const handleOk = async () => {
-        if (!teamName.trim()) {
-            notification.error({
-                message: 'Error',
-                description: 'Team name cannot be empty.',
-            });
-            return;
-        }
-
-        if (modalType === 'add') {
-            try {
-                const addedBy = await fetchUserEmail();
-                const response = await axios.post(
-                    `${server}/api/organizations/${organizationId}/teams`,
-                    { teamName: teamName.trim(), addedBy },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        },
-                    }
-                );
-
-                setTeams((prevTeams) => [...prevTeams, response.data.team]);
-                notification.success({
-                    message: 'Success',
-                    description: 'Team added successfully.',
-                });
-            } catch (error) {
-                console.error("Error creating team:", error);
-                notification.error({
-                    message: 'Error',
-                    description: 'There was an error creating the team.',
-                });
-            }
-        } else if (modalType === 'edit') {
-            try {
-                const response = await axios.put(
-                    `${server}/api/organizations/${organizationId}/teams/${currentTeam._id}`,
-                    { teamName: teamName.trim() },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        },
-                    }
-                );
-
-                setTeams(teams.map(team => team._id === currentTeam._id ? response.data.team : team));
-                notification.success({
-                    message: 'Success',
-                    description: 'Team updated successfully.',
-                });
-            } catch (error) {
-                console.error("Error updating team:", error);
-                notification.error({
-                    message: 'Error',
-                    description: 'There was an error updating the team.',
-                });
-            }
-        }
-
-        setIsModalVisible(false);
-        setTeamName("");
-    };
-
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setTeamName("");
+    const handleAddTeam = () => {
+        setIsAddingTeam(true);
     };
 
     const fetchUserEmail = async () => {
@@ -149,36 +75,7 @@ const TeamsPage = () => {
         }
     };
 
-    // const handleSaveNewTeam = async () => {
-    //     if (!newTeamName.trim()) {
-    //         setNewTeamError(true);
-    //         return;
-    //     }
-
-    //     try {
-    //         const addedBy = await fetchUserEmail();
-
-    //         const response = await axios.post(
-    //             `${server}/api/organizations/${organizationId}/teams`,
-    //             { teamName: newTeamName.trim(), addedBy: addedBy },
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                 },
-    //             }
-    //         );
-
-    //         const newTeam = response.data.team;
-    //         setTeams((prevTeams) => [...prevTeams, newTeam]);
-    //         setIsAddingTeam(false);
-    //         setNewTeamName("");
-    //         setNewTeamError(false);
-    //     } catch (error) {
-    //         console.error("Error creating team:", error);
-    //         setNewTeamError(true);
-    //     }
-    // };
-
+   
 
     const handleSaveNewTeam = async () => {
         if (!newTeamName.trim()) {
@@ -219,10 +116,8 @@ const TeamsPage = () => {
     const handleDeleteTeam = async (teamId) => {
         Modal.confirm({
             title: 'Are you sure you want to delete this team?',
-            icon: <ExclamationCircleOutlined />,
             content: '',
             okText: 'Delete',
-            okType: 'danger',
             cancelText: 'Cancel',
             onOk: async () => {
                 try {
@@ -284,11 +179,16 @@ const TeamsPage = () => {
         setEditingTeamId(null);
         setEditingTeamName("");
     };
-
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Spin size="large" />
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center', // Center horizontally
+                alignItems: 'center', // Center vertically
+                height: '100vh' // Full height of the viewport
+            }}>
+                <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+                Loading...
             </div>
         );
     }
@@ -423,25 +323,3 @@ const TeamsPage = () => {
 };
 
 export default TeamsPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

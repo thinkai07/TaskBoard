@@ -9,7 +9,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
-import { Tooltip } from "antd";
+import { Modal, Form, Input, Button, notification } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
@@ -18,66 +18,20 @@ import { useNavigate } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
-import { notification } from "antd";
+// import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "./RulePage";
-import { Tooltip } from 'antd';
+import { Tooltip } from "antd";
 import Column from "antd/es/table/Column";
 import { MdCancel } from "react-icons/md";
 import { CiCirclePlus } from "react-icons/ci";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { BsFillPencilFill } from "react-icons/bs";
+import { Plus } from "lucide-react";
 
 const initialBoard = {
   columns: [],
-};
-
-const TimeProgressBar = ({ assignDate, dueDate }) => {
-  const [progress, setProgress] = useState(0);
-  const [isOverdue, setIsOverdue] = useState(false);
-
-  useEffect(() => {
-    const updateProgress = () => {
-      const now = new Date();
-      const start = new Date(assignDate);
-      const end = new Date(dueDate);
-      const total = end - start;
-      const elapsed = now - start;
-
-      if (now > end) {
-        setProgress(100);
-        setIsOverdue(true);
-      } else {
-        const calculatedProgress = (elapsed / total) * 100;
-        setProgress(Math.min(calculatedProgress, 100));
-        setIsOverdue(false);
-      }
-    };
-
-    updateProgress();
-    const timer = setInterval(updateProgress, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, [assignDate, dueDate]);
-
-  return (
-    <div
-      className="relative h-3 w-full rounded-lg"
-      style={{
-        background: isOverdue
-          ? "#ff4d4d"
-          : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
-      }}
-    >
-      <div
-        className="absolute inset-0 flex items-center justify-center text-black font-semibold"
-        style={{ fontSize: "0.75rem" }}
-      >
-        {Math.round(progress)}%
-      </div>
-    </div>
-  );
 };
 
 function KanbanBoard() {
@@ -136,6 +90,7 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
@@ -330,8 +285,6 @@ function KanbanBoard() {
     };
   }, [socket, projectId]);
 
-
-
   //time progress
   // const TimeProgressBar = ({ assignDate, dueDate }) => {
   //   const [progress, setProgress] = useState(0);
@@ -408,23 +361,19 @@ function KanbanBoard() {
         className="relative h-3 w-full rounded-lg"
         style={{
           background: isOverdue
-            ? '#ff4d4d' // Darker red color for decreased brightness
+            ? "#ff4d4d" // Darker red color for decreased brightness
             : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
         }}
       >
-
         <div
           className="absolute inset-0 flex items-center justify-center text-black font-bold"
-          style={{ fontSize: '0.75rem' }} // Adjust font size as needed
+          style={{ fontSize: "0.75rem" }} // Adjust font size as needed
         >
           {Math.round(progress)}%
         </div>
       </div>
     );
   };
-
-
-
 
   useEffect(() => {
     const fetchUserEmail = async () => {
@@ -442,8 +391,6 @@ function KanbanBoard() {
 
     fetchUserEmail();
   }, []);
-
-
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -597,9 +544,6 @@ function KanbanBoard() {
     }
   }
 
-
-
-
   useEffect(() => {
     console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
@@ -738,9 +682,6 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
-
-
-
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -1029,19 +970,73 @@ function KanbanBoard() {
     setNewColumnModalVisible(true);
   };
 
-  const handleAddColumnSubmit = async (e) => {
-    e.preventDefault();
+  // const handleAddColumnSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const trimmedColumnName = newColumnName.trim();
+  //   if (!trimmedColumnName) {
+  //     setNewColumnError(true);
+  //     return;
+  //   }
+  //   let createdBy;
+  //   try {
+  //     createdBy = await fetchUserEmail();
+  //     console.log(createdBy);
+  //   } catch (error) {
+  //     console.error("Error fetching logged-in user's email:", error);
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await fetch(
+  //       `${server}/api/projects/${projectId}/tasks`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //         body: JSON.stringify({
+  //           name: trimmedColumnName,
+  //           createdBy: createdBy,
+  //         }),
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to add task");
+  //     }
+
+  //     const { task } = await response.json();
+  //     setBoardData((prevState) => ({
+  //       ...prevState,
+  //       columns: [
+  //         ...prevState.columns,
+  //         { id: task._id, title: task.name, cards: [], createdBy: createdBy },
+  //       ],
+  //     }));
+  //     setNewColumnModalVisible(false);
+  //     setNewColumnName("");
+  //     setNewColumnError(false);
+  //     notification.success({ message: "Column created Successfully" });
+  //   } catch (error) {
+  //     console.error("Error adding task:", error);
+  //   }
+  // };
+
+  const handleAddColumnSubmit = async () => {
     const trimmedColumnName = newColumnName.trim();
     if (!trimmedColumnName) {
       setNewColumnError(true);
       return;
     }
+
+    setLoading(true);
     let createdBy;
     try {
-      createdBy = await fetchUserEmail();
-      console.log(createdBy);
+      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
+      setLoading(false);
       return;
     }
 
@@ -1073,12 +1068,14 @@ function KanbanBoard() {
           { id: task._id, title: task.name, cards: [], createdBy: createdBy },
         ],
       }));
+      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
-      notification.success({ message: "Column created Successfully" });
     } catch (error) {
       console.error("Error adding task:", error);
+    } finally {
+      setLoading(false);
     }
   };
   // Update the handleRenameColumn function
@@ -1334,8 +1331,6 @@ function KanbanBoard() {
     }
   };
 
-
-
   //added for render card
   // const renderCard = (card, { dragging }) => (
   //   <div
@@ -1373,7 +1368,6 @@ function KanbanBoard() {
   //           )}
   //         </div>
   //       </div>
-
 
   //       <div className="react-kanban-card__assignDate">
   //         {/* {card.assignDate && (
@@ -1451,12 +1445,15 @@ function KanbanBoard() {
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <TimeProgressBar
-        assignDate={card.assignDate}
-        dueDate={card.dueDate}
-      />
+      <TimeProgressBar assignDate={card.assignDate} dueDate={card.dueDate} />
       <div className="p-4">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
               ? card.title.slice(0, 28) + "..."
@@ -1498,8 +1495,17 @@ function KanbanBoard() {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
-          <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            className="react-kanban-card__status"
+            style={{ marginRight: "19px" }}
+          >
             <select
               value={card.status}
               onChange={(e) => handleChangeStatus(card.id, e.target.value)}
@@ -1513,7 +1519,12 @@ function KanbanBoard() {
             <button
               className="delete-card-button"
               onClick={() => confirmRemoveCard(card.columnId, card.id)}
-              style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%" }}
+              style={{
+                marginRight: "10px",
+                color: "red",
+                paddingTop: "5px",
+                marginLeft: "30%",
+              }}
             >
               <BsTrash />
             </button>
@@ -1529,20 +1540,14 @@ function KanbanBoard() {
                 card.comments
               )
             }
-            style={{ color: 'black', marginTop: "2%" }}
+            style={{ color: "black", marginTop: "2%" }}
           >
             <BsFillPencilFill />
           </button>
         </div>
-
       </div>
     </div>
   );
-
-
-
-
-
 
   const handleSaveComment = async () => {
     if (comment.trim()) {
@@ -1751,10 +1756,11 @@ function KanbanBoard() {
                         setRenameCardTitle(e.target.value);
                         setRenameCardErrors((prev) => ({ ...prev, title: "" }));
                       }}
-                      className={`border ${renameCardErrors.title
-                        ? "border-red-500"
-                        : "border-gray-300"
-                        } rounded-3xl px-4 py-2 w-full`}
+                      className={`border ${
+                        renameCardErrors.title
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-3xl px-4 py-2 w-full`}
                       placeholder="Card Title"
                     />
                     {renameCardErrors.title && (
@@ -1773,10 +1779,11 @@ function KanbanBoard() {
                           description: "",
                         }));
                       }}
-                      className={`border ${renameCardErrors.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                        } rounded-3xl px-4 py-2 w-full`}
+                      className={`border ${
+                        renameCardErrors.description
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-3xl px-4 py-2 w-full`}
                       placeholder="Card Description"
                     />
                     {renameCardErrors.description && (
@@ -1845,10 +1852,11 @@ function KanbanBoard() {
                         .map((comment, idx) => (
                           <div
                             key={idx}
-                            className={`ml-2 text-gray-700 mt-2 flex items-start ${idx === 0
-                              ? "bg-gray-100 p-2 rounded-lg"
-                              : "bg-white p-2 rounded-lg"
-                              }`}
+                            className={`ml-2 text-gray-700 mt-2 flex items-start ${
+                              idx === 0
+                                ? "bg-gray-100 p-2 rounded-lg"
+                                : "bg-white p-2 rounded-lg"
+                            }`}
                           >
                             <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
                               {comment.commentBy[0].toUpperCase()}
@@ -1910,7 +1918,8 @@ function KanbanBoard() {
             Project : <span className="font-normal">{projectName}</span>
           </h1>
           <h1 className="text-xl font-semibold">
-            Project Manager : <span className="font-normal">{projectManager}</span>
+            Project Manager :{" "}
+            <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
 
@@ -2004,12 +2013,14 @@ function KanbanBoard() {
             Git Configuration
           </button>
 
-          <button
+          <Button
+            type="primary"
+            icon={<Plus />}
             onClick={handleAddColumn}
-            className="bg-blue-500 text-white px-4 py-2 rounded-full"
+            style={{ borderRadius: "8px" }}
           >
-            + New Column
-          </button>
+            New Column
+          </Button>
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
@@ -2032,9 +2043,9 @@ function KanbanBoard() {
                 borderRadius: "20px",
               }}
             >
-              <div style={{ marginBottom: "0.5rem" }}>
+              <div style={{ marginBottom: "0.5rem", }}>
                 <h3
-                  className="font-semibold"
+                  className="font-bold"
                   style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
                 >
                   {card.title}
@@ -2089,7 +2100,8 @@ function KanbanBoard() {
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
-                  paddingLeft: "50%"
+                  paddingLeft: "50%",
+                  
                 }}
               >
                 <FaPlus />
@@ -2105,7 +2117,7 @@ function KanbanBoard() {
       {modalVisible && modalType === "addCard" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
               <label
                 htmlFor="title"
@@ -2215,7 +2227,7 @@ function KanbanBoard() {
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl">
-            <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
+            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
             <p>Are you sure you want to delete this card?</p>
             <div className="flex justify-between mt-4">
               <button
@@ -2249,10 +2261,10 @@ function KanbanBoard() {
         </div>
       )} */}
 
-      {newColumnModalVisible && (
+      {/* {newColumnModalVisible && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
           <div className="bg-white p-6 w-96 rounded-3xl shadow-lg max-h-screen ">
-            <h2 className="text-lg font-semibold mb-4">Add New Column</h2>
+            <h2 className="text-lg font-bold mb-4">Add New Column</h2>
 
             <form onSubmit={handleAddColumnSubmit}>
               <input
@@ -2262,9 +2274,8 @@ function KanbanBoard() {
                   setNewColumnName(e.target.value.trimStart());
                   setNewColumnError(false);
                 }}
-                className={`border ${
-                  newColumnError ? "border-red-500" : "border-gray-300"
-                } rounded-xl px-3 py-3 mb-4 w-full`}
+                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
+                  } rounded-xl px-3 py-3 mb-4 w-full`}
                 placeholder="Column Name"
                 required
               />
@@ -2294,12 +2305,48 @@ function KanbanBoard() {
             </form>
           </div>
         </div>
-      )}
+      )} */}
 
+      <Modal
+        title="Add New Column"
+        visible={newColumnModalVisible}
+        onCancel={() => setNewColumnModalVisible(false)}
+        footer={null}
+      >
+        <Form onFinish={handleAddColumnSubmit}>
+          <Form.Item
+            validateStatus={newColumnError ? "error" : ""}
+            help={newColumnError ? "Please enter a column name" : ""}
+          >
+            <Input
+              value={newColumnName}
+              onChange={(e) => {
+                setNewColumnName(e.target.value.trimStart());
+                setNewColumnError(false);
+              }}
+              placeholder="Column Name"
+              size="large"
+            />
+          </Form.Item>
+          <Form.Item>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setNewColumnModalVisible(false)}
+                style={{ marginRight: 8 }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Add Column
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
       {modalVisible && modalType === "options" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Column Options</h2>
+            <h2 className="text-lg font-bold mb-4">Column Options</h2>
             <button
               onClick={() => setShowRenameInput(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
@@ -2326,7 +2373,7 @@ function KanbanBoard() {
           {showConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-semibold mb-4">
+                <p className="text-lg font-bold mb-4">
                   Are you sure you want to remove this column?
                 </p>
                 <div className="flex justify-between">
@@ -2349,7 +2396,7 @@ function KanbanBoard() {
           {showRenameInput && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
-                <h2 className="text-lg font-semibold mb-4">Rename Column</h2>
+                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
                 <input
                   type="text"
                   value={newColumnName}
@@ -2398,7 +2445,7 @@ function KanbanBoard() {
           {showRenameConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-semibold mb-4">
+                <p className="text-lg font-bold mb-4">
                   Are you sure want to rename this column ?
                 </p>
                 <div className="flex justify-between">
@@ -2446,7 +2493,11 @@ function KanbanBoard() {
                   onClick={() => copyToClipboard(repository, "button1")}
                   className="ml-2  p-1 rounded hover:bg-gray-400"
                 >
-                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button1" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
@@ -2470,10 +2521,16 @@ git push -u origin main`}
                   </code>
                 </pre>
                 <button
-                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  onClick={() =>
+                    copyToClipboard(newRepoRef.current.innerText, "button2")
+                  }
                   className="absolute right-2 top-2 bg-transparent border-none cursor-pointer bg-gray-300 rounded hover:bg-gray-400 p-1"
                 >
-                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button2" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
@@ -2491,17 +2548,25 @@ git branch -M main
 git push -u origin main`}
                 </pre>
                 <button
-                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
+                  onClick={() =>
+                    copyToClipboard(
+                      existingRepoRef.current.innerText,
+                      "button3"
+                    )
+                  }
                   className="absolute right-2 top-2 bg-transparent border-none cursor-pointer  rounded  bg-gray-300 hover:bg-gray-400 p-1"
                 >
-                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button3" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

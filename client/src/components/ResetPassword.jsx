@@ -1,55 +1,55 @@
-// //reset page
-// import React, { useState } from 'react';
-// import regImage from '../assets/reset.png';
-// import axios from 'axios';
-// import { server } from '../constant';
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+//reset page
+import React, { useState } from 'react';
+import regImage from '../assets/reset.png';
+import axios from 'axios';
+import { server } from '../constant';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
-// const ResetPage = () => {
-//   const [password, setPassword] = useState('');
-//   const [confirmPassword, setConfirmPassword] = useState('');
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-//   const [token, setToken] = useState(new URLSearchParams(window.location.search).get('token'));
-//   const [error, setError] = useState('');
-//   const [success, setSuccess] = useState('');
+const ResetPage = () => {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [token, setToken] = useState(new URLSearchParams(window.location.search).get('token'));
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-//   const togglePasswordVisibility = () => {
-//     setShowPassword(!showPassword);
-//   };
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
-//   const toggleConfirmPasswordVisibility = () => {
-//     setShowConfirmPassword(!showConfirmPassword);
-//   };
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
 
-//   const validatePassword = (password) => {
-//     const isValid = password.length >= 8 && password[0] === password[0].toUpperCase();
-//     return isValid;
-//   };
+  const validatePassword = (password) => {
+    const isValid = password.length >= 8 && password[0] === password[0].toUpperCase();
+    return isValid;
+  };
 
-//   const handleReset = async (e) => {
-//     e.preventDefault();
-//     if (password !== confirmPassword) {
-//       setError('Passwords do not match');
-//       setSuccess('');
-//       return;
-//     }
-//     if (!validatePassword(password)) {
-//       setError('Password must be at least 8 characters ');
-//       return;
-//     }
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setSuccess('');
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError('Password must be at least 8 characters ');
+      return;
+    }
 
 
-//     try {
-//       await axios.post(`${server}/resetPassword`, { token, newPassword: password });
-//       setSuccess('Password reset successfully');
+    try {
+      await axios.post(`${server}/resetPassword`, { token, newPassword: password });
+      setSuccess('Password reset successfully');
 
-//       window.location.href = '/login';
-//     } catch (err) {
-//       setError('Token has expired');
-//     }
-//   };
+      window.location.href = '/login';
+    } catch (err) {
+      setError('Token has expired');
+    }
+  };
 
 
   return (

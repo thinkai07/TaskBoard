@@ -635,7 +635,7 @@ const Projects = () => {
 
         <Select
           className="mt-4 w-full"
-          // mode="multiple"
+          mode="multiple"
           placeholder="Select Teams"
           value={newProject.teams}
           onChange={(values) =>

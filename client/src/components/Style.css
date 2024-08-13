@@ -4,16 +4,30 @@
   background-color: #eee;
   margin: 5px;
 }
+
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 250px;
   min-width: 300px;
   margin-top: 3%;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8153153255c5360b0a271a54212e5094728a3356
 }
+
 .react-kanban-card__title {
+<<<<<<< HEAD
 border-bottom: 70px  #eee;
 padding-bottom: 5px;
 font-weight: bold;
 display: flex;
 justify-content: space-between;
+=======
+  border-bottom: 70px #eee;
+  padding-bottom: 5px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+>>>>>>> 8153153255c5360b0a271a54212e5094728a3356
 }

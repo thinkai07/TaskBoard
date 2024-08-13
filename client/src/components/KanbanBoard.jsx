@@ -1,5 +1,5 @@
 //kanban.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
 import {
@@ -274,10 +274,57 @@ function KanbanBoard() {
                 ...column,
                 cards: column.cards.filter((card) => card.id !== cardId),
               }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
       });
+
+      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
+        console.log("Card moved event received:", {
+          cardId,
+          sourceTaskId,
+          destinationTaskId,
+        });
+        setBoardData((prevState) => {
+          if (!prevState || !prevState.columns) {
+            console.error("Invalid board state:", prevState);
+            return prevState;
+          }
+
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === sourceTaskId) {
+              return {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              };
+            }
+            if (column.id === destinationTaskId) {
+              const movedCard = prevState.columns
+                .find((col) => col.id === sourceTaskId)
+                ?.cards.find((card) => card.id === cardId);
+
+              if (!movedCard) {
+                console.error("Moved card not found:", {
+                  cardId,
+                  sourceTaskId,
+                });
+                return column;
+              }
+
+              return {
+                ...column,
+                cards: [...column.cards, movedCard],
+              };
+            }
+            return column;
+          });
+          return { ...prevState, columns: updatedColumns };
+        });
+      });
+
 
       socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
         console.log("Card moved event received:", {
@@ -334,11 +381,107 @@ function KanbanBoard() {
         socket.off("cardDeleted");
         socket.off("cardRenamed");
 
+
       }
     };
   }, [socket, projectId]);
 
-  //
+
+
+  //time progress
+  // const TimeProgressBar = ({ assignDate, dueDate }) => {
+  //   const [progress, setProgress] = useState(0);
+  //   const [isOverdue, setIsOverdue] = useState(false);
+
+  //   useEffect(() => {
+  //     const updateProgress = () => {
+  //       const now = new Date();
+  //       const start = new Date(assignDate);
+  //       const end = new Date(dueDate);
+  //       const total = end - start;
+  //       const elapsed = now - start;
+
+  //       if (now > end) {
+  //         setProgress(100);
+  //         setIsOverdue(true);
+  //       } else {
+  //         const calculatedProgress = (elapsed / total) * 100;
+  //         setProgress(Math.min(calculatedProgress, 100));
+  //         setIsOverdue(false);
+  //       }
+  //     };
+
+  //     updateProgress();
+  //     const timer = setInterval(updateProgress, 60000);
+
+  //     return () => clearInterval(timer);
+  //   }, [assignDate, dueDate]);
+
+  //   return (
+  //     <Tooltip title={`${Math.round(progress)}%`} placement="top">
+  //       <div
+  //         className="h-3 w-full rounded-lg"
+  //         style={{
+  //           background: isOverdue
+  //             ? 'red'
+  //             : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
+  //         }}
+  //       />
+  //     </Tooltip>
+  //   );
+  // };
+
+  const TimeProgressBar = ({ assignDate, dueDate }) => {
+    const [progress, setProgress] = useState(0);
+    const [isOverdue, setIsOverdue] = useState(false);
+
+    useEffect(() => {
+      const updateProgress = () => {
+        const now = new Date();
+        const start = new Date(assignDate);
+        const end = new Date(dueDate);
+        const total = end - start;
+        const elapsed = now - start;
+
+        if (now > end) {
+          setProgress(100);
+          setIsOverdue(true);
+        } else {
+          const calculatedProgress = (elapsed / total) * 100;
+          setProgress(Math.min(calculatedProgress, 100));
+          setIsOverdue(false);
+        }
+      };
+
+      updateProgress();
+      const timer = setInterval(updateProgress, 60000); // Update every minute
+
+      return () => clearInterval(timer);
+    }, [assignDate, dueDate]);
+
+    return (
+      <div
+        className="relative h-3 w-full rounded-lg"
+        style={{
+          background: isOverdue
+            ? '#ff4d4d' // Darker red color for decreased brightness
+            : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
+        }}
+      >
+
+        <div
+          className="absolute inset-0 flex items-center justify-center text-black font-bold"
+          style={{ fontSize: '0.75rem' }} // Adjust font size as needed
+        >
+          {Math.round(progress)}%
+        </div>
+      </div>
+    );
+  };
+
+
+
+
   useEffect(() => {
     const fetchUserEmail = async () => {
       try {
@@ -451,6 +594,7 @@ function KanbanBoard() {
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
       projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -508,6 +652,9 @@ function KanbanBoard() {
       console.error("Error fetching tasks:", error);
     }
   }
+
+
+
 
   useEffect(() => {
     console.log("Current bgUrl:", bgUrl);
@@ -638,6 +785,7 @@ function KanbanBoard() {
 
       // Close the modal
       setModalVisible(false);
+      notification.success({ message: "Card Added successfully" });
 
       // Refresh board data
       await fetchTasks();
@@ -650,6 +798,9 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+
+
+
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -735,6 +886,20 @@ function KanbanBoard() {
   }, []);
 
 
+  // Polling function
+  const pollForUpdates = async () => {
+    await fetchTasks();
+  };
+
+  // Set up polling
+  useEffect(() => {
+    const intervalId = setInterval(pollForUpdates, 5000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []);
+
+
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
     setBoardData(updatedBoard);
@@ -795,6 +960,8 @@ function KanbanBoard() {
 
 
 
+
+
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
     setShowDeleteConfirmation(true);
@@ -829,6 +996,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
                 ...column,
                 cards: column.cards.filter((card) => card.id !== cardId),
               }
@@ -1337,6 +1507,7 @@ function KanbanBoard() {
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
+      style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
     >
       <TimeProgressBar
         assignDate={card.assignDate}
@@ -1593,6 +1764,10 @@ function KanbanBoard() {
                     title: trimmedTitle,
                     description: trimmedDescription,
                   }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1612,6 +1787,7 @@ function KanbanBoard() {
         setShowSuccessPopup(false);
         setRenameCardModalVisible(false); // Close the modal after showing success message
       }, 1000);
+      notification.success({ message: "Card Renamed Successfully" });
     } catch (error) {
       console.error("Error renaming card:", error);
     }
@@ -1620,9 +1796,16 @@ function KanbanBoard() {
   return (
     <div
       className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
+      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
       style={
         bgUrl
           ? {
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "100vh",
+            width: "100%",
+          }
             backgroundImage: `url(${bgUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -1771,13 +1954,17 @@ function KanbanBoard() {
           </div>
         )}
       </div>
+
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
-            Project Manager : {projectManager}
+            Project : <span className="font-normal">{projectName}</span>
+          </h1>
+          <h1 className="text-xl font-semibold">
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
+
         <div className="flex space-x-2 ">
           {/* {canShowActions && (
             <button
@@ -1948,14 +2135,17 @@ function KanbanBoard() {
                 style={{
                   width: "100%",
                   backgroundColor: "white",
+                  backgroundColor: "white",
                   borderBottomLeftRadius: "0.375rem",
                   borderBottomRightRadius: "0.375rem",
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
                   paddingLeft: "50%"
+                  paddingLeft: "50%"
                 }}
               >
+                <FaPlus />
                 <FaPlus />
               </button>
             </div>
@@ -2098,20 +2288,20 @@ function KanbanBoard() {
           </div>
         </div>
       )}
-      {showDeleteSuccess && (
+      {/* {showDeleteSuccess && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
             <p className="font-semibold">Column deleted successfully</p>
           </div>
         </div>
-      )}
-      {showSuccessMessage && (
+      )} */}
+      {/* {showSuccessMessage && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
             <p className="font-semibold">Card deleted successfully</p>
           </div>
         </div>
-      )}
+      )} */}
 
       {newColumnModalVisible && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
@@ -2126,6 +2316,8 @@ function KanbanBoard() {
                   setNewColumnName(e.target.value.trimStart());
                   setNewColumnError(false);
                 }}
+                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
+                  } rounded-xl px-3 py-3 mb-4 w-full`}
                 className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
                   } rounded-xl px-3 py-3 mb-4 w-full`}
                 placeholder="Column Name"
@@ -2222,6 +2414,8 @@ function KanbanBoard() {
                   }}
                   className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
                     }`}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="Enter the new name for the column"
                 />
                 {renameColumnError && (
@@ -2290,8 +2484,16 @@ function KanbanBoard() {
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
             className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
+            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
             style={{ scrollbarWidth: "none" }}
           >
+            <button
+              onClick={closeGitModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+              aria-label="Close modal"
+            >
+              <MdCancel size={30} />
+            </button>
             <button
               onClick={closeGitModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
@@ -2306,13 +2508,9 @@ function KanbanBoard() {
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  className="ml-2  p-1 rounded hover:bg-gray-400"
                 >
-                  {copiedButton === "button1" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
+                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
                 </button>
               </div>
             </div>
@@ -2320,40 +2518,39 @@ function KanbanBoard() {
               <p className="font-semibold">
                 ...or create a new repository on the command line
               </p>
-              <pre
-                ref={newRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`echo "# ${repoName}" >> README.md
+              <div className="relative">
+                <pre
+                  ref={newRepoRef}
+                  className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+                >
+                  <code>
+                    {`echo "# ${repoName}" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git branch -M main
 git remote add origin ${repository}
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(newRepoRef.current.innerText, "button2")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button2" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                  </code>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  className="absolute right-2 bottom-2 bg-transparent border-none cursor-pointer bg-gray-300 rounded hover:bg-gray-400 p-1"
+                >
+                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p className="font-semibold">
                 ...or push an existing repository from the command line
               </p>
-              <pre
-                ref={existingRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`git remote add origin ${repository}
+              <div className="relative">
+                <pre
+                  ref={existingRepoRef}
+                  className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+                >
+                  {`git remote add origin ${repository}
 git branch -M main
 git push -u origin main`}
               </pre>
@@ -2380,8 +2577,25 @@ git push -u origin main`}
         </div>
       )}
 
+
     </div>
   );
 }
 
 export default KanbanBoard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

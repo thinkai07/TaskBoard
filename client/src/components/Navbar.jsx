@@ -5,16 +5,20 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { Popover, Button } from "antd";
 import { Bell, SquareChevronDown } from "lucide-react";
+import { Popover, Button } from "antd";
+import { Bell, SquareChevronDown } from "lucide-react";
 import { server } from "../constant";
 import { BsMenuUp } from "react-icons/bs";
 import { TbMenuOrder } from "react-icons/tb";
 
 const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   // console.log(user)
+  // console.log(user)
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const notificationCount = notifications.filter(
@@ -83,6 +87,25 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     fetchUserRoleAndOrganization();
   }, []);
 
+  useEffect(() => {
+    const fetchUserRoleAndOrganization = async () => {
+      try {
+        const response = await axios.get(`${server}/api/role`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUserRole(response.data.role);
+        setOrganizationId(response.data.organizationId);
+        setOrganizationName(response.data.organizationName);
+        console.log("org", response.data);
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+    fetchUserRoleAndOrganization();
+  }, []);
+
   const handleNotificationClick = async (notificationId) => {
     try {
       await axios.patch(
@@ -96,6 +119,9 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
       );
 
       setNotifications((prevNotifications) =>
+        prevNotifications.filter(
+          (notification) => notification._id !== notificationId
+        )
         prevNotifications.filter(
           (notification) => notification._id !== notificationId
         )
@@ -133,6 +159,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
   const handleSelectBackground = (image) => {
     const projectId = location.pathname.split("/")[2];
+    setSelectedImage(image);
     setSelectedImage(image);
     axios
       .put(
@@ -241,6 +268,8 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         <div className="ml-3">
           <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
           <h3 className="font-medium text-md">
+          <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
+          <h3 className="font-medium text-md">
             <span className="text-gray-500">{formatDate(currentTime)}</span>
           </h3>
         </div>
@@ -248,7 +277,9 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
       <div className="flex items-center flex-grow justify-center space-x-20">
         <div className="relative w-full max-w-xs"> </div>
+        <div className="relative w-full max-w-xs"> </div>
       </div>
+      <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
       <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
 
       {isProjectRoute && (
@@ -340,12 +371,14 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
           >
             <button
               className="absolute top-4 right-4 p-2 rounded"
+              className="absolute top-4 right-4 p-2 rounded"
               onClick={handleCloseSidebar}
             >
               <MdOutlineCancel size={30} />
             </button>
 
             <div className="mt-16">
+              <h3 className="text-xl font-semibold mb-4">Select Background</h3>
               <h3 className="text-xl font-semibold mb-4">Select Background</h3>
               <hr className="border-gray-300 my-2" />
 
@@ -360,13 +393,18 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
                         ? "border-4 border-green-500"
                         : "border-gray-300"
                     }`}
+                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${
+                      selectedImage === image
+                        ? "border-4 border-green-500"
+                        : "border-gray-300"
+                    }`}
                     onClick={() => handleSelectBackground(image)}
                   />
                 ))}
               </div>
               <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover mb-4 justify-center mb-4">
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  <AiOutlinePlus size={30} />
+                  <AiOutlinePlus size={24} />
                 </label>
                 <input
                   id="file-upload"

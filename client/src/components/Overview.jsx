@@ -10,6 +10,9 @@ import {
   CategoryScale, // Import CategoryScale
   LinearScale,
   BarElement
+  CategoryScale, // Import CategoryScale
+  LinearScale,
+  BarElement
 } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +23,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
 import { Button } from 'antd';
 
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Overview = () => {
@@ -207,6 +211,7 @@ const Overview = () => {
   const totalInProgressCards = overviewData.projects.reduce((acc, project) => acc + project.totalInProgressCards, 0);
   const totalCompletedCards = overviewData.projects.reduce((acc, project) => acc + project.totalCompletedCards, 0);
   const noDataColor = '#e5e7eb';
+  const noDataColor = '#e5e7eb';
 
   const data = {
     labels: ['Pending', 'In-Progress', 'Completed'],
@@ -225,6 +230,11 @@ const Overview = () => {
     plugins: {
       legend: {
         position: 'right',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 10,
+        },
         labels: {
           usePointStyle: true,
           pointStyle: 'circle',

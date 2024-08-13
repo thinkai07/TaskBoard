@@ -102,12 +102,12 @@ const LoginPage = ({ onLogin }) => {
         )}
 
         <div className="w-full md:w-1/2 bg-white p-8 flex flex-col justify-center">
-          <h1 className="text-4xl font-bold mb-6 text-gray-700 text-left">Login</h1>
+          <h1 className="text-4xl font-semibold mb-6 text-gray-700 text-left">Login</h1>
           <h1 className="text-3xl mb-2">Hello,</h1>
-          <h1 className="text-3xl font-bold mb-6 text-blue-500">Welcome!</h1>
+          <h1 className="text-3xl font-semibold mb-6 text-blue-500">Welcome!</h1>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="email">
                 Email
               </label>
               <input
@@ -126,7 +126,7 @@ const LoginPage = ({ onLogin }) => {
               )} */}
             </div>
             <div className="mb-6 relative">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
                 Password
               </label>
               <input
@@ -160,13 +160,13 @@ const LoginPage = ({ onLogin }) => {
             </div>
             <div className="flex items-center justify-between">
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105"
                 type="submit"
               >
                 Login
               </button>
               <a
-                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
+                className="inline-block align-baseline font-semibold text-sm text-blue-500 hover:text-blue-800"
                 href="/Organization"
               >
                 Register ?
@@ -196,23 +196,3 @@ const LoginPage = ({ onLogin }) => {
 };
 
 export default LoginPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

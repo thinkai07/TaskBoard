@@ -3,14 +3,12 @@
   border-radius: 20px;
   background-color: #eee;
   margin: 5px;
-  height: 300px; /* Set a fixed height */
-  overflow-x: auto; /* Enable vertical scrollbar */
 }
-
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 250px;
   min-width: 300px;
+  margin-top: 3%;
 }
 .react-kanban-card__title {
 border-bottom: 70px  #eee;
@@ -20,8 +18,6 @@ display: flex;
 justify-content: space-between;
 }
 
-
-
-
-
-
+.custom-calendar .ant-picker-cell-inner {
+  font-size: 12px; /* Adjust the font size as needed */
+}

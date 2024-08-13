@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
+import { Select, Table, Typography, Card } from "antd";
+
+const { Option } = Select;
+const { Title } = Typography;
 
 const AuditLog = () => {
   useTokenValidation();
@@ -87,18 +91,21 @@ const AuditLog = () => {
           },
         }
       );
-      setAuditLogs(response.data);
+      // Sort logs by actionDate in descending order
+      const sortedLogs = response.data.sort(
+        (a, b) => new Date(b.actionDate) - new Date(a.actionDate)
+      );
+      setAuditLogs(sortedLogs);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
     }
   };
 
-  const handleProjectChange = (e) => {
-    const projectId = e.target.value;
-    setSelectedProject(projectId);
-    if (projectId) {
-      fetchTasksAndCards(projectId);
-      fetchAuditLogs(projectId);
+  const handleProjectChange = (value) => {
+    setSelectedProject(value);
+    if (value) {
+      fetchTasksAndCards(value);
+      fetchAuditLogs(value);
     } else {
       setTasks([]);
       setCards([]);
@@ -106,83 +113,112 @@ const AuditLog = () => {
     }
   };
 
+  const columns = [
+    {
+      title: "Project Name",
+      dataIndex: "projectName",
+      key: "projectName",
+      render: () =>
+        projects.find((p) => p._id === selectedProject)?.name || "-",
+    },
+    {
+      title: "Column Name",
+      dataIndex: "columnName",
+      key: "columnName",
+      render: (_, log) =>
+        log.entityType === "Task"
+          ? tasks.find((t) => t.id === log.entityId)?.name ||
+            `#${log.entityId.slice(-6)}`
+          : "-",
+    },
+    {
+      title: "Task Name",
+      dataIndex: "taskName",
+      key: "taskName",
+      render: (_, log) =>
+        log.entityType === "Card"
+          ? cards.find((c) => c.id === log.entityId)?.name ||
+            `#${log.entityId.slice(-6)}`
+          : "-",
+    },
+    {
+      title: "Action By",
+      dataIndex: "performedBy",
+      key: "performedBy",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Activity Date",
+      dataIndex: "actionDate",
+      key: "actionDate",
+      render: (text) => (text ? new Date(text).toLocaleDateString() : "-"),
+    },
+    {
+      title: "Activity",
+      dataIndex: "actionType",
+      key: "actionType",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Old Value",
+      dataIndex: "oldValue",
+      key: "oldValue",
+      render: (_, log) =>
+        log.changes.length > 0 ? JSON.stringify(log.changes[0].oldValue) : "-",
+    },
+    {
+      title: "New Value",
+      dataIndex: "newValue",
+      key: "newValue",
+      render: (_, log) =>
+        log.changes.length > 0 ? JSON.stringify(log.changes[0].newValue) : "-",
+    },
+  ];
+
   return (
-    <div className="h-auto bg-gray-100 p-4">
-      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-4">
-        <h1 className="text-2xl font-semibold">Audit Logs</h1>
-        <select
+    <div style={{ padding: "20px" }}>
+    <Card bordered={false} style={{ marginBottom: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Title level={4} style={{ fontWeight: 600 }}> {/* Semi-bold font */}
+          Audit Logs
+        </Title>
+        <Select
           value={selectedProject}
           onChange={handleProjectChange}
-          className="border border-gray-300 rounded-md p-2"
+          style={{ width: 200, fontWeight: 600  }}
+          placeholder="Select a Project"
         >
-          <option value="">Select a Project</option>
+          <Option value="" disabled>
+            Select a Project
+          </Option>
           {projects.map((project) => (
-            <option key={project._id} value={project._id}>
+            <Option key={project._id} value={project._id}>
               {project.name}
-            </option>
+            </Option>
           ))}
-        </select>
+        </Select>
       </div>
-
-      {selectedProject && (
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Project Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Column Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Task Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action By
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Activity Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Activity
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {auditLogs.map((log) => (
-                <tr key={log._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {projects.find((p) => p._id === selectedProject)?.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Task"
-                      ? tasks.find((t) => t.id === log.entityId)?.name ||
-                        `#${log.entityId.slice(-6)}` 
-                      : ""}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Card"
-                      ? cards.find((c) => c.id === log.entityId)?.name ||
-                        `#${log.entityId.slice(-6)}` 
-                      : ""}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.performedBy}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(log.actionDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.actionType}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    </Card>
+  
+    {selectedProject ? (
+      <Card bordered={false}>
+        <Table
+          columns={columns}
+          dataSource={auditLogs.map((log) => ({
+            ...log,
+            key: log._id,
+          }))}
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
+    ) : (
+      <div style={{ textAlign: "center", padding: "40px 0" }}>
+        <Title level={5} style={{ color: "#888", fontWeight: 600 }}> {/* Semi-bold font */}
+          No project selected. Please select a project.
+        </Title>
+      </div>
+    )}
+  </div>
   );
 };
 

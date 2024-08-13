@@ -4,6 +4,8 @@ import axios from "axios";
 import { X, ChevronDown, ArrowRight, PlusCircle, Clock, CheckSquare, Trash2, ArrowLeft, } from "lucide-react";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
+import useTokenValidation from "../components/UseTockenValidation";
+
 
 const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
   <button
@@ -27,6 +29,7 @@ const ActionOption = ({ icon: Icon, label, onClick }) => (
 );
 
 function RulesButton({tasks,}) {
+  useTokenValidation();
   const [isOpen, setIsOpen] = useState(false);
   const [showRulesUI, setShowRulesUI] = useState(false);
   const [showTriggers, setShowTriggers] = useState(false);
@@ -256,7 +259,7 @@ function RulesButton({tasks,}) {
         onClick={toggleDropdown}
         className="bg-purple-500 text-white px-4 py-2 rounded-full flex items-center"
       >
-        Rules <ChevronDown className="ml-2" />
+        Automation <ChevronDown className="ml-2" />
       </button>
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-md shadow-lg">
@@ -279,7 +282,7 @@ function RulesButton({tasks,}) {
             </button>
 
 
-            <h2 className="text-2xl font-bold mb-4">Create a Rule</h2>
+            <h2 className="text-2xl font-semibold mb-4">Create a Rule</h2>
             <div className="flex items-center space-x-4 mb-4">
               <div
                 className={`rounded-full px-4 py-2 text-sm ${currentStep >= 1

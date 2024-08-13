@@ -188,7 +188,7 @@ const Calendar = () => {
         </div>
       </div>
 
-      <div className="flex justify-between mb-4 items-center">
+      <div className="flex justify-right mb-4 items-right">
         <Button
           icon={<LeftOutlined />}
           onClick={handlePrevMonth}

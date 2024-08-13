@@ -519,7 +519,7 @@ const Projects = () => {
       {showTooltipIndex === index && (
         <div
           ref={dropdownRef}
-          className="absolute left-full top-0 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
           onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
         >
           <Button

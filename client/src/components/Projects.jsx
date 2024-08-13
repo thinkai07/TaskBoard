@@ -4,9 +4,25 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
+import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
+
 import dayjs from "dayjs";
-import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,} from "antd";
-import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
+import {
+  Card,
+  Modal,
+  Input,
+  Button,
+  DatePicker,
+  Select,
+  notification,
+  Tooltip,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 const { TextArea } = Input;
 const { Option } = Select;
@@ -204,6 +220,7 @@ const Projects = () => {
       });
       return;
     }
+
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
@@ -457,6 +474,7 @@ const Projects = () => {
           </Button>
         )}
       </div>
+
       <div className="flex flex-wrap justify-start">
   {cards.map((card, index) => (
     <Card
@@ -471,21 +489,23 @@ const Projects = () => {
           <h3 className="font-bold text-black truncate">{card.name}</h3>
         </Tooltip>
         {userRole !== "USER" && (
-          <Tooltip title="More actions">
-            <EllipsisOutlined
-              className=""
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowTooltipIndex(
-                  showTooltipIndex === index ? null : index
-                );
-              }}
-            />
-          </Tooltip>
-        )}
+      
+        <button
+          className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTooltipIndex(showTooltipIndex === index ? null : index);
+          }}
+        >
+         <EllipsisVertical />
+        </button>
+   
+    )}
+
+
       </div>
       <Tooltip >
-        <p className="truncate text-gray-500">{card.description}</p>
+        <p className="truncate  text-gray-500">{card.description}</p>
       </Tooltip>
       <div className="mt-2 flex justify-between items-center">
         <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
@@ -503,7 +523,7 @@ const Projects = () => {
       {showTooltipIndex === index && (
         <div
           ref={dropdownRef}
-          className="absolute left-full top-0 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
           onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
         >
           <Button
@@ -536,13 +556,14 @@ const Projects = () => {
     </Card>
   ))}
 </div>
+
+
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
         onOk={handleSaveNewCard}
         onCancel={() => setAddProjectModalVisible(false)}
         width={600}
-        maskClosable={false} 
       >
         <Input
           placeholder="Project Name"
@@ -590,11 +611,13 @@ const Projects = () => {
             </Option>
           ))}
         </Select>
+
         {newCardErrors.email && (
           <p className="text-red-500">
             Valid Project Manager email is required
           </p>
         )}
+
         <DatePicker
           className="mt-4 w-full"
           placeholder="Start Date"
@@ -629,6 +652,7 @@ const Projects = () => {
           <p className="text-red-500">At least one team is required</p>
         )}
       </Modal>
+
       <Modal
         title="Rename Project"
         visible={renameDialogVisible}
@@ -676,6 +700,7 @@ const Projects = () => {
           </p>
         )}
       </Modal>
+
       <Modal
         title="Confirm Project Deletion"
         visible={deleteDialogVisible}
@@ -687,4 +712,5 @@ const Projects = () => {
     </div>
   );
 };
+
 export default Projects;

@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { server } from "../constant";
-import {
-  Table,
-  Button,
-  Input,
-  Modal,
-  Select,
-  message,
+import {Table,Button,Input,Modal,Select,message,
   Spin,
 } from "antd";
 import { AiOutlineCheckCircle } from "react-icons/ai";

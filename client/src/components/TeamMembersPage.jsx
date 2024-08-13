@@ -5,7 +5,8 @@ import { server } from "../constant";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
-
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 const TeamMembersPage = () => {
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
@@ -38,7 +39,7 @@ const TeamMembersPage = () => {
     };
 
     fetchMembers();
-  }, [organizationId, teamId]);
+  }, [organizationId, teamId,members]);
 
   const handleEmailChange = async (event) => {
     setNewMemberEmail(event.target.value);
@@ -120,9 +121,18 @@ const TeamMembersPage = () => {
   };
 
   if (loading) {
-    return <p>Loading members...</p>;
-  }
-
+    return (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center', // Center horizontally
+            alignItems: 'center', // Center vertically
+            height: '100vh' // Full height of the viewport
+        }}>
+            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+            Loading...
+        </div>
+    );
+}
   const columns = [
     {
       title: 'Email',

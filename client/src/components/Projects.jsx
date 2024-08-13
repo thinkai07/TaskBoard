@@ -4,6 +4,9 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
+import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dayjs from "dayjs";
 import {
   Card,
@@ -69,6 +72,7 @@ const Projects = () => {
     teams: [],
   });
   const dropdownRef = useRef(null);
+  const [loading, setLoading] = useState(true);
   
 
   useEffect(() => {
@@ -456,6 +460,19 @@ const Projects = () => {
       throw error;
     }
   };
+  if (!cards.length) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-light-white rounded-3xl p-8">
@@ -486,21 +503,23 @@ const Projects = () => {
           <h3 className="font-bold text-black truncate">{card.name}</h3>
         </Tooltip>
         {userRole !== "USER" && (
-          <Tooltip title="More actions">
-            <EllipsisOutlined
-              className=""
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowTooltipIndex(
-                  showTooltipIndex === index ? null : index
-                );
-              }}
-            />
-          </Tooltip>
-        )}
+      
+        <button
+          className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTooltipIndex(showTooltipIndex === index ? null : index);
+          }}
+        >
+         <EllipsisVertical />
+        </button>
+   
+    )}
+
+
       </div>
       <Tooltip >
-        <p className="truncate text-gray-500">{card.description}</p>
+        <p className="truncate  text-gray-500">{card.description}</p>
       </Tooltip>
       <div className="mt-2 flex justify-between items-center">
         <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
@@ -518,7 +537,7 @@ const Projects = () => {
       {showTooltipIndex === index && (
         <div
           ref={dropdownRef}
-          className="absolute left-full top-0 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
           onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
         >
           <Button

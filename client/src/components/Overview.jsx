@@ -16,7 +16,8 @@ import useTokenValidation from './UseTockenValidation';
 import { DownOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
 import { Button } from 'antd';
-
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -337,8 +338,18 @@ const Overview = () => {
 
 
   if (!overviewData.projects.length) {
-    return <div>Loading...</div>;
-  }
+    return (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center', // Center horizontally
+            alignItems: 'center', // Center vertically
+            height: '100vh' // Full height of the viewport
+        }}>
+            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+            Loading...
+        </div>
+    );
+}
 
   return (
     <div style={{ padding: '24px', backgroundColor: '#f7fafc', fontFamily: "'Open Sans', sans-serif" }}>

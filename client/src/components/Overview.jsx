@@ -95,51 +95,7 @@ const Overview = () => {
   }, [organizationId]);
 
 
-  //added
-
-
-
-  // const handleUserChange = async (event) => {
-  //   const userId = event.target.value;
-  //   setSelectedUser(userId);
-
-  //   if (userId) {
-  //     try {
-  //       const response = await axios.get(`${server}/api/cards/user/${userId}`);
-  //       const userCards = response.data;
-  //       setCards(userCards);
-
-  //       // Calculate card counts for the selected user
-  //       const counts = userCards.reduce((acc, card) => {
-  //         acc[card.status] = (acc[card.status] || 0) + 1;
-  //         return acc;
-  //       }, {});
-
-  //       setTotalCardCount(userCards.length); // Total cards for the selected user
-  //       setUserCardCounts({
-  //         pending: counts['pending'] || 0,
-  //         inprogress: counts['inprogress'] || 0,
-  //         completed: counts['completed'] || 0,
-  //       });
-
-  //       // Render the bar chart when cards data changes
-  //       setGroupedData(groupByMonthAndStatus(userCards));
-
-  //     } catch (error) {
-  //       console.error('Error fetching cards:', error);
-  //     }
-  //   } else {
-  //     setCards([]);
-  //     setUserCardCounts({
-  //       pending: 0,
-  //       inprogress: 0,
-  //       completed: 0,
-  //     });
-  //     setTotalCardCount(0);
-  //     setGroupedData({});
-  //   }
-  // };
-
+ 
   const handleMenuClick = async (e) => {
     const userId = e.key;
     setSelectedUser(userId);
@@ -284,19 +240,16 @@ const Overview = () => {
         label: 'Pending',
         data: pendingData,
         backgroundColor: '#f7665a',
-
       },
       {
         label: 'In-Progress',
         data: inprogressData,
         backgroundColor: '#efe152',
-
       },
       {
         label: 'Completed',
         data: completedData,
         backgroundColor: '#10b981',
-
       },
     ],
   };
@@ -327,7 +280,9 @@ const Overview = () => {
     plugins: {
       legend: {
         position: 'bottom',
-
+        pointStyle: 'circle',
+          padding: 10,
+        
       },
       title: {
         display: true,
@@ -357,19 +312,19 @@ const Overview = () => {
         <div style={{ flex: 3 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', gap: '16px' }}>
-              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '20px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
+              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '15px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
                 <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#4a5568' }}>Total Projects</h3>
                 <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>+{overviewData.totalProjects}</p>
               </div>
-              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '20px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
+              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '15px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
                 <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#4a5568' }}>Total Members</h3>
                 <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>+{overviewData.totalMembers}</p>
               </div>
-              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '20px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
+              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '15px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
                 <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#4a5568' }}>Total Tasks</h3>
                 <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>+{overviewData.totalCards}</p>
               </div>
-              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '20px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
+              <div style={{ backgroundColor: 'white', boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)', borderRadius: '15px', padding: '20px', textAlign: 'center', width: '200px', height: '130px' }}>
                 <Pie data={data} options={options} />
               </div>
             </div>
@@ -377,7 +332,7 @@ const Overview = () => {
               <h3 style={{ fontSize: '17px', fontWeight: '600', color: '#4a5568', marginBottom: '16px' }}>Project Details</h3>
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ maxHeight: '330px', overflowY: 'auto', scrollbarWidth: "none" }}>
-                  <table style={{ width: '100%', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', fontFamily: "'Open Sans', sans-serif", fontSize: "12px" }}>
+                  <table style={{ width: '100%', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', fontFamily: "'Open Sans', sans-serif",fontSize:"12px" }}>
                     <thead className="sticky top-0 z-10 bg-gray-100">
                       <tr>
                         <th className="px-4 py-3 border-b-2 border-gray-200 text-left">Project Name</th>
@@ -436,6 +391,7 @@ const Overview = () => {
               </a>
 
             </Dropdown>
+           
 
           </div>
 
@@ -443,7 +399,7 @@ const Overview = () => {
             <Doughnut data={selectedUser ? data1 : defaultDoughnutData} options={options} />
           </div>
           <div style={{ marginTop: '16px' }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568', paddingTop: '25px' }}>Bar plot</h3>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568' }}>Bar plot</h3>
             <Bar data={selectedUser ? barData : defaultBarData} options={barOptions} />
           </div>
         </div>

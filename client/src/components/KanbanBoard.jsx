@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
-import { notification } from "antd";
+// import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
@@ -143,7 +143,7 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
-
+  const [loading, setLoading] = useState(false);
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
@@ -199,7 +199,6 @@ function KanbanBoard() {
           ),
         }));
       });
-
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
         setBoardData((prevState) => ({
@@ -275,9 +274,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -325,7 +324,6 @@ function KanbanBoard() {
           return { ...prevState, columns: updatedColumns };
         });
       });
-
     }
     return () => {
       if (socket) {
@@ -337,7 +335,6 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
-
       }
     };
   }, [socket, projectId]);
@@ -454,7 +451,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-      projects.find((project) => project._id === projectId)?.projectManager);
+        projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -723,8 +720,6 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
-
-
   // Polling function
   const pollForUpdates = async () => {
     await fetchTasks();
@@ -737,7 +732,6 @@ function KanbanBoard() {
     // Clean up the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, []);
-
 
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
@@ -796,9 +790,6 @@ function KanbanBoard() {
     }
   };
 
-
-
-
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
     setShowDeleteConfirmation(true);
@@ -833,9 +824,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -929,11 +920,15 @@ function KanbanBoard() {
     }
 
     setLoading(true);
+
+    setLoading(true);
     let createdBy;
     try {
       createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
+      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
+      setLoading(false);
       setLoading(false);
       return;
     }
@@ -967,11 +962,14 @@ function KanbanBoard() {
         ],
       }));
       notification.success({ message: "Column created successfully" });
+      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
     } catch (error) {
       console.error("Error adding task:", error);
+    } finally {
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -1342,10 +1340,7 @@ function KanbanBoard() {
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <TimeProgressBar
-        assignDate={card.assignDate}
-        dueDate={card.dueDate}
-      />
+      <TimeProgressBar assignDate={card.assignDate} dueDate={card.dueDate} />
       <div className="p-4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div className="react-kanban-card__title truncate" title={card.title}>
@@ -1443,7 +1438,6 @@ function KanbanBoard() {
             <BsPencilSquare />
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -1593,10 +1587,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                    ...card,
-                    title: trimmedTitle,
-                    description: trimmedDescription,
-                  }
+                      ...card,
+                      title: trimmedTitle,
+                      description: trimmedDescription,
+                    }
                   : card
               ),
             };
@@ -1929,7 +1923,7 @@ function KanbanBoard() {
                 borderRadius: "20px",
               }}
             >
-              <div style={{ marginBottom: "0.5rem" }}>
+              <div style={{ marginBottom: "0.5rem", }}>
                 <h3
                   className="font-bold"
                   style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
@@ -1986,7 +1980,8 @@ function KanbanBoard() {
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
-                  paddingLeft: "50%"
+                  paddingLeft: "50%",
+                  
                 }}
               >
                 <FaPlus />
@@ -2247,8 +2242,9 @@ function KanbanBoard() {
                     setNewColumnName(e.target.value.trimStart());
                     setRenameColumnError(false);
                   }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${
+                    renameColumnError ? "border-red-500" : "border-gray-300"
+                  }`}
                   placeholder="Enter the new name for the column"
                 />
                 {renameColumnError && (
@@ -2340,6 +2336,11 @@ function KanbanBoard() {
                   ) : (
                     <MdOutlineContentCopy />
                   )}
+                  {copiedButton === "button1" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
@@ -2406,7 +2407,6 @@ git push -u origin main`}
           </div>
         </div>
       )}
-
     </div>
   );
 }

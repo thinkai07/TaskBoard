@@ -14,7 +14,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 const axios = require("axios");
 // Initialize the Express app
-const port = process.env.PORT || 3001;
+const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -836,14 +836,10 @@ app.post("/api/addUser",
   authorizeRoles("ADMIN"),
   async (req, res) => {
     const { name, email, role } = req.body;
-
     try {
       if (!name || !email || !role) {
         return res.status(400).json({ message: "All fields are required" });
       }
-
-
-
       const newUser = new User({
         name,
         email,
@@ -911,8 +907,8 @@ const sendResetEmail = (email, link) => {
   const mailOptions = {
     from: "thinkailabs111@gmail.com",
     to: email,
-    subject: "Password Reset",
-    text: `Please click on the following link to reset your password: ${link}`,
+    subject: "Create password",
+    text: `Please click on the following link to create your password: ${link}`,
   };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -1411,7 +1407,7 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
 );
 
 //custom image
-app.put("/api/projects/:projectId/customImages", authenticateToken,
+app.put("/api/projects/:projectId/customImages",authenticateToken,
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
@@ -2026,7 +2022,7 @@ app.put("/api/projects/:projectId/tasks/:taskId/move",
 
 
 //delelte column
-app.delete("/api/projects/:projectId/tasks/:taskId", authenticateToken,
+app.delete("/api/projects/:projectId/tasks/:taskId",authenticateToken,
   async (req, res) => {
     const { projectId, taskId } = req.params;
     const { deletedBy, deletedDate } = req.body;
@@ -2287,7 +2283,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch notifications" });
   }
 });
-app.patch("/api/notifications/:notificationId", authenticateToken,
+app.patch("/api/notifications/:notificationId",authenticateToken,
   async (req, res) => {
     const { notificationId } = req.params;
     const { readStatus } = req.body;
@@ -2967,7 +2963,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 
 
 //teams related apis
-app.post("/api/projects/:projectId/teams/addUser", authenticateToken,
+app.post("/api/projects/:projectId/teams/addUser",authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
     const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
@@ -3033,7 +3029,7 @@ app.post("/api/projects/:projectId/teams/addUser", authenticateToken,
   }
 );
 // Endpoint to get all users under all teams based on project ID
-app.get("/api/projects/:projectId/teams/users", authenticateToken,
+app.get("/api/projects/:projectId/teams/users",authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
 
@@ -3070,40 +3066,40 @@ app.get("/api/projects/:projectId/teams/users", authenticateToken,
   }
 );
 // Endpoint to get users under a specific team based on project ID and team name
-app.get("/api/projects/:projectId/teams/:teamName/users", authenticateToken, async (req, res) => {
-  const { projectId, teamName } = req.params;
-  try {
-    const project = await Project.findById(projectId).populate({
-      path: "teams",
-      match: { name: teamName },
-      populate: {
-        path: "users.user",
-        model: "User",
-      },
-    });
+app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
+    const { projectId, teamName } = req.params;
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        match: { name: teamName },
+        populate: {
+          path: "users.user",
+          model: "User",
+        },
+      });
 
-    if (!project || project.teams.length === 0) {
-      return res.status(404).json({ message: "Team not found" });
+      if (!project || project.teams.length === 0) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+
+      const team = project.teams[0];
+      const users = team.users.map((user) => ({
+        name: user.user.name,
+        email: user.user.email,
+        role: user.role,
+        team: team.name,
+      }));
+
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error("Error fetching team users:", error);
+      res.status(500).json({ message: "Error fetching team users" });
     }
-
-    const team = project.teams[0];
-    const users = team.users.map((user) => ({
-      name: user.user.name,
-      email: user.user.email,
-      role: user.role,
-      team: team.name,
-    }));
-
-    res.status(200).json({ users });
-  } catch (error) {
-    console.error("Error fetching team users:", error);
-    res.status(500).json({ message: "Error fetching team users" });
   }
-}
 );
 
 // Endpoint to delete a user from a team
-app.delete("/api/projects/:projectId/teams/:teamName/users", authenticateToken,
+app.delete("/api/projects/:projectId/teams/:teamName/users",authenticateToken,
   async (req, res) => {
     const { projectId, teamName } = req.params;
     const { email, removedBy } = req.body;
@@ -3216,29 +3212,28 @@ app.post("/api/organizations/:organizationId/teams", authenticateToken,
     }
   }
 );
+app.get("/api/organizations/:organizationId/teams",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
 
-app.get("/api/organizations/:organizationId/teams", authenticateToken, async (req, res) => {
-  const { organizationId } = req.params;
+    try {
+      const organization = await Organization.findById(organizationId).populate(
+        "teams"
+      );
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
 
-  try {
-    const organization = await Organization.findById(organizationId).populate(
-      "teams"
-    );
-    if (!organization) {
-      return res.status(404).json({ message: "Organization not found" });
+      const teams = organization.teams;
+
+      res.status(200).json({ teams });
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Error fetching teams" });
     }
-
-    const teams = organization.teams;
-
-    res.status(200).json({ teams });
-  } catch (error) {
-    console.error("Error fetching teams:", error);
-    res.status(500).json({ message: "Error fetching teams" });
   }
-}
 );
 // Delete team inside organization
-app.delete("/api/organizations/:organizationId/teams/:teamId", authenticateToken,
+app.delete("/api/organizations/:organizationId/teams/:teamId",authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
 
@@ -3292,92 +3287,92 @@ app.delete("/api/organizations/:organizationId/teams/:teamId", authenticateToken
   }
 );
 // Edit team inside organization
-app.put("/api/organizations/:organizationId/teams/:teamId", authenticateToken, async (req, res) => {
-  const { organizationId, teamId } = req.params;
-  const { teamName } = req.body;
+app.put("/api/organizations/:organizationId/teams/:teamId",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
+    const { teamName } = req.body;
 
-  try {
-    const organization = await Organization.findById(organizationId);
-    if (!organization) {
-      return res.status(404).json({ message: "Organization not found" });
-    }
-
-    const team = await Team.findById(teamId);
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
-
-    const oldTeamName = team.name;
-    team.name = teamName;
-    await team.save();
-
-    // Update the team name in the GitHub organization
-    const githubTeamResponse = await axios.patch(
-      `https://api.github.com/orgs/${organization.name}/teams/${oldTeamName}`,
-      {
-        name: teamName,
-      },
-      {
-        headers: {
-          Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+    try {
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
       }
-    );
 
-    console.log("GitHub team updated:", githubTeamResponse.data);
+      const team = await Team.findById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
 
-    res.status(200).json({
-      message: "Team updated successfully",
-      team,
-      githubTeam: githubTeamResponse.data,
-    });
-  } catch (error) {
-    console.error("Error updating team:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating team", error: error.message });
+      const oldTeamName = team.name;
+      team.name = teamName;
+      await team.save();
+
+      // Update the team name in the GitHub organization
+      const githubTeamResponse = await axios.patch(
+        `https://api.github.com/orgs/${organization.name}/teams/${oldTeamName}`,
+        {
+          name: teamName,
+        },
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("GitHub team updated:", githubTeamResponse.data);
+
+      res.status(200).json({
+        message: "Team updated successfully",
+        team,
+        githubTeam: githubTeamResponse.data,
+      });
+    } catch (error) {
+      console.error("Error updating team:", error);
+      res
+        .status(500)
+        .json({ message: "Error updating team", error: error.message });
+    }
   }
-}
 );
 
 //create users inside teams
-app.post("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken, async (req, res) => {
-  const { organizationId, teamId } = req.params;
-  const { email, role } = req.body;
+app.post("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
+    const { email, role } = req.body;
 
-  try {
-    // Find the organization
-    const organization = await Organization.findById(organizationId);
-    if (!organization) {
-      return res.status(404).json({ message: "Organization not found" });
-    }
+    try {
+      // Find the organization
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
 
-    // Find the team
-    const team = await Team.findById(teamId);
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
+      // Find the team
+      const team = await Team.findById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
 
-    // Check if the team belongs to the organization
-    if (!organization.teams.includes(team._id)) {
-      return res
-        .status(400)
-        .json({ message: "Team does not belong to this organization" });
-    }
+      // Check if the team belongs to the organization
+      if (!organization.teams.includes(team._id)) {
+        return res
+          .status(400)
+          .json({ message: "Team does not belong to this organization" });
+      }
 
-    // Find the user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+      // Find the user
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-    // Check if the user has an 'ADMIN' role
-    if (user.role === "ADMIN") {
-      return res
-        .status(400)
-        .json({ message: "Admin users cannot be added to teams" });
-    }
+      // Check if the user has an 'ADMIN' role
+      if (user.role === "ADMIN") {
+        return res
+          .status(400)
+          .json({ message: "Admin users cannot be added to teams" });
+      }
 
     // Check if the user status is 'unverify'
     if (user.status === "UNVERIFY") {
@@ -3387,91 +3382,91 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users", authenticateT
       });
     }
 
-    // Check if the user is already in the team
-    const userInTeam = team.users.find(
-      (u) => u.user.toString() === user._id.toString()
-    );
-    if (userInTeam) {
-      return res.status(400).json({ message: "User is already in the team" });
-    }
-
-    // Add the user to the team in MongoDB
-    team.users.push({ user: user._id, role: role || "USER" });
-    await team.save();
-
-    // Add the user to the GitHub team
-    const githubTeamResponse = await axios.put(
-      `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
-      {},
-      {
-        headers: {
-          Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+      // Check if the user is already in the team
+      const userInTeam = team.users.find(
+        (u) => u.user.toString() === user._id.toString()
+      );
+      if (userInTeam) {
+        return res.status(400).json({ message: "User is already in the team" });
       }
-    );
 
-    console.log("GitHub team membership updated:", githubTeamResponse.data);
+      // Add the user to the team in MongoDB
+      team.users.push({ user: user._id, role: role || "USER" });
+      await team.save();
 
-    res.status(200).json({
-      message:
-        "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
-      team,
-      githubTeam: githubTeamResponse.data,
-    });
-  } catch (error) {
-    console.error("Error adding user to team:", error);
-    res
-      .status(500)
-      .json({ message: "Error adding user to team", error: error.message });
+      // Add the user to the GitHub team
+      const githubTeamResponse = await axios.put(
+        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
+        {},
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("GitHub team membership updated:", githubTeamResponse.data);
+
+      res.status(200).json({
+        message:
+          "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
+        team,
+        githubTeam: githubTeamResponse.data,
+      });
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+      res
+        .status(500)
+        .json({ message: "Error adding user to team", error: error.message });
+    }
   }
-}
 );
 
-app.get("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken, async (req, res) => {
-  const { organizationId, teamId } = req.params;
+app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
 
-  try {
-    // Find the organization
-    const organization = await Organization.findById(organizationId);
-    if (!organization) {
-      return res.status(404).json({ message: "Organization not found" });
+    try {
+      // Find the organization
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Find the team and populate its users
+      const team = await Team.findById(teamId).populate(
+        "users.user",
+        "name email status"
+      );
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+
+      // Check if the team belongs to the organization
+      if (!organization.teams.includes(team._id)) {
+        return res
+          .status(400)
+          .json({ message: "Team does not belong to this organization" });
+      }
+
+      // Format the user data
+      const users = team.users.map((user) => ({
+        id: user.user._id,
+        name: user.user.name,
+        email: user.user.email,
+        role: user.role,
+        status: user.user.status,
+      }));
+
+      res.status(200).json({ teamName: team.name, users });
+    } catch (error) {
+      console.error("Error fetching team users:", error);
+      res.status(500).json({ message: "Error fetching team users" });
     }
-
-    // Find the team and populate its users
-    const team = await Team.findById(teamId).populate(
-      "users.user",
-      "name email status"
-    );
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
-
-    // Check if the team belongs to the organization
-    if (!organization.teams.includes(team._id)) {
-      return res
-        .status(400)
-        .json({ message: "Team does not belong to this organization" });
-    }
-
-    // Format the user data
-    const users = team.users.map((user) => ({
-      id: user.user._id,
-      name: user.user.name,
-      email: user.user.email,
-      role: user.role,
-      status: user.user.status,
-    }));
-
-    res.status(200).json({ teamName: team.name, users });
-  } catch (error) {
-    console.error("Error fetching team users:", error);
-    res.status(500).json({ message: "Error fetching team users" });
   }
-}
 );
 
-app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId", authenticateToken,
+app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",authenticateToken,
   async (req, res) => {
     const { organizationId, teamId, userId } = req.params;
     const { removedBy } = req.body;
@@ -3548,88 +3543,91 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId", aut
   }
 );
 
-app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
-  const { projectId } = req.params;
-  const { email } = req.query;
 
-  if (!email) {
-    return res
-      .status(400)
-      .json({ message: "Email query parameter is required" });
-  }
 
-  try {
-    const project = await Project.findById(projectId).populate({
-      path: "teams",
-      populate: {
-        path: "users.user",
-        model: "User",
-      },
-    });
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+app.get( "/api/projects/:projectId/users/search",authenticateToken,async (req, res) => {
+    const { projectId } = req.params;
+    const { email } = req.query;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ message: "Email query parameter is required" });
     }
 
-    const matchingUsers = [];
-    project.teams.forEach((team) => {
-      team.users.forEach((user) => {
-        if (user.user.email.toLowerCase().includes(email.toLowerCase())) {
-          matchingUsers.push({
-            name: user.user.name,
-            email: user.user.email,
-            role: user.role,
-            team: team.name,
-          });
-        }
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        populate: {
+          path: "users.user",
+          model: "User",
+        },
       });
-    });
 
-    if (matchingUsers.length === 0) {
-      return res.status(404).json({
-        message:
-          "No users found within the project teams with the given email",
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      const matchingUsers = [];
+      project.teams.forEach((team) => {
+        team.users.forEach((user) => {
+          if (user.user.email.toLowerCase().includes(email.toLowerCase())) {
+            matchingUsers.push({
+              name: user.user.name,
+              email: user.user.email,
+              role: user.role,
+              team: team.name,
+            });
+          }
+        });
       });
+
+      if (matchingUsers.length === 0) {
+        return res.status(404).json({
+          message:
+            "No users found within the project teams with the given email",
+        });
+      }
+
+      res.status(200).json({ users: matchingUsers });
+    } catch (error) {
+      console.error("Error searching project team users:", error);
+      res.status(500).json({ message: "Error searching project team users" });
     }
-
-    res.status(200).json({ users: matchingUsers });
-  } catch (error) {
-    console.error("Error searching project team users:", error);
-    res.status(500).json({ message: "Error searching project team users" });
   }
-}
 );
 
-app.get("/api/projects/:projectId/teams", authenticateToken, async (req, res) => {
-  const { projectId } = req.params;
-  try {
-    const project = await Project.findById(projectId).populate({
-      path: "teams",
-      populate: {
-        path: "users.user",
-        select: "email role", // Select only email and role fields
-      },
-    });
+app.get("/api/projects/:projectId/teams",authenticateToken,async (req, res) => {
+    const { projectId } = req.params;
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        populate: {
+          path: "users.user",
+          select: "email role", // Select only email and role fields
+        },
+      });
 
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Transform the data to match the frontend requirements
+      const teams = project.teams.map((team) => ({
+        name: team.name,
+        members: team.users.map((user) => ({
+          email: user.user.email,
+          role: user.role,
+        })),
+      }));
+
+      res.status(200).json({ teams });
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Error fetching teams" });
     }
-
-    // Transform the data to match the frontend requirements
-    const teams = project.teams.map((team) => ({
-      name: team.name,
-      members: team.users.map((user) => ({
-        email: user.user.email,
-        role: user.role,
-      })),
-    }));
-
-    res.status(200).json({ teams });
-  } catch (error) {
-    console.error("Error fetching teams:", error);
-    res.status(500).json({ message: "Error fetching teams" });
   }
-}
 );
 
   // Fetch users for an organization
@@ -3643,215 +3641,215 @@ app.get("/api/projects/:projectId/teams", authenticateToken, async (req, res) =>
     }
   });
 
-app.get("/api/overview/:organizationId", authenticateToken, async (req, res) => {
-  const { organizationId } = req.params;
-  const userEmail = req.user.email;
-  const userRole = req.user.role;
+app.get("/api/overview/:organizationId",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
+    const userEmail = req.user.email;
+    const userRole = req.user.role;
 
-  try {
-    const organization = await Organization.findById(organizationId);
-    if (!organization) {
-      return res.status(404).json({ message: "Organization not found" });
-    }
-
-    // Get user count of the organization
-    const userCount = await User.countDocuments({
-      organization: organizationId,
-    });
-
-    let projects;
-    if (userRole === "ADMIN") {
-      projects = await Project.find({
-        organization: organizationId,
-      }).populate("teams");
-    } else {
-      const user = await User.findOne({ email: userEmail });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+    try {
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
       }
 
-      const userTeams = await Team.find({ "users.user": user._id });
-      projects = await Project.find({
+      // Get user count of the organization
+      const userCount = await User.countDocuments({
         organization: organizationId,
-        $or: [
-          { projectManager: userEmail },
-          { teams: { $in: userTeams.map((team) => team._id) } },
-        ],
-      }).populate("teams");
-    }
+      });
 
-    const totalProjects = projects.length;
+      let projects;
+      if (userRole === "ADMIN") {
+        projects = await Project.find({
+          organization: organizationId,
+        }).populate("teams");
+      } else {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
 
-    // Get all task IDs for these projects
-    const projectIds = projects.map((project) => project._id);
-    const tasks = await Task.find({ project: { $in: projectIds } });
+        const userTeams = await Team.find({ "users.user": user._id });
+        projects = await Project.find({
+          organization: organizationId,
+          $or: [
+            { projectManager: userEmail },
+            { teams: { $in: userTeams.map((team) => team._id) } },
+          ],
+        }).populate("teams");
+      }
 
-    // Get total number of tasks
-    const totalTasks = tasks.length;
+      const totalProjects = projects.length;
 
-    // Aggregate cards across all tasks
-    const totalCardsResult = await Task.aggregate([
-      { $match: { project: { $in: projectIds } } },
-      { $unwind: "$card" },
-      {
-        $lookup: {
-          from: "cards",
-          localField: "card",
-          foreignField: "_id",
-          as: "cards",
+      // Get all task IDs for these projects
+      const projectIds = projects.map((project) => project._id);
+      const tasks = await Task.find({ project: { $in: projectIds } });
+
+      // Get total number of tasks
+      const totalTasks = tasks.length;
+
+      // Aggregate cards across all tasks
+      const totalCardsResult = await Task.aggregate([
+        { $match: { project: { $in: projectIds } } },
+        { $unwind: "$card" },
+        {
+          $lookup: {
+            from: "cards",
+            localField: "card",
+            foreignField: "_id",
+            as: "cards",
+          },
         },
-      },
-      { $unwind: "$cards" },
-      { $group: { _id: null, totalCards: { $sum: 1 } } },
-    ]);
-    const totalCards =
-      totalCardsResult.length > 0 ? totalCardsResult[0].totalCards : 0;
+        { $unwind: "$cards" },
+        { $group: { _id: null, totalCards: { $sum: 1 } } },
+      ]);
+      const totalCards =
+        totalCardsResult.length > 0 ? totalCardsResult[0].totalCards : 0;
 
-    const projectDetails = await Promise.all(
-      projects.map(async (project) => {
-        const projectTasks = tasks.filter((task) =>
-          task.project.equals(project._id)
-        );
-        const teams = await Team.find({
-          _id: { $in: project.teams },
-        }).populate("users.user");
+      const projectDetails = await Promise.all(
+        projects.map(async (project) => {
+          const projectTasks = tasks.filter((task) =>
+            task.project.equals(project._id)
+          );
+          const teams = await Team.find({
+            _id: { $in: project.teams },
+          }).populate("users.user");
 
-        // Calculate total cards and their statuses for this project
-        const projectCardsResult = await Task.aggregate([
-          { $match: { project: project._id } },
-          { $unwind: "$card" },
-          {
-            $lookup: {
-              from: "cards",
-              localField: "card",
-              foreignField: "_id",
-              as: "cards",
+          // Calculate total cards and their statuses for this project
+          const projectCardsResult = await Task.aggregate([
+            { $match: { project: project._id } },
+            { $unwind: "$card" },
+            {
+              $lookup: {
+                from: "cards",
+                localField: "card",
+                foreignField: "_id",
+                as: "cards",
+              },
             },
-          },
-          { $unwind: "$cards" },
-          {
-            $group: {
-              _id: "$cards.status",
-              count: { $sum: 1 },
+            { $unwind: "$cards" },
+            {
+              $group: {
+                _id: "$cards.status",
+                count: { $sum: 1 },
+              },
             },
-          },
-        ]);
+          ]);
 
-        // Initialize card counts
-        let totalPendingCards = 0;
-        let totalInProgressCards = 0;
-        let totalCompletedCards = 0;
+          // Initialize card counts
+          let totalPendingCards = 0;
+          let totalInProgressCards = 0;
+          let totalCompletedCards = 0;
 
-        projectCardsResult.forEach((card) => {
-          if (card._id === "pending") totalPendingCards = card.count;
-          if (card._id === "inprogress") totalInProgressCards = card.count;
-          if (card._id === "completed") totalCompletedCards = card.count;
-        });
+          projectCardsResult.forEach((card) => {
+            if (card._id === "pending") totalPendingCards = card.count;
+            if (card._id === "inprogress") totalInProgressCards = card.count;
+            if (card._id === "completed") totalCompletedCards = card.count;
+          });
 
-        // Calculate in-progress and pending tasks
-        const totalInProgressTasks = projectTasks.filter((task) =>
-          task.card.some((card) => card.status === "inprogress")
-        ).length;
-        const totalPendingTasks = projectTasks.filter((task) =>
-          task.card.some((card) => card.status === "pending")
-        ).length;
+          // Calculate in-progress and pending tasks
+          const totalInProgressTasks = projectTasks.filter((task) =>
+            task.card.some((card) => card.status === "inprogress")
+          ).length;
+          const totalPendingTasks = projectTasks.filter((task) =>
+            task.card.some((card) => card.status === "pending")
+          ).length;
 
-        return {
-          id: project._id,
-          name: project.name,
-          projectMembers: teams.flatMap((team) =>
-            team.users.map((user) => user.user)
-          ),
-          totalTasks: projectTasks.length,
-          totalInProgressTasks,
-          totalPendingTasks,
-          totalCards:
-            totalPendingCards + totalInProgressCards + totalCompletedCards,
-          totalPendingCards,
-          totalInProgressCards,
-          totalCompletedCards,
-        };
-      })
-    );
+          return {
+            id: project._id,
+            name: project.name,
+            projectMembers: teams.flatMap((team) =>
+              team.users.map((user) => user.user)
+            ),
+            totalTasks: projectTasks.length,
+            totalInProgressTasks,
+            totalPendingTasks,
+            totalCards:
+              totalPendingCards + totalInProgressCards + totalCompletedCards,
+            totalPendingCards,
+            totalInProgressCards,
+            totalCompletedCards,
+          };
+        })
+      );
 
-    res.json({
-      totalProjects,
-      totalTasks,
-      totalMembers: userCount,
-      totalCards,
-      projects: projectDetails,
-    });
-  } catch (error) {
-    console.error("Error retrieving overview data:", error);
-    res.status(500).json({ message: "Error retrieving overview data" });
+      res.json({
+        totalProjects,
+        totalTasks,
+        totalMembers: userCount,
+        totalCards,
+        projects: projectDetails,
+      });
+    } catch (error) {
+      console.error("Error retrieving overview data:", error);
+      res.status(500).json({ message: "Error retrieving overview data" });
+    }
   }
-}
 );
 
-app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => {
-  const { organizationId } = req.params;
-  const userEmail = req.user.email;
-  const userRole = req.user.role;
+app.get("/api/calendar/:organizationId",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
+    const userEmail = req.user.email;
+    const userRole = req.user.role;
 
-  try {
-    let assignedCards;
-    if (userRole === "ADMIN") {
-      assignedCards = await Card.find()
-        .populate({
-          path: "project",
-          match: { organization: organizationId },
-          select: "_id name projectManager",
+    try {
+      let assignedCards;
+      if (userRole === "ADMIN") {
+        assignedCards = await Card.find()
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      } else {
+        // Find projects where the user is the project manager
+        const managedProjects = await Project.find({
+          organization: organizationId,
+          projectManager: userEmail,
+        }).select("_id");
+
+        const managedProjectIds = managedProjects.map((project) => project._id);
+
+        assignedCards = await Card.find({
+          $or: [
+            { assignedTo: userEmail },
+            { project: { $in: managedProjectIds } },
+          ],
         })
-        .populate("task", "name");
-    } else {
-      // Find projects where the user is the project manager
-      const managedProjects = await Project.find({
-        organization: organizationId,
-        projectManager: userEmail,
-      }).select("_id");
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      }
 
-      const managedProjectIds = managedProjects.map((project) => project._id);
+      const events = assignedCards
+        .filter((card) => card.project && card.task)
+        .flatMap((card) => [
+          {
+            id: `${card._id}-assign`,
+            date: card.assignDate,
+            projectId: card.project._id,
+            projectName: card.project.name,
+            taskId: card.task._id,
+            taskName: card.task.name,
+            cardId: card._id,
+            cardName: card.name,
+            assignedTo: card.assignedTo,
+            createdDate: card.createdDate,
+            status: card.status,
+            type: "Assign Date",
+          },
+        ])
+        .filter((event) => event.date);
 
-      assignedCards = await Card.find({
-        $or: [
-          { assignedTo: userEmail },
-          { project: { $in: managedProjectIds } },
-        ],
-      })
-        .populate({
-          path: "project",
-          match: { organization: organizationId },
-          select: "_id name projectManager",
-        })
-        .populate("task", "name");
+      res.json(events);
+    } catch (error) {
+      console.error("Error retrieving calendar data:", error);
+      res.status(500).json({ message: "Error retrieving calendar data" });
     }
-
-    const events = assignedCards
-      .filter((card) => card.project && card.task)
-      .flatMap((card) => [
-        {
-          id: `${card._id}-assign`,
-          date: card.assignDate,
-          projectId: card.project._id,
-          projectName: card.project.name,
-          taskId: card.task._id,
-          taskName: card.task.name,
-          cardId: card._id,
-          cardName: card.name,
-          assignedTo: card.assignedTo,
-          createdDate: card.createdDate,
-          status: card.status,
-          type: "Assign Date",
-        },
-      ])
-      .filter((event) => event.date);
-
-    res.json(events);
-  } catch (error) {
-    console.error("Error retrieving calendar data:", error);
-    res.status(500).json({ message: "Error retrieving calendar data" });
   }
-}
 );
 
   app.get("/api/projects/:projectId/audit-logs", async (req, res) => {

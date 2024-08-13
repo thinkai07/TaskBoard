@@ -222,6 +222,7 @@ const Projects = () => {
       });
       return;
     }
+
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
@@ -726,4 +727,5 @@ const Projects = () => {
     </div>
   );
 };
+
 export default Projects;

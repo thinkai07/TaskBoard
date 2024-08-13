@@ -20,14 +20,11 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
-<<<<<<< HEAD
 import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
 
-=======
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 
 const initialBoard = {
   columns: [],
@@ -72,11 +69,7 @@ const TimeProgressBar = ({ assignDate, dueDate }) => {
     >
 
       <div
-<<<<<<< HEAD
         className="absolute inset-0 flex items-center justify-center text-black font-bold"
-=======
-        className="absolute inset-0 flex items-center justify-center text-black font-semibold"
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         style={{ fontSize: '0.75rem' }} 
       >
         {Math.round(progress)}%
@@ -178,11 +171,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-<<<<<<< HEAD
     const newSocket = io("http://localhost:5000");
-=======
-    const newSocket = io("http://localhost:3001");
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
     setSocket(newSocket);
   }, []);
 
@@ -1354,16 +1343,12 @@ function KanbanBoard() {
         dueDate={card.dueDate}
       />
       <div className="p-4">
-<<<<<<< HEAD
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-=======
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         <div className="react-kanban-card__title truncate" title={card.title}>
           {card.title && card.title.length > 20
             ? card.title.slice(0, 28) + "..."
             : card.title}
         </div>
-<<<<<<< HEAD
         <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
@@ -1389,32 +1374,6 @@ function KanbanBoard() {
 
 
         {/* <div className="react-kanban-card__assignDate">
-=======
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px" }}>
-          <div
-            className="react-kanban-card__description truncate"
-            title={card.description || ""}
-            style={{ flex: 1, marginRight: "10px" }}
-          >
-            {card.description && card.description.length > 35
-              ? card.description.slice(0, 35) + "..."
-              : card.description || ""}
-          </div>
-          <div className="react-kanban-card__assignedTo flex items-center">
-            {card.assignedTo && (
-              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-semibold ml-2 relative group">
-                <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-                  {card.assignedTo}
-                </span>
-                {card.assignedTo.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-        </div>
-
-
-        <div className="react-kanban-card__assignDate">
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           {card.assignDate && (
             <div className="text-sm text-gray-500">
               Assign Date:{" "}
@@ -1428,11 +1387,7 @@ function KanbanBoard() {
               })}
             </div>
           )}
-<<<<<<< HEAD
         </div> */}
-=======
-        </div>
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
             <div className="text-sm text-gray-500">
@@ -1448,11 +1403,7 @@ function KanbanBoard() {
             </div>
           )}
         </div>
-<<<<<<< HEAD
         <div style={{ display: "flex", alignItems:'flex-start', justifyContent: "space-between" }}>
-=======
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px" }}>
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
             <select
               value={card.status}
@@ -2348,11 +2299,7 @@ function KanbanBoard() {
             >
               <MdCancel size={30} />
             </button>
-<<<<<<< HEAD
             <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
-=======
-            <h2 className="text-lg font-semibold mb-4">Git Configuration</h2>
->>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p>Quick setup — if you've done this kind of thing before</p>
               <div className="flex justify-between items-center bg-gray-200 p-2 rounded">

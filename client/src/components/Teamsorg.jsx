@@ -6,6 +6,8 @@ import { server } from "../constant";
 import { FaTrash, FaEdit, FaSave, FaTimes, FaPlus } from 'react-icons/fa';
 import { Modal, notification, Button, Card } from 'antd';
 import { BsFillPencilFill } from "react-icons/bs";
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const TeamsPage = () => {
     const [teams, setTeams] = useState([]);
@@ -73,36 +75,7 @@ const TeamsPage = () => {
         }
     };
 
-    // const handleSaveNewTeam = async () => {
-    //     if (!newTeamName.trim()) {
-    //         setNewTeamError(true);
-    //         return;
-    //     }
-
-    //     try {
-    //         const addedBy = await fetchUserEmail();
-
-    //         const response = await axios.post(
-    //             `${server}/api/organizations/${organizationId}/teams`,
-    //             { teamName: newTeamName.trim(), addedBy: addedBy },
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                 },
-    //             }
-    //         );
-
-    //         const newTeam = response.data.team;
-    //         setTeams((prevTeams) => [...prevTeams, newTeam]);
-    //         setIsAddingTeam(false);
-    //         setNewTeamName("");
-    //         setNewTeamError(false);
-    //     } catch (error) {
-    //         console.error("Error creating team:", error);
-    //         setNewTeamError(true);
-    //     }
-    // };
-
+   
 
     const handleSaveNewTeam = async () => {
         if (!newTeamName.trim()) {
@@ -206,9 +179,18 @@ const TeamsPage = () => {
         setEditingTeamId(null);
         setEditingTeamName("");
     };
-
     if (loading) {
-        return <p>Loading teams...</p>;
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center', // Center horizontally
+                alignItems: 'center', // Center vertically
+                height: '100vh' // Full height of the viewport
+            }}>
+                <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+                Loading...
+            </div>
+        );
     }
 
     return (

@@ -24,7 +24,10 @@ import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
-
+import { Popover, Button,Space,Modal,Form,Input } from 'antd';
+import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
+import { SquareMenu } from 'lucide-react';
+import { Plus } from "lucide-react";
 
 const initialBoard = {
   columns: [],
@@ -145,6 +148,7 @@ function KanbanBoard() {
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -917,19 +921,20 @@ function KanbanBoard() {
     setNewColumnModalVisible(true);
   };
 
-  const handleAddColumnSubmit = async (e) => {
-    e.preventDefault();
+  const handleAddColumnSubmit = async () => {
     const trimmedColumnName = newColumnName.trim();
     if (!trimmedColumnName) {
       setNewColumnError(true);
       return;
     }
+
+    setLoading(true);
     let createdBy;
     try {
-      createdBy = await fetchUserEmail();
-      console.log(createdBy);
+      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
+      setLoading(false);
       return;
     }
 
@@ -961,15 +966,14 @@ function KanbanBoard() {
           { id: task._id, title: task.name, cards: [], createdBy: createdBy },
         ],
       }));
+      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
-      notification.success({
-        message: 'Column created  Successfully',
-
-    });
     } catch (error) {
       console.error("Error adding task:", error);
+    } finally {
+      setLoading(false);
     }
   };
   // Update the handleRenameColumn function
@@ -1619,19 +1623,19 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
-      style={
-        bgUrl
-          ? {
+    className="p-4 overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+    style={
+      bgUrl
+        ? {
             backgroundImage: `url(${bgUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            height: "100vh",
+
             width: "100%",
           }
-          : {}
-      }
-    >
+        : {}
+    }
+  >
       <div>
         {renameCardModalVisible && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -1803,17 +1807,7 @@ function KanbanBoard() {
           </h1>
         </div>
         <div className="flex space-x-2 ">
-          {/* {canShowActions && (
-            <button
-              onClick={handleOpenModal}
-              className={`${memberAdded ? "bg-gray-400" : "bg-green-500"
-                } text-white px-4 py-2 rounded-full`}
-              disabled={memberAdded}
-            >
-              {memberAdded ? "Member Added" : "+ Add member"}
-            </button>
-          )} */}
-          {/* added */}
+         
 
           {isModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-slate-700 z-50 bg-opacity-50">
@@ -1878,26 +1872,41 @@ function KanbanBoard() {
             </div>
           )}
 
-          {/* <button
-            className="bg-blue-500 text-white px-4 py-2 rounded-full"
-            onClick={handleTeamsClick}
-          >
-            Teams
-          </button> */}
-          <RulesButton tasks={tasks} />
-          <button
-            onClick={openGitModal}
-            className="bg-green-500 text-white px-4 py-2 rounded-full"
-          >
-            Git Configuration
-          </button>
 
-          <button
+<Button
+            type="primary"
+            icon={<Plus />}
             onClick={handleAddColumn}
-            className="bg-blue-500 text-white px-4 py-2 rounded-full"
+            style={{ borderRadius: "8px" }}
           >
-            + New Column
-          </button>
+            New Column
+          </Button>
+
+
+
+<Popover
+        trigger="click"
+        placement="bottomRight"
+        content={
+          <Space direction="vertical">
+           
+            <Button
+              type="default"
+              icon={<SettingOutlined />}
+              onClick={openGitModal}
+              block
+            >
+              Git Configuration
+            </Button>
+            <RulesButton tasks={tasks} />
+          </Space>
+        }
+      >
+        <Button type="text" icon={<SquareMenu />} />
+      </Popover>        
+         
+
+
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
@@ -2138,49 +2147,43 @@ function KanbanBoard() {
       )}
 
       {newColumnModalVisible && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
-          <div className="bg-white p-6 w-96 rounded-3xl shadow-lg max-h-screen ">
-            <h2 className="text-lg font-bold mb-4">Add New Column</h2>
+        <Modal
+        title="Add New Column"
+        visible={newColumnModalVisible}
+        onCancel={() => setNewColumnModalVisible(false)}
+        footer={null}
+      >
+        <Form onFinish={handleAddColumnSubmit}>
+          <Form.Item
+            validateStatus={newColumnError ? "error" : ""}
+            help={newColumnError ? "Please enter a column name" : ""}
+          >
+            <Input
+              value={newColumnName}
+              onChange={(e) => {
+                setNewColumnName(e.target.value.trimStart());
+                setNewColumnError(false);
+              }}
+              placeholder="Column Name"
+              size="large"
+            />
+          </Form.Item>
+          <Form.Item>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setNewColumnModalVisible(false)}
+                style={{ marginRight: 8 }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Add Column
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
 
-            <form onSubmit={handleAddColumnSubmit}>
-              <input
-                type="text"
-                value={newColumnName}
-                onChange={(e) => {
-                  setNewColumnName(e.target.value.trimStart());
-                  setNewColumnError(false);
-                }}
-                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
-                  } rounded-xl px-3 py-3 mb-4 w-full`}
-                placeholder="Column Name"
-                required
-              />
-              {newColumnError && (
-                <p className="text-red-500 text-sm mb-2">
-                  Please enter a column name
-                </p>
-              )}
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewColumnModalVisible(false);
-                    setNewColumnError(false);
-                  }}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-                >
-                  Add Column
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {modalVisible && modalType === "options" && (

@@ -12,7 +12,8 @@ import {
 } from "antd";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import useTokenValidation from "./UseTockenValidation";
-
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
 const AdminPanel = () => {
@@ -183,6 +184,19 @@ const AdminPanel = () => {
       ),
     },
   ];
+  if (loading) {
+    return (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center', // Center horizontally
+            alignItems: 'center', // Center vertically
+            height: '100vh' // Full height of the viewport
+        }}>
+            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+            Loading...
+        </div>
+    );
+}
 
   return (
     <div className="p-4 m-4 bg-gray-100 rounded-lg shadow-md">

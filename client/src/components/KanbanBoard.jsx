@@ -24,7 +24,7 @@ import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
-import { Popover, Button,Space,Modal,Form,Input } from 'antd';
+import { Popover, Button,Space,Modal,Form,Input,notification } from 'antd';
 import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
 import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
@@ -143,7 +143,7 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
@@ -970,8 +970,8 @@ function KanbanBoard() {
       console.error("Error adding task:", error);
     } finally {
       setLoading(false);
-    } finally {
-      setLoading(false);
+    // } finally {
+    //   setLoading(false);
     }
   };
   // Update the handleRenameColumn function

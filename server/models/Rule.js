@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+
+=======
+>>>>>>> e2080dec6c5ef2d42c0feb4e3c203f5c14403dfe
 //rule schema
 const mongoose = require('mongoose');
 

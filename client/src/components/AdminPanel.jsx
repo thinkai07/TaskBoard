@@ -150,6 +150,7 @@ const AdminPanel = () => {
     setFilteredData(filtered);
   };
 
+<<<<<<< HEAD
   const columns = [
     {
       title: "Name",
@@ -188,17 +189,104 @@ const AdminPanel = () => {
     <div className="p-4 m-4 bg-gray-100 rounded-lg shadow-md">
       <div className="flex justify-between mb-4">
         <Input
+=======
+  return (
+    <div className="bg-white rounded-xl text-md overflow-hidden ">
+      {successMessage && (
+        <div className="flex justify-center items-center p-4 bg-green-100 w-96 text-green-800 rounded-2xl">
+          <AiOutlineCheckCircle className="mr-2" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      <div className="flex justify-between p-4">
+       
+        <input
+          type="text"
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           placeholder="Search by name or email"
           value={searchTerm}
           onChange={handleSearch}
           className="w-1/3"
         />
+<<<<<<< HEAD
         {userRole === "ADMIN" && (
           <Button type="primary" onClick={() => setIsModalOpen(true)}>
             Add User
           </Button>
         )}
       </div>
+=======
+         {userRole === "ADMIN" && (
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-2xl"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add User
+          </button>
+        )}
+      </div>
+      <table className="min-w-full divide-y bg-gray-200 divide-gray-1000 ">
+        <thead>
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Name</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Email</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Role</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Status</th> {/* Add Status column */}
+            {userRole === "ADMIN" && (
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Actions</th>
+            )}
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {filteredData.map((item, index) => (
+            <tr key={index}>
+              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-normal break-words max-w-xs">{item.name}</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-normal break-words max-w-xs">{item.email}</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{item.role}</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{item.status}</td> {/* Display status */}
+              {userRole === "ADMIN" && (
+                <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">
+                  <button className="px-4 py-2 bg-red-600 text-white rounded-2xl" onClick={() => confirmDeleteUser(item._id)}>Delete</button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+            >
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3
+                      className="text-lg leading-6 font-medium text-gray-900"
+                      id="modal-title"
+                    >
+                      Add User
+                    </h3>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        value={name}
+                        onChange={(e) => {
+                          let inputValue = e.target.value;
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 
       <Table
         columns={columns}
@@ -246,3 +334,15 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+//uwser schema
+=======
 //user schema
+>>>>>>> e2080dec6c5ef2d42c0feb4e3c203f5c14403dfe
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -13,4 +17,8 @@ const userSchema = new mongoose.Schema({
   status: { type: String, default: "UNVERIFY" },
 });
 
+<<<<<<< HEAD
+module.exports = mongoose.model("User", userSchema);
+=======
 module.exports = mongoose.model("User", userSchema); 
+>>>>>>> e2080dec6c5ef2d42c0feb4e3c203f5c14403dfe

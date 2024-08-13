@@ -176,6 +176,7 @@ const AuditLog = () => {
   ];
 
   return (
+<<<<<<< HEAD
     <div style={{ padding: "20px" }}>
     <Card bordered={false} style={{ marginBottom: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -183,6 +184,12 @@ const AuditLog = () => {
           Audit Logs
         </Title>
         <Select
+=======
+    <div className="h-auto text-md  p-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-4">
+        <h1 className="text-2xl font-semibold">Audit Logs</h1>
+        <select
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           value={selectedProject}
           onChange={handleProjectChange}
           style={{ width: 200, fontWeight: 600  }}
@@ -198,6 +205,7 @@ const AuditLog = () => {
           ))}
         </Select>
       </div>
+<<<<<<< HEAD
     </Card>
   
     {selectedProject ? (
@@ -219,6 +227,92 @@ const AuditLog = () => {
       </div>
     )}
   </div>
+=======
+
+      {selectedProject ? (
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Project Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Column Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Task Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action By
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Old Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  New Value
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {auditLogs.map((log) => (
+                <tr key={log._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {projects.find((p) => p._id === selectedProject)?.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === 'Task' ? tasks.find(t => t.id === log.entityId)?.name || 'Unknown Task' : ''}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === 'Card' 
+                      ? cards.find(c => c.id === log.entityId)?.name || 'Unknown Card' 
+                      : ''}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.performedBy}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(log.actionDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.actionType}
+                  </td>
+                  <td className="px-6 py-4  text-sm text-gray-500">
+                    {log.changes.length > 0 && (
+                      <div>
+                        {log.changes[0].field}:{" "}
+                        {JSON.stringify(log.changes[0].oldValue)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4  text-sm text-gray-500">
+                    {log.changes.length > 0 && (
+                      <div>
+                        {log.changes[0].field}:{" "}
+                        {JSON.stringify(log.changes[0].newValue)}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-40">
+          <p className="text-lg text-gray-600 font-semibold">
+            No project selected. Please select a project.
+          </p>
+        </div>
+      )}
+    </div>
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
   );
 };
 

@@ -10,6 +10,7 @@ import { BsMenuUp } from "react-icons/bs";
 import { TbMenuOrder } from "react-icons/tb";
 
 const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
+  // console.log(user)
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
@@ -235,7 +236,11 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   );
 
   return (
+<<<<<<< HEAD
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
+=======
+<div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10  border-1 shadow-sm">
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
       <div className="flex items-center">
         <div className="ml-3">
           <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
@@ -253,6 +258,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
       {isProjectRoute && (
         <div className="relative inline-block group">
           <button
+<<<<<<< HEAD
             className="text-black text-xl hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4"
             onClick={handleOpenSidebar}
           >
@@ -260,10 +266,32 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
           </button>
           <span className="invisible absolute right-full bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
             Change background
+=======
+            className="text-black text-xl   hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4"
+            onClick={handleOpenSidebar}
+          >
+            <TbMenuOrder />
+          </button>
+          <span className="invisible absolute right-full  bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+            Change background
+          </span>
+        </div>
+      )}
+      <div className="relative  hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4">
+        <AiOutlineBell
+          size={25}
+          className="cursor-pointer  text-gray-700"
+          onClick={toggleNotificationModal}
+        />
+        {notificationCount > 0 && (
+          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 mr-2 mb-6 h-4 flex items-center justify-center">
+            {notificationCount}
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           </span>
         </div>
       )}
 
+<<<<<<< HEAD
       <Popover
         placement="bottomRight"
         title="Notifications"
@@ -330,6 +358,50 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
           {getFirstLetter()}
         </div>
       </Popover>
+=======
+      <div
+        className="w-8 h-8 bg-[#8AAAE5] text-white flex items-center justify-center rounded-full font-bold text-xl cursor-pointer"
+        onClick={toggleProfileDropdown}
+      >
+        {getFirstLetter()}
+      </div>
+
+      {showProfileDropdown && (
+  <div ref={profileDropdownRef} className="ml-2 absolute top-20 right-4">
+    <div className="w-60 bg-white border border-gray-300 rounded-2xl shadow-xl">
+      <div className="px-4 py-2 text-sm text-gray-700">{user?.email}</div>
+      {/* <div className="px-4 py-2 text-sm text-gray-700">{user?.name}</div> */}
+      <div className="border-t border-gray-300"></div>
+      {showLogoutConfirmation ? (
+        <div className="px-4 py-2">
+          <p className="text-sm justify-center items-center mb-2">Are you sure want to logout?</p>
+          <div className="flex justify-between space-x-2">
+            <button
+              onClick={confirmLogout}
+              className="bg-red-500 text-white px-4 py-1 rounded-3xl hover:bg-red-600 transition-colors text-sm"
+            >
+              Yes
+            </button>
+            <button
+              onClick={cancelLogout}
+              className="bg-gray-500 text-white px-4 py-1 rounded-3xl hover:bg-gray-600 transition-colors text-sm"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowLogoutConfirmation(true)}
+          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-2xl"
+        >
+          Logout
+        </button>
+      )}
+    </div>
+  </div>
+)}
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 
       {showSidebar && (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -378,6 +450,66 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
           </div>
         </div>
       )}
+<<<<<<< HEAD
+=======
+
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-50 flex justify-end pr-4 pt-20">
+          <div
+            className="bg-white w-96 p-4 rounded-2xl shadow-lg relative notification-modal"
+            style={{ height: "60vh", overflowY: "auto" }}
+          >
+            <button
+              className="absolute top-4 right-4 p-2 rounded"
+              onClick={toggleNotificationModal}
+            >
+              <MdOutlineCancel size={30} />
+            </button>
+
+            <h3 className="text-xl font-bold mb-4">Notifications</h3>
+            <hr className="border-gray-300 my-2" />
+
+            {notifications.length === 0 ? (
+              <p className="text-gray-500">No notifications</p>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className="flex items-start mb-4 cursor-pointer hover:bg-gray-100 transition-colors border rounded-xl py-2 px-2"
+                  onClick={() => handleNotificationClick(notification._id)}
+                >
+                  <div className="w-10 h-10 bg-blue-500 text-white flex items-center justify-center rounded-full mr-4 flex-shrink-0">
+                    {notification.assignedByEmail.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="text-gray-700">
+                    <p>
+                      <strong>{notification.assignedByEmail}</strong>{" "}
+                      {notification.message}
+                    </p>
+                    {notification.createdAt && (
+                      <div className="text-sm text-gray-500">
+                        {" "}
+                        {new Date(notification.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true,
+                          }
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
     </div>
   );
 };

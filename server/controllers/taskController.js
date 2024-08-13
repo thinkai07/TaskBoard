@@ -95,6 +95,7 @@ exports.getTasks = async (req, res) => {
 
 // Move Task
 exports.moveTask = async (req, res) => {
+<<<<<<< HEAD
     const { projectId, taskId } = req.params;
     const { newIndex, movedBy, movedDate } = req.body;
 
@@ -165,6 +166,62 @@ exports.moveTask = async (req, res) => {
       console.error("Error moving task:", error);
       res.status(500).json({ message: "Error moving task" });
     }
+=======
+  const { projectId, taskId } = req.params;
+  const { newIndex, movedBy, movedDate } = req.body;
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const taskIndex = project.tasks.indexOf(taskId);
+    if (taskIndex === -1) {
+      return res.status(404).json({ message: "Task not found in project" });
+    }
+
+    project.tasks.splice(taskIndex, 1);
+    project.tasks.splice(newIndex, 0, taskId);
+
+    const task = await Task.findById(taskId);
+    if (task) {
+      task.movedBy.push(movedBy);
+      task.movedDate.push(movedDate);
+      await task.save();
+    }
+
+    await project.save();
+
+    const movedByUser = await User.findOne({ email: movedBy });
+    if (!movedByUser) {
+      return res.status(404).json({ message: "User not found for movedBy" });
+    }
+
+    const newAuditLog = new AuditLog({
+      projectId: projectId,
+      entityType: "Task",
+      entityId: taskId,
+      actionType: "move",
+      actionDate: movedDate,
+      performedBy: movedByUser.name,
+      changes: [
+        { field: "index", oldValue: taskIndex, newValue: newIndex },
+        { field: "movedBy", oldValue: null, newValue: movedBy },
+        { field: "movedDate", oldValue: null, newValue: movedDate },
+      ],
+    });
+
+    await newAuditLog.save();
+
+    io.emit("taskMoved", { projectId, taskId, newIndex });
+
+    res.status(200).json({ message: "Task moved successfully" });
+  } catch (error) {
+    console.error("Error moving task:", error);
+    res.status(500).json({ message: "Error moving task" });
+  }
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 };
 
 // Delete Task

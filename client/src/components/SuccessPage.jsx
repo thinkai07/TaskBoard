@@ -44,7 +44,7 @@ const SuccessPage = () => {
             style={{ width: '350px', height: '265px' }}
           />
         </div>
-        <h2 className={`text-2xl font-bold mb-2 ${error ? 'text-red-500' : 'text-blue-500'}`}>
+        <h2 className={`text-2xl font-semibold mb-2 ${error ? 'text-red-500' : 'text-blue-500'}`}>
           {message}
         </h2>
         { !error && (

@@ -196,5 +196,8 @@ const LoginPage = ({ onLogin }) => {
 };
 
 export default LoginPage;
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6

@@ -20,11 +20,14 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
+<<<<<<< HEAD
 import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
 
+=======
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 
 const initialBoard = {
   columns: [],
@@ -69,7 +72,11 @@ const TimeProgressBar = ({ assignDate, dueDate }) => {
     >
 
       <div
+<<<<<<< HEAD
         className="absolute inset-0 flex items-center justify-center text-black font-bold"
+=======
+        className="absolute inset-0 flex items-center justify-center text-black font-semibold"
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         style={{ fontSize: '0.75rem' }} 
       >
         {Math.round(progress)}%
@@ -171,7 +178,11 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
+<<<<<<< HEAD
     const newSocket = io("http://localhost:5000");
+=======
+    const newSocket = io("http://localhost:3001");
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
     setSocket(newSocket);
   }, []);
 
@@ -1343,12 +1354,16 @@ function KanbanBoard() {
         dueDate={card.dueDate}
       />
       <div className="p-4">
+<<<<<<< HEAD
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+=======
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         <div className="react-kanban-card__title truncate" title={card.title}>
           {card.title && card.title.length > 20
             ? card.title.slice(0, 28) + "..."
             : card.title}
         </div>
+<<<<<<< HEAD
         <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
@@ -1374,6 +1389,32 @@ function KanbanBoard() {
 
 
         {/* <div className="react-kanban-card__assignDate">
+=======
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px" }}>
+          <div
+            className="react-kanban-card__description truncate"
+            title={card.description || ""}
+            style={{ flex: 1, marginRight: "10px" }}
+          >
+            {card.description && card.description.length > 35
+              ? card.description.slice(0, 35) + "..."
+              : card.description || ""}
+          </div>
+          <div className="react-kanban-card__assignedTo flex items-center">
+            {card.assignedTo && (
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-semibold ml-2 relative group">
+                <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                  {card.assignedTo}
+                </span>
+                {card.assignedTo.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
+
+
+        <div className="react-kanban-card__assignDate">
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           {card.assignDate && (
             <div className="text-sm text-gray-500">
               Assign Date:{" "}
@@ -1387,7 +1428,11 @@ function KanbanBoard() {
               })}
             </div>
           )}
+<<<<<<< HEAD
         </div> */}
+=======
+        </div>
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
             <div className="text-sm text-gray-500">
@@ -1403,7 +1448,11 @@ function KanbanBoard() {
             </div>
           )}
         </div>
+<<<<<<< HEAD
         <div style={{ display: "flex", alignItems:'flex-start', justifyContent: "space-between" }}>
+=======
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px" }}>
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
           <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
             <select
               value={card.status}
@@ -1635,31 +1684,7 @@ function KanbanBoard() {
       <div>
         {renameCardModalVisible && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12 relative">
-              {/* Close Icon */}
-              <button
-                onClick={() => {
-                  setRenameCardModalVisible(false);
-                  setRenameCardErrors({ title: "", description: "" });
-                }}
-                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
+            <div className="bg-white p-6 rounded-3xl w-5/12">
               <h2 className="text-lg font-bold mb-4">Rename Card</h2>
               <form onSubmit={handleRenameCard}>
                 <div className="mb-4">
@@ -1726,7 +1751,7 @@ function KanbanBoard() {
               <div className="mt-4 h-96 overflow-y-auto">
                 <div className="flex items-center mb-4 pt-6">
                   <RxActivityLog size={24} className="mr-2" />
-                  <h2 className="text-lg font-bold">Activity</h2>
+                  <h2 className="text-lg font-semibold">Activity</h2>
                   <button
                     onClick={() => setCommentsVisible(!commentsVisible)}
                     className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
@@ -1736,7 +1761,7 @@ function KanbanBoard() {
                 </div>
                 <div className="flex items-center mb-2">
                   <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    {userEmail.charAt(0).toUpperCase()}
+                    V
                   </div>
 
                   <input
@@ -1767,11 +1792,11 @@ function KanbanBoard() {
                             : "bg-white p-2 rounded-lg"
                             }`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-semibold">
                             {comment.commentBy[0].toUpperCase()}
                           </div>
                           <p className="ml-2">
-                            <span className="font-bold">
+                            <span className="font-semibold">
                               {comment.commentBy}
                             </span>
                             : {comment.comment}
@@ -1788,7 +1813,7 @@ function KanbanBoard() {
         {showSuccessPopup && (
           <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
             <div className="bg-green-400 p-2 rounded-xl">
-              <h2 className="text-lg text-white font-bold mb-2">
+              <h2 className="text-lg text-white font-semibold mb-2">
                 Card renamed successfully
               </h2>
             </div>
@@ -1922,7 +1947,7 @@ function KanbanBoard() {
             >
               <div style={{ marginBottom: "0.5rem" }}>
                 <h3
-                  className="font-bold"
+                  className="font-semibold"
                   style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
                 >
                   {card.title}
@@ -1993,7 +2018,7 @@ function KanbanBoard() {
       {modalVisible && modalType === "addCard" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
               <label
                 htmlFor="title"
@@ -2103,7 +2128,7 @@ function KanbanBoard() {
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl">
-            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+            <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
             <p>Are you sure you want to delete this card?</p>
             <div className="flex justify-between mt-4">
               <button
@@ -2140,7 +2165,7 @@ function KanbanBoard() {
       {newColumnModalVisible && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
           <div className="bg-white p-6 w-96 rounded-3xl shadow-lg max-h-screen ">
-            <h2 className="text-lg font-bold mb-4">Add New Column</h2>
+            <h2 className="text-lg font-semibold mb-4">Add New Column</h2>
 
             <form onSubmit={handleAddColumnSubmit}>
               <input
@@ -2186,7 +2211,7 @@ function KanbanBoard() {
       {modalVisible && modalType === "options" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Column Options</h2>
+            <h2 className="text-lg font-semibold mb-4">Column Options</h2>
             <button
               onClick={() => setShowRenameInput(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
@@ -2213,7 +2238,7 @@ function KanbanBoard() {
           {showConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-bold mb-4">
+                <p className="text-lg font-semibold mb-4">
                   Are you sure you want to remove this column?
                 </p>
                 <div className="flex justify-between">
@@ -2236,7 +2261,7 @@ function KanbanBoard() {
           {showRenameInput && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
-                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
+                <h2 className="text-lg font-semibold mb-4">Rename Column</h2>
                 <input
                   type="text"
                   value={newColumnName}
@@ -2284,7 +2309,7 @@ function KanbanBoard() {
           {showRenameConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-bold mb-4">
+                <p className="text-lg font-semibold mb-4">
                   Are you sure want to rename this column ?
                 </p>
                 <div className="flex justify-between">
@@ -2323,7 +2348,11 @@ function KanbanBoard() {
             >
               <MdCancel size={30} />
             </button>
+<<<<<<< HEAD
             <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
+=======
+            <h2 className="text-lg font-semibold mb-4">Git Configuration</h2>
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
             <div className="bg-gray-100 p-4 rounded mb-4">
               <p>Quick setup — if you've done this kind of thing before</p>
               <div className="flex justify-between items-center bg-gray-200 p-2 rounded">

@@ -258,4 +258,8 @@ exports.removeUserFromTeam = async (req, res) => {
     console.error("Error removing user from team:", error.response ? error.response.data : error.message);
     res.status(500).json({ message: "Error removing user from team", error: error.message });
   }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6

@@ -1,8 +1,9 @@
-const Task = require('../models/Task');
+// controllers/taskController.js
 const Project = require('../models/Project');
+const Task = require('../models/Task');
 const User = require('../models/User');
 const AuditLog = require('../models/Auditlog');
-// const io = require('../your-socket-config-file'); // Import your socket configuration
+const io = require('../server').io; // Adjust the path based on your actual setup
 
 // Add Task
 exports.addTask = async (req, res) => {
@@ -94,6 +95,78 @@ exports.getTasks = async (req, res) => {
 
 // Move Task
 exports.moveTask = async (req, res) => {
+<<<<<<< HEAD
+    const { projectId, taskId } = req.params;
+    const { newIndex, movedBy, movedDate } = req.body;
+
+    try {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      const taskIndex = project.tasks.indexOf(taskId);
+      if (taskIndex === -1) {
+        return res.status(404).json({ message: "Task not found in project" });
+      }
+
+      // Remove task from current position and insert at new position
+      project.tasks.splice(taskIndex, 1);
+      project.tasks.splice(newIndex, 0, taskId);
+
+      // Update the task with movedBy and movedDate
+      const task = await Task.findById(taskId);
+      if (task) {
+        task.movedBy.push(movedBy);
+        task.movedDate.push(movedDate);
+        await task.save();
+      }
+
+      await project.save();
+
+      // Create a new audit log entry
+      const movedByUser = await User.findOne({ email: movedBy });
+      if (!movedByUser) {
+        return res.status(404).json({ message: "User not found for movedBy" });
+      }
+
+      const newAuditLog = new AuditLog({
+        projectId: projectId,
+        entityType: "Task",
+        entityId: taskId,
+        actionType: "move",
+        actionDate: movedDate,
+        performedBy: movedByUser.name, // Save the email of the user
+        changes: [
+          {
+            field: "index",
+            oldValue: taskIndex,
+            newValue: newIndex,
+          },
+          {
+            field: "movedBy",
+            oldValue: null,
+            newValue: movedBy,
+          },
+          {
+            field: "movedDate",
+            oldValue: null,
+            newValue: movedDate,
+          },
+        ],
+      });
+
+      await newAuditLog.save();
+
+      // Emit event for real-time update
+      io.emit("taskMoved", { projectId, taskId, newIndex });
+
+      res.status(200).json({ message: "Task moved successfully" });
+    } catch (error) {
+      console.error("Error moving task:", error);
+      res.status(500).json({ message: "Error moving task" });
+    }
+=======
   const { projectId, taskId } = req.params;
   const { newIndex, movedBy, movedDate } = req.body;
 
@@ -148,6 +221,7 @@ exports.moveTask = async (req, res) => {
     console.error("Error moving task:", error);
     res.status(500).json({ message: "Error moving task" });
   }
+>>>>>>> f5006441aad4b7f5f174bc5593d81e9d42ca6fb6
 };
 
 // Delete Task
@@ -251,7 +325,7 @@ exports.updateTask = async (req, res) => {
 
     await newAuditLog.save();
 
-    io.emit("taskUpdated", { projectId, taskId, name });
+    io.emit("taskRenamed", { projectId, taskId, newName: name });
 
     res.status(200).json({ message: "Task updated successfully", task });
   } catch (error) {

@@ -218,7 +218,6 @@ const Projects = () => {
       });
       return;
     }
-
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
@@ -501,7 +500,7 @@ const Projects = () => {
         )}
       </div>
       <Tooltip >
-        <p className="truncate  text-gray-500">{card.description}</p>
+        <p className="truncate text-gray-500">{card.description}</p>
       </Tooltip>
       <div className="mt-2 flex justify-between items-center">
         <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
@@ -519,7 +518,7 @@ const Projects = () => {
       {showTooltipIndex === index && (
         <div
           ref={dropdownRef}
-          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+          className="absolute left-full top-0 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
           onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
         >
           <Button

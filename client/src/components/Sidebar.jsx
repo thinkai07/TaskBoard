@@ -10,13 +10,13 @@ const Sidebar = () => {
 
   const getNavLinkClass = (path) => {
     return location.pathname === path
-      ? `bg-gray-200 text-black font-bold w-56 ml-3 rounded-tl-3xl rounded-br-3xl`
+      ? `bg-gray-200 text-black font-bold w-full  rounded-tl-3xl rounded-br-3xl`
       : "hover:font-semibold text-black";
   };
 
   const getIconClass = (path) => {
     return location.pathname === path
-      ? "text-xl text-black"
+      ? "text-lg text-black"
       : "hover:font-semibold text-black";
   };
 
@@ -36,28 +36,28 @@ const Sidebar = () => {
           className="text-gray-500 hover:text-black"
           title="Expand sidebar"
         >
-          <ChevronsRight size={24} />
+          <ChevronsRight size={20} />
         </button>
       </div>
     );
   }
 
   return (
-    <div className="w-64 h-full bg-white text-black flex flex-col shadow-md shadow-gray-400 relative">
+    <div className="w-[242px] h-full bg-white text-black flex flex-col shadow-md shadow-gray-400 relative">
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center">
           <img src={task} alt="Logo" className="w-10 h-10 mr-3" />
-          <h2 className="text-xl font-bold">TaskBoard</h2>
+          <h2 className="text-lg font-bold">TaskBoard</h2>
         </div>
         <button
           onClick={toggleSidebar}
-          className="text-gray-500 hover:text-black absolute top-6 right-4"
+          className="text-gray-500 hover:text-black absolute top-4 right-3"
           title="Collapse sidebar"
         >
-          <ChevronsLeft size={24} />
+          <ChevronsLeft size={20} />
         </button>
       </div>
-      <ul className="flex-1 pt-8">
+      <ul className="flex-1 pt-8 p-4 pl-3">
         {[
           { path: '/', icon: SquareKanban, label: 'Overview' },
           { path: '/projects', icon: PanelsTopLeft, label: 'Projects' },
@@ -68,10 +68,10 @@ const Sidebar = () => {
         ].map(({ path, icon: Icon, label }) => (
           <li
             key={path}
-            className={`p-4 pl-12 flex items-center cursor-pointer text-lg ${getNavLinkClass(path)}`}
+            className={`p-4 pl-12 flex items-center cursor-pointer text-base ${getNavLinkClass(path)}`}
             onClick={() => handleNavigation(path)}
           >
-            <Icon className={`mr-3 ${getIconClass(path)}`} />
+            <Icon className={`mr-3 ${getIconClass(path)}`} size={18} />
             <span className="block w-full h-full">{label}</span>
           </li>
         ))}
@@ -81,3 +81,13 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+
+
+
+
+
+
+
+
+
+

@@ -38,7 +38,7 @@ const TeamMembersPage = () => {
     };
 
     fetchMembers();
-  }, [organizationId, teamId,members]);
+  }, [organizationId, teamId]);
 
   const handleEmailChange = async (event) => {
     setNewMemberEmail(event.target.value);

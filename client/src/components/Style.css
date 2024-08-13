@@ -4,20 +4,18 @@
   background-color: #b62323;
   margin: 5px;
 }
+
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 250px;
   min-width: 300px;
   margin-top: 3%;
 }
+
 .react-kanban-card__title {
 border-bottom: 70px  #eee;
 padding-bottom: 5px;
 font-weight: bold;
 display: flex;
 justify-content: space-between;
-}
-
-.custom-calendar .ant-picker-cell-inner {
-  font-size: 12px; /* Adjust the font size as needed */
 }

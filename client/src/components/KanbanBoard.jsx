@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
+import { Dropdown, Menu } from 'antd';  //added
+import { DownOutlined } from '@ant-design/icons'; //added
 import {
   BsClockHistory,
   BsPencilSquare,
@@ -9,7 +11,6 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
-import { X } from 'lucide-react';
 import { Tooltip } from 'antd';
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
@@ -19,18 +20,18 @@ import { useNavigate } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
-// import { notification } from "antd";
+import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "../Automation/RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
-import { Popover, Button,Space,Modal,Form,Input,notification } from 'antd';
+import { Popover, Button,Space,Modal,Form,Input } from 'antd';
 import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
 import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
-import { Dropdown, Menu, Button } from 'antd';  //added
-import { DownOutlined } from '@ant-design/icons'; //added
+import {X} from 'lucide-react'
+import { BsFillPencilFill } from "react-icons/bs";
 
 const initialBoard = {
   columns: [],
@@ -146,7 +147,7 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
-  // const [loading, setLoading] = useState(false);
+
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
@@ -156,9 +157,6 @@ function KanbanBoard() {
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
-
-
-
 
   const [userRole, setUserRole] = useState(""); 
 
@@ -205,6 +203,7 @@ function KanbanBoard() {
           ),
         }));
       });
+
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
         setBoardData((prevState) => ({
@@ -280,9 +279,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -330,6 +329,7 @@ function KanbanBoard() {
           return { ...prevState, columns: updatedColumns };
         });
       });
+
     }
     return () => {
       if (socket) {
@@ -341,6 +341,7 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
+
       }
     };
   }, [socket, projectId]);
@@ -384,7 +385,6 @@ function KanbanBoard() {
   const openGitModal = () => {
     setIsGitModalOpen(true);
   };
-
   const closeGitModal = () => {
     setIsGitModalOpen(false);
   };
@@ -458,7 +458,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -727,6 +727,8 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
+
+
   // Polling function
   const pollForUpdates = async () => {
     await fetchTasks();
@@ -739,6 +741,7 @@ function KanbanBoard() {
     // Clean up the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, []);
+
 
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
@@ -797,6 +800,9 @@ function KanbanBoard() {
     }
   };
 
+
+
+
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
     setShowDeleteConfirmation(true);
@@ -831,9 +837,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -927,15 +933,11 @@ function KanbanBoard() {
     }
 
     setLoading(true);
-
-    setLoading(true);
     let createdBy;
     try {
       createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
-      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
-      setLoading(false);
       setLoading(false);
       return;
     }
@@ -969,7 +971,6 @@ function KanbanBoard() {
         ],
       }));
       notification.success({ message: "Column created successfully" });
-      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
@@ -977,8 +978,6 @@ function KanbanBoard() {
       console.error("Error adding task:", error);
     } finally {
       setLoading(false);
-    // } finally {
-    //   setLoading(false);
     }
   };
   // Update the handleRenameColumn function
@@ -1218,18 +1217,6 @@ function KanbanBoard() {
     }
   }
 
-  //added
-  const statusMenu = (cardId) => (
-    <Menu
-      onClick={(e) => handleChangeStatus(cardId, e.key)}
-      items={[
-        { key: 'pending', label: 'Pending' },
-        { key: 'inprogress', label: 'Inprogress' },
-        { key: 'completed', label: 'Completed' },
-      ]}
-    />
-  );
-
   const handleaddmember = async (event) => {
     const value = event.target.value;
     setEmail(value);
@@ -1252,125 +1239,35 @@ function KanbanBoard() {
     }
   };
 
-  // const renderCard = (card, { dragging }) => (
-  //   <div
-  //     className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-  //     style={{ borderRadius: "20px", maxWidth: "750px" }}
-  //   >
-  //     <div className="react-kanban-card__title truncate" title={card.title}>
-  //       {card.title && card.title.length > 20
-  //         ? card.title.slice(0, 28) + "..."
-  //         : card.title}
-  //     </div>
-  //     <div
-  //       className="react-kanban-card__description truncate"
-  //       title={card.description || ""}
-  //     >
-  //       {card.description && card.description.length > 35
-  //         ? card.description.slice(0, 35) + "..."
-  //         : card.description || ""}
-  //     </div>
-  //     <div className="react-kanban-card__assignedTo flex items-center justify-end">
-  //       {card.assignedTo && (
-  //         <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-  //           <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-  //             {card.assignedTo}
-  //           </span>
-  //           {card.assignedTo.charAt(0).toUpperCase()}
-  //         </div>
-  //       )}
-  //     </div>
+ //added
+ const statusMenu = (cardId) => (
+  <Menu
+    onClick={(e) => handleChangeStatus(cardId, e.key)}
+    items={[
+      { key: 'pending', label: 'Pending' },
+      { key: 'inprogress', label: 'Inprogress' },
+      { key: 'completed', label: 'Completed' },
+    ]}
+  />
+);
 
-  //     <div className="react-kanban-card__assignDate">
-  //       {card.assignDate && (
-  //         <div className="text-sm text-gray-500">
-  //           Assign Date:{" "}
-  //           {new Date(card.assignDate).toLocaleDateString("en-US", {
-  //             year: "numeric",
-  //             month: "short",
-  //             day: "numeric",
-  //             hour: "numeric",
-  //             minute: "numeric",
-  //             hour12: true,
-  //           })}
-  //         </div>
-  //       )}
-  //     </div>
-  //     <div className="react-kanban-card__dueDate">
-  //       {card.dueDate && (
-  //         <div className="text-sm text-gray-500">
-  //           Due Date:{" "}
-  //           {new Date(card.dueDate).toLocaleDateString("en-US", {
-  //             year: "numeric",
-  //             month: "short",
-  //             day: "numeric",
-  //             hour: "numeric",
-  //             minute: "numeric",
-  //             hour12: true,
-  //           })}
-  //         </div>
-  //       )}
-  //     </div>
-  //     <div className="react-kanban-card__status">
-  //       <select
-  //         value={card.status}
-  //         onChange={(e) => handleChangeStatus(card.id, e.target.value)}
-  //       >
-  //         <option value="pending">Pending</option>
-  //         <option value="inprogress">Inprogress</option>
-  //         <option value="completed">Completed</option>
-  //       </select>
-  //     </div>
-  //     <div
-  //       style={{
-  //         display: "flex",
-  //         justifyContent: "space-between",
-  //         padding: "10px",
-  //       }}
-  //     >
-  //       {canShowActions && (
-  //         <button
-  //           className="delete-card-button"
-  //           onClick={() => confirmRemoveCard(card.columnId, card.id)}
-  //         >
-  //           <BsTrash />
-  //         </button>
-  //       )}
-
-  //       <button
-  //         className="delete-card-button"
-  //         onClick={() =>
-  //           openRenameCardModal(
-  //             card.columnId,
-  //             card.id,
-  //             card.title,
-  //             card.description,
-  //             card.comments
-  //           )
-  //         }
-  //       >
-  //         <BsPencilSquare />
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
-  const renderCard = (card, { dragging }) => (
+ const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <TimeProgressBar
+      {/* <TimeProgressBar
         assignDate={card.assignDate}
         dueDate={card.dueDate}
-      />
+      /> */}
       <div className="p-4">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="react-kanban-card__title truncate" title={card.title}>
-          {card.title && card.title.length > 20
-            ? card.title.slice(0, 28) + "..."
-            : card.title}
-        </div>
-        <div className="react-kanban-card__assignedTo flex items-center">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="react-kanban-card__title truncate" title={card.title}>
+            {card.title && card.title.length > 20
+              ? card.title.slice(0, 28) + "..."
+              : card.title}
+          </div>
+          <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
                 <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
@@ -1381,7 +1278,7 @@ function KanbanBoard() {
             )}
           </div>
         </div>
-        <div
+        {/* <div
           className="react-kanban-card__description truncate"
           title={card.description || ""}
           style={{ flex: 1, marginRight: "10px" }}
@@ -1389,7 +1286,7 @@ function KanbanBoard() {
           {card.description && card.description.length > 35
             ? card.description.slice(0, 35) + "..."
             : card.description || ""}
-        </div>
+        </div> */}
 
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
@@ -1407,7 +1304,7 @@ function KanbanBoard() {
           )}
         </div>
         <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
-          <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
+          {/* <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
             <select
               value={card.status}
               onChange={(e) => handleChangeStatus(card.id, e.target.value)}
@@ -1430,7 +1327,7 @@ function KanbanBoard() {
               onClick={() => confirmRemoveCard(card.columnId, card.id)}
               style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%", marginTop: '3%' }}
             >
-             <BsTrash/>
+              <BsTrash />
             </button>
           )}
           <button
@@ -1446,9 +1343,10 @@ function KanbanBoard() {
             }
             style={{ color: 'black', marginTop: "4%" }}
           >
-            <BsPencilSquare />
+            <BsFillPencilFill />
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -1598,10 +1496,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1932,19 +1830,18 @@ function KanbanBoard() {
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: "20px",
-
               }}
             >
-              <div style={{ marginBottom: "0.5rem", }}>
+              <div style={{ marginBottom: "0.5rem" }}>
                 <h3
                   className="font-bold"
                   style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
                 >
                   {card.title}
                 </h3>
-                {/* <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
+                <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
                   {card.description}
-                </p> */}
+                </p>
               </div>
               <div
                 style={{ display: "flex", justifyContent: "space-between" }}
@@ -1992,8 +1889,7 @@ function KanbanBoard() {
                   padding: "0.5rem",
                   color: "#4A5568",
                   textAlign: "center",
-                  paddingLeft: "50%",
-                  
+                  paddingLeft: "50%"
                 }}
               >
                 <FaPlus />
@@ -2254,9 +2150,8 @@ function KanbanBoard() {
                     setNewColumnName(e.target.value.trimStart());
                     setRenameColumnError(false);
                   }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${
-                    renameColumnError ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="Enter the new name for the column"
                 />
                 {renameColumnError && (
@@ -2343,16 +2238,7 @@ function KanbanBoard() {
                   onClick={() => copyToClipboard(repository, "button1")}
                   className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
                 >
-                  {copiedButton === "button1" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
-                  {copiedButton === "button1" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
+                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
                 </button>
               </div>
             </div>
@@ -2388,7 +2274,7 @@ git push -u origin main`}
                 </pre>
                 <button
                   onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
-                  className="absolute right-2 bottom-2 bg-transparent border-none cursor-pointer  rounded  bg-gray-300 hover:bg-gray-400 p-1"
+                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
                 >
                   {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
                 </button>
@@ -2397,6 +2283,7 @@ git push -u origin main`}
           </div>
         </div>
       )}
+
     </div>
   );
 }

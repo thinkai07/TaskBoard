@@ -20,7 +20,7 @@ import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
-import RulesButton from "../Automation/RulePage";
+import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";

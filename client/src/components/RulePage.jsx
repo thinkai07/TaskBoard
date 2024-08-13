@@ -1,115 +1,174 @@
-// //rulespage.jsx
+// // //rulespage.jsx with antd
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Button, Select, Input, Modal, Card, Steps, Typography, Space, Dropdown, Menu } from "antd";
+import { server } from "../constant";
 import { useParams } from "react-router-dom";
 import useTokenValidation from "./UseTockenValidation";
-import { Button, Modal, Select, Steps, Card, Input, List, Popconfirm, message} from "antd";
-import { 
-  ArrowRightOutlined, 
-  PlusCircleOutlined, 
-  ClockCircleOutlined, 
-  CheckSquareOutlined, 
-  DeleteOutlined, 
-  UserOutlined 
-} from "@ant-design/icons";
-import { server } from "../constant";
 
-const { Step } = Steps;
 const { Option } = Select;
+const { Step } = Steps;
+const { Title, Text } = Typography;
+
+const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
+  <Button
+    icon={<Icon />}
+    className={`flex items-center justify-start w-full ${isSelected ? "ant-btn-primary" : ""}`}
+    onClick={onClick}
+  >
+    {label}
+  </Button>
+);
+
+const ActionOption = ({ icon: Icon, label, onClick }) => (
+  <Button
+    icon={<Icon />}
+    onClick={onClick}
+    className="flex flex-col items-center justify-center h-24 w-24"
+  >
+    <Text className="mt-2">{label}</Text>
+  </Button>
+);
 
 function RulesButton({ tasks }) {
   useTokenValidation();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showRulesUI, setShowRulesUI] = useState(false);
+  const [showTriggers, setShowTriggers] = useState(false);
   const [selectedTrigger, setSelectedTrigger] = useState("");
   const [triggerCondition, setTriggerCondition] = useState("");
-  const [createdByCondition, setCreatedByCondition] = useState("");
-  const [selectedAction, setSelectedAction] = useState("");
+  const [listName, setListName] = useState("");
+  const [triggerAdded, setTriggerAdded] = useState(false);
+  const [actionStep, setActionStep] = useState(false);
+  const [actionAdded, setActionAdded] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedAction, setSelectedAction] = useState(null);
   const [moveToList, setMoveToList] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [rules, setRules] = useState([]);
-  const [cardStatuses, setCardStatuses] = useState([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState(null);
   const { projectId } = useParams();
+  const [cardStatuses, setCardStatuses] = useState([]);
+  const [createdByCondition, setCreatedByCondition] = useState("");
 
   useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const response = await axios.get(`${server}/api/user`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUserEmail(response.data.user.email);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
     fetchUserEmail();
-    fetchRules();
-    fetchCardStatuses();
+  }, []);
+
+  useEffect(() => {
+    const fetchRules = async () => {
+      try {
+        const response = await axios.get(`${server}/api/rules/${projectId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setRules(response.data);
+      } catch (error) {
+        console.error("Error fetching rules:", error);
+      }
+    };
+
+    if (projectId) {
+      fetchRules();
+    }
   }, [projectId]);
 
-  const fetchUserEmail = async () => {
-    try {
-      const response = await axios.get(`${server}/api/user`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setUserEmail(response.data.user.email);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
+  useEffect(() => {
+    const fetchCardStatuses = async () => {
+      try {
+        const response = await axios.get(`${server}/api/card-statuses`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setCardStatuses(response.data.statuses);
+      } catch (error) {
+        console.error("Error fetching card statuses:", error);
+        setCardStatuses(["Completed", "Pending", "Inprogress"]);
+      }
+    };
+
+    fetchCardStatuses();
+  }, []);
+
+  const openRulesUI = () => {
+    setIsOpen(false);
+    setShowRulesUI(true);
+  };
+
+  const handleAddTrigger = () => {
+    setShowTriggers(true);
+  };
+
+  const handleTriggerSelect = (trigger) => {
+    setSelectedTrigger(trigger);
+  };
+
+  const handleAddButtonClick = () => {
+    setTriggerAdded(true);
+    setActionStep(true);
+    setCurrentStep(1);
+  };
+
+  const handleAddActionClick = () => {
+    setActionAdded(true);
+    setCurrentStep(2);
+  };
+
+  const handleBack = () => {
+    if (currentStep === 1) {
+      setActionStep(false);
+      setTriggerAdded(false);
+      setCurrentStep(0);
+    } else if (currentStep === 2) {
+      setActionAdded(false);
+      setCurrentStep(1);
     }
   };
 
-  const fetchRules = async () => {
-    try {
-      const response = await axios.get(`${server}/api/rules/${projectId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setRules(response.data);
-    } catch (error) {
-      console.error("Error fetching rules:", error);
-    }
-  };
-
-  const fetchCardStatuses = async () => {
-    try {
-      const response = await axios.get(`${server}/api/card-statuses`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setCardStatuses(response.data.statuses);
-    } catch (error) {
-      console.error("Error fetching card statuses:", error);
-      setCardStatuses(["Completed", "Pending", "Inprogress"]);
-    }
-  };
-
-  const showModal = () => setIsModalVisible(true);
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setCurrentStep(0);
-    setSelectedTrigger("");
-    setTriggerCondition("");
-    setCreatedByCondition("");
-    setSelectedAction("");
-    setMoveToList("");
+  const handleActionSelect = (action) => {
+    setSelectedAction(action);
   };
 
   const handleSaveRule = async () => {
     try {
-      const triggerSentence = `When card status is marked as ${triggerCondition}`;
+      let triggerSentence = "";
+      if (selectedTrigger === "Card Move") {
+        triggerSentence = `When card status is marked as ${triggerCondition}`;
+      } else if (selectedTrigger === "Card Changes") {
+        triggerSentence = `When card is moved to ${triggerCondition}`;
+      }
+
       let actionSentence = "";
-      
-      switch (selectedAction) {
-        case "Move to List":
-          actionSentence = `Move to column ${moveToList}`;
-          break;
-        case "Complete Task":
-          actionSentence = "Mark the task as completed";
-          break;
-        case "Delete Task":
-          actionSentence = "Delete the task";
-          break;
-        case "Assign Task":
-          actionSentence = `Assign task to ${userEmail}`;
-          break;
+      if (selectedAction === "Move to List") {
+        actionSentence = `Move to column ${moveToList}`;
+      } else if (selectedAction === "Complete Task") {
+        actionSentence = `Mark the task as completed`;
+      } else if (selectedAction === "Delete Task") {
+        actionSentence = `Delete the task`;
+      } else if (selectedAction === "Assign Task") {
+        actionSentence = `Assign task to ${userEmail}`;
       }
 
       const newRule = {
         name: `${selectedTrigger} Rule`,
         trigger: selectedTrigger,
         triggerCondition,
+        listName,
         action: selectedAction,
         actionDetails: { moveToList },
         createdBy: userEmail,
@@ -123,193 +182,292 @@ function RulesButton({ tasks }) {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
-      setRules((prevRules) => [...prevRules, response.data]);
-      message.success("Rule created successfully");
-      handleCancel();
+      const savedRule = response.data;
+      setRules((prevRules) => [...prevRules, savedRule]);
+
+      setCurrentStep(0);
+      setSelectedTrigger("");
+      setTriggerCondition("");
+      setCreatedByCondition("");
+      setShowTriggers(false);
+      setSelectedAction("");
+      setMoveToList("");
+      setUserEmail("");
+      setShowRulesUI(false);
     } catch (error) {
       console.error("Error saving rule:", error);
-      message.error("Failed to create rule");
     }
   };
 
-  const handleDeleteRule = async (ruleId) => {
-    try {
-      await axios.delete(`${server}/api/rules/${ruleId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setRules(rules.filter((rule) => rule._id !== ruleId));
-      message.success("Rule deleted successfully");
-    } catch (error) {
-      console.error("Error deleting rule:", error);
-      message.error("Failed to delete rule");
+  const openDeleteConfirmation = (ruleId) => {
+    setRuleToDelete(ruleId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const closeDeleteConfirmation = () => {
+    setShowDeleteConfirmation(false);
+    setRuleToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (ruleToDelete) {
+      try {
+        await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setRules(rules.filter((rule) => rule._id !== ruleToDelete));
+        closeDeleteConfirmation();
+      } catch (error) {
+        console.error("Error deleting rule:", error);
+      }
     }
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <Card title="Select Trigger">
-            <Select
-              style={{ width: "100%" }}
-              placeholder="Select a trigger"
-              onChange={(value) => setSelectedTrigger(value)}
-            >
-              <Option value="Card Move">
-                <ArrowRightOutlined /> Card Move
-              </Option>
-              <Option value="Card Changes">
-                <PlusCircleOutlined /> Card Changes
-              </Option>
-            </Select>
-            {selectedTrigger && (
-              <div style={{ marginTop: 16 }}>
-                <Select
-                  style={{ width: "100%", marginBottom: 8 }}
-                  placeholder="Select card status"
-                  onChange={(value) => setTriggerCondition(value)}
-                >
-                  {cardStatuses.map((status) => (
-                    <Option key={status} value={status.toLowerCase()}>
-                      {status}
-                    </Option>
-                  ))}
-                </Select>
-                <Select
-                  style={{ width: "100%" }}
-                  placeholder="Select created by condition"
-                  onChange={(value) => setCreatedByCondition(value)}
-                >
-                  <Option value="by me">by me</Option>
-                  <Option value="by anyone">by anyone</Option>
-                  <Option value="by anyone except me">by anyone except me</Option>
-                </Select>
-              </div>
-            )}
-          </Card>
-        );
-      case 1:
-        return (
-          <Card title="Select Action">
-            <Select
-              style={{ width: "100%" }}
-              placeholder="Select an action"
-              onChange={(value) => setSelectedAction(value)}
-            >
-              <Option value="Move to List">
-                <ClockCircleOutlined /> Move to List
-              </Option>
-              <Option value="Complete Task">
-                <CheckSquareOutlined /> Complete Task
-              </Option>
-              <Option value="Delete Task">
-                <DeleteOutlined /> Delete Task
-              </Option>
-              <Option value="Assign Task">
-                <UserOutlined /> Assign Task
-              </Option>
-            </Select>
-            {selectedAction === "Move to List" && (
-              <Select
-                style={{ width: "100%", marginTop: 16 }}
-                placeholder="Select a column"
-                onChange={(value) => setMoveToList(value)}
-              >
-                {tasks.map((task) => (
-                  <Option key={task.id} value={task.name}>
-                    {task.name}
-                  </Option>
-                ))}
-              </Select>
-            )}
-            {selectedAction === "Assign Task" && (
-              <Input
-                style={{ marginTop: 16 }}
-                placeholder="Enter User Email"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-              />
-            )}
-          </Card>
-        );
-      case 2:
-        return (
-          <Card title="Review and Save">
-            <p><strong>Trigger:</strong> {selectedTrigger} - {triggerCondition}</p>
-            <p><strong>Action:</strong> {selectedAction} {moveToList && `- ${moveToList}`}</p>
-          </Card>
-        );
-      default:
-        return null;
-    }
-  };
-
+  const menu = (
+    <Menu>
+      <Menu.Item key="1" onClick={openRulesUI}>
+        RULES
+      </Menu.Item>
+    </Menu>
+  );
   return (
-    <>
-      <Button onClick={showModal} type="primary">
-        Automation
-      </Button>
+    <div className="relative">
+      <Dropdown overlay={menu} trigger={['click']}>
+        <Button type="primary" shape="round">
+          Rules<ArrowRightOutlined />
+        </Button>
+      </Dropdown>
+
       <Modal
-        title="Rules Management"
-        visible={isModalVisible}
-        onCancel={handleCancel}
+        visible={showRulesUI}
+        onCancel={() => setShowRulesUI(false)}
         footer={null}
-        width={800}
+        width="70%"
       >
-        <Steps current={currentStep}>
-          <Step title="Select Trigger" />
-          <Step title="Select Action" />
-          <Step title="Review and Save" />
+        <Title level={2}>Create a Rule</Title>
+        <Steps current={currentStep} className="mb-6">
+          <Step title="Select trigger" />
+          <Step title="Select action" />
+          <Step title="Review and save" />
         </Steps>
-        <div style={{ marginTop: 24 }}>{renderStepContent()}</div>
-        <div style={{ marginTop: 24 }}>
-          <Button
-            style={{ marginRight: 8 }}
-            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-            disabled={currentStep === 0}
-          >
-            Previous
-          </Button>
-          {currentStep < 2 ? (
-            <Button
-              type="primary"
-              onClick={() => setCurrentStep(Math.min(2, currentStep + 1))}
-            >
-              Next
-            </Button>
+
+        <Card title="Existing Rules" className="mb-6" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          {rules.length === 0 ? (
+            <Text>No rules have been configured yet.</Text>
           ) : (
-            <Button type="primary" onClick={handleSaveRule}>
-              Save Rule
-            </Button>
+            rules.map((rule, index) => (
+              <Card.Grid key={index} className="w-full">
+                <Space>
+                  <Text strong>{rule.triggerSentence || "No trigger sentence"} -</Text>
+                  <Text>{rule.actionSentence || "No action sentence"}</Text>
+                  <Button
+                    icon={<DeleteOutlined />}
+                    onClick={() => openDeleteConfirmation(rule._id)}
+                    type="text"
+                    danger
+                  />
+                </Space>
+              </Card.Grid>
+            ))
           )}
-        </div>
-        <List
-          style={{ marginTop: 24 }}
-          header={<div>Existing Rules</div>}
-          bordered
-          dataSource={rules}
-          renderItem={(rule) => (
-            <List.Item
-              actions={[
-                <Popconfirm
-                  title="Are you sure you want to delete this rule?"
-                  onConfirm={() => handleDeleteRule(rule._id)}
-                  okText="Yes"
-                  cancelText="No"
-                >
-                  <Button icon={<DeleteOutlined />} />
-                </Popconfirm>
-              ]}
-            >
-              <List.Item.Meta
-                title={rule.name}
-                description={`${rule.triggerSentence} - ${rule.actionSentence}`}
+        </Card>
+        {currentStep === 0 && (
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Title level={3}>Select Trigger</Title>
+            {!showTriggers ? (
+              <Button type="primary" block onClick={handleAddTrigger}>
+                + Add Trigger
+              </Button>
+            ) : (
+              <Space direction="vertical" className="w-full">
+                <Space>
+                  <TriggerOption
+                    icon={ArrowRightOutlined}
+                    label="Card Move"
+                    isSelected={selectedTrigger === "Card Move"}
+                    onClick={() => handleTriggerSelect("Card Move")}
+                  />
+                  <TriggerOption
+                    icon={PlusCircleOutlined}
+                    label="Card Changes"
+                    isSelected={selectedTrigger === "Card Changes"}
+                    onClick={() => handleTriggerSelect("Card Changes")}
+                  />
+                </Space>
+                <Card size="small">
+                  {selectedTrigger === "Card Move" && (
+                    <Space direction="vertical" size="small">
+                      <Space>
+                        <Text>when card status mark as</Text>
+                        <Select
+                          value={triggerCondition}
+                          onChange={setTriggerCondition}
+                          style={{ width: 120 }}
+                        >
+                          {cardStatuses.map((status) => (
+                            <Option key={status} value={status.toLowerCase()}>
+                              {status}
+                            </Option>
+                          ))}
+                        </Select>
+                        <Select
+                          value={createdByCondition}
+                          onChange={setCreatedByCondition}
+                          style={{ width: 180 }}
+                        >
+                          <Option value="by me">by me</Option>
+                          <Option value="by anyone">by anyone</Option>
+                          <Option value="by anyone except me">by anyone except me</Option>
+                        </Select>
+                      </Space>
+                      <Text type="secondary">
+                        The rule will be triggered when a card is moved.
+                      </Text>
+                    </Space>
+                  )}
+                </Card>
+                <Space>
+                  <Button type="primary" onClick={handleAddButtonClick}>
+                    Add Trigger
+                  </Button>
+                  <Button onClick={() => setShowTriggers(false)}>
+                    Back
+                  </Button>
+                </Space>
+              </Space>
+            )}
+          </div>
+        )}
+        {currentStep === 1 && (
+          <>
+            <Title level={3}>Select Action</Title>
+            <Space size="large" wrap>
+              <ActionOption
+                icon={ClockCircleOutlined}
+                label="Move to List"
+                onClick={() => handleActionSelect("Move to List")}
               />
-            </List.Item>
-          )}
-        />
+              <ActionOption
+                icon={CheckSquareOutlined}
+                label="Complete Task"
+                onClick={() => handleActionSelect("Complete Task")}
+              />
+              <ActionOption
+                icon={DeleteOutlined}
+                label="Delete Task"
+                onClick={() => handleActionSelect("Delete Task")}
+              />
+            </Space>
+            {selectedAction && (
+              <Card className="mt-4">
+                {selectedAction === "Move to List" && (
+                  <>
+                    <Title level={4}>Move to column</Title>
+                    <Select
+                      style={{ width: '100%' }}
+                      value={moveToList}
+                      onChange={setMoveToList}
+                    >
+                      {tasks.map((task) => (
+                        <Option key={task.id} value={task.name}>
+                          {task.name}
+                        </Option>
+                      ))}
+                    </Select>
+                    <Text type="secondary">
+                      The card will be moved to the specified column.
+                    </Text>
+                  </>
+                )}
+                {selectedAction === "Complete Task" && (
+                  <Text type="secondary">
+                    The selected task will be marked as complete.
+                  </Text>
+                )}
+                {selectedAction === "Delete Task" && (
+                  <Text type="secondary">
+                    The selected task will be deleted.
+                  </Text>
+                )}
+              </Card>
+            )}
+            <div className="mt-4 flex justify-between items-center">
+              <div>
+                {selectedAction && (
+                  <Button type="primary" onClick={handleAddActionClick}>
+                    Add Action
+                  </Button>
+                )}
+              </div>
+              <div>
+                <Button onClick={handleBack}>
+                  Back
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+        {currentStep === 2 && (
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Title level={3}>Review and Save</Title>
+            <Card size="small">
+              <Title level={4}>Trigger</Title>
+              <Text>
+                {selectedTrigger === "Card Move" && (
+                  <>
+                    When card status is marked as{" "}
+                    <Text strong>{triggerCondition}</Text>
+                  </>
+                )}
+                {selectedTrigger === "Card Changes" && (
+                  <>
+                    When card is moved to{" "}
+                    <Text strong>{triggerCondition}</Text>
+                  </>
+                )}
+              </Text>
+              <Title level={4} className="mt-4">Action</Title>
+              <Text>
+                {selectedAction === "Move to List" && (
+                  <>
+                    Move to column <Text strong>{moveToList}</Text>
+                  </>
+                )}
+                {selectedAction === "Complete Task" && (
+                  <>Mark the task as completed</>
+                )}
+                {selectedAction === "Delete Task" && <>Delete the task</>}
+                {selectedAction === "Assign Task" && (
+                  <>
+                    Assign task to <Text strong>{userEmail}</Text>
+                  </>
+                )}
+              </Text>
+            </Card>
+            <Space className="mt-4">
+              <Button type="primary" onClick={handleSaveRule}>
+                Save Rule
+              </Button>
+              <Button onClick={() => setCurrentStep(1)}>
+                Back
+              </Button>
+            </Space>
+          </div>
+        )}
       </Modal>
-    </>
+
+      <Modal
+        title="Confirm Deletion"
+        visible={showDeleteConfirmation}
+        onOk={confirmDelete}
+        onCancel={closeDeleteConfirmation}
+      >
+        <p>Are you sure you want to delete this rule?</p>
+      </Modal>
+    </div>
   );
 }
+
 export default RulesButton;
+
+

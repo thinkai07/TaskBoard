@@ -32,4 +32,8 @@ const auditLogSchema = new mongoose.Schema(
   }
 );
 
+<<<<<<< HEAD
 module.exports = mongoose.model("AuditLog", auditLogSchema);
+=======
+module.exports = mongoose.model("AuditLog", auditLogSchema); 
+>>>>>>> 8153153255c5360b0a271a54212e5094728a3356

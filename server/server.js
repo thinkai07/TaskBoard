@@ -1,29 +1,28 @@
-  // //server.js
-  require('dotenv').config();
-  const cron = require('node-cron');
-  const express = require("express");
-  const mongoose = require("mongoose");
-  const cors = require("cors");
-  const bodyParser = require("body-parser");
-  const crypto = require("crypto");
-  const bcrypt = require("bcrypt");
-  const jwt = require("jsonwebtoken");
-  const moment = require("moment-timezone");
-  const nodemailer = require("nodemailer");
-  const { type } = require("os");
-  const http = require("http");
-  const socketIo = require("socket.io");
-  const axios = require("axios");
-  // Initialize the Express app
-  const port = process.env.PORT ;
-  const app = express();
-  const server = http.createServer(app);
-  const io = socketIo(server, {
-    cors: {
-      origin: true,
-      methods: ["GET", "POST", "PUT", "DELETE"],
-    },
-  });
+require('dotenv').config();
+const cron = require('node-cron');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const moment = require("moment-timezone");
+const nodemailer = require("nodemailer");
+const { type } = require("os");
+const http = require("http");
+const socketIo = require("socket.io");
+const axios = require("axios");
+// Initialize the Express app
+const port = process.env.PORT;
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+});
 
   app.use(cors());
   app.use(bodyParser.json());
@@ -80,63 +79,63 @@
   });
 
 
-  const ruleSchema = new Schema({
-    projectId: [{ type: Schema.Types.ObjectId, ref: "Project" }],
-    name: { type: String, required: true },
-    trigger: {
-      type: String,
-      enum: [
-        "Card Move",
-        "Card Changes",
-        "Dates",
-        "Checklists",
-        "Card Content",
-        "Fields",
-      ],
-    },
-    triggerCondition: { type: String },
-    listName: { type: String },
-    action: {
-      type: String,
-      enum: [
-        "Move",
-        "Add/Remove",
-        "Dates",
-        "Checklists",
-        "Move to List",
-        "Complete Task",
-        "Members",
-        "Content",
-        "Fields",
-      ],
-    },
-    actionDetails: { type: Map, of: String },
-    createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    createdByCondition: {
-      type: String,
-      enum: ["by me", "by anyone", "by anyone except me"],
-      required: true,
-    },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    triggerSentence:{type:String},
-    actionSentence:{type:String}
-  });
+const ruleSchema = new Schema({
+  projectId: [{ type: Schema.Types.ObjectId, ref: "Project" }],
+  name: { type: String, required: true },
+  trigger: {
+    type: String,
+    enum: [
+      "Card Move",
+      "Card Changes",
+      "Dates",
+      "Checklists",
+      "Card Content",
+      "Fields",
+    ],
+  },
+  triggerCondition: { type: String },
+  listName: { type: String },
+  action: {
+    type: String,
+    enum: [
+      "Move",
+      "Add/Remove",
+      "Dates",
+      "Checklists",
+      "Move to List",
+      "Complete Task",
+      "Members",
+      "Content",
+      "Fields",
+    ],
+  },
+  actionDetails: { type: Map, of: String },
+  createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  createdByCondition: {
+    type: String,
+    enum: ["by me", "by anyone", "by anyone except me"],
+    required: true,
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  triggerSentence: { type: String },
+  actionSentence: { type: String }
+});
 
-  const projectSchema = new Schema(
-    {
-      id: String,
-      name: String,
-      description: String,
-      projectManager: String,
-      projectManagerName: String,
-      teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
-      tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
-      organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-      rules: [{ type: Schema.Types.ObjectId, ref: "Rule" }],
-      createdBy: String,
-      updatedBy: String,
-      deletedBy: String,
+const projectSchema = new Schema(
+  {
+    id: String,
+    name: String,
+    description: String,
+    projectManager: String,
+    projectManagerName: String,
+    teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
+    tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
+    rules: [{ type: Schema.Types.ObjectId, ref: "Rule" }],
+    createdBy: String,
+    updatedBy: String,
+    deletedBy: String,
 
       startDate: { type: Date },
 
@@ -228,39 +227,39 @@
     }
   );
 
-  //cards schema
-  const cardSchema = new Schema(
-    {
-      name: String,
-      description: String,
-      assignedTo: { type: String },
-      status: {
-        type: String,
-        enum: ["inprogress", "completed", "pending", "paused"],
-        default: "pending",
-      },
-      createdDate: { type: Date },
-      updatedDate: [{ type: Date }],
-      project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
-      assignDate: { type: Date },
-      dueDate: { type: Date },
-      task: { type: mongoose.Schema.Types.ObjectId, ref: "Task" },
-      createdBy: String,
-      updatedBy: [{ type: String }],
-      movedBy: [{ type: String }],
-      movedDate: [{ type: Date }],
-      deletedBy: String,
-      comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-      estimatedTime: { type: Number, default: 0 },
-      utilizedTime: [{ type: Number, default: 0 }],
-      pausedAt: [{ type: Date }], // To store the timestamps when paused
-      resumedAt: [{ type: Date }], // To store the timestamps when resumed
+//cards schema
+const cardSchema = new Schema(
+  {
+    name: String,
+    description: String,
+    assignedTo: { type: String },
+    status: {
+      type: String,
+      enum: ["inprogress", "completed", "pending", "paused"],
+      default: "pending",
     },
-    {
-      timestamps: { deletedDate: "deletedDate" },
-    }
-  );
-  
+    createdDate: { type: Date },
+    updatedDate: [{ type: Date }],
+    project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
+    assignDate: { type: Date },
+    dueDate: { type: Date },
+    task: { type: mongoose.Schema.Types.ObjectId, ref: "Task" },
+    createdBy: String,
+    updatedBy: [{ type: String }],
+    movedBy: [{ type: String }],
+    movedDate: [{ type: Date }],
+    deletedBy: String,
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+    estimatedTime: { type: Number, default: 0 },
+    utilizedTime: [{ type: Number, default: 0 }],
+    pausedAt: [{ type: Date }], // To store the timestamps when paused
+    resumedAt: [{ type: Date }], // To store the timestamps when resumed
+  },
+  {
+    timestamps: { deletedDate: "deletedDate" },
+  }
+);
+
 
   // Comment schema
   const commentSchema = new Schema(
@@ -295,18 +294,18 @@
     }
   );
 
-  // User schema
-  const userSchema = new Schema({
-    id: String,
-    name: String,
-    email: String,
-    password: String,
-    role: { type: String },
-    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    status: { type: String, default: "UNVERIFY" },
-  });
+// User schema
+const userSchema = new Schema({
+  id: String,
+  name: String,
+  email: String,
+  password: String,
+  role: { type: String },
+  organization: { type: Schema.Types.ObjectId, ref: "Organization" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  status: { type: String, default: "UNVERIFY" },
+});
 
   // Audit log schema
   const auditLogSchema = new Schema(
@@ -342,31 +341,31 @@
     }
   );
 
-  // Creating models
-  const User = mongoose.model("User", userSchema);
-  const Task = mongoose.model("Task", taskSchema);
-  const Team = mongoose.model("Team", teamSchema);
-  const Project = mongoose.model("Project", projectSchema);
-  const Organization = mongoose.model("Organization", organizationSchema);
-  const Card = mongoose.model("Card", cardSchema);
-  const AuditLog = mongoose.model("AuditLog", auditLogSchema);
-  const Comment = mongoose.model("Comment", commentSchema);
-  const Activity = mongoose.model("Activity", activitySchema);
-  const Notification = mongoose.model("Notification", NotificationSchema);
-  const Rule = mongoose.model("Rule", ruleSchema);
-  module.exports = {
-    User,
-    Task,
-    Team,
-    Project,
-    Organization,
-    Card,
-    AuditLog,
-    Comment,
-    Activity,
-    Notification,
-    Rule,
-  };
+// Creating models
+const User = mongoose.model("User", userSchema);
+const Task = mongoose.model("Task", taskSchema);
+const Team = mongoose.model("Team", teamSchema);
+const Project = mongoose.model("Project", projectSchema);
+const Organization = mongoose.model("Organization", organizationSchema);
+const Card = mongoose.model("Card", cardSchema);
+const AuditLog = mongoose.model("AuditLog", auditLogSchema);
+const Comment = mongoose.model("Comment", commentSchema);
+const Activity = mongoose.model("Activity", activitySchema);
+const Notification = mongoose.model("Notification", NotificationSchema);
+const Rule = mongoose.model("Rule", ruleSchema);
+module.exports = {
+  User,
+  Task,
+  Team,
+  Project,
+  Organization,
+  Card,
+  AuditLog,
+  Comment,
+  Activity,
+  Notification,
+  Rule,
+};
 
   const tempOrganizationSchema = new Schema({
     name: String,
@@ -406,15 +405,15 @@
     },
   });
 
-  // // Send Registration Email with Token Function
-  const sendRegistrationEmail = (email, name, token) => {
-    const link = `http://13.235.16.113/success?token=${token}`;
-    const mailOptions = {
-      from: "thinkailabs111@gmail.com",
-      to: email,
-      subject: "Registration Successful",
-      text: `Dear ${name},\n\nYour registration was successful. Please click the following link to complete your registration and login: ${link}\n\nBest Regards,\nTeam`,
-    };
+// // Send Registration Email with Token Function
+const sendRegistrationEmail = (email, name, token) => {
+  const link = `http://13.235.16.113/success?token=${token}`;
+  const mailOptions = {
+    from: "thinkailabs111@gmail.com",
+    to: email,
+    subject: "Registration Successful",
+    text: `Dear ${name},\n\nYour registration was successful. Please click the following link to complete your registration and login: ${link}\n\nBest Regards,\nTeam`,
+  };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
@@ -454,15 +453,15 @@
       // Hash the password before saving
       const hashedPassword = await bcrypt.hash(userPassword, 10);
 
-      // Create the user with the organization reference and role 'admin'
-      const newUser = new TempUser({
-        name: userName,
-        email: userEmail,
-        password: hashedPassword, // Save the hashed password
-        organization: newOrganization._id,
-        role: "ADMIN",
-        status: "VERIFIED",
-      });
+    // Create the user with the organization reference and role 'admin'
+    const newUser = new TempUser({
+      name: userName,
+      email: userEmail,
+      password: hashedPassword, // Save the hashed password
+      organization: newOrganization._id,
+      role: "ADMIN",
+      status: "VERIFIED",
+    });
 
       await newUser.save();
 
@@ -549,11 +548,11 @@
           .json({ message: "Email query parameter is required" });
       }
 
-      const users = await User.find({
-        email: { $regex: email, $options: "i" },
-        organization: req.user.organizationId,
-        
-      }).select("email status");
+    const users = await User.find({
+      email: { $regex: email, $options: "i" },
+      organization: req.user.organizationId,
+
+    }).select("email status");
 
       res.status(200).json({ users });
     } catch (error) {
@@ -562,42 +561,42 @@
     }
   });
 
-  // Fetch users for an organization
-  app.get("/api/users", authenticateToken, async (req, res) => {
-    try {
-      const users = await User.find({ organization: req.user.organizationId });
-      res.status(200).json({ users });
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Error fetching users" });
-    }
-  });
+// Fetch users for an organization
+app.get("/api/users", authenticateToken, async (req, res) => {
+  try {
+    const users = await User.find({ organization: req.user.organizationId });
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Error fetching users" });
+  }
+});
 
-  app.get('/api/cards/user/:userId', async (req, res) => {
-    try {
-      const userId = req.params.userId;
-  
-      // Fetch the user to get the email
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      const userEmail = user.email;
-  
-      // Fetch cards assigned to the user by email
-      const cards = await Card.find({ assignedTo: userEmail });
-  
-      // Send the response with the cards
-      res.json(cards);
-      console.log(cards);
-    } catch (error) {
-      console.error('Error fetching cards:', error);
-      res.status(500).send('Server error');
+app.get('/api/cards/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    // Fetch the user to get the email
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  });
-  
-  
+
+    const userEmail = user.email;
+
+    // Fetch cards assigned to the user by email
+    const cards = await Card.find({ assignedTo: userEmail });
+
+    // Send the response with the cards
+    res.json(cards);
+    console.log(cards);
+  } catch (error) {
+    console.error('Error fetching cards:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
 
   // User data name route
   app.get("/api/user", authenticateToken, async (req, res) => {
@@ -618,131 +617,131 @@
     }
   });
 
-  // Delete user
-  app.delete("/api/deleteUser/:id", authenticateToken, authorizeRoles("ADMIN"),
-    async (req, res) => {
+// Delete user
+app.delete("/api/deleteUser/:id", authenticateToken, authorizeRoles("ADMIN"),
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+
+      // Find the user in the database before deleting to get the email or GitHub username
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Find the organization associated with the user
+      const organization = await Organization.findById(user.organization);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Attempt to remove the user from the GitHub organization
       try {
-        const userId = req.params.id;
+        const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
 
-        // Find the user in the database before deleting to get the email or GitHub username
-        const user = await User.findById(userId);
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
+        const githubResponse = await axios.delete(
+          `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+              Accept: "application/vnd.github.v3+json",
+            },
+          }
+        );
 
-        // Find the organization associated with the user
-        const organization = await Organization.findById(user.organization);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
-
-        // Attempt to remove the user from the GitHub organization
-        try {
-          const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
-
-          const githubResponse = await axios.delete(
-            `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-            {
-              headers: {
-                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-                Accept: "application/vnd.github.v3+json",
-              },
-            }
-          );
-
-          console.log(
-            "GitHub membership deletion response:",
-            githubResponse.data
-          );
-        } catch (error) {
-          console.error(
-            "Error removing user from GitHub organization:",
-            error.response ? error.response.data : error.message
-          );
-          // Optionally, decide whether to proceed with deleting the user from the database if GitHub deletion fails
-          return res.status(500).json({
-            message: "User deletion failed on GitHub but proceeded in the database",
-          });
-        }
+        console.log(
+          "GitHub membership deletion response:",
+          githubResponse.data
+        );
+      } catch (error) {
+        console.error(
+          "Error removing user from GitHub organization:",
+          error.response ? error.response.data : error.message
+        );
+        // Optionally, decide whether to proceed with deleting the user from the database if GitHub deletion fails
+        return res.status(500).json({
+          message: "User deletion failed on GitHub but proceeded in the database",
+        });
+      }
 
         // Delete the user from the database
         await User.findByIdAndDelete(userId);
 
-        res.status(200).json({
-          message: "User deleted successfully from both database and GitHub",
-        });
-      } catch (error) {
-        console.error("Error deleting user:", error);
-        res.status(500).json({ message: "Error deleting user" });
-      }
+      res.status(200).json({
+        message: "User deleted successfully from both database and GitHub",
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Error deleting user" });
     }
-  );
+  }
+);
 
-//   // Function to delete user from both database and GitHub
-// const deleteUser = async (userId) => {
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       console.log(`User not found: ${userId}`);
-//       return;
-//     }
+// Function to delete user from both database and GitHub
+const deleteUser = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log(`User not found: ${userId}`);
+      return;
+    }
 
-//     const organization = await Organization.findById(user.organization);
-//     if (!organization) {
-//       console.log(`Organization not found for user: ${userId}`);
-//       return;
-//     }
+    const organization = await Organization.findById(user.organization);
+    if (!organization) {
+      console.log(`Organization not found for user: ${userId}`);
+      return;
+    }
 
-//     try {
-//       const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
+    try {
+      const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
 
-//       const githubResponse = await axios.delete(
-//         `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         }
-//       );
+      const githubResponse = await axios.delete(
+        `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
 
-//       console.log("GitHub membership deletion response:", githubResponse.data);
-//     } catch (error) {
-//       console.error(
-//         "Error removing user from GitHub organization:",
-//         error.response ? error.response.data : error.message
-//       );
-//       // Proceeding with database deletion even if GitHub deletion fails
-//     }
+      console.log("GitHub membership deletion response:", githubResponse.data);
+    } catch (error) {
+      console.error(
+        "Error removing user from GitHub organization:",
+        error.response ? error.response.data : error.message
+      );
+      // Proceeding with database deletion even if GitHub deletion fails
+    }
 
-//     await User.findByIdAndDelete(userId);
-//     console.log(`User ${userId} deleted successfully from both database and GitHub`);
-//   } catch (error) {
-//     console.error("Error deleting user:", error);
-//   }
-// };
+    await User.findByIdAndDelete(userId);
+    console.log(`User ${userId} deleted successfully from both database and GitHub`);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+  }
+};
 
-// // Schedule the job to run every minute
-// cron.schedule("* * * * *", async () => {
-//   console.log("Running scheduled job to delete unverified users...");
+// Schedule the job to run every minute
+cron.schedule("* * * * *", async () => {
+  console.log("Running scheduled job to delete unverified users...");
 
-//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  
-//   try {
-//     const usersToDelete = await User.find({
-//       status: "UNVERIFY",
-//       createdAt: { $lt: fiveMinutesAgo },
-//     });
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-//     for (const user of usersToDelete) {
-//       await deleteUser(user._id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching users for deletion:", error);
-//   }
-// });
+  try {
+    const usersToDelete = await User.find({
+      status: "UNVERIFY",
+      createdAt: { $lt: fiveMinutesAgo },
+    });
+
+    for (const user of usersToDelete) {
+      await deleteUser(user._id);
+    }
+  } catch (error) {
+    console.error("Error fetching users for deletion:", error);
+  }
+});
 
 
   // Login route
@@ -788,100 +787,96 @@
     const token = authHeader && authHeader.split(" ")[1];
     if (token == null) return res.sendStatus(401);
 
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) return res.sendStatus(403);
-      req.user = user;
-      next();
-    });
-  }
-  // Middleware for authorizing based on role
-  function authorizeRoles(...roles) {
-    return (req, res, next) => {
-      if (!roles.includes(req.user.role)) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      next();
-    };
-  }
-  // Get user role route
-  app.get("/api/role", authenticateToken, async (req, res) => {
-    try {
-      // Step 1: Find the user and get the organization ID
-      const user = await User.findOne({ email: req.user.email }).select("role organization");
-      if (!user) {
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-
-      // Step 2: Find the organization by ID and get the name
-      const organization = await Organization.findById(user.organization).select("name");
-      if (!organization) {
-        return res.status(404).json({ success: false, message: "Organization not found" });
-      }
-
-      res.json({
-        success: true,
-        role: user.role,
-        organizationId: user.organization,
-        organizationName: organization.name, // Include the organization name in the response
-      });
-    } catch (error) {
-      console.error("Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
-    }
+  jwt.verify(token, secretKey, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
   });
+}
+// Middleware for authorizing based on role
+function authorizeRoles(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+}
+// Get user role route
+app.get("/api/role", authenticateToken, async (req, res) => {
+  try {
+    // Step 1: Find the user and get the organization ID
+    const user = await User.findOne({ email: req.user.email }).select("role organization");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-  // Add user
- 
-  app.post("/api/addUser",
-    authenticateToken,
-    authorizeRoles("ADMIN"),
-    async (req, res) => {
-      const { name, email, role } = req.body;
+    // Step 2: Find the organization by ID and get the name
+    const organization = await Organization.findById(user.organization).select("name");
+    if (!organization) {
+      return res.status(404).json({ success: false, message: "Organization not found" });
+    }
 
-      try {
-        if (!name || !email || !role) {
-          return res.status(400).json({ message: "All fields are required" });
-        }
+    res.json({
+      success: true,
+      role: user.role,
+      organizationId: user.organization,
+      organizationName: organization.name, // Include the organization name in the response
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
-      
+// Add user
 
-        const newUser = new User({
-          name,
-          email,
-          role: "USER",
-          organization: req.user.organizationId,
-          status: "UNVERIFY", // Set default status as 'unverify'
-        });
-        // Find the organization by ID
-        const organization = await Organization.findById(req.user.organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
+app.post("/api/addUser",
+  authenticateToken,
+  authorizeRoles("ADMIN"),
+  async (req, res) => {
+    const { name, email, role } = req.body;
+    try {
+      if (!name || !email || !role) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      const newUser = new User({
+        name,
+        email,
+        role: "USER",
+        organization: req.user.organizationId,
+        status: "UNVERIFY", // Set default status as 'unverify'
+      });
+      // Find the organization by ID
+      const organization = await Organization.findById(req.user.organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
 
         await newUser.save();
 
-        const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
-          expiresIn: "3d",
-        });
-        const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
+      const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
+        expiresIn: "3d",
+      });
+      const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
 
         sendResetEmail(email, resetLink);
 
-        // Add the user to the GitHub organization
-        try {
-          const githubResponse = await axios.put(
-            `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
-            {
-              role: "member", // Use 'member' or 'admin' depending on the role you want to assign
+      // Add the user to the GitHub organization
+      try {
+        const githubResponse = await axios.put(
+          `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
+          {
+            role: "member", // Use 'member' or 'admin' depending on the role you want to assign
+          },
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+              Accept: "application/vnd.github.v3+json",
             },
-            {
-              headers: {
-                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-                Accept: "application/vnd.github.v3+json",
-              },
-            }
-          );
+          }
+        );
 
           console.log("GitHub membership response:", githubResponse.data);
         } catch (error) {
@@ -908,13 +903,13 @@
   );
 
 
-  const sendResetEmail = (email, link) => {
-    const mailOptions = {
-      from: "thinkailabs111@gmail.com",
-      to: email,
-      subject: "Password Reset",
-      text: `Please click on the following link to reset your password: ${link}`,
-    };
+const sendResetEmail = (email, link) => {
+  const mailOptions = {
+    from: "thinkailabs111@gmail.com",
+    to: email,
+    subject: "Create password",
+    text: `Please click on the following link to create your password: ${link}`,
+  };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
@@ -940,11 +935,11 @@
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      const user = await User.findByIdAndUpdate(
-        decoded.userId,
-        { password: hashedPassword, status: "VERIFIED" },
-        { new: true }
-      ); // Update status to 'Verified'
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      { password: hashedPassword, status: "VERIFIED" },
+      { new: true }
+    ); // Update status to 'Verified'
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -983,213 +978,406 @@
     });
   };
 
-  //create projects
+//create projects
 
-  app.post("/api/projects", async (req, res) => {
-    const {
-      organizationId,
+// app.post("/api/projects", async (req, res) => {
+//   const {
+//     organizationId,
+//     name,
+//     description,
+//     projectManager,
+//     startDate,
+//     createdBy,
+//     teams,
+//   } = req.body;
+
+//   try {
+//     console.log("Received request to create project:", req.body);
+
+//     const organization = await Organization.findById(organizationId);
+//     if (!organization) {
+//       console.log("Organization not found");
+//       return res.status(404).json({ message: "Organization not found" });
+//     }
+
+//     const projectManagerUser = await User.findOne({ email: projectManager });
+//     if (!projectManagerUser) {
+//       console.log("Project manager not found");
+//       return res.status(404).json({ message: "Project manager not found" });
+//     }
+
+//     const createProjectUser = await User.findOne({ email: createdBy });
+//     if (!createProjectUser) {
+//       console.log("Creator not found");
+//       return res.status(404).json({ message: "Creator not found" });
+//     }
+
+//     // Validate that all team IDs exist and fetch team names
+//     let teamNames = [];
+//     if (teams && teams.length > 0) {
+//       const existingTeams = await Team.find({ _id: { $in: teams } });
+//       if (existingTeams.length !== teams.length) {
+//         console.log("Some teams not found");
+//         return res.status(404).json({ message: "Some teams not found" });
+//       }
+//       teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
+//     }
+//     console.log("Team names:", teamNames); // Add a log to check team names
+
+//     const newProject = new Project({
+//       name,
+//       description,
+//       projectManager,
+//       organization: organization._id,
+//       teams: teams || [],
+//       tasks: [],
+//       startDate,
+//       createdBy,
+//       bgUrl: "",
+//       repository: "", // Initialize repository field
+//       repoName: "", // Initialize repoName field
+//     });
+
+//     await newProject.save();
+//     console.log("New project created:", newProject);
+
+//     const auditLog = new AuditLog({
+//       entityType: "Project",
+//       entityId: newProject._id,
+//       actionType: "create",
+//       actionDate: new Date(),
+//       performedBy: createProjectUser.name,
+//       changes: [],
+//     });
+
+//     await auditLog.save();
+//     console.log("Audit log created:", auditLog);
+
+//     organization.projects.push(newProject._id);
+//     await organization.save();
+//     console.log("Organization updated with new project");
+
+//     // Update teams with the new project
+//     if (teams && teams.length > 0) {
+//       await Team.updateMany(
+//         { _id: { $in: teams } },
+//         { $push: { projects: newProject._id } }
+//       );
+//       console.log("Teams updated with new project");
+//     }
+
+//     const token = jwt.sign(
+//       {
+//         projectId: newProject._id,
+//         name: newProject.name,
+//         description: newProject.description,
+//         projectManager: newProject.projectManager,
+//       },
+//       secretKey,
+//       { expiresIn: "1h" }
+//     );
+
+//     const link = `http://13.235.16.113/project?token=${token}`;
+//     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
+
+//     await sendEmail(projectManager, "New Project Created", emailText);
+//     console.log("Email sent to project manager");
+
+//     // Create GitHub repository
+//     const repoName = `${organization.name}-${newProject.name}-repo`
+//       .replace(/\s+/g, "-")
+//       .toLowerCase();
+//     let githubResponse;
+//     try {
+//       console.log(organization)
+//       githubResponse = await axios.post(
+//         `https://api.github.com/orgs/${organization.name}/repos`,
+//         {
+//           name: repoName,
+//           private: true,
+//           description: `Repository for ${organization.name} project ${newProject.name}`,
+//         },
+//         {
+//           headers: {
+//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+//       console.log("GitHub repository created:", githubResponse.data);
+
+//       // Update project with repository info
+//       newProject.repository = githubResponse.data.html_url;
+//       newProject.repoName = repoName;
+//       await newProject.save();
+//       console.log(
+//         "Project repository URL and repo name updated:",
+//         newProject.repository,
+//         newProject.repoName
+//       );
+//     } catch (error) {
+//       console.error(
+//         "Error creating GitHub repository:",
+//         error.response ? error.response.data : error.message
+//       );
+//       return res.status(500).json({
+//         message: "Error creating GitHub repository",
+//         error: error.message,
+//       });
+//     }
+
+//     // Assign team to the repository
+//     if (teamNames && teamNames.length > 0) {
+//       for (const teamName of teamNames) {
+//         try {
+//           const teamAssignResponse = await axios.put(
+//             `https://api.github.com/orgs/${organization.name}/teams/${teamName}/repos/${organization.name}/${repoName}`,
+//             { permission: "push" }, // 'push' gives write access, you can change to 'admin' for admin access
+//             {
+//               headers: {
+//                 Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//                 "Content-Type": "application/json",
+//                 Accept: "application/vnd.github.v3+json",
+//               },
+//             }
+//           );
+//           console.log(
+//             `Team ${teamName} assigned to GitHub repository:`,
+//             teamAssignResponse.data
+//           );
+//         } catch (error) {
+//           console.error(
+//             `Error assigning team ${teamName} to GitHub repository:`,
+//             error.response ? error.response.data : error.message
+//           );
+//           return res.status(500).json({
+//             message: `Error assigning team ${teamName} to GitHub repository`,
+//             error: error.message,
+//           });
+//         }
+//       }
+//     }
+
+//     res.status(201).json({
+//       message:
+//         "Project created, email sent to project manager, GitHub repository created, and team assigned",
+//       project: newProject,
+//       projectManagerStatus: projectManagerUser.status,
+//       repository: githubResponse.data,
+//       repoName, // Include repo name in the response
+//       teamNames, // Include team names in the response
+//     });
+//   } catch (error) {
+//     console.error("Error creating project:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error creating project", error: error.message });
+//   }
+// });
+
+app.post("/api/projects", async (req, res) => {
+  const {
+    organizationId,
+    name,
+    description,
+    projectManager,
+    startDate,
+    createdBy,
+    teams,
+  } = req.body;
+
+  try {
+    console.log("Received request to create project:", req.body);
+
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      console.log("Organization not found");
+      return res.status(404).json({ message: "Organization not found" });
+    }
+
+    const projectManagerUser = await User.findOne({ email: projectManager });
+    if (!projectManagerUser) {
+      console.log("Project manager not found");
+      return res.status(404).json({ message: "Project manager not found" });
+    }
+
+    const createProjectUser = await User.findOne({ email: createdBy });
+    if (!createProjectUser) {
+      console.log("Creator not found");
+      return res.status(404).json({ message: "Creator not found" });
+    }
+
+    // Validate that all team IDs exist and fetch team names
+    let teamNames = [];
+    if (teams && teams.length > 0) {
+      const existingTeams = await Team.find({ _id: { $in: teams } });
+      if (existingTeams.length !== teams.length) {
+        console.log("Some teams not found");
+        return res.status(404).json({ message: "Some teams not found" });
+      }
+      teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
+    }
+    console.log("Team names:", teamNames); // Add a log to check team names
+
+    const newProject = new Project({
       name,
       description,
       projectManager,
+      projectManagerName: projectManagerUser.name, // Store the name here
+      organization: organization._id,
+      teams: teams || [],
+      tasks: [],
       startDate,
       createdBy,
-      teams,
-    } = req.body;
-  
-    try {
-      console.log("Received request to create project:", req.body);
-  
-      const organization = await Organization.findById(organizationId);
-      if (!organization) {
-        console.log("Organization not found");
-        return res.status(404).json({ message: "Organization not found" });
-      }
-  
-      const projectManagerUser = await User.findOne({ email: projectManager });
-      if (!projectManagerUser) {
-        console.log("Project manager not found");
-        return res.status(404).json({ message: "Project manager not found" });
-      }
-  
-      const createProjectUser = await User.findOne({ email: createdBy });
-      if (!createProjectUser) {
-        console.log("Creator not found");
-        return res.status(404).json({ message: "Creator not found" });
-      }
-  
-      // Validate that all team IDs exist and fetch team names
-      let teamNames = [];
-      if (teams && teams.length > 0) {
-        const existingTeams = await Team.find({ _id: { $in: teams } });
-        if (existingTeams.length !== teams.length) {
-          console.log("Some teams not found");
-          return res.status(404).json({ message: "Some teams not found" });
-        }
-        teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
-      }
-      console.log("Team names:", teamNames); // Add a log to check team names
-  
-      const newProject = new Project({
-        name,
-        description,
-        projectManager,
-        projectManagerName:projectManager.name,
-        organization: organization._id,
-        teams: teams || [],
-        tasks: [],
-        startDate,
-        createdBy,
-        bgUrl: "",
-        repository: "", // Initialize repository field
-        repoName: "", // Initialize repoName field
-      });
-  
-      await newProject.save();
-      console.log("New project created:", newProject);
-  
-      const auditLog = new AuditLog({
-        entityType: "Project",
-        entityId: newProject._id,
-        actionType: "create",
-        actionDate: new Date(),
-        performedBy: createProjectUser.name,
-        changes: [],
-      });
-  
-      await auditLog.save();
-      console.log("Audit log created:", auditLog);
-  
-      organization.projects.push(newProject._id);
-      await organization.save();
-      console.log("Organization updated with new project");
-  
-      // Update teams with the new project
-      if (teams && teams.length > 0) {
-        await Team.updateMany(
-          { _id: { $in: teams } },
-          { $push: { projects: newProject._id } }
-        );
-        console.log("Teams updated with new project");
-      }
-  
-      const token = jwt.sign(
-        {
-          projectId: newProject._id,
-          name: newProject.name,
-          description: newProject.description,
-          projectManager: newProject.projectManager,
-        },
-        secretKey,
-        { expiresIn: "1h" }
+      bgUrl: "",
+      repository: "", // Initialize repository field
+      repoName: "", // Initialize repoName field
+    });
+
+    await newProject.save();
+    console.log("New project created:", newProject);
+
+    const auditLog = new AuditLog({
+      entityType: "Project",
+      entityId: newProject._id,
+      actionType: "create",
+      actionDate: new Date(),
+      performedBy: createProjectUser.name,
+      changes: [],
+    });
+
+    await auditLog.save();
+    console.log("Audit log created:", auditLog);
+
+    organization.projects.push(newProject._id);
+    await organization.save();
+    console.log("Organization updated with new project");
+
+    // Update teams with the new project
+    if (teams && teams.length > 0) {
+      await Team.updateMany(
+        { _id: { $in: teams } },
+        { $push: { projects: newProject._id } }
       );
-  
-      const link = `http://localhost:3001/project?token=${token}`;
-      const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
-  
-      await sendEmail(projectManager, "New Project Created", emailText);
-      console.log("Email sent to project manager");
-  
-      // Create GitHub repository
-      const repoName = `${organization.name}-${newProject.name}-repo`
-        .replace(/\s+/g, "-")
-        .toLowerCase();
-      let githubResponse;
-      try {
-        console.log(organization)
-        githubResponse = await axios.post(
-          `https://api.github.com/orgs/${organization.name}/repos`,
-          {
-            name: repoName,
-            private: true,
-            description: `Repository for ${organization.name} project ${newProject.name}`,
+      console.log("Teams updated with new project");
+    }
+
+    const token = jwt.sign(
+      {
+        projectId: newProject._id,
+        name: newProject.name,
+        description: newProject.description,
+        projectManager: newProject.projectManager,
+      },
+      secretKey,
+      { expiresIn: "1h" }
+    );
+
+    const link = `http://13.235.16.113/project?token=${token}`;
+    const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
+
+    await sendEmail(projectManager, "New Project Created", emailText);
+    console.log("Email sent to project manager");
+
+    // Create GitHub repository
+    const repoName = `${organization.name}-${newProject.name}-repo`
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+    let githubResponse;
+    try {
+      console.log(organization)
+      githubResponse = await axios.post(
+        `https://api.github.com/orgs/${organization.name}/repos`,
+        {
+          name: repoName,
+          private: true,
+          description: `Repository for ${organization.name} project ${newProject.name}`,
+        },
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
           },
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log("GitHub repository created:", githubResponse.data);
-  
-        // Update project with repository info
-        newProject.repository = githubResponse.data.html_url;
-        newProject.repoName = repoName;
-        await newProject.save();
-        console.log(
-          "Project repository URL and repo name updated:",
-          newProject.repository,
-          newProject.repoName
-        );
-      } catch (error) {
-        console.error(
-          "Error creating GitHub repository:",
-          error.response ? error.response.data : error.message
-        );
-        return res.status(500).json({
-          message: "Error creating GitHub repository",
-          error: error.message,
-        });
-      }
-  
-      // Assign team to the repository
-      if (teamNames && teamNames.length > 0) {
-        for (const teamName of teamNames) {
-          try {
-            const teamAssignResponse = await axios.put(
-              `https://api.github.com/orgs/${organization.name}/teams/${teamName}/repos/${organization.name}/${repoName}`,
-              { permission: "push" }, // 'push' gives write access, you can change to 'admin' for admin access
-              {
-                headers: {
-                  Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-                  "Content-Type": "application/json",
-                  Accept: "application/vnd.github.v3+json",
-                },
-              }
-            );
-            console.log(
-              `Team ${teamName} assigned to GitHub repository:`,
-              teamAssignResponse.data
-            );
-          } catch (error) {
-            console.error(
-              `Error assigning team ${teamName} to GitHub repository:`,
-              error.response ? error.response.data : error.message
-            );
-            return res.status(500).json({
-              message: `Error assigning team ${teamName} to GitHub repository`,
-              error: error.message,
-            });
-          }
+        }
+      );
+      console.log("GitHub repository created:", githubResponse.data);
+
+      // Update project with repository info
+      newProject.repository = githubResponse.data.html_url;
+      newProject.repoName = repoName;
+      await newProject.save();
+      console.log(
+        "Project repository URL and repo name updated:",
+        newProject.repository,
+        newProject.repoName
+      );
+    } catch (error) {
+      console.error(
+        "Error creating GitHub repository:",
+        error.response ? error.response.data : error.message
+      );
+      return res.status(500).json({
+        message: "Error creating GitHub repository",
+        error: error.message,
+      });
+    }
+
+    // Assign team to the repository
+    if (teamNames && teamNames.length > 0) {
+      for (const teamName of teamNames) {
+        try {
+          const teamAssignResponse = await axios.put(
+            `https://api.github.com/orgs/${organization.name}/teams/${teamName}/repos/${organization.name}/${repoName}`,
+            { permission: "push" }, // 'push' gives write access, you can change to 'admin' for admin access
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
+          console.log(
+            `Team ${teamName} assigned to GitHub repository:`,
+            teamAssignResponse.data
+          );
+        } catch (error) {
+          console.error(
+            `Error assigning team ${teamName} to GitHub repository:`,
+            error.response ? error.response.data : error.message
+          );
+          return res.status(500).json({
+            message: `Error assigning team ${teamName} to GitHub repository`,
+            error: error.message,
+          });
         }
       }
-  
-      res.status(201).json({
-        message:
-          "Project created, email sent to project manager, GitHub repository created, and team assigned",
-        project: newProject,
-        projectManagerStatus: projectManagerUser.status,
-        repository: githubResponse.data,
-        repoName, // Include repo name in the response
-        teamNames, // Include team names in the response
-      });
-    } catch (error) {
-      console.error("Error creating project:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating project", error: error.message });
     }
-  });
-  
+
+    res.status(201).json({
+      message:
+        "Project created, email sent to project manager, GitHub repository created, and team assigned",
+      project: newProject,
+      projectManagerStatus: projectManagerUser.status,
+      repository: githubResponse.data,
+      repoName, // Include repo name in the response
+      teamNames, // Include team names in the response
+    });
+  } catch (error) {
+    console.error("Error creating project:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating project", error: error.message });
+  }
+});
 
 
- 
-  app.put("/api/projects/:projectId/bgImage",authenticateToken,
-    async (req, res) => {
-      try {
-        const projectId = req.params.projectId;
-        console.log(projectId);
-        const { bgUrl } = req.body;
+app.put("/api/projects/:projectId/bgImage", authenticateToken,
+  async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      console.log(projectId);
+      const { bgUrl } = req.body;
 
         const result = await cloudinary.uploader.upload(bgUrl, {
           folder: "document",
@@ -1207,24 +1395,24 @@
           return res.status(404).json({ message: "Project not found" });
         }
 
-        res.status(200).json({
-          message: "Background image URL updated successfully",
-          project: updatedProject,
-        });
-      } catch (error) {
-        console.error("Error updating background image:", error);
-        res.status(500).json({ message: "Error updating background image" });
-      }
+      res.status(200).json({
+        message: "Background image URL updated successfully",
+        project: updatedProject,
+      });
+    } catch (error) {
+      console.error("Error updating background image:", error);
+      res.status(500).json({ message: "Error updating background image" });
     }
-  );
+  }
+);
 
-  //custom image
-  app.put("/api/projects/:projectId/customImages",authenticateToken,
-    async (req, res) => {
-      try {
-        const projectId = req.params.projectId;
-        console.log(projectId);
-        const { imageUrl } = req.body;
+//custom image
+app.put("/api/projects/:projectId/customImages",authenticateToken,
+  async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      console.log(projectId);
+      const { imageUrl } = req.body;
 
         const updatedProject = await Project.findByIdAndUpdate(
           projectId,
@@ -1236,16 +1424,16 @@
           return res.status(404).json({ message: "Project not found" });
         }
 
-        res.status(200).json({
-          message: "Custom image URL added successfully",
-          project: updatedProject,
-        });
-      } catch (error) {
-        console.error("Error adding custom image:", error);
-        res.status(500).json({ message: "Error adding custom image" });
-      }
+      res.status(200).json({
+        message: "Custom image URL added successfully",
+        project: updatedProject,
+      });
+    } catch (error) {
+      console.error("Error adding custom image:", error);
+      res.status(500).json({ message: "Error adding custom image" });
     }
-  );
+  }
+);
 
   //status
   app.get("/api/user-status", async (req, res) => {
@@ -1257,170 +1445,222 @@
         return res.status(404).json({ message: "User not found" });
       }
 
-      res.status(200).json({ status: user.status });
-    } catch (error) {
-      console.error("Error fetching user status:", error);
-      res.status(500).json({ message: "Error fetching user status" });
+    res.status(200).json({ status: user.status });
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    res.status(500).json({ message: "Error fetching user status" });
+  }
+});
+
+
+
+// // Endpoint to display projects based on organization ID
+// app.get("/api/projects/:organizationId", authenticateToken,
+//   async (req, res) => {
+//     const { organizationId } = req.params;
+//     const userEmail = req.user.email;
+//     const userRole = req.user.role;
+
+//     try {
+//       const organization = await Organization.findById(organizationId);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       let projects;
+//       if (userRole === "ADMIN") {
+//         // Admins can see all projects
+//         projects = await Project.find({ organization: organizationId });
+//       } else {
+//         // Find the user
+//         const user = await User.findOne({ email: userEmail });
+//         if (!user) {
+//           return res.status(404).json({ message: "User not found" });
+//         }
+
+//         // Find projects where the user is either the project manager or part of a team
+//         projects = await Project.find({
+//           organization: organizationId,
+//           $or: [
+//             { projectManager: userEmail },
+//             { teams: { $in: await Team.find({ "users.user": user._id }) } },
+//           ],
+//         });
+//       }
+
+//       res.status(200).json({ projects });
+//     } catch (error) {
+//       console.error("Error retrieving projects:", error);
+//       res.status(500).json({ message: "Error retrieving projects" });
+//     }
+//   }
+// );
+
+app.get("/api/projects/:organizationId", authenticateToken, async (req, res) => {
+  const { organizationId } = req.params;
+  const userEmail = req.user.email;
+  const userRole = req.user.role;
+
+  try {
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
     }
-  });
+
+    let projectsQuery;
+
+    if (userRole === "ADMIN") {
+      // Admins can see all projects
+      projectsQuery = Project.find({ organization: organizationId });
+    } else {
+      // Find the user
+      const user = await User.findOne({ email: userEmail });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Find projects where the user is either the project manager or part of a team
+      projectsQuery = Project.find({
+        organization: organizationId,
+        $or: [
+          { projectManager: user._id }, // Use user._id for comparison
+          { teams: { $in: await Team.find({ "users.user": user._id }).distinct('_id') } },
+        ],
+      });
+    }
+
+    // Populate projectManager field with User details
+    const projects = await projectsQuery
+      .populate('projectManager', 'name') // Populate the projectManager field and include only the name field
+      .exec();
+
+    // Transform projects to include projectManagerName
+    const transformedProjects = projects.map(project => ({
+      ...project._doc,
+      projectManagerName: project.projectManager ? project.projectManager.name : 'N/A'
+    }));
+
+    res.status(200).json({ projects: transformedProjects });
+  } catch (error) {
+    console.error("Error retrieving projects:", error);
+    res.status(500).json({ message: "Error retrieving projects" });
+  }
+});
 
 
+app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    const { name, description, updatedBy } = req.body;
 
-  // // Endpoint to display projects based on organization ID
-  app.get("/api/projects/:organizationId",authenticateToken,
-    async (req, res) => {
-      const { organizationId } = req.params;
-      const userEmail = req.user.email;
-      const userRole = req.user.role;
+    // Find the user by email to get their ObjectId and email
+    const updatedByUser = await User.findOne({ email: updatedBy });
+    if (!updatedByUser) {
+      return res.status(404).json({ message: "User not found for updatedBy" });
+    }
+
+    // Find the existing project to get the old values
+    const oldProject = await Project.findById(projectId);
+    if (!oldProject) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const organization = await Organization.findById(oldProject.organization);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+
+    // Update the GitHub repository name if the project name has changed
+    if (oldProject.name !== name) {
+      const oldRepoName = `${organization.name}-${oldProject.name}-repo`
+        .replace(/\s+/g, "-")
+        .toLowerCase();
+      const newRepoName = `${organization.name}-${name}-repo`
+        .replace(/\s+/g, "-")
+        .toLowerCase();
 
       try {
-        const organization = await Organization.findById(organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
-
-        let projects;
-        if (userRole === "ADMIN") {
-          // Admins can see all projects
-          projects = await Project.find({ organization: organizationId });
-        } else {
-          // Find the user
-          const user = await User.findOne({ email: userEmail });
-          if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // Update the GitHub repository name
+        await axios.patch(
+          `https://api.github.com/repos/${organization.name}/${oldRepoName}`,
+          { name: newRepoName },
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+              Accept: "application/vnd.github.v3+json",
+            },
           }
+        );
 
-          // Find projects where the user is either the project manager or part of a team
-          projects = await Project.find({
-            organization: organizationId,
-            $or: [
-              { projectManager: userEmail },
-              { teams: { $in: await Team.find({ "users.user": user._id }) } },
-            ],
-          });
-        }
-
-        res.status(200).json({ projects });
+        // Update the repository URL in the project document
+        oldProject.repository = `https://github.com/${organization.name}/${newRepoName}`;
+        oldProject.repoName = newRepoName;
       } catch (error) {
-        console.error("Error retrieving projects:", error);
-        res.status(500).json({ message: "Error retrieving projects" });
+        console.error(
+          "Error updating GitHub repository:",
+          error.response ? error.response.data : error.message
+        );
+        return res.status(500).json({
+          message: "Error updating GitHub repository",
+          error: error.message,
+        });
       }
     }
-  );
 
-  app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
-    try {
-      const projectId = req.params.projectId;
-      const { name, description, updatedBy } = req.body;
-  
-      // Find the user by email to get their ObjectId and email
-      const updatedByUser = await User.findOne({ email: updatedBy });
-      if (!updatedByUser) {
-        return res.status(404).json({ message: "User not found for updatedBy" });
-      }
-  
-      // Find the existing project to get the old values
-      const oldProject = await Project.findById(projectId);
-      if (!oldProject) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-  
-      const organization = await Organization.findById(oldProject.organization);
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
-      }
-  
-      // Update the GitHub repository name if the project name has changed
-      if (oldProject.name !== name) {
-        const oldRepoName = `${organization.name}-${oldProject.name}-repo`
-          .replace(/\s+/g, "-")
-          .toLowerCase();
-        const newRepoName = `${organization.name}-${name}-repo`
-          .replace(/\s+/g, "-")
-          .toLowerCase();
-  
-        try {
-          // Update the GitHub repository name
-          await axios.patch(
-            `https://api.github.com/repos/${organization.name}/${oldRepoName}`,
-            { name: newRepoName },
-            {
-              headers: {
-                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-                Accept: "application/vnd.github.v3+json",
-              },
-            }
-          );
-  
-          // Update the repository URL in the project document
-          oldProject.repository = `https://github.com/${organization.name}/${newRepoName}`;
-          oldProject.repoName = newRepoName;
-        } catch (error) {
-          console.error(
-            "Error updating GitHub repository:",
-            error.response ? error.response.data : error.message
-          );
-          return res.status(500).json({
-            message: "Error updating GitHub repository",
-            error: error.message,
-          });
-        }
-      }
-  
-      // Update the project document
-      oldProject.name = name;
-      oldProject.description = description;
-      oldProject.updatedBy = updatedBy;
-      const updatedProject = await oldProject.save();
-  
-      // Prepare changes array for audit log
-      const changes = [];
-      if (oldProject.name !== name) {
-        changes.push({
-          field: "name",
-          oldValue: oldProject.name,
-          newValue: name,
-        });
-      }
-      if (oldProject.description !== description) {
-        changes.push({
-          field: "description",
-          oldValue: oldProject.description,
-          newValue: description,
-        });
-      }
-  
-      // Create a new audit log entry
-      const newAuditLog = new AuditLog({
-        entityType: "Project",
-        entityId: projectId,
-        actionType: "update",
-        actionDate: new Date(),
-        performedBy: updatedByUser.name,
-        changes: changes,
+    // Update the project document
+    oldProject.name = name;
+    oldProject.description = description;
+    oldProject.updatedBy = updatedBy;
+    const updatedProject = await oldProject.save();
+
+    // Prepare changes array for audit log
+    const changes = [];
+    if (oldProject.name !== name) {
+      changes.push({
+        field: "name",
+        oldValue: oldProject.name,
+        newValue: name,
       });
-  
-      await newAuditLog.save();
-  
-      // Check if the project name has changed and send an email if it has
-      if (oldProject.name !== name) {
-        const projectManager = oldProject.projectManager;
-        const emailText = `Dear Project Manager,\n\nThe project name has been changed.\n\nOld Project Name: ${oldProject.name}\nNew Project Name: ${name}\n\nBest Regards,\nTeam`;
-        sendEmail(projectManager, "Project Name Changed", emailText);
-      }
-  
-      res.status(200).json({
-        message: "Project updated successfully",
-        project: updatedProject,
-      });
-    } catch (error) {
-      console.error("Error updating project:", error);
-      res.status(500).json({ message: "Error updating project" });
     }
-  });
-  
-  
+    if (oldProject.description !== description) {
+      changes.push({
+        field: "description",
+        oldValue: oldProject.description,
+        newValue: description,
+      });
+    }
+
+    // Create a new audit log entry
+    const newAuditLog = new AuditLog({
+      entityType: "Project",
+      entityId: projectId,
+      actionType: "update",
+      actionDate: new Date(),
+      performedBy: updatedByUser.name,
+      changes: changes,
+    });
+
+    await newAuditLog.save();
+
+    // Check if the project name has changed and send an email if it has
+    if (oldProject.name !== name) {
+      const projectManager = oldProject.projectManager;
+      const emailText = `Dear Project Manager,\n\nThe project name has been changed.\n\nOld Project Name: ${oldProject.name}\nNew Project Name: ${name}\n\nBest Regards,\nTeam`;
+      sendEmail(projectManager, "Project Name Changed", emailText);
+    }
+
+    res.status(200).json({
+      message: "Project updated successfully",
+      project: updatedProject,
+    });
+  } catch (error) {
+    console.error("Error updating project:", error);
+    res.status(500).json({ message: "Error updating project" });
+  }
+});
+
+
 
   // Delete a project
   app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
@@ -1464,49 +1704,49 @@
 
       console.log("Attempting to delete GitHub repository:", repoName);
 
-      // Attempt to delete the GitHub repository
-      try {
-        const githubResponse = await axios.delete(
-          `https://api.github.com/repos/${organization.name}/${repoName}`,
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-              Accept: "application/vnd.github.v3+json",
-            },
-          }
-        );
-        console.log("GitHub repository deleted:", githubResponse.data);
-      } catch (error) {
-        console.error(
-          "Error deleting GitHub repository:",
-          error.response ? error.response.data : error.message
-        );
-        return res.status(500).json({
-          message: "Error deleting GitHub repository",
-          error: error.message,
-        });
-      }
-
-      res.status(200).json({
-        message: "Project and associated GitHub repository deleted successfully",
-      });
+    // Attempt to delete the GitHub repository
+    try {
+      const githubResponse = await axios.delete(
+        `https://api.github.com/repos/${organization.name}/${repoName}`,
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
+      console.log("GitHub repository deleted:", githubResponse.data);
     } catch (error) {
-      console.error("Error deleting project:", error);
-      res
-        .status(500)
-        .json({ message: "Error deleting project", error: error.message });
+      console.error(
+        "Error deleting GitHub repository:",
+        error.response ? error.response.data : error.message
+      );
+      return res.status(500).json({
+        message: "Error deleting GitHub repository",
+        error: error.message,
+      });
     }
-  });
+
+    res.status(200).json({
+      message: "Project and associated GitHub repository deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting project", error: error.message });
+  }
+});
 
   //tasks
   //add task
 
-  app.post("/api/projects/:projectId/tasks",
-    authenticateToken,
-    async (req, res) => {
-      const { projectId } = req.params;
-      const { name, createdBy, createdDate } = req.body;
+app.post("/api/projects/:projectId/tasks",
+  authenticateToken,
+  async (req, res) => {
+    const { projectId } = req.params;
+    const { name, createdBy, createdDate } = req.body;
 
       try {
         const project = await Project.findById(projectId);
@@ -1592,11 +1832,11 @@
     }
   );
 
-  //get task
-  app.get("/api/projects/:projectId/tasks",
-    authenticateToken,
-    async (req, res) => {
-      const { projectId } = req.params;
+//get task
+app.get("/api/projects/:projectId/tasks",
+  authenticateToken,
+  async (req, res) => {
+    const { projectId } = req.params;
 
       try {
         const project = await Project.findById(projectId).populate("tasks");
@@ -1610,108 +1850,182 @@
           cards: task.cards || [],
         }));
 
-        res.status(200).json({ tasks, bgUrl: project.bgUrl });
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-        res.status(500).json({ message: "Error fetching tasks" });
-      }
+      res.status(200).json({ tasks, bgUrl: project.bgUrl });
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Error fetching tasks" });
     }
-  );
+  }
+);
+//move tasks
+// app.put("/api/projects/:projectId/tasks/:taskId/move",
+//   authenticateToken,
+//   async (req, res) => {
+//     const { projectId, taskId } = req.params;
+//     const { newIndex, movedBy, movedDate } = req.body;
 
- 
+//     try {
+//       const project = await Project.findById(projectId);
+//       if (!project) {
+//         return res.status(404).json({ message: "Project not found" });
+//       }
 
-  app.put("/api/projects/:projectId/tasks/:taskId/move",
-    authenticateToken,
-    async (req, res) => {
-      const { projectId, taskId } = req.params;
-      const { newIndex, movedBy, movedDate } = req.body;
-  
-      try {
-        const project = await Project.findById(projectId).populate('tasks'); // Ensure tasks are populated
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
-  
-        const taskIndex = project.tasks.findIndex(task => task._id.toString() === taskId);
-        if (taskIndex === -1) {
-          return res.status(404).json({ message: "Task not found in project" });
-        }
-  
-        // Get the task name for the old index
-        const oldTaskName = project.tasks[taskIndex].name;
-  
-        // Get the task name for the new index
-        let newTaskName = null;
-        if (newIndex < project.tasks.length) {
-          newTaskName = project.tasks[newIndex].name;
-        }
-  
-        // Remove task from current position and insert at new position
-        project.tasks.splice(taskIndex, 1);
-        project.tasks.splice(newIndex, 0, taskId);
-  
-        // Update the task with movedBy and movedDate
-        const task = await Task.findById(taskId);
-        if (task) {
-          task.movedBy.push(movedBy);
-          task.movedDate.push(movedDate);
-          await task.save();
-        }
-  
-        await project.save();
-  
-        // Create a new audit log entry
-        const movedByUser = await User.findOne({ email: movedBy });
-        if (!movedByUser) {
-          return res.status(404).json({ message: "User not found for movedBy" });
-        }
-  
-        const newAuditLog = new AuditLog({
-          projectId: projectId,
-          entityType: "Task",
-          entityId: taskId,
-          actionType: "move",
-          actionDate: movedDate,
-          performedBy: movedByUser.name, // Save the email of the user
-          changes: [
-            {
-              field: "from",
-              oldValue: ` (Task: ${oldTaskName})`,
-              newValue: ` (Task: ${newTaskName ? newTaskName : 'N/A'})`,
-            },
-            {
-              field: "movedBy",
-              oldValue: null,
-              newValue: movedBy,
-            },
-            {
-              field: "movedDate",
-              oldValue: null,
-              newValue: movedDate,
-            },
-          ],
-        });
-  
-        await newAuditLog.save();
-  
-        // Emit event for real-time update
-        io.emit("taskMoved", { projectId, taskId, newIndex });
-  
-        res.status(200).json({ message: "Task moved successfully" });
-      } catch (error) {
-        console.error("Error moving task:", error);
-        res.status(500).json({ message: "Error moving task" });
+//       const taskIndex = project.tasks.indexOf(taskId);
+//       if (taskIndex === -1) {
+//         return res.status(404).json({ message: "Task not found in project" });
+//       }
+
+//       // Remove task from current position and insert at new position
+//       project.tasks.splice(taskIndex, 1);
+//       project.tasks.splice(newIndex, 0, taskId);
+
+//       // Update the task with movedBy and movedDate
+//       const task = await Task.findById(taskId);
+//       if (task) {
+//         task.movedBy.push(movedBy);
+//         task.movedDate.push(movedDate);
+//         await task.save();
+//       }
+
+//       await project.save();
+
+//       // Create a new audit log entry
+//       const movedByUser = await User.findOne({ email: movedBy });
+//       if (!movedByUser) {
+//         return res.status(404).json({ message: "User not found for movedBy" });
+//       }
+
+//       const newAuditLog = new AuditLog({
+//         projectId: projectId,
+//         entityType: "Task",
+//         entityId: taskId,
+//         actionType: "move",
+//         actionDate: movedDate,
+//         performedBy: movedByUser.name, // Save the email of the user
+//         changes: [
+//           {
+//             field: "index",
+//             oldValue: taskIndex,
+//             newValue: newIndex,
+//           },
+//           {
+//             field: "movedBy",
+//             oldValue: null,
+//             newValue: movedBy,
+//           },
+//           {
+//             field: "movedDate",
+//             oldValue: null,
+//             newValue: movedDate,
+//           },
+//         ],
+//       });
+
+//       await newAuditLog.save();
+
+//       // Emit event for real-time update
+//       io.emit("taskMoved", { projectId, taskId, newIndex });
+
+//       res.status(200).json({ message: "Task moved successfully" });
+//     } catch (error) {
+//       console.error("Error moving task:", error);
+//       res.status(500).json({ message: "Error moving task" });
+//     }
+//   }
+// );
+
+app.put("/api/projects/:projectId/tasks/:taskId/move",
+  authenticateToken,
+  async (req, res) => {
+    const { projectId, taskId } = req.params;
+    const { newIndex, movedBy, movedDate } = req.body;
+
+    try {
+      const project = await Project.findById(projectId).populate('tasks'); // Ensure tasks are populated
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
       }
-    }
-  );
-  
-  
 
-  //delelte column
-  app.delete("/api/projects/:projectId/tasks/:taskId",authenticateToken,
-    async (req, res) => {
-      const { projectId, taskId } = req.params;
-      const { deletedBy, deletedDate } = req.body;
+      const taskIndex = project.tasks.findIndex(task => task._id.toString() === taskId);
+      if (taskIndex === -1) {
+        return res.status(404).json({ message: "Task not found in project" });
+      }
+
+      // Get the task name for the old index
+      const oldTaskName = project.tasks[taskIndex].name;
+
+      // Get the task name for the new index
+      let newTaskName = null;
+      if (newIndex < project.tasks.length) {
+        newTaskName = project.tasks[newIndex].name;
+      }
+
+      // Remove task from current position and insert at new position
+      project.tasks.splice(taskIndex, 1);
+      project.tasks.splice(newIndex, 0, taskId);
+
+      // Update the task with movedBy and movedDate
+      const task = await Task.findById(taskId);
+      if (task) {
+        task.movedBy.push(movedBy);
+        task.movedDate.push(movedDate);
+        await task.save();
+      }
+
+      await project.save();
+
+      // Create a new audit log entry
+      const movedByUser = await User.findOne({ email: movedBy });
+      if (!movedByUser) {
+        return res.status(404).json({ message: "User not found for movedBy" });
+      }
+
+      const newAuditLog = new AuditLog({
+        projectId: projectId,
+        entityType: "Task",
+        entityId: taskId,
+        actionType: "move",
+        actionDate: movedDate,
+        performedBy: movedByUser.name, // Save the email of the user
+        changes: [
+          {
+            field: "from",
+            oldValue: `${taskIndex} (Task: ${oldTaskName})`,
+            newValue: `${newIndex} (Task: ${newTaskName ? newTaskName : 'N/A'})`,
+          },
+          {
+            field: "movedBy",
+            oldValue: null,
+            newValue: movedBy,
+          },
+          {
+            field: "movedDate",
+            oldValue: null,
+            newValue: movedDate,
+          },
+        ],
+      });
+
+      await newAuditLog.save();
+
+      // Emit event for real-time update
+      io.emit("taskMoved", { projectId, taskId, newIndex });
+
+      res.status(200).json({ message: "Task moved successfully" });
+    } catch (error) {
+      console.error("Error moving task:", error);
+      res.status(500).json({ message: "Error moving task" });
+    }
+  }
+);
+
+
+
+//delelte column
+app.delete("/api/projects/:projectId/tasks/:taskId",authenticateToken,
+  async (req, res) => {
+    const { projectId, taskId } = req.params;
+    const { deletedBy, deletedDate } = req.body;
 
       try {
         const project = await Project.findById(projectId);
@@ -1746,45 +2060,45 @@
             .json({ message: "User not found for deletedBy" });
         }
 
-        const newAuditLog = new AuditLog({
-          projectId: projectId,
-          entityType: "Task",
-          entityId: taskId,
-          actionType: "delete",
-          actionDate: deletedDate,
-          performedBy: deletedByUser.name, // Save the email of the user
-          changes: [
-            {
-              field: "deletedBy",
-              oldValue: null,
-              newValue: deletedByUser.name,
-            },
-            {
-              field: "deletedDate",
-              oldValue: null,
-              newValue: deletedDate,
-            },
-          ],
-        });
+      const newAuditLog = new AuditLog({
+        projectId: projectId,
+        entityType: "Task",
+        entityId: taskId,
+        actionType: "delete",
+        actionDate: deletedDate,
+        performedBy: deletedByUser.name, // Save the email of the user
+        changes: [
+          {
+            field: "deletedBy",
+            oldValue: null,
+            newValue: deletedByUser.name,
+          },
+          {
+            field: "deletedDate",
+            oldValue: null,
+            newValue: deletedDate,
+          },
+        ],
+      });
 
         await newAuditLog.save();
 
         // Emit event for real-time update
         io.emit("taskDeleted", { projectId, taskId });
 
-        res.status(200).json({ message: "Task deleted successfully" });
-      } catch (error) {
-        console.error("Error deleting task:", error);
-        res.status(500).json({ message: "Error deleting task" });
-      }
+      res.status(200).json({ message: "Task deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Error deleting task" });
     }
-  );
-  // Update (rename) task
-  app.put("/api/projects/:projectId/tasks/:taskId",
-    authenticateToken,
-    async (req, res) => {
-      const { projectId, taskId } = req.params;
-      const { name, updatedBy, updatedDate } = req.body;
+  }
+);
+// Update (rename) task
+app.put("/api/projects/:projectId/tasks/:taskId",
+  authenticateToken,
+  async (req, res) => {
+    const { projectId, taskId } = req.params;
+    const { name, updatedBy, updatedDate } = req.body;
 
       try {
         const project = await Project.findById(projectId);
@@ -1851,14 +2165,11 @@
     }
   );
 
-  //cards
-  //create card
-  //create cards
+
+//create cards
 app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
-
-  const { name, description, assignedTo, assignDate, dueDate, createdBy } =
-    req.body;
+  const { name, description, assignedTo, assignDate, dueDate, createdBy } = req.body;
 
   try {
     const task = await Task.findById(taskId);
@@ -1918,7 +2229,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
     // Log creation in comments
     const newComment = new Comment({
-      comment: `card created by ${createdByUser.name}`,
+      comment: `Card created by ${createdByUser.name}`,
       commentBy: createdByUser.name,
       card: newCard._id,
     });
@@ -1945,9 +2256,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     // Emit event for real-time update
     io.emit("cardCreated", { taskId, card: newCard });
 
-    res
-      .status(201)
-      .json({ message: "Card created successfully", card: newCard });
+    res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
     console.error("Error creating card:", error);
     res.status(500).json({ message: "Error creating card" });
@@ -1968,16 +2277,16 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       const notifications = await Notification.find({ userId }, "message");
       console.log("Fetched notifications for user:", userId, notifications);
 
-      res.status(200).json({ notifications });
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ message: "Failed to fetch notifications" });
-    }
-  });
-  app.patch("/api/notifications/:notificationId",authenticateToken,
-    async (req, res) => {
-      const { notificationId } = req.params;
-      const { readStatus } = req.body;
+    res.status(200).json({ notifications });
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+});
+app.patch("/api/notifications/:notificationId",authenticateToken,
+  async (req, res) => {
+    const { notificationId } = req.params;
+    const { readStatus } = req.body;
 
       try {
         // Find the notification by ID
@@ -2019,120 +2328,226 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     }
   });
 
-  
-  app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
-    const { cardId } = req.params;
-    const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
-  
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) {
-        return res.status(404).json({ message: "Card not found" });
-      }
-  
-      const sourceTask = await Task.findById(sourceTaskId);
-      if (!sourceTask) {
-        return res.status(404).json({ message: "Source task not found" });
-      }
-  
-      const destinationTask = await Task.findById(destinationTaskId);
-      if (!destinationTask) {
-        return res.status(404).json({ message: "Destination task not found" });
-      }
-  
-      // Retrieve the card names for the old and new values
-      const sourceCardName = card.name; // Assuming card schema has a 'name' field
-      let destinationCardName = card.name;
-  
-      // Create comment
-      const movedByUser = await User.findOne({ email: movedBy });
-      if (!movedByUser) {
-        return res.status(404).json({ message: "User not found for movedBy" });
-      }
-      const cardIndex = sourceTask.card.indexOf(cardId);
-      if (cardIndex === -1) {
-        return res.status(404).json({ message: "Card not found in source task" });
-      }
-      sourceTask.card.splice(cardIndex, 1);
-      await sourceTask.save();
-  
-      destinationTask.card.push(cardId);
-      await destinationTask.save();
-  
-      card.task = destinationTaskId;
-      if (!card.movedBy) {
-        card.movedBy = [];
-      }
-      card.movedBy.push(movedBy);
-      card.movedDate.push(movedDate);
-  
-      await card.save();
-  
-      // Create audit log entry for card move
-      const newAuditLog = new AuditLog({
-        entityType: "Card",
-        entityId: cardId,
-        actionType: "move",
-        actionDate: movedDate,
-        performedBy: movedByUser.name,
-        projectId: sourceTask.project, // Include projectId from source task
-        sourceTaskId,
-        destinationTaskId,
-        changes: [
-          { field: "task", oldValue: `${sourceTask.name} (Card: ${sourceCardName})`, newValue: `${destinationTask.name} (Card: ${destinationCardName})` },
-          { field: "movedBy", oldValue: null, newValue: movedBy },
-          { field: "movedDate", oldValue: null, newValue: movedDate },
-        ],
-      });
-  
-      await newAuditLog.save();
-  
-      const project = await Project.findById(sourceTask.project);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-  
-      const assignedUser = await User.findOne({ email: card.assignedTo });
-      if (!assignedUser) {
-        return res.status(404).json({ message: "Assigned user not found" });
-      }
-  
-      const newComment = new Comment({
-        comment: `Card moved by ${movedByUser.name} from column ${sourceTask.name} to column ${destinationTask.name}`,
-        commentBy: movedByUser.name,
-        card: card._id,
-      });
-      await newComment.save();
-      card.comments.push(newComment._id);
-      await card.save();
-  
-      // Create notification
-      const newNotification = new Notification({
-        userId: assignedUser._id,
-        projectId: sourceTask.project,
-        message: `Card "${card.name}" is moved from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
-        type: "CARD_MOVED",
-        assignedByEmail: movedByUser.name,
-        cardId: card._id,
-      });
-  
-      await newNotification.save();
-  
-      // Emit event
-      io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
-  
-      res.status(200).json({ message: "Card moved successfully", card });
-    } catch (error) {
-      console.error("Error moving card:", error);
-      res.status(500).json({ message: "Error moving card" });
-    }
-  });
-  
 
-  app.put("/api/tasks/:taskId/cards/:cardId",authenticateToken,
-    async (req, res) => {
-      const { taskId, cardId } = req.params;
-      const { name, description, updatedBy, updatedDate, comment } = req.body;
+app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+  const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
+
+  try {
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    const sourceTask = await Task.findById(sourceTaskId);
+    if (!sourceTask) {
+      return res.status(404).json({ message: "Source task not found" });
+    }
+
+    const destinationTask = await Task.findById(destinationTaskId);
+    if (!destinationTask) {
+      return res.status(404).json({ message: "Destination task not found" });
+    }
+
+    // Retrieve the card names for the old and new values
+    const sourceCardName = card.name; // Assuming card schema has a 'name' field
+    let destinationCardName = card.name;
+
+    // Create comment
+    const movedByUser = await User.findOne({ email: movedBy });
+    if (!movedByUser) {
+      return res.status(404).json({ message: "User not found for movedBy" });
+    }
+    const cardIndex = sourceTask.card.indexOf(cardId);
+    if (cardIndex === -1) {
+      return res.status(404).json({ message: "Card not found in source task" });
+    }
+    sourceTask.card.splice(cardIndex, 1);
+    await sourceTask.save();
+
+    destinationTask.card.push(cardId);
+    await destinationTask.save();
+
+    card.task = destinationTaskId;
+    if (!card.movedBy) {
+      card.movedBy = [];
+    }
+    card.movedBy.push(movedBy);
+    card.movedDate.push(movedDate);
+
+    await card.save();
+
+    // Create audit log entry for card move
+    const newAuditLog = new AuditLog({
+      entityType: "Card",
+      entityId: cardId,
+      actionType: "move",
+      actionDate: movedDate,
+      performedBy: movedByUser.name,
+      projectId: sourceTask.project, // Include projectId from source task
+      sourceTaskId,
+      destinationTaskId,
+      changes: [
+        { field: "task", oldValue: `${sourceTask.name} (Card: ${sourceCardName})`, newValue: `${destinationTask.name} (Card: ${destinationCardName})` },
+        { field: "movedBy", oldValue: null, newValue: movedBy },
+        { field: "movedDate", oldValue: null, newValue: movedDate },
+      ],
+    });
+
+    await newAuditLog.save();
+
+    const project = await Project.findById(sourceTask.project);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const assignedUser = await User.findOne({ email: card.assignedTo });
+    if (!assignedUser) {
+      return res.status(404).json({ message: "Assigned user not found" });
+    }
+
+    const newComment = new Comment({
+      comment: `Card moved by ${movedByUser.name} from column ${sourceTask.name} to column ${destinationTask.name}`,
+      commentBy: movedByUser.name,
+      card: card._id,
+    });
+    await newComment.save();
+    card.comments.push(newComment._id);
+    await card.save();
+
+    // Create notification
+    const newNotification = new Notification({
+      userId: assignedUser._id,
+      projectId: sourceTask.project,
+      message: `Card "${card.name}" is moved from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
+      type: "CARD_MOVED",
+      assignedByEmail: movedByUser.name,
+      cardId: card._id,
+    });
+
+    await newNotification.save();
+
+    // Emit event
+    io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
+
+    res.status(200).json({ message: "Card moved successfully", card });
+  } catch (error) {
+    console.error("Error moving card:", error);
+    res.status(500).json({ message: "Error moving card" });
+  }
+});
+
+
+//card move
+// app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
+//   const { cardId } = req.params;
+//   const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
+
+//   try {
+//     const card = await Card.findById(cardId);
+//     if (!card) {
+//       return res.status(404).json({ message: "Card not found" });
+//     }
+
+//     const sourceTask = await Task.findById(sourceTaskId);
+//     if (!sourceTask) {
+//       return res.status(404).json({ message: "Source task not found" });
+//     }
+
+//     const destinationTask = await Task.findById(destinationTaskId);
+//     if (!destinationTask) {
+//       return res.status(404).json({ message: "Destination task not found" });
+//     }
+
+//     // Create comment
+//     const movedByUser = await User.findOne({ email: movedBy });
+//     if (!movedByUser) {
+//       return res.status(404).json({ message: "User not found for movedBy" });
+//     }
+//     const cardIndex = sourceTask.card.indexOf(cardId);
+//     if (cardIndex === -1) {
+//       return res.status(404).json({ message: "Card not found in source task" });
+//     }
+//     sourceTask.card.splice(cardIndex, 1);
+//     await sourceTask.save();
+
+//     destinationTask.card.push(cardId);
+//     await destinationTask.save();
+
+//     card.task = destinationTaskId;
+//     if (!card.movedBy) {
+//       card.movedBy = [];
+//     }
+//     card.movedBy.push(movedBy);
+//     card.movedDate.push(movedDate);
+
+//     await card.save();
+
+//     // Create audit log entry for card move
+//     const newAuditLog = new AuditLog({
+//       entityType: "Card",
+//       entityId: cardId,
+//       actionType: "move",
+//       actionDate: movedDate,
+//       performedBy: movedByUser.name,
+//       projectId: sourceTask.project, // Include projectId from source task
+//       sourceTaskId,
+//       destinationTaskId,
+//       changes: [
+//         { field: "task", oldValue: sourceTaskId, newValue: destinationTaskId },
+//         { field: "movedBy", oldValue: null, newValue: movedBy },
+//         { field: "movedDate", oldValue: null, newValue: movedDate },
+//       ],
+//     });
+
+//     await newAuditLog.save();
+
+//     const project = await Project.findById(sourceTask.project);
+//     if (!project) {
+//       return res.status(404).json({ message: "Project not found" });
+//     }
+
+//     const assignedUser = await User.findOne({ email: card.assignedTo });
+//     if (!assignedUser) {
+//       return res.status(404).json({ message: "Assigned user not found" });
+//     }
+
+//     const newComment = new Comment({
+//       comment: `Card moved by ${movedByUser.name} from  column ${sourceTask.name} to column ${destinationTask.name}`,
+//       commentBy: movedByUser.name,
+//       card: card._id,
+//     });
+//     await newComment.save();
+//     card.comments.push(newComment._id);
+//     await card.save();
+
+//     // Create notification
+//     const newNotification = new Notification({
+//       userId: assignedUser._id,
+//       projectId: sourceTask.project,
+//       // message: `${card.name} is moved from "${sourceTask.name}" to "${destinationTask.name}"`,
+//       message: ` is moved task "${card.name}" from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
+//       type: "CARD_MOVED",
+//       assignedByEmail: movedByUser.name,
+//       cardId: card._id,
+//     });
+
+//     await newNotification.save();
+
+//     // Emit event
+//     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
+
+//     res.status(200).json({ message: "Card moved successfully", card });
+//   } catch (error) {
+//     console.error("Error moving card:", error);
+//     res.status(500).json({ message: "Error moving card" });
+//   }
+// });
+
+app.put("/api/tasks/:taskId/cards/:cardId", authenticateToken,
+  async (req, res) => {
+    const { taskId, cardId } = req.params;
+    const { name, description, updatedBy, updatedDate, comment } = req.body;
 
       try {
         const task = await Task.findById(taskId);
@@ -2304,254 +2719,254 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
   // Delete a card from a task
 
-  app.delete("/api/tasks/:taskId/cards/:cardId",authenticateToken,async (req, res) => {
-      const { taskId, cardId } = req.params;
-      const { deletedBy, deletedDate } = req.body;
+app.delete("/api/tasks/:taskId/cards/:cardId", authenticateToken, async (req, res) => {
+  const { taskId, cardId } = req.params;
+  const { deletedBy, deletedDate } = req.body;
 
-      try {
-        // Find the task
-        const task = await Task.findById(taskId);
-        if (!task) {
-          return res.status(404).json({ message: "Task not found" });
-        }
-
-        // Find the card
-        const card = await Card.findById(cardId);
-        if (!card) {
-          return res.status(404).json({ message: "Card not found" });
-        }
-
-        // Check if the card is part of the task
-        const cardIndex = task.card.indexOf(cardId); // Change 'task.card' to 'task.cards'
-        if (cardIndex === -1) {
-          return res.status(404).json({ message: "Card not found in task" });
-        }
-
-        // Find the user who deleted the card
-        const deletedByUser = await User.findOne({ email: deletedBy });
-        if (!deletedByUser) {
-          return res
-            .status(404)
-            .json({ message: "User not found for deletedBy" });
-        }
-
-        // Create audit log entry for card deletion
-        const newAuditLog = new AuditLog({
-          entityType: "Card",
-          entityId: cardId,
-          actionType: "delete",
-          actionDate: deletedDate,
-          performedBy: deletedByUser.name,
-          projectId: task.project,
-          taskId,
-          changes: [
-            { field: "deletedBy", oldValue: null, newValue: deletedByUser.name },
-            { field: "deletedDate", oldValue: null, newValue: deletedDate },
-          ],
-        });
-
-        await newAuditLog.save();
-
-        // Remove the card from the task
-        task.card.splice(cardIndex, 1);
-        await task.save();
-
-        // Delete the card from the database
-        await Card.findByIdAndDelete(cardId);
-
-        const assignedUser = await User.findOne({ email: card.assignedTo });
-        if (!assignedUser) {
-          return res.status(404).json({ message: "Assigned user not found" });
-        }
-
-        const project = await Project.findById(task.project);
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
-
-        // Create a notification for the card deletion
-        // const notification = new Notification({
-        //   userId: assignedUser._id,
-        //   projectId: task.project,
-        //   // message: `Card with ID ${cardId} has been deleted.`,
-        //   message: `${deletedByUser.name} has been deleted task "${card.name}" on project "${project.name}".`,
-        //   type: 'CARD_DELETED',
-        //   assignedByEmail: deletedBy,
-        //   cardId,
-        //   readStatus: false,
-        // });
-
-        // await notification.save();
-
-        // Emit a socket event for card deletion
-        io.emit("cardDeleted", { taskId, cardId });
-
-        // Respond with success message
-        res.status(200).json({ message: "Card deleted successfully" });
-      } catch (error) {
-        console.error("Error deleting card:", error);
-        res.status(500).json({ message: "Error deleting card" });
-      }
+  try {
+    // Find the task
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
     }
-  );
 
-
-
-  const calculateUtilizedTime = (pausedAt, resumedAt) => {
-    let totalTime = 0;
-    for (let i = 0; i < pausedAt.length; i++) {
-      const pause = new Date(pausedAt[i]);
-      const resume = new Date(resumedAt[i]);
-      totalTime += (resume - pause) / 1000; // Convert to seconds or minutes as needed
+    // Find the card
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
     }
-    return totalTime;
-  };
 
-  app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
-    const { cardId } = req.params;
-    const { status, updatedBy, updatedDate } = req.body;
-  
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) {
-        return res.status(404).json({ message: "Card not found" });
-      }
-  
-      const oldStatus = card.status;
-      card.status = status;
-  
-      if (!card.updatedBy) {
-        card.updatedBy = [];
-      }
-      card.updatedBy.push(updatedBy);
-      if (!card.updatedDate) {
-        card.updatedDate = [];
-      }
-      card.updatedDate.push(updatedDate);
-  
-      if (status === 'paused') {
-        card.pausedAt.push(new Date());
-      } else if (oldStatus === 'paused' && status === 'inprogress') {
-        card.resumedAt.push(new Date());
-      }
-
-      if (status === 'completed') {
-        const utilizedTime = calculateUtilizedTime(card.pausedAt, card.resumedAt);
-        card.utilizedTime.push(utilizedTime);
-      }
-  
-      await card.save();
-  
-      const updatedByUser = await User.findOne({ email: updatedBy });
-      if (!updatedByUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      const newAuditLog = new AuditLog({
-        entityType: "Card",
-        entityId: cardId,
-        actionType: "update",
-        actionDate: updatedDate,
-        performedBy: updatedByUser.name,
-        projectId: card.project,
-        taskId: card.task,
-        changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
-      });
-  
-      await newAuditLog.save();
-  
-      const statusComment = new Comment({
-        comment: `Card status updated to ${status} by ${updatedByUser.name}`,
-        commentBy: updatedByUser.name,
-        card: card._id,
-      });
-      await statusComment.save();
-      card.comments.push(statusComment._id);
-      await card.save();
-  
-      io.emit("cardStatusUpdated", { cardId, newStatus: status });
-  
-      res.status(200).json({ message: "Card status updated successfully", card });
-    } catch (error) {
-      console.error("Error updating card status:", error);
-      res.status(500).json({ message: "Error updating card status" });
+    // Check if the card is part of the task
+    const cardIndex = task.card.indexOf(cardId); // Change 'task.card' to 'task.cards'
+    if (cardIndex === -1) {
+      return res.status(404).json({ message: "Card not found in task" });
     }
-  });
-  
 
-  // app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
-  //   const { cardId } = req.params;
-  //   const { status, updatedBy, updatedDate } = req.body;
+    // Find the user who deleted the card
+    const deletedByUser = await User.findOne({ email: deletedBy });
+    if (!deletedByUser) {
+      return res
+        .status(404)
+        .json({ message: "User not found for deletedBy" });
+    }
 
-  //   try {
-  //     // Find the card by ID
-  //     const card = await Card.findById(cardId);
-  //     if (!card) {
-  //       return res.status(404).json({ message: "Card not found" });
-  //     }
+    // Create audit log entry for card deletion
+    const newAuditLog = new AuditLog({
+      entityType: "Card",
+      entityId: cardId,
+      actionType: "delete",
+      actionDate: deletedDate,
+      performedBy: deletedByUser.name,
+      projectId: task.project,
+      taskId,
+      changes: [
+        { field: "deletedBy", oldValue: null, newValue: deletedByUser.name },
+        { field: "deletedDate", oldValue: null, newValue: deletedDate },
+      ],
+    });
 
-  //     const oldStatus = card.status;
-  //     card.status = status;
+    await newAuditLog.save();
 
-  //     // Update updatedBy and updatedDate fields
-  //     if (!card.updatedBy) {
-  //       card.updatedBy = [];
-  //     }
-  //     card.updatedBy.push(updatedBy);
-  //     if (!card.updatedDate) {
-  //       card.updatedDate = [];
-  //     }
-  //     card.updatedDate.push(updatedDate);
+    // Remove the card from the task
+    task.card.splice(cardIndex, 1);
+    await task.save();
 
-  //     // Save the updated card
-  //     await card.save();
+    // Delete the card from the database
+    await Card.findByIdAndDelete(cardId);
 
-  //     // Find the user who updated the card
-  //     const updatedByUser = await User.findOne({ email: updatedBy });
-  //     if (!updatedByUser) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
+    const assignedUser = await User.findOne({ email: card.assignedTo });
+    if (!assignedUser) {
+      return res.status(404).json({ message: "Assigned user not found" });
+    }
 
-  //     // Create a new audit log entry
-  //     const newAuditLog = new AuditLog({
-  //       entityType: "Card",
-  //       entityId: cardId,
-  //       actionType: "update",
-  //       actionDate: updatedDate,
-  //       performedBy: updatedByUser.name,
-  //       projectId: card.project, // Include projectId in the audit log
-  //       taskId: card.task, // Include taskId in the audit log
-  //       changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
-  //     });
+    const project = await Project.findById(task.project);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-  //     await newAuditLog.save();
+    // Create a notification for the card deletion
+    // const notification = new Notification({
+    //   userId: assignedUser._id,
+    //   projectId: task.project,
+    //   // message: `Card with ID ${cardId} has been deleted.`,
+    //   message: `${deletedByUser.name} has been deleted task "${card.name}" on project "${project.name}".`,
+    //   type: 'CARD_DELETED',
+    //   assignedByEmail: deletedBy,
+    //   cardId,
+    //   readStatus: false,
+    // });
 
-  //     // Log status update in comments
-  //     const statusComment = new Comment({
-  //       comment: `Card status updated to ${status} by ${updatedByUser.name}`,
-  //       commentBy: updatedByUser.name,
-  //       card: card._id,
-  //     });
-  //     await statusComment.save();
-  //     card.comments.push(statusComment._id);
-  //     await card.save();
+    // await notification.save();
 
-  //     // Emit event for real-time update
-  //     io.emit("cardStatusUpdated", { cardId, newStatus: status });
+    // Emit a socket event for card deletion
+    io.emit("cardDeleted", { taskId, cardId });
 
-  //     res.status(200).json({ message: "Card status updated successfully", card });
-  //   } catch (error) {
-  //     console.error("Error updating card status:", error);
-  //     res.status(500).json({ message: "Error updating card status" });
-  //   }
-  // });
+    // Respond with success message
+    res.status(200).json({ message: "Card deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting card:", error);
+    res.status(500).json({ message: "Error deleting card" });
+  }
+}
+);
 
 
-  //teams related apis
-  app.post("/api/projects/:projectId/teams/addUser",authenticateToken,
-    async (req, res) => {
-      const { projectId } = req.params;
-      const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
+
+const calculateUtilizedTime = (pausedAt, resumedAt) => {
+  let totalTime = 0;
+  for (let i = 0; i < pausedAt.length; i++) {
+    const pause = new Date(pausedAt[i]);
+    const resume = new Date(resumedAt[i]);
+    totalTime += (resume - pause) / 1000; // Convert to seconds or minutes as needed
+  }
+  return totalTime;
+};
+
+app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+  const { status, updatedBy, updatedDate } = req.body;
+
+  try {
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    const oldStatus = card.status;
+    card.status = status;
+
+    if (!card.updatedBy) {
+      card.updatedBy = [];
+    }
+    card.updatedBy.push(updatedBy);
+    if (!card.updatedDate) {
+      card.updatedDate = [];
+    }
+    card.updatedDate.push(updatedDate);
+
+    if (status === 'paused') {
+      card.pausedAt.push(new Date());
+    } else if (oldStatus === 'paused' && status === 'inprogress') {
+      card.resumedAt.push(new Date());
+    }
+
+    if (status === 'completed') {
+      const utilizedTime = calculateUtilizedTime(card.pausedAt, card.resumedAt);
+      card.utilizedTime.push(utilizedTime);
+    }
+
+    await card.save();
+
+    const updatedByUser = await User.findOne({ email: updatedBy });
+    if (!updatedByUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const newAuditLog = new AuditLog({
+      entityType: "Card",
+      entityId: cardId,
+      actionType: "update",
+      actionDate: updatedDate,
+      performedBy: updatedByUser.name,
+      projectId: card.project,
+      taskId: card.task,
+      changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
+    });
+
+    await newAuditLog.save();
+
+    const statusComment = new Comment({
+      comment: `Card status updated to ${status} by ${updatedByUser.name}`,
+      commentBy: updatedByUser.name,
+      card: card._id,
+    });
+    await statusComment.save();
+    card.comments.push(statusComment._id);
+    await card.save();
+
+    io.emit("cardStatusUpdated", { cardId, newStatus: status });
+
+    res.status(200).json({ message: "Card status updated successfully", card });
+  } catch (error) {
+    console.error("Error updating card status:", error);
+    res.status(500).json({ message: "Error updating card status" });
+  }
+});
+
+
+// app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
+//   const { cardId } = req.params;
+//   const { status, updatedBy, updatedDate } = req.body;
+
+//   try {
+//     // Find the card by ID
+//     const card = await Card.findById(cardId);
+//     if (!card) {
+//       return res.status(404).json({ message: "Card not found" });
+//     }
+
+//     const oldStatus = card.status;
+//     card.status = status;
+
+//     // Update updatedBy and updatedDate fields
+//     if (!card.updatedBy) {
+//       card.updatedBy = [];
+//     }
+//     card.updatedBy.push(updatedBy);
+//     if (!card.updatedDate) {
+//       card.updatedDate = [];
+//     }
+//     card.updatedDate.push(updatedDate);
+
+//     // Save the updated card
+//     await card.save();
+
+//     // Find the user who updated the card
+//     const updatedByUser = await User.findOne({ email: updatedBy });
+//     if (!updatedByUser) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Create a new audit log entry
+//     const newAuditLog = new AuditLog({
+//       entityType: "Card",
+//       entityId: cardId,
+//       actionType: "update",
+//       actionDate: updatedDate,
+//       performedBy: updatedByUser.name,
+//       projectId: card.project, // Include projectId in the audit log
+//       taskId: card.task, // Include taskId in the audit log
+//       changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
+//     });
+
+//     await newAuditLog.save();
+
+//     // Log status update in comments
+//     const statusComment = new Comment({
+//       comment: `Card status updated to ${status} by ${updatedByUser.name}`,
+//       commentBy: updatedByUser.name,
+//       card: card._id,
+//     });
+//     await statusComment.save();
+//     card.comments.push(statusComment._id);
+//     await card.save();
+
+//     // Emit event for real-time update
+//     io.emit("cardStatusUpdated", { cardId, newStatus: status });
+
+//     res.status(200).json({ message: "Card status updated successfully", card });
+//   } catch (error) {
+//     console.error("Error updating card status:", error);
+//     res.status(500).json({ message: "Error updating card status" });
+//   }
+// });
+
+
+//teams related apis
+app.post("/api/projects/:projectId/teams/addUser",authenticateToken,
+  async (req, res) => {
+    const { projectId } = req.params;
+    const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
 
       try {
         const project = await Project.findById(projectId).populate("teams");
@@ -2586,13 +3001,13 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
             .json({ message: "Admin users cannot be added to teams" });
         }
 
-        // Check if the user status is 'unverify'
-        if (user.status === "UNVERIFY") {
-          return res.status(400).json({
-            message:
-              "This user email is not verified. Please verify the email before adding into team.",
-          });
-        }
+      // Check if the user status is 'unverify'
+      if (user.status === "UNVERIFY") {
+        return res.status(400).json({
+          message:
+            "This user email is not verified. Please verify the email before adding into team.",
+        });
+      }
 
         const userInTeam = team.users.find(
           (u) => u.user.toString() === user._id.toString()
@@ -2604,19 +3019,19 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         team.users.push({ user: user._id, role: "USER" });
         await team.save();
 
-        res
-          .status(200)
-          .json({ message: "User added to team successfully", team });
-      } catch (error) {
-        console.error("Error adding user to team:", error);
-        res.status(500).json({ message: "Error adding user to team" });
-      }
+      res
+        .status(200)
+        .json({ message: "User added to team successfully", team });
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+      res.status(500).json({ message: "Error adding user to team" });
     }
-  );
-  // Endpoint to get all users under all teams based on project ID
-  app.get("/api/projects/:projectId/teams/users",authenticateToken,
-    async (req, res) => {
-      const { projectId } = req.params;
+  }
+);
+// Endpoint to get all users under all teams based on project ID
+app.get("/api/projects/:projectId/teams/users",authenticateToken,
+  async (req, res) => {
+    const { projectId } = req.params;
 
       try {
         const project = await Project.findById(projectId).populate({
@@ -2643,51 +3058,51 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
           });
         });
 
-        res.status(200).json({ users });
-      } catch (error) {
-        console.error("Error fetching team users:", error);
-        res.status(500).json({ message: "Error fetching team users" });
-      }
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error("Error fetching team users:", error);
+      res.status(500).json({ message: "Error fetching team users" });
     }
-  );
-  // Endpoint to get users under a specific team based on project ID and team name
-  app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
-      const { projectId, teamName } = req.params;
-      try {
-        const project = await Project.findById(projectId).populate({
-          path: "teams",
-          match: { name: teamName },
-          populate: {
-            path: "users.user",
-            model: "User",
-          },
-        });
+  }
+);
+// Endpoint to get users under a specific team based on project ID and team name
+app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
+    const { projectId, teamName } = req.params;
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        match: { name: teamName },
+        populate: {
+          path: "users.user",
+          model: "User",
+        },
+      });
 
-        if (!project || project.teams.length === 0) {
-          return res.status(404).json({ message: "Team not found" });
-        }
-
-        const team = project.teams[0];
-        const users = team.users.map((user) => ({
-          name: user.user.name,
-          email: user.user.email,
-          role: user.role,
-          team: team.name,
-        }));
-
-        res.status(200).json({ users });
-      } catch (error) {
-        console.error("Error fetching team users:", error);
-        res.status(500).json({ message: "Error fetching team users" });
+      if (!project || project.teams.length === 0) {
+        return res.status(404).json({ message: "Team not found" });
       }
-    }
-  );
 
-  // Endpoint to delete a user from a team
-  app.delete("/api/projects/:projectId/teams/:teamName/users",authenticateToken,
-    async (req, res) => {
-      const { projectId, teamName } = req.params;
-      const { email, removedBy } = req.body;
+      const team = project.teams[0];
+      const users = team.users.map((user) => ({
+        name: user.user.name,
+        email: user.user.email,
+        role: user.role,
+        team: team.name,
+      }));
+
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error("Error fetching team users:", error);
+      res.status(500).json({ message: "Error fetching team users" });
+    }
+  }
+);
+
+// Endpoint to delete a user from a team
+app.delete("/api/projects/:projectId/teams/:teamName/users",authenticateToken,
+  async (req, res) => {
+    const { projectId, teamName } = req.params;
+    const { email, removedBy } = req.body;
 
       try {
         const project = await Project.findById(projectId).populate("teams");
@@ -2729,10 +3144,10 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
   // Create a team inside an organization and a GitHub organization
 
-  app.post("/api/organizations/:organizationId/teams",authenticateToken,
-    async (req, res) => {
-      const { organizationId } = req.params;
-      const { teamName, addedBy } = req.body;
+app.post("/api/organizations/:organizationId/teams", authenticateToken,
+  async (req, res) => {
+    const { organizationId } = req.params;
+    const { teamName, addedBy } = req.body;
 
       try {
         const organization = await Organization.findById(organizationId).populate(
@@ -2762,66 +3177,65 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         organization.teams.push(team._id);
         await organization.save();
 
-        // Create a team in the GitHub organization
-        const githubTeamResponse = await axios.post(
-          `https://api.github.com/orgs/${organization.name}/teams`,
-          {
-            name: teamName,
-            privacy: "closed",
+      // Create a team in the GitHub organization
+      const githubTeamResponse = await axios.post(
+        `https://api.github.com/orgs/${organization.name}/teams`,
+        {
+          name: teamName,
+          privacy: "closed",
+        },
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
           },
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        }
+      );
 
         console.log("GitHub team created:", githubTeamResponse.data);
 
-        // Update the team with the GitHub slug
-        team.slug = githubTeamResponse.data.slug;
-        await team.save();
-         console.log('teams created')
-        res.status(200).json({
-          message: "Team created successfully",
-          team,
-          githubTeam: githubTeamResponse.data,
+      // Update the team with the GitHub slug
+      team.slug = githubTeamResponse.data.slug;
+      await team.save();
+      console.log('teams created')
+      res.status(200).json({
+        message: "Team created successfully",
+        team,
+        githubTeam: githubTeamResponse.data,
 
-        });
-      } catch (error) {
-        console.error("Error creating team:", error);
-        res
-          .status(500)
-          .json({ message: "Error creating team", error: error.message });
-      }
+      });
+    } catch (error) {
+      console.error("Error creating team:", error);
+      res
+        .status(500)
+        .json({ message: "Error creating team", error: error.message });
     }
-  );
+  }
+);
+app.get("/api/organizations/:organizationId/teams",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
 
-  app.get("/api/organizations/:organizationId/teams",authenticateToken,async (req, res) => {
-      const { organizationId } = req.params;
-
-      try {
-        const organization = await Organization.findById(organizationId).populate(
-          "teams"
-        );
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
-
-        const teams = organization.teams;
-
-        res.status(200).json({ teams });
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-        res.status(500).json({ message: "Error fetching teams" });
+    try {
+      const organization = await Organization.findById(organizationId).populate(
+        "teams"
+      );
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
       }
+
+      const teams = organization.teams;
+
+      res.status(200).json({ teams });
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Error fetching teams" });
     }
-  );
-  // Delete team inside organization
-  app.delete("/api/organizations/:organizationId/teams/:teamId",authenticateToken,
-    async (req, res) => {
-      const { organizationId, teamId } = req.params;
+  }
+);
+// Delete team inside organization
+app.delete("/api/organizations/:organizationId/teams/:teamId",authenticateToken,
+  async (req, res) => {
+    const { organizationId, teamId } = req.params;
 
       try {
         const organization = await Organization.findById(organizationId);
@@ -2848,214 +3262,214 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         // Delete the team
         await Team.findByIdAndDelete(teamId);
 
-        // Delete the team from the GitHub organization
-        const githubTeamResponse = await axios.delete(
-          `https://api.github.com/orgs/${organization.name}/teams/${team.name}`,
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+      // Delete the team from the GitHub organization
+      const githubTeamResponse = await axios.delete(
+        `https://api.github.com/orgs/${organization.name}/teams/${team.name}`,
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
         console.log("GitHub team deleted:", githubTeamResponse.data);
 
-        res
-          .status(200)
-          .json({ message: "Team deleted successfully from MongoDB and GitHub" });
-      } catch (error) {
-        console.error("Error deleting team:", error);
-        res
-          .status(500)
-          .json({ message: "Error deleting team", error: error.message });
-      }
+      res
+        .status(200)
+        .json({ message: "Team deleted successfully from MongoDB and GitHub" });
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      res
+        .status(500)
+        .json({ message: "Error deleting team", error: error.message });
     }
-  );
-  // Edit team inside organization
-  app.put("/api/organizations/:organizationId/teams/:teamId",authenticateToken,async (req, res) => {
-      const { organizationId, teamId } = req.params;
-      const { teamName } = req.body;
+  }
+);
+// Edit team inside organization
+app.put("/api/organizations/:organizationId/teams/:teamId",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
+    const { teamName } = req.body;
 
-      try {
-        const organization = await Organization.findById(organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
+    try {
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
 
-        const team = await Team.findById(teamId);
-        if (!team) {
-          return res.status(404).json({ message: "Team not found" });
-        }
+      const team = await Team.findById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
 
-        const oldTeamName = team.name;
-        team.name = teamName;
-        await team.save();
+      const oldTeamName = team.name;
+      team.name = teamName;
+      await team.save();
 
-        // Update the team name in the GitHub organization
-        const githubTeamResponse = await axios.patch(
-          `https://api.github.com/orgs/${organization.name}/teams/${oldTeamName}`,
-          {
-            name: teamName,
+      // Update the team name in the GitHub organization
+      const githubTeamResponse = await axios.patch(
+        `https://api.github.com/orgs/${organization.name}/teams/${oldTeamName}`,
+        {
+          name: teamName,
+        },
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
           },
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        }
+      );
 
-        console.log("GitHub team updated:", githubTeamResponse.data);
+      console.log("GitHub team updated:", githubTeamResponse.data);
 
-        res.status(200).json({
-          message: "Team updated successfully",
-          team,
-          githubTeam: githubTeamResponse.data,
-        });
-      } catch (error) {
-        console.error("Error updating team:", error);
-        res
-          .status(500)
-          .json({ message: "Error updating team", error: error.message });
-      }
+      res.status(200).json({
+        message: "Team updated successfully",
+        team,
+        githubTeam: githubTeamResponse.data,
+      });
+    } catch (error) {
+      console.error("Error updating team:", error);
+      res
+        .status(500)
+        .json({ message: "Error updating team", error: error.message });
     }
-  );
+  }
+);
 
-  //create users inside teams
-  app.post("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
-      const { organizationId, teamId } = req.params;
-      const { email, role } = req.body;
+//create users inside teams
+app.post("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
+    const { email, role } = req.body;
 
-      try {
-        // Find the organization
-        const organization = await Organization.findById(organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
-
-        // Find the team
-        const team = await Team.findById(teamId);
-        if (!team) {
-          return res.status(404).json({ message: "Team not found" });
-        }
-
-        // Check if the team belongs to the organization
-        if (!organization.teams.includes(team._id)) {
-          return res
-            .status(400)
-            .json({ message: "Team does not belong to this organization" });
-        }
-
-        // Find the user
-        const user = await User.findOne({ email });
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-
-        // Check if the user has an 'ADMIN' role
-        if (user.role === "ADMIN") {
-          return res
-            .status(400)
-            .json({ message: "Admin users cannot be added to teams" });
-        }
-
-        // Check if the user status is 'unverify'
-        if (user.status === "UNVERIFY") {
-          return res.status(400).json({
-            message:
-              "This user email is not verified. Please verify the email before adding into team.",
-          });
-        }
-
-        // Check if the user is already in the team
-        const userInTeam = team.users.find(
-          (u) => u.user.toString() === user._id.toString()
-        );
-        if (userInTeam) {
-          return res.status(400).json({ message: "User is already in the team" });
-        }
-
-        // Add the user to the team in MongoDB
-        team.users.push({ user: user._id, role: role || "USER" });
-        await team.save();
-
-        // Add the user to the GitHub team
-        const githubTeamResponse = await axios.put(
-          `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
-          {},
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("GitHub team membership updated:", githubTeamResponse.data);
-
-        res.status(200).json({
-          message:
-            "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
-          team,
-          githubTeam: githubTeamResponse.data,
-        });
-      } catch (error) {
-        console.error("Error adding user to team:", error);
-        res
-          .status(500)
-          .json({ message: "Error adding user to team", error: error.message });
+    try {
+      // Find the organization
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
       }
-    }
-  );
 
-  app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
-      const { organizationId, teamId } = req.params;
-
-      try {
-        // Find the organization
-        const organization = await Organization.findById(organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
-
-        // Find the team and populate its users
-        const team = await Team.findById(teamId).populate(
-          "users.user",
-          "name email status"
-        );
-        if (!team) {
-          return res.status(404).json({ message: "Team not found" });
-        }
-
-        // Check if the team belongs to the organization
-        if (!organization.teams.includes(team._id)) {
-          return res
-            .status(400)
-            .json({ message: "Team does not belong to this organization" });
-        }
-
-        // Format the user data
-        const users = team.users.map((user) => ({
-          id: user.user._id,
-          name: user.user.name,
-          email: user.user.email,
-          role: user.role,
-          status: user.user.status,
-        }));
-
-        res.status(200).json({ teamName: team.name, users });
-      } catch (error) {
-        console.error("Error fetching team users:", error);
-        res.status(500).json({ message: "Error fetching team users" });
+      // Find the team
+      const team = await Team.findById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
       }
-    }
-  );
 
-  app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",authenticateToken,
-    async (req, res) => {
-      const { organizationId, teamId, userId } = req.params;
-      const { removedBy } = req.body;
+      // Check if the team belongs to the organization
+      if (!organization.teams.includes(team._id)) {
+        return res
+          .status(400)
+          .json({ message: "Team does not belong to this organization" });
+      }
+
+      // Find the user
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if the user has an 'ADMIN' role
+      if (user.role === "ADMIN") {
+        return res
+          .status(400)
+          .json({ message: "Admin users cannot be added to teams" });
+      }
+
+    // Check if the user status is 'unverify'
+    if (user.status === "UNVERIFY") {
+      return res.status(400).json({
+        message:
+          "This user email is not verified. Please verify the email before adding into team.",
+      });
+    }
+
+      // Check if the user is already in the team
+      const userInTeam = team.users.find(
+        (u) => u.user.toString() === user._id.toString()
+      );
+      if (userInTeam) {
+        return res.status(400).json({ message: "User is already in the team" });
+      }
+
+      // Add the user to the team in MongoDB
+      team.users.push({ user: user._id, role: role || "USER" });
+      await team.save();
+
+      // Add the user to the GitHub team
+      const githubTeamResponse = await axios.put(
+        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
+        {},
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("GitHub team membership updated:", githubTeamResponse.data);
+
+      res.status(200).json({
+        message:
+          "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
+        team,
+        githubTeam: githubTeamResponse.data,
+      });
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+      res
+        .status(500)
+        .json({ message: "Error adding user to team", error: error.message });
+    }
+  }
+);
+
+app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,async (req, res) => {
+    const { organizationId, teamId } = req.params;
+
+    try {
+      // Find the organization
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Find the team and populate its users
+      const team = await Team.findById(teamId).populate(
+        "users.user",
+        "name email status"
+      );
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+
+      // Check if the team belongs to the organization
+      if (!organization.teams.includes(team._id)) {
+        return res
+          .status(400)
+          .json({ message: "Team does not belong to this organization" });
+      }
+
+      // Format the user data
+      const users = team.users.map((user) => ({
+        id: user.user._id,
+        name: user.user.name,
+        email: user.user.email,
+        role: user.role,
+        status: user.user.status,
+      }));
+
+      res.status(200).json({ teamName: team.name, users });
+    } catch (error) {
+      console.error("Error fetching team users:", error);
+      res.status(500).json({ message: "Error fetching team users" });
+    }
+  }
+);
+
+app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",authenticateToken,
+  async (req, res) => {
+    const { organizationId, teamId, userId } = req.params;
+    const { removedBy } = req.body;
 
       try {
         // Find the organization
@@ -3099,119 +3513,122 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
           return res.status(404).json({ message: "User not found" });
         }
 
-        // Remove the user from the GitHub team
-        const githubTeamResponse = await axios.delete(
-          `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+      // Remove the user from the GitHub team
+      const githubTeamResponse = await axios.delete(
+        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
         console.log("GitHub team membership deleted:", githubTeamResponse.data);
 
-        res.status(200).json({
-          message: "User removed from team successfully in MongoDB and GitHub",
-          removedBy,
-        });
-      } catch (error) {
-        console.error(
-          "Error removing user from team:",
-          error.response ? error.response.data : error.message
-        );
-        res.status(500).json({
-          message: "Error removing user from team",
-          error: error.message,
-        });
-      }
+      res.status(200).json({
+        message: "User removed from team successfully in MongoDB and GitHub",
+        removedBy,
+      });
+    } catch (error) {
+      console.error(
+        "Error removing user from team:",
+        error.response ? error.response.data : error.message
+      );
+      res.status(500).json({
+        message: "Error removing user from team",
+        error: error.message,
+      });
     }
-  );
+  }
+);
 
-  app.get( "/api/projects/:projectId/users/search",authenticateToken,async (req, res) => {
-      const { projectId } = req.params;
-      const { email } = req.query;
 
-      if (!email) {
-        return res
-          .status(400)
-          .json({ message: "Email query parameter is required" });
-      }
 
-      try {
-        const project = await Project.findById(projectId).populate({
-          path: "teams",
-          populate: {
-            path: "users.user",
-            model: "User",
-          },
-        });
 
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
+app.get( "/api/projects/:projectId/users/search",authenticateToken,async (req, res) => {
+    const { projectId } = req.params;
+    const { email } = req.query;
 
-        const matchingUsers = [];
-        project.teams.forEach((team) => {
-          team.users.forEach((user) => {
-            if (user.user.email.toLowerCase().includes(email.toLowerCase())) {
-              matchingUsers.push({
-                name: user.user.name,
-                email: user.user.email,
-                role: user.role,
-                team: team.name,
-              });
-            }
-          });
-        });
-
-        if (matchingUsers.length === 0) {
-          return res.status(404).json({
-            message:
-              "No users found within the project teams with the given email",
-          });
-        }
-
-        res.status(200).json({ users: matchingUsers });
-      } catch (error) {
-        console.error("Error searching project team users:", error);
-        res.status(500).json({ message: "Error searching project team users" });
-      }
+    if (!email) {
+      return res
+        .status(400)
+        .json({ message: "Email query parameter is required" });
     }
-  );
 
-  app.get("/api/projects/:projectId/teams",authenticateToken,async (req, res) => {
-      const { projectId } = req.params;
-      try {
-        const project = await Project.findById(projectId).populate({
-          path: "teams",
-          populate: {
-            path: "users.user",
-            select: "email role", // Select only email and role fields
-          },
-        });
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        populate: {
+          path: "users.user",
+          model: "User",
+        },
+      });
 
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
-
-        // Transform the data to match the frontend requirements
-        const teams = project.teams.map((team) => ({
-          name: team.name,
-          members: team.users.map((user) => ({
-            email: user.user.email,
-            role: user.role,
-          })),
-        }));
-
-        res.status(200).json({ teams });
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-        res.status(500).json({ message: "Error fetching teams" });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
       }
+
+      const matchingUsers = [];
+      project.teams.forEach((team) => {
+        team.users.forEach((user) => {
+          if (user.user.email.toLowerCase().includes(email.toLowerCase())) {
+            matchingUsers.push({
+              name: user.user.name,
+              email: user.user.email,
+              role: user.role,
+              team: team.name,
+            });
+          }
+        });
+      });
+
+      if (matchingUsers.length === 0) {
+        return res.status(404).json({
+          message:
+            "No users found within the project teams with the given email",
+        });
+      }
+
+      res.status(200).json({ users: matchingUsers });
+    } catch (error) {
+      console.error("Error searching project team users:", error);
+      res.status(500).json({ message: "Error searching project team users" });
     }
-  );
+  }
+);
+
+app.get("/api/projects/:projectId/teams",authenticateToken,async (req, res) => {
+    const { projectId } = req.params;
+    try {
+      const project = await Project.findById(projectId).populate({
+        path: "teams",
+        populate: {
+          path: "users.user",
+          select: "email role", // Select only email and role fields
+        },
+      });
+
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Transform the data to match the frontend requirements
+      const teams = project.teams.map((team) => ({
+        name: team.name,
+        members: team.users.map((user) => ({
+          email: user.user.email,
+          role: user.role,
+        })),
+      }));
+
+      res.status(200).json({ teams });
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Error fetching teams" });
+    }
+  }
+);
 
   // Fetch users for an organization
   app.get("/api/users", authenticateToken, async (req, res) => {
@@ -3224,216 +3641,216 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     }
   });
 
-  app.get("/api/overview/:organizationId",authenticateToken,async (req, res) => {
-      const { organizationId } = req.params;
-      const userEmail = req.user.email;
-      const userRole = req.user.role;
+app.get("/api/overview/:organizationId",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
+    const userEmail = req.user.email;
+    const userRole = req.user.role;
 
-      try {
-        const organization = await Organization.findById(organizationId);
-        if (!organization) {
-          return res.status(404).json({ message: "Organization not found" });
-        }
+    try {
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
 
-        // Get user count of the organization
-        const userCount = await User.countDocuments({
+      // Get user count of the organization
+      const userCount = await User.countDocuments({
+        organization: organizationId,
+      });
+
+      let projects;
+      if (userRole === "ADMIN") {
+        projects = await Project.find({
           organization: organizationId,
-        });
-
-        let projects;
-        if (userRole === "ADMIN") {
-          projects = await Project.find({
-            organization: organizationId,
-          }).populate("teams");
-        } else {
-          const user = await User.findOne({ email: userEmail });
-          if (!user) {
-            return res.status(404).json({ message: "User not found" });
-          }
-
-          const userTeams = await Team.find({ "users.user": user._id });
-          projects = await Project.find({
-            organization: organizationId,
-            $or: [
-              { projectManager: userEmail },
-              { teams: { $in: userTeams.map((team) => team._id) } },
-            ],
-          }).populate("teams");
+        }).populate("teams");
+      } else {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
         }
 
-        const totalProjects = projects.length;
+        const userTeams = await Team.find({ "users.user": user._id });
+        projects = await Project.find({
+          organization: organizationId,
+          $or: [
+            { projectManager: userEmail },
+            { teams: { $in: userTeams.map((team) => team._id) } },
+          ],
+        }).populate("teams");
+      }
 
-        // Get all task IDs for these projects
-        const projectIds = projects.map((project) => project._id);
-        const tasks = await Task.find({ project: { $in: projectIds } });
+      const totalProjects = projects.length;
 
-        // Get total number of tasks
-        const totalTasks = tasks.length;
+      // Get all task IDs for these projects
+      const projectIds = projects.map((project) => project._id);
+      const tasks = await Task.find({ project: { $in: projectIds } });
 
-        // Aggregate cards across all tasks
-        const totalCardsResult = await Task.aggregate([
-          { $match: { project: { $in: projectIds } } },
-          { $unwind: "$card" },
-          {
-            $lookup: {
-              from: "cards",
-              localField: "card",
-              foreignField: "_id",
-              as: "cards",
-            },
+      // Get total number of tasks
+      const totalTasks = tasks.length;
+
+      // Aggregate cards across all tasks
+      const totalCardsResult = await Task.aggregate([
+        { $match: { project: { $in: projectIds } } },
+        { $unwind: "$card" },
+        {
+          $lookup: {
+            from: "cards",
+            localField: "card",
+            foreignField: "_id",
+            as: "cards",
           },
-          { $unwind: "$cards" },
-          { $group: { _id: null, totalCards: { $sum: 1 } } },
-        ]);
-        const totalCards =
-          totalCardsResult.length > 0 ? totalCardsResult[0].totalCards : 0;
+        },
+        { $unwind: "$cards" },
+        { $group: { _id: null, totalCards: { $sum: 1 } } },
+      ]);
+      const totalCards =
+        totalCardsResult.length > 0 ? totalCardsResult[0].totalCards : 0;
 
-        const projectDetails = await Promise.all(
-          projects.map(async (project) => {
-            const projectTasks = tasks.filter((task) =>
-              task.project.equals(project._id)
-            );
-            const teams = await Team.find({
-              _id: { $in: project.teams },
-            }).populate("users.user");
+      const projectDetails = await Promise.all(
+        projects.map(async (project) => {
+          const projectTasks = tasks.filter((task) =>
+            task.project.equals(project._id)
+          );
+          const teams = await Team.find({
+            _id: { $in: project.teams },
+          }).populate("users.user");
 
-            // Calculate total cards and their statuses for this project
-            const projectCardsResult = await Task.aggregate([
-              { $match: { project: project._id } },
-              { $unwind: "$card" },
-              {
-                $lookup: {
-                  from: "cards",
-                  localField: "card",
-                  foreignField: "_id",
-                  as: "cards",
-                },
-              },
-              { $unwind: "$cards" },
-              {
-                $group: {
-                  _id: "$cards.status",
-                  count: { $sum: 1 },
-                },
-              },
-            ]);
-
-            // Initialize card counts
-            let totalPendingCards = 0;
-            let totalInProgressCards = 0;
-            let totalCompletedCards = 0;
-
-            projectCardsResult.forEach((card) => {
-              if (card._id === "pending") totalPendingCards = card.count;
-              if (card._id === "inprogress") totalInProgressCards = card.count;
-              if (card._id === "completed") totalCompletedCards = card.count;
-            });
-
-            // Calculate in-progress and pending tasks
-            const totalInProgressTasks = projectTasks.filter((task) =>
-              task.card.some((card) => card.status === "inprogress")
-            ).length;
-            const totalPendingTasks = projectTasks.filter((task) =>
-              task.card.some((card) => card.status === "pending")
-            ).length;
-
-            return {
-              id: project._id,
-              name: project.name,
-              projectMembers: teams.flatMap((team) =>
-                team.users.map((user) => user.user)
-              ),
-              totalTasks: projectTasks.length,
-              totalInProgressTasks,
-              totalPendingTasks,
-              totalCards:
-                totalPendingCards + totalInProgressCards + totalCompletedCards,
-              totalPendingCards,
-              totalInProgressCards,
-              totalCompletedCards,
-            };
-          })
-        );
-
-        res.json({
-          totalProjects,
-          totalTasks,
-          totalMembers: userCount,
-          totalCards,
-          projects: projectDetails,
-        });
-      } catch (error) {
-        console.error("Error retrieving overview data:", error);
-        res.status(500).json({ message: "Error retrieving overview data" });
-      }
-    }
-  );
-
-  app.get("/api/calendar/:organizationId",authenticateToken,async (req, res) => {
-      const { organizationId } = req.params;
-      const userEmail = req.user.email;
-      const userRole = req.user.role;
-
-      try {
-        let assignedCards;
-        if (userRole === "ADMIN") {
-          assignedCards = await Card.find()
-            .populate({
-              path: "project",
-              match: { organization: organizationId },
-              select: "_id name projectManager",
-            })
-            .populate("task", "name");
-        } else {
-          // Find projects where the user is the project manager
-          const managedProjects = await Project.find({
-            organization: organizationId,
-            projectManager: userEmail,
-          }).select("_id");
-
-          const managedProjectIds = managedProjects.map((project) => project._id);
-
-          assignedCards = await Card.find({
-            $or: [
-              { assignedTo: userEmail },
-              { project: { $in: managedProjectIds } },
-            ],
-          })
-            .populate({
-              path: "project",
-              match: { organization: organizationId },
-              select: "_id name projectManager",
-            })
-            .populate("task", "name");
-        }
-
-        const events = assignedCards
-          .filter((card) => card.project && card.task)
-          .flatMap((card) => [
+          // Calculate total cards and their statuses for this project
+          const projectCardsResult = await Task.aggregate([
+            { $match: { project: project._id } },
+            { $unwind: "$card" },
             {
-              id: `${card._id}-assign`,
-              date: card.assignDate,
-              projectId: card.project._id,
-              projectName: card.project.name,
-              taskId: card.task._id,
-              taskName: card.task.name,
-              cardId: card._id,
-              cardName: card.name,
-              assignedTo: card.assignedTo,
-              createdDate: card.createdDate,
-              status: card.status,
-              type: "Assign Date",
+              $lookup: {
+                from: "cards",
+                localField: "card",
+                foreignField: "_id",
+                as: "cards",
+              },
             },
-          ])
-          .filter((event) => event.date);
+            { $unwind: "$cards" },
+            {
+              $group: {
+                _id: "$cards.status",
+                count: { $sum: 1 },
+              },
+            },
+          ]);
 
-        res.json(events);
-      } catch (error) {
-        console.error("Error retrieving calendar data:", error);
-        res.status(500).json({ message: "Error retrieving calendar data" });
-      }
+          // Initialize card counts
+          let totalPendingCards = 0;
+          let totalInProgressCards = 0;
+          let totalCompletedCards = 0;
+
+          projectCardsResult.forEach((card) => {
+            if (card._id === "pending") totalPendingCards = card.count;
+            if (card._id === "inprogress") totalInProgressCards = card.count;
+            if (card._id === "completed") totalCompletedCards = card.count;
+          });
+
+          // Calculate in-progress and pending tasks
+          const totalInProgressTasks = projectTasks.filter((task) =>
+            task.card.some((card) => card.status === "inprogress")
+          ).length;
+          const totalPendingTasks = projectTasks.filter((task) =>
+            task.card.some((card) => card.status === "pending")
+          ).length;
+
+          return {
+            id: project._id,
+            name: project.name,
+            projectMembers: teams.flatMap((team) =>
+              team.users.map((user) => user.user)
+            ),
+            totalTasks: projectTasks.length,
+            totalInProgressTasks,
+            totalPendingTasks,
+            totalCards:
+              totalPendingCards + totalInProgressCards + totalCompletedCards,
+            totalPendingCards,
+            totalInProgressCards,
+            totalCompletedCards,
+          };
+        })
+      );
+
+      res.json({
+        totalProjects,
+        totalTasks,
+        totalMembers: userCount,
+        totalCards,
+        projects: projectDetails,
+      });
+    } catch (error) {
+      console.error("Error retrieving overview data:", error);
+      res.status(500).json({ message: "Error retrieving overview data" });
     }
-  );
+  }
+);
+
+app.get("/api/calendar/:organizationId",authenticateToken,async (req, res) => {
+    const { organizationId } = req.params;
+    const userEmail = req.user.email;
+    const userRole = req.user.role;
+
+    try {
+      let assignedCards;
+      if (userRole === "ADMIN") {
+        assignedCards = await Card.find()
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      } else {
+        // Find projects where the user is the project manager
+        const managedProjects = await Project.find({
+          organization: organizationId,
+          projectManager: userEmail,
+        }).select("_id");
+
+        const managedProjectIds = managedProjects.map((project) => project._id);
+
+        assignedCards = await Card.find({
+          $or: [
+            { assignedTo: userEmail },
+            { project: { $in: managedProjectIds } },
+          ],
+        })
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      }
+
+      const events = assignedCards
+        .filter((card) => card.project && card.task)
+        .flatMap((card) => [
+          {
+            id: `${card._id}-assign`,
+            date: card.assignDate,
+            projectId: card.project._id,
+            projectName: card.project.name,
+            taskId: card.task._id,
+            taskName: card.task.name,
+            cardId: card._id,
+            cardName: card.name,
+            assignedTo: card.assignedTo,
+            createdDate: card.createdDate,
+            status: card.status,
+            type: "Assign Date",
+          },
+        ])
+        .filter((event) => event.date);
+
+      res.json(events);
+    } catch (error) {
+      console.error("Error retrieving calendar data:", error);
+      res.status(500).json({ message: "Error retrieving calendar data" });
+    }
+  }
+);
 
   app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
     try {
@@ -3462,198 +3879,197 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.json({ message: "This is a protected endpoint!", user: req.user });
   });
 
-  // Create a new rule
-  // Create rule endpoint
-  app.post('/api/rules', authenticateToken, async (req, res) => {
-    try {
-      const { name, trigger, triggerCondition, listName, action, actionDetails, createdByCondition, projectId, triggerSentence, actionSentence } = req.body;
-      const loggedInUserEmail = req.user.email;
-  
-      // Find the logged-in user's ID using their email
-      const loggedInUser = await User.findOne({ email: loggedInUserEmail });
-      if (!loggedInUser) {
-        return res.status(400).json({ error: 'Invalid logged-in user' });
-      }
-  
-      let createdBy;
-      if (createdByCondition === 'by me') {
-        createdBy = [loggedInUser._id]; // Store as an array
-      } else if (createdByCondition === 'by anyone') {
-        // Fetch all teams associated with the project and their users
-        const project = await Project.findById(projectId).populate({
-          path: 'teams',
-          populate: { path: 'users.user', select: '_id' } // Populate users in each team
-        });
-        createdBy = project.teams.flatMap(team => team.users.map(user => user.user._id));
-      } else if (createdByCondition === 'by anyone except me') {
-        createdBy = [loggedInUser._id];
-      }
-  
-      const newRule = new Rule({
-        name,
-        trigger,
-        triggerCondition,
-        listName,
-        action,
-        actionDetails,
-        createdBy, // Now an array of user IDs
-        createdByCondition,
-        projectId,
-        triggerSentence, // Add triggerSentence here
-        actionSentence,  // Add actionSentence here
+// Create a new rule
+// Create rule endpoint
+app.post('/api/rules', authenticateToken, async (req, res) => {
+  try {
+    const { name, trigger, triggerCondition, listName, action, actionDetails, createdByCondition, projectId, triggerSentence, actionSentence } = req.body;
+    const loggedInUserEmail = req.user.email;
+
+    // Find the logged-in user's ID using their email
+    const loggedInUser = await User.findOne({ email: loggedInUserEmail });
+    if (!loggedInUser) {
+      return res.status(400).json({ error: 'Invalid logged-in user' });
+    }
+
+    let createdBy;
+    if (createdByCondition === 'by me') {
+      createdBy = [loggedInUser._id]; // Store as an array
+    } else if (createdByCondition === 'by anyone') {
+      // Fetch all teams associated with the project and their users
+      const project = await Project.findById(projectId).populate({
+        path: 'teams',
+        populate: { path: 'users.user', select: '_id' } // Populate users in each team
       });
-  
-      await newRule.save();
-      res.status(201).json(newRule);
-    } catch (err) {
-      console.error('Error saving rule:', err); // Log error for debugging
-      res.status(400).json({ error: err.message });
+      createdBy = project.teams.flatMap(team => team.users.map(user => user.user._id));
+    } else if (createdByCondition === 'by anyone except me') {
+      createdBy = [loggedInUser._id];
     }
-  });
-  
-  
-  
-  app.get("/api/rules/:projectId", authenticateToken, async (req, res) => {
-    try {
-      const { projectId } = req.params;
-      const rules = await Rule.find({ projectId });
-  
-      if (!rules.length) {
-        return res.status(404).json({ error: "No rules found for this project" });
+
+    const newRule = new Rule({
+      name,
+      trigger,
+      triggerCondition,
+      listName,
+      action,
+      actionDetails,
+      createdBy, // Now an array of user IDs
+      createdByCondition,
+      projectId,
+      triggerSentence, // Add triggerSentence here
+      actionSentence,  // Add actionSentence here
+    });
+
+    await newRule.save();
+    res.status(201).json(newRule);
+  } catch (err) {
+    console.error('Error saving rule:', err); // Log error for debugging
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
+app.get("/api/rules/:projectId", authenticateToken, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const rules = await Rule.find({ projectId });
+
+    if (!rules.length) {
+      return res.status(404).json({ error: "No rules found for this project" });
+    }
+
+    res.status(200).json(rules);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete("/api/rules/:ruleId", authenticateToken, async (req, res) => {
+  try {
+    const { ruleId } = req.params;
+    const result = await Rule.findByIdAndDelete(ruleId);
+
+    if (!result) {
+      return res.status(404).json({ error: "Rule not found" });
+    }
+
+    res.status(200).json({ message: "Rule deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+taskSchema.post('save', async function (doc) {
+  // Trigger rule execution when a Task is saved
+  await executeBackgroundJob();
+});
+
+taskSchema.post('remove', async function (doc) {
+  // Trigger rule execution when a Task is removed
+  await executeBackgroundJob();
+});
+
+teamSchema.post('save', async function (doc) {
+  // Trigger rule execution when a Team is saved
+  await executeBackgroundJob();
+});
+
+teamSchema.post('remove', async function (doc) {
+  // Trigger rule execution when a Team is removed
+  await executeBackgroundJob();
+});
+cardSchema.post('save', async function (doc) {
+  // Trigger rule execution when a Card is saved
+  await executeBackgroundJob();
+});
+
+cardSchema.post('remove', async function (doc) {
+  // Trigger rule execution when a Card is removed
+  await executeBackgroundJob();
+});
+
+cardSchema.post('update', async function (doc) {
+  // Trigger rule execution when a Card is removed
+  await executeBackgroundJob();
+});
+
+
+const executeBackgroundJob = async () => {
+  try {
+    console.log('Running scheduled background job...');
+
+    // Find rules related to 'Card Move' that need to be executed
+    const rules = await Rule.find({ trigger: 'Card Move' });
+
+    for (const rule of rules) {
+      // console.log(`Processing rule ${rule._id}:`);
+
+      // Fetch the project by ID
+      const project = await Project.findById(rule.projectId);
+      if (!project) {
+        // console.error(`Project ${rule.projectId} not found.`);
+        continue; // Skip to the next rule if the project is not found
       }
-  
-      res.status(200).json(rules);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  });
-  
-  app.delete("/api/rules/:ruleId", authenticateToken, async (req, res) => {
-    try {
-      const { ruleId } = req.params;
-      const result = await Rule.findByIdAndDelete(ruleId);
-  
-      if (!result) {
-        return res.status(404).json({ error: "Rule not found" });
-      }
-  
-      res.status(200).json({ message: "Rule deleted successfully" });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  });
-  
 
-  taskSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Task is saved
-    await executeBackgroundJob();
-  });
+      // Fetch all cards associated with the project
+      let cardsToMove = await Card.find({ project: rule.projectId });
 
-  taskSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Task is removed
-    await executeBackgroundJob();
-  });
-
-  teamSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Team is saved
-    await executeBackgroundJob();
-  });
-
-  teamSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Team is removed
-    await executeBackgroundJob();
-  });
-  cardSchema.post('save', async function(doc) {
-    // Trigger rule execution when a Card is saved
-    await executeBackgroundJob();
-  });
-
-  cardSchema.post('remove', async function(doc) {
-    // Trigger rule execution when a Card is removed
-    await executeBackgroundJob();
-  });
-
-  cardSchema.post('update', async function(doc) {
-    // Trigger rule execution when a Card is removed
-    await executeBackgroundJob();
-  });
-
-
-  const executeBackgroundJob = async () => {
-    try {
-      console.log('Running scheduled background job...');
-
-      // Find rules related to 'Card Move' that need to be executed
-      const rules = await Rule.find({ trigger: 'Card Move' });
-
-      for (const rule of rules) {
-        // console.log(`Processing rule ${rule._id}:`);
-
-        // Fetch the project by ID
-        const project = await Project.findById(rule.projectId);
-        if (!project) {
-          // console.error(`Project ${rule.projectId} not found.`);
-          continue; // Skip to the next rule if the project is not found
+      for (const card of cardsToMove) {
+        // Get the user ID based on the updatedBy email
+        const user = await User.findOne({ email: card.updatedBy });
+        if (!user) {
+          console.error(`User with email ${card.updatedBy} not found.`);
+          continue; // Skip to the next card if the user is not found
         }
 
-        // Fetch all cards associated with the project
-        let cardsToMove = await Card.find({ project: rule.projectId });
-
-        for (const card of cardsToMove) {
-          // Get the user ID based on the updatedBy email
-          const user = await User.findOne({ email: card.updatedBy });
-          if (!user) {
-            console.error(`User with email ${card.updatedBy} not found.`);
-            continue; // Skip to the next card if the user is not found
+        // Check the createdByCondition
+        if (rule.createdByCondition === 'by me') {
+          if (!rule.createdBy.includes(user._id.toString())) {
+            console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
+            continue; // Skip this card if the user ID doesn't match
           }
-
-          // Check the createdByCondition
-          if (rule.createdByCondition === 'by me') {
-            if (!rule.createdBy.includes(user._id.toString())) {
-              console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
-              continue; // Skip this card if the user ID doesn't match
-            }
-          } else if (rule.createdByCondition === 'by anyone except me') {
-            if (rule.createdBy.includes(user._id.toString())) {
-              console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
-              continue; // Skip this card if the user ID matches the excluded user
-            }
-          }
-
-          // Fetch the destination list by name
-          const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
-          if (!destinationList) {
-            console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
-            continue; // Skip to the next rule if the destination list is not found
-          }
-
-          // Check if the rule applies to this card based on triggerCondition
-          if (!rule.triggerCondition || card.status === rule.triggerCondition) {
-            // Find the current task (list) of the card
-            const currentTask = await Task.findById(card.task);
-
-            // Remove the card from the current list
-            if (currentTask) {
-              currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
-              await currentTask.save();
-            }
-
-            // Add the card to the destination list
-            destinationList.card.push(card._id);
-            await destinationList.save();
-
-            // Update the card's task field
-            card.task = destinationList._id;
-            await card.save();
-
-            // console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
+        } else if (rule.createdByCondition === 'by anyone except me') {
+          if (rule.createdBy.includes(user._id.toString())) {
+            console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
+            continue; // Skip this card if the user ID matches the excluded user
           }
         }
+
+        // Fetch the destination list by name
+        const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
+        if (!destinationList) {
+          console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
+          continue; // Skip to the next rule if the destination list is not found
+        }
+
+        // Check if the rule applies to this card based on triggerCondition
+        if (!rule.triggerCondition || card.status === rule.triggerCondition) {
+          // Find the current task (list) of the card
+          const currentTask = await Task.findById(card.task);
+
+          // Remove the card from the current list
+          if (currentTask) {
+            currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
+            await currentTask.save();
+          }
+
+          // Add the card to the destination list
+          destinationList.card.push(card._id);
+          await destinationList.save();
+
+          // Update the card's task field
+          card.task = destinationList._id;
+          await card.save();
+
+          // console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
+        }
       }
-    } catch (error) {
-      console.error('Error running scheduled job:', error);
     }
-  };
+  } catch (error) {
+    console.error('Error running scheduled job:', error);
+  }
+};
 
 
 
@@ -3661,17 +4077,43 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
 
 
-  // setInterval(executeBackgroundJob, 5000);
+setInterval(executeBackgroundJob, 5000);
 
-  // Schedule the job to run every minute
-  // cron.schedule('* * * * *', executeBackgroundJob);
-
-
+// Schedule the job to run every minute
+// cron.schedule('* * * * *', executeBackgroundJob);
 
 
 
-  server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
 
-  module.exports = app;
+
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+module.exports = app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

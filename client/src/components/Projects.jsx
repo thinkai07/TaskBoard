@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
 import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
-
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dayjs from "dayjs";
 import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,} from "antd";
 import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
@@ -57,6 +58,7 @@ const Projects = () => {
     teams: [],
   });
   const dropdownRef = useRef(null);
+  const [loading, setLoading] = useState(true);
   
 
   useEffect(() => {
@@ -445,6 +447,19 @@ const Projects = () => {
       throw error;
     }
   };
+  if (!cards.length) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-light-white rounded-3xl p-8">

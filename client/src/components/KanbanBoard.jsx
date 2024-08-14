@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
+import { Dropdown, Menu } from 'antd';  //added
+import { DownOutlined } from '@ant-design/icons'; //added
 import {
   BsClockHistory,
   BsPencilSquare,
@@ -24,7 +26,12 @@ import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
-
+import { Popover, Button,Space,Modal,Form,Input } from 'antd';
+import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
+import { SquareMenu } from 'lucide-react';
+import { Plus } from "lucide-react";
+import {X} from 'lucide-react'
+import { BsFillPencilFill } from "react-icons/bs";
 
 const initialBoard = {
   columns: [],
@@ -145,6 +152,7 @@ function KanbanBoard() {
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -171,7 +179,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:5000");
+    const newSocket = io("http://13.235.16.113:5000");
     setSocket(newSocket);
   }, []);
 
@@ -917,19 +925,20 @@ function KanbanBoard() {
     setNewColumnModalVisible(true);
   };
 
-  const handleAddColumnSubmit = async (e) => {
-    e.preventDefault();
+  const handleAddColumnSubmit = async () => {
     const trimmedColumnName = newColumnName.trim();
     if (!trimmedColumnName) {
       setNewColumnError(true);
       return;
     }
+
+    setLoading(true);
     let createdBy;
     try {
-      createdBy = await fetchUserEmail();
-      console.log(createdBy);
+      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
+      setLoading(false);
       return;
     }
 
@@ -961,15 +970,14 @@ function KanbanBoard() {
           { id: task._id, title: task.name, cards: [], createdBy: createdBy },
         ],
       }));
+      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
-      notification.success({
-        message: 'Column created  Successfully',
-
-    });
     } catch (error) {
       console.error("Error adding task:", error);
+    } finally {
+      setLoading(false);
     }
   };
   // Update the handleRenameColumn function
@@ -1231,125 +1239,35 @@ function KanbanBoard() {
     }
   };
 
-  // const renderCard = (card, { dragging }) => (
-  //   <div
-  //     className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-  //     style={{ borderRadius: "20px", maxWidth: "750px" }}
-  //   >
-  //     <div className="react-kanban-card__title truncate" title={card.title}>
-  //       {card.title && card.title.length > 20
-  //         ? card.title.slice(0, 28) + "..."
-  //         : card.title}
-  //     </div>
-  //     <div
-  //       className="react-kanban-card__description truncate"
-  //       title={card.description || ""}
-  //     >
-  //       {card.description && card.description.length > 35
-  //         ? card.description.slice(0, 35) + "..."
-  //         : card.description || ""}
-  //     </div>
-  //     <div className="react-kanban-card__assignedTo flex items-center justify-end">
-  //       {card.assignedTo && (
-  //         <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-  //           <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-  //             {card.assignedTo}
-  //           </span>
-  //           {card.assignedTo.charAt(0).toUpperCase()}
-  //         </div>
-  //       )}
-  //     </div>
+ //added
+ const statusMenu = (cardId) => (
+  <Menu
+    onClick={(e) => handleChangeStatus(cardId, e.key)}
+    items={[
+      { key: 'pending', label: 'Pending' },
+      { key: 'inprogress', label: 'Inprogress' },
+      { key: 'completed', label: 'Completed' },
+    ]}
+  />
+);
 
-  //     <div className="react-kanban-card__assignDate">
-  //       {card.assignDate && (
-  //         <div className="text-sm text-gray-500">
-  //           Assign Date:{" "}
-  //           {new Date(card.assignDate).toLocaleDateString("en-US", {
-  //             year: "numeric",
-  //             month: "short",
-  //             day: "numeric",
-  //             hour: "numeric",
-  //             minute: "numeric",
-  //             hour12: true,
-  //           })}
-  //         </div>
-  //       )}
-  //     </div>
-  //     <div className="react-kanban-card__dueDate">
-  //       {card.dueDate && (
-  //         <div className="text-sm text-gray-500">
-  //           Due Date:{" "}
-  //           {new Date(card.dueDate).toLocaleDateString("en-US", {
-  //             year: "numeric",
-  //             month: "short",
-  //             day: "numeric",
-  //             hour: "numeric",
-  //             minute: "numeric",
-  //             hour12: true,
-  //           })}
-  //         </div>
-  //       )}
-  //     </div>
-  //     <div className="react-kanban-card__status">
-  //       <select
-  //         value={card.status}
-  //         onChange={(e) => handleChangeStatus(card.id, e.target.value)}
-  //       >
-  //         <option value="pending">Pending</option>
-  //         <option value="inprogress">Inprogress</option>
-  //         <option value="completed">Completed</option>
-  //       </select>
-  //     </div>
-  //     <div
-  //       style={{
-  //         display: "flex",
-  //         justifyContent: "space-between",
-  //         padding: "10px",
-  //       }}
-  //     >
-  //       {canShowActions && (
-  //         <button
-  //           className="delete-card-button"
-  //           onClick={() => confirmRemoveCard(card.columnId, card.id)}
-  //         >
-  //           <BsTrash />
-  //         </button>
-  //       )}
-
-  //       <button
-  //         className="delete-card-button"
-  //         onClick={() =>
-  //           openRenameCardModal(
-  //             card.columnId,
-  //             card.id,
-  //             card.title,
-  //             card.description,
-  //             card.comments
-  //           )
-  //         }
-  //       >
-  //         <BsPencilSquare />
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
-  const renderCard = (card, { dragging }) => (
+ const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "20px", maxWidth: "750px", overflow: "hidden" }}
+      style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
     >
-      <TimeProgressBar
+      {/* <TimeProgressBar
         assignDate={card.assignDate}
         dueDate={card.dueDate}
-      />
+      /> */}
       <div className="p-4">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="react-kanban-card__title truncate" title={card.title}>
-          {card.title && card.title.length > 20
-            ? card.title.slice(0, 28) + "..."
-            : card.title}
-        </div>
-        <div className="react-kanban-card__assignedTo flex items-center">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="react-kanban-card__title truncate" title={card.title}>
+            {card.title && card.title.length > 20
+              ? card.title.slice(0, 28) + "..."
+              : card.title}
+          </div>
+          <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
                 <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
@@ -1359,35 +1277,17 @@ function KanbanBoard() {
               </div>
             )}
           </div>
-       </div>
-          <div
-            className="react-kanban-card__description truncate"
-            title={card.description || ""}
-            style={{ flex: 1, marginRight: "10px" }}
-          >
-            {card.description && card.description.length > 35
-              ? card.description.slice(0, 35) + "..."
-              : card.description || ""}
-          </div>
-         
-       
-
-
-        {/* <div className="react-kanban-card__assignDate">
-          {card.assignDate && (
-            <div className="text-sm text-gray-500">
-              Assign Date:{" "}
-              {new Date(card.assignDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-              })}
-            </div>
-          )}
+        </div>
+        {/* <div
+          className="react-kanban-card__description truncate"
+          title={card.description || ""}
+          style={{ flex: 1, marginRight: "10px" }}
+        >
+          {card.description && card.description.length > 35
+            ? card.description.slice(0, 35) + "..."
+            : card.description || ""}
         </div> */}
+
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
             <div className="text-sm text-gray-500">
@@ -1403,8 +1303,8 @@ function KanbanBoard() {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", alignItems:'flex-start', justifyContent: "space-between" }}>
-          <div className="react-kanban-card__status" style={{ marginRight: "10px" }}>
+        <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
+          {/* <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
             <select
               value={card.status}
               onChange={(e) => handleChangeStatus(card.id, e.target.value)}
@@ -1413,14 +1313,21 @@ function KanbanBoard() {
               <option value="inprogress">Inprogress</option>
               <option value="completed">Completed</option>
             </select>
-          </div>
+          </div> */}
+          <Dropdown overlay={statusMenu(card.id)} trigger={['click']} >
+            <Button style={{ width: '100px', marginTop: '3%' }}>
+              {card.status.charAt(0).toUpperCase() + card.status.slice(1)} <DownOutlined />
+            </Button>
+          </Dropdown>
+
+
           {canShowActions && (
             <button
               className="delete-card-button"
               onClick={() => confirmRemoveCard(card.columnId, card.id)}
-              style={{ marginRight: "10px", color: "red" }}
+              style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%", marginTop: '3%' }}
             >
-             <BsTrash/>
+              <BsTrash />
             </button>
           )}
           <button
@@ -1434,9 +1341,9 @@ function KanbanBoard() {
                 card.comments
               )
             }
-            style={{ color: 'blue' }}
+            style={{ color: 'black', marginTop: "4%" }}
           >
-            <BsPencilSquare />
+            <BsFillPencilFill />
           </button>
         </div>
 
@@ -1619,23 +1526,47 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-xl"
-      style={
-        bgUrl
-          ? {
+    className="p-4 overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+    style={
+      bgUrl
+        ? {
             backgroundImage: `url(${bgUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            height: "100vh",
+
             width: "100%",
           }
-          : {}
-      }
-    >
+        : {}
+    }
+  >
       <div>
         {renameCardModalVisible && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12">
+            <div className="bg-white p-6 rounded-3xl w-5/12 relative">
+              {/* Close Icon */}
+              <button
+                onClick={() => {
+                  setRenameCardModalVisible(false);
+                  setRenameCardErrors({ title: "", description: "" });
+                }}
+                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
               <h2 className="text-lg font-bold mb-4">Rename Card</h2>
               <form onSubmit={handleRenameCard}>
                 <div className="mb-4">
@@ -1702,7 +1633,7 @@ function KanbanBoard() {
               <div className="mt-4 h-96 overflow-y-auto">
                 <div className="flex items-center mb-4 pt-6">
                   <RxActivityLog size={24} className="mr-2" />
-                  <h2 className="text-lg font-semibold">Activity</h2>
+                  <h2 className="text-lg font-bold">Activity</h2>
                   <button
                     onClick={() => setCommentsVisible(!commentsVisible)}
                     className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
@@ -1712,7 +1643,7 @@ function KanbanBoard() {
                 </div>
                 <div className="flex items-center mb-2">
                   <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    V
+                    {userEmail.charAt(0).toUpperCase()}
                   </div>
 
                   <input
@@ -1743,11 +1674,11 @@ function KanbanBoard() {
                             : "bg-white p-2 rounded-lg"
                             }`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-semibold">
+                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
                             {comment.commentBy[0].toUpperCase()}
                           </div>
                           <p className="ml-2">
-                            <span className="font-semibold">
+                            <span className="font-bold">
                               {comment.commentBy}
                             </span>
                             : {comment.comment}
@@ -1764,7 +1695,7 @@ function KanbanBoard() {
         {showSuccessPopup && (
           <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
             <div className="bg-green-400 p-2 rounded-xl">
-              <h2 className="text-lg text-white font-semibold mb-2">
+              <h2 className="text-lg text-white font-bold mb-2">
                 Card renamed successfully
               </h2>
             </div>
@@ -1779,17 +1710,7 @@ function KanbanBoard() {
           </h1>
         </div>
         <div className="flex space-x-2 ">
-          {/* {canShowActions && (
-            <button
-              onClick={handleOpenModal}
-              className={`${memberAdded ? "bg-gray-400" : "bg-green-500"
-                } text-white px-4 py-2 rounded-full`}
-              disabled={memberAdded}
-            >
-              {memberAdded ? "Member Added" : "+ Add member"}
-            </button>
-          )} */}
-          {/* added */}
+         
 
           {isModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-slate-700 z-50 bg-opacity-50">
@@ -1854,26 +1775,41 @@ function KanbanBoard() {
             </div>
           )}
 
-          {/* <button
-            className="bg-blue-500 text-white px-4 py-2 rounded-full"
-            onClick={handleTeamsClick}
-          >
-            Teams
-          </button> */}
-          <RulesButton tasks={tasks} />
-          <button
-            onClick={openGitModal}
-            className="bg-green-500 text-white px-4 py-2 rounded-full"
-          >
-            Git Configuration
-          </button>
 
-          <button
+<Button
+            type="primary"
+            icon={<Plus />}
             onClick={handleAddColumn}
-            className="bg-blue-500 text-white px-4 py-2 rounded-full"
+            style={{ borderRadius: "8px" }}
           >
-            + New Column
-          </button>
+            New Column
+          </Button>
+
+
+
+<Popover
+        trigger="click"
+        placement="bottomRight"
+        content={
+          <Space direction="vertical">
+           
+            <Button
+              type="default"
+              icon={<SettingOutlined />}
+              onClick={openGitModal}
+              block
+            >
+              Git Configuration
+            </Button>
+            <RulesButton tasks={tasks} />
+          </Space>
+        }
+      >
+        <Button type="text" icon={<SquareMenu />} />
+      </Popover>        
+         
+
+
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
@@ -1898,7 +1834,7 @@ function KanbanBoard() {
             >
               <div style={{ marginBottom: "0.5rem" }}>
                 <h3
-                  className="font-semibold"
+                  className="font-bold"
                   style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
                 >
                   {card.title}
@@ -1969,7 +1905,7 @@ function KanbanBoard() {
       {modalVisible && modalType === "addCard" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
               <label
                 htmlFor="title"
@@ -2079,7 +2015,7 @@ function KanbanBoard() {
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl">
-            <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
+            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
             <p>Are you sure you want to delete this card?</p>
             <div className="flex justify-between mt-4">
               <button
@@ -2114,55 +2050,49 @@ function KanbanBoard() {
       )}
 
       {newColumnModalVisible && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
-          <div className="bg-white p-6 w-96 rounded-3xl shadow-lg max-h-screen ">
-            <h2 className="text-lg font-semibold mb-4">Add New Column</h2>
+        <Modal
+        title="Add New Column"
+        visible={newColumnModalVisible}
+        onCancel={() => setNewColumnModalVisible(false)}
+        footer={null}
+      >
+        <Form onFinish={handleAddColumnSubmit}>
+          <Form.Item
+            validateStatus={newColumnError ? "error" : ""}
+            help={newColumnError ? "Please enter a column name" : ""}
+          >
+            <Input
+              value={newColumnName}
+              onChange={(e) => {
+                setNewColumnName(e.target.value.trimStart());
+                setNewColumnError(false);
+              }}
+              placeholder="Column Name"
+              size="large"
+            />
+          </Form.Item>
+          <Form.Item>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setNewColumnModalVisible(false)}
+                style={{ marginRight: 8 }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Add Column
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
 
-            <form onSubmit={handleAddColumnSubmit}>
-              <input
-                type="text"
-                value={newColumnName}
-                onChange={(e) => {
-                  setNewColumnName(e.target.value.trimStart());
-                  setNewColumnError(false);
-                }}
-                className={`border ${newColumnError ? "border-red-500" : "border-gray-300"
-                  } rounded-xl px-3 py-3 mb-4 w-full`}
-                placeholder="Column Name"
-                required
-              />
-              {newColumnError && (
-                <p className="text-red-500 text-sm mb-2">
-                  Please enter a column name
-                </p>
-              )}
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewColumnModalVisible(false);
-                    setNewColumnError(false);
-                  }}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-                >
-                  Add Column
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {modalVisible && modalType === "options" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Column Options</h2>
+            <h2 className="text-lg font-bold mb-4">Column Options</h2>
             <button
               onClick={() => setShowRenameInput(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
@@ -2189,7 +2119,7 @@ function KanbanBoard() {
           {showConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-semibold mb-4">
+                <p className="text-lg font-bold mb-4">
                   Are you sure you want to remove this column?
                 </p>
                 <div className="flex justify-between">
@@ -2212,7 +2142,7 @@ function KanbanBoard() {
           {showRenameInput && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
-                <h2 className="text-lg font-semibold mb-4">Rename Column</h2>
+                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
                 <input
                   type="text"
                   value={newColumnName}
@@ -2260,7 +2190,7 @@ function KanbanBoard() {
           {showRenameConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-semibold mb-4">
+                <p className="text-lg font-bold mb-4">
                   Are you sure want to rename this column ?
                 </p>
                 <div className="flex justify-between">
@@ -2289,93 +2219,67 @@ function KanbanBoard() {
 {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto relative"
-            style={{ scrollbarWidth: "none" }}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
+              }`}
           >
             <button
               onClick={closeGitModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
               aria-label="Close modal"
             >
-              <MdCancel size={30} />
+              <X size={24} />
             </button>
-            <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p>Quick setup — if you've done this kind of thing before</p>
-              <div className="flex justify-between items-center bg-gray-200 p-2 rounded">
+            <h2 className="text-xl font-semibold mb-6 border-b pb-2">Git Configuration</h2>
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-2">Quick setup — if you've done this kind of thing before</p>
+              <div className="flex justify-between items-center bg-gray-100 p-3 rounded-md shadow-sm">
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
                 >
-                  {copiedButton === "button1" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
+                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
                 </button>
               </div>
             </div>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p className="font-semibold">
-                ...or create a new repository on the command line
-              </p>
-              <pre
-                ref={newRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`echo "# ${repoName}" >> README.md
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-800 mb-2">...or create a new repository on the command line</p>
+              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
+                <pre ref={newRepoRef} className="whitespace-pre-wrap">
+                  <code>
+                    {`echo "# ${repoName}" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git branch -M main
 git remote add origin ${repository}
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(newRepoRef.current.innerText, "button2")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button2" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                  </code>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
+                >
+                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
-            <div className="bg-gray-100 p-4 rounded mb-4">
-              <p className="font-semibold">
-                ...or push an existing repository from the command line
-              </p>
-              <pre
-                ref={existingRepoRef}
-                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
-              >
-                {`git remote add origin ${repository}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 mb-2">...or push an existing repository from the command line</p>
+              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
+                <pre ref={existingRepoRef} className="whitespace-pre-wrap">
+                  {`git remote add origin ${repository}
 git branch -M main
 git push -u origin main`}
-              </pre>
-              <button
-                onClick={() =>
-                  copyToClipboard(existingRepoRef.current.innerText, "button3")
-                }
-                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
-              >
-                {copiedButton === "button3" ? (
-                  "Copied"
-                ) : (
-                  <MdOutlineContentCopy />
-                )}
-              </button>
+                </pre>
+                <button
+                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
+                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
+                >
+                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
+                </button>
+              </div>
             </div>
-            {/* <button
-              onClick={closeGitModal}
-              className="bg-red-600 text-white p-2 rounded mt-4 w-full text-center"
-            >
-              close
-            </button> */}
           </div>
         </div>
       )}

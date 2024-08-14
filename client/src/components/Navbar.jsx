@@ -10,7 +10,6 @@ import { BsMenuUp } from "react-icons/bs";
 import { TbMenuOrder } from "react-icons/tb";
 
 const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
-  // console.log(user)
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);

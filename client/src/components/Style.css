@@ -1,15 +1,21 @@
 .react-kanban-column {
   padding: 15px;
-  border-radius: 20px;
-  background-color: #eee;
+  border-radius: 8px;
+  background-color: #ede5e5;
   margin: 5px;
+  height: fixed; /* Set a fixed height for the column */
+  /* overflow-x: auto; Enable vertical scrolling */
+
 }
+
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 250px;
   min-width: 300px;
   margin-top: 3%;
+  
 }
+
 .react-kanban-card__title {
 border-bottom: 70px  #eee;
 padding-bottom: 5px;

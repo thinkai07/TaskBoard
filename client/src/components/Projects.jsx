@@ -7,22 +7,8 @@ import useTokenValidation from "./UseTockenValidation";
 import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
 
 import dayjs from "dayjs";
-import {
-  Card,
-  Modal,
-  Input,
-  Button,
-  DatePicker,
-  Select,
-  notification,
-  Tooltip,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EllipsisOutlined,
-} from "@ant-design/icons";
+import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,} from "antd";
+import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 const { TextArea } = Input;
 const { Option } = Select;

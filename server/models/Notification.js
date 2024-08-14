@@ -39,4 +39,8 @@ const NotificationSchema = new mongoose.Schema({
   },
 });
 
+<<<<<<< HEAD
 module.exports = mongoose.model("Notification", NotificationSchema);
+=======
+module.exports = mongoose.model("Notification", NotificationSchema);
+>>>>>>> 8153153255c5360b0a271a54212e5094728a3356

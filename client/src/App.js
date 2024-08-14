@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Projects from './components/Projects';
 import Tasks from './components/KanbanBoard';
-
 import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import RegistrationPage from './components/RegistrationPage';
@@ -17,9 +16,10 @@ import KanbanBoard from './components/KanbanBoard';
 import SuccessPage from './components/SuccessPage';
 import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
-import TeamsPage from './components/Teamsorg';
+import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
-import RulesButton from './Automation/RulePage';
+import RulesButton from './components/RulePage';
+
 
 
 
@@ -66,9 +66,9 @@ const App = () => {
       <Routes>
         <Route path='/login' element={<LoginPage onLogin={handleLogin} />} />
         <Route path='/register' element={<RegistrationPage />} />
-        <Route path='/Organization' element={<Organization />} /> 
+        <Route path='/Organization' element={<Organization />} />
         <Route path='/reset-password' element={<ResetPassword />} />
-        <Route path='/success' element= {<SuccessPage />} />
+        <Route path='/success' element={<SuccessPage />} />
 
         <Route
           path="/*"
@@ -85,12 +85,12 @@ const App = () => {
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
                   <Route path="/Auditlog" element={<AuditLog/>} /> 
-                  <Route path="/Teamsorg" element={<TeamsPage/>} /> 
+                  <Route path="/Teamsorg" element={<Teamsorg/>} /> 
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
                   <Route path="/Rules" element={<RulesButton/>} /> 
                 </Routes>
               </Layout>
-            ) : ( 
+            ) : (
               <Navigate to="/login" />
             )
           }

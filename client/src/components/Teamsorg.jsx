@@ -264,12 +264,31 @@ const TeamsPage = () => {
                                             >
                                                 <BsFillPencilFill className="inline " /> Edit
                                             </Button>
-                                            <Button type="text"
+                                            {/* <Button type="text"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDeleteTeam(team._id);
                                                 }}
                                                 className="text-red-500 bg-transparent"
+                                            >
+                                                <FaTrash className="inline mr-2 " /> Delete
+                                            </Button> */}
+                                            <Button
+                                                onClick={() => handleDeleteTeam(team._id)}
+                                                className="border border-red-500 text-red-500 bg-transparent"
+                                                style={{
+                                                    borderColor: 'red',
+                                                    color: 'red',
+                                                    transition: 'color 0.3s, border-color 0.3s',
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.borderColor = 'gray';
+                                                    e.currentTarget.style.color = 'gray';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.borderColor = 'red';
+                                                    e.currentTarget.style.color = 'red';
+                                                }}
                                             >
                                                 <FaTrash className="inline mr-2 " /> Delete
                                             </Button>

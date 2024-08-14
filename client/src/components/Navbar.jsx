@@ -225,26 +225,34 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     window.location.reload();
   };
 
-  const images = [
-    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-
-    ...customImages,
-  ];
-
   // const images = [
-  //   // "https://img.lovepik.com/element/40156/3639.png_1200.png",
-  //   // "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
-  //   "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQBAAMBIgACEQEDEQH/xAAaAAEBAQEBAQEAAAAAAAAAAAABAAIDBQQG/8QAGxABAQEAAgMAAAAAAAAAAAAAAAERITECEkH/xAAaAQEBAQEBAQEAAAAAAAAAAAABAAIEAwUG/8QAGBEBAQEBAQAAAAAAAAAAAAAAABEBAhL/2gAMAwEAAhEDEQA/AP2EhxrD6v0Ffj/TOLGsWCqsrGsViFZFaxE1lFJUI4kaziKRoRRVAKRoRSNCKRqSSVSSSqSSNSwpKs4rGhUa7Ycaw4865WMGN4sVTGKxrBSqyqViVAsaCVZxY0iqwjixGs4msBNCKSoRSNCKRoRSNCKRoRSVQKSoVIqNfXhxrE8a8oxgsbwWcGjWBY3gprLFgbopDOLCkmQ0iqyiEqBhRVGIjEc0I4sRoRSNCOLEaEcRNBWIGpJYlQsOLEX34MdMDnpjGDG8FNZ3GMZsdGbDWY52JuwVqsbjAxrAaGcDYxDWWW8BwM4mgUA1gwkIpKijGkjREQjUUkaBjSSoxFJqoWFJV6WDG8Dkro8sYLGxhrO4xYLG7BjVY3GLGbHTBYaxuOdgsdKzYazuMXgN0NMsUY1YlRrGDG8GEM4K1iw1Moo1BHFipCKRCKRCKRCKSCKxVp6mLGw43bHPBXSxmxqs7yxYLG8Cee8sYLG6LGmdxjBjdZsLG4xYy6YMarG4xjLpgw1ncYFjbOGs7jOBvBZwqGKmrBmGhlNBEIokIpEIpEFFEIpF6+DG8GOKvp7jFjNjpjNhrG4zjNjpYMNY3HOxmumCxqsbjFjON4MNY3GLBjeDCxGMGN2DGqxuMYMbwYWdxihrBhEZwWN4LCIxYsasWKiM4GrFhTKOLEQikQUU1AGhUntYMbwY4a+vGMFjeCws7jGM2OljGNMbgZsbopee452Cx0sZw1jcYsGNjCxGMGN4LCzuMWDG8GFiMWDG8GFmMYrGrBhEZsFjWKw0RjBjeDDVGU0MSjJKJgRSIvQaHl0k9tHDjgfajGCxvBSzuOdgxvBjTG4xjOOmQYWNxgWNUU157jGCxpYazGBjWAsbjODGsGFiM4LG8FhZ3liwWNiw1ncYwWN2MkQYMaWERixY1iw1MrGsCpgwN4MVUZxNYzUtx7iScT7YVnCSGsjEixrNCTTz0D4kWNZwJFgBIs6Ak0wMFiSZ1YKkWdFFCLKCRCBSQRRIVSSDNSI1/9k=",
-  //   // "https://i.pinimg.com/originals/b9/df/24/b9df243c15b372d33ade268c538dde2d.jpg",
-  //   "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQA/AMBIgACEQEDEQH/xAAbAAADAQEBAQEAAAAAAAAAAAAAAgMBBAUGB//EACgQAAICAgICAgICAgMAAAAAAAABAhEDIRIxBEEiURNhMnEjgUKRkv/EABoBAAMBAQEBAAAAAAAAAAAAAAECAwAEBQb/xAAfEQEBAQEBAAMBAAMAAAAAAAAAARECIQMSMUEEE2H/2gAMAwEAAhEDEQA/APqseJ3/ABX/AEdHAyMZf8SmXlw+Wj2bXzU8ifXRSWNTinWyMJ/5lA64oFDn1HHHjNI68cW+gxYeUkztxYOMmyfXS/HCUYyS2OkdLx/Ej+OmT3VOphGMDibFDJ08CiESHQtNAAAKINMAzKYy8GQiyliWLc1dM1slCQ5PFZW2aKajC0GDMszMTpjp2Tb2ambG1RgKpByBhthgkK50KslujYH2OYaYZnykSXku0h1Im1znXo9GT15nXPmE8dRWf5fyrR3Rx8zk/DU00umdmKVV9m7b4+ZPHThxSx1Xs64Nta69iYWnDb2ZCXCVHPfXV5zF9VsSVLozmxHO2CQOuoZbGolZvIZPVUAsJJrsYAgAADAAAzNTKKcSQJmsGXFVIpCZz2PB/sWxTnpaUzYzItv7KQkktsXD/ZVy0LYkppqhUwYN6PYyMW0bQADC6AWd+jGrHI2EtkXf0xsd30NnhJfXVYWI+gi1QmK6+Tj/AAS9/ZZ4r+UdMSEVr9j5s8cc9els7rXFsz1sMbfs1RcGnZmHJLJLT0dEoJpfYLSyabHmlW60UlO2mckm46QfllFWD6j9r/XY5uiDzNS0cObyMrnaehlmU1fsacYl18s16KnaQylZ52LPJypHZhbk6X+wXnB5610ReyiESSKJaJ1WNXQAgsAgAADAACjNgNh2goaCNRkU46YqRrloTkJFdjXphjZOUm2ClWxsLvrrjoOS9shjy3dvaKOcVTbEsPsxQEcOfyPx207+jfG8iclb3fX6D9LmhPkm47JRsWKoFkUl9Vph+WK7Yptn6zLb6E+RRuzE1Wwh+vAUVkVq19bMniTWttoeEZRcGl8TshiU0pcdp6rtHTesQ+muTBgfNbaOhqKTjFb+yuOLUqfvofgozal3ViXraf65HnvHNSUm/jQNJxO2ShLG4vr2cM4uKSj0PLqdmOfLGulY/jYYNrnG7Em2rtM3x87jNLiUu2OfOft67l4MYyUlOlXQ906T/ox5JZHukv0bjhsl7/VpJPxeCbVsohY1SoeIlPAFGtbAGjgoyhlvRjVA02NUTaQyaaGjGwaeTSqFg4tdFUqNaQn2VvDnaZnFnRJJL+zKVB1O8xytU9m0nH9M3L7pWc2TO4cYNLr16KT1O5Eskmk0ntlFJxxpcm9GwUXG37+xMk1OMeCG/wCJez1HK+TV9DZs34sairv9EpycbT0c+aXJ6ZScpXvHVi8vIoJT+ST9spLynOSro4U6iapUrD9IX/ZY9vHnuKrY/KL25JP6s8JeQ+rB5XemxL8Ks/yHsYfGePG4ZEn9UUhBQlSWjracuw/GrOb769H6RD8S1WjlnifNu2enxRHNj+jTr0nXHjy80HeuvYn41yO7JhlT0Rjje9XRadRz3m65c2OEY/s4J6l6o9TN4+SceSWmjkfiTaXxd32W46mOf5Obv4r4+4UvR04lsfx8Cxpp7Zbik7RLrtXnnxOCrQ6RtALTwBWxkhkti6aQsYq7YzRWK0FIXT/VFKiuMHFGR0bRnlX4g0EWn7Bk1tTyRuOiW+i8npkvY8TsI4Nrs4vLx8YdJ1tv7PSS0S8pR4O16G569T743l42Ty4LDKPBwv3d6OaXmPK1HHFpIp5OP/ivslj/AMfezs5kef31dc3kSlycbl+9koZJxaVuv2Vndv8AsSmyskc/W66I5HavoMkr3Ho5/ktWMm+LSRsa2seVp7HjmXHbOWbbdsxdDfVK93X6FQUbRh4z6djM9DMVhLWUJxjG6WmOJPaDCXA+KjS6Itekb/saI/4ncqTXysbjfsaa6oVOglzCyRiG7Yyj8Ta2MS2OlWxE+LKJ2gGjUwaBGSYDaHoI0xWxU6Dhd9dCSRjbsIys17EUjOzOI6A2iyqRy+bNcNF8s+Kr7OHP002U4nqXydZPHDk+VujiyJqR6Gk2jlzxXZ1815/yTXJL+jIo3tmWk2VQbNJRutkY8r70VyTTjRFTVNJ7GheiSTk3Ssnf6K8ZJN2TpDz1Dr9foloSzAo8XH0/2aYzTGYKUSQ7Ju7GhKzjYqtMrGvYr7CWwu2Y4mpoa0EEX2PCTqgkr6FppWEPyq0jJL6Gj1tg+hT/AMJFsyQOSUnYspJjQlpW2FitgNidqsJtFVJnLFnTFfFMTqYrxdNFs2T0CaXZOc10KfcTySt7OXO7Rab2RybLcxz93XJKOzHj5Roq1s1ItqFjhl4/0cOWE4zdHryjv2Rz4043RTnvEe/j1wwhapu7F/HBS62dHClekLpj6l9XL5KlFa6OW2vr/bPRyRjKLUnX0efKoScW0U5rn+Xn1+hWZbADx30jbYrYyRjRmo9E5q+x70JNhheqm3TG5a2Kqb2M0kMmWVGJ0K+wW2NgavHoScbGj0bQv4b9R+X2UjdUbRqRq0hJ9Emizi2xZxoModRGjGyvESUGPKnhUzqxS1s5GNHJKOgdTR5uV0ZJIjOQksjYvI05broN2K1YXsLKJpSTTFui7SfYsoRa6DpLHPdvQZF/jf2FVJhLaGDHBlUqtsWN8TpzJVTRzt8VS2VlQsK199HLmX+R04pftHc2uNtHNJSvSGlT6mvtUBoI8t7oB9GiyAFK96JzVIb2bL+I0LfUDUKxk9FE05II6ZrMCVeLGuyCdFIS0JYfmqUAJ2a0Kdi7CaVdBQUZiUDiEuRilIYviGSNS0ZHa2PkX/ohzcdDxK+VXIviQbo1zsST0PIS1jkamSb+Q8ZDYTVG6QspaM5WY3aNg1NNWwbVaJZXWxFlXHY8id6Zkdpo5ck1FpaOiU1pr26OPzHSdWq+inKXd8Y816sFkaRy4uT3t/2dKT9lMTltfctAAHjvdYLI0AhUn2En8QAZOoyFACkToGQAFoGakAC0YpEcAEUhWAAZhIiADQlK2QmzAKRLpOTEk3RgFIl0jNuwUmloAHTDnL7FlkkloADGqLm3dkn0wAeJdJqUk3s3IuWG5bdgAYT+Odr2MtrtgA5Y/9k=",
-  //   // "https://besthqwallpapers.com/Uploads/11-11-2019/111139/white-wood-boards-4k-macro-white-wooden-texture-wooden-lines.jpg",
-
-  //   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQYAAACUCAMAAABGMnfyAAAAA1BMVEWt2eZvScryAAAAPElEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8G5gMAAGN/kBAAAAAAElFTkSuQmCC",
+  //   "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
+  //   "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
+  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
+  //   "https://c4.wallpaperflare.com/wallpaper/446/836/908/mclaren-p1-concept-cars-orange-car-desktop-wallpaper-preview.jpg",
 
   //   ...customImages,
   // ];
+
+  const images = [
+    "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
+    "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
+    "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
+    "https://img.lovepik.com/element/40156/3639.png_1200.png",
+    "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
+    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
+    "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
+    "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
+    "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
+    "https://images8.alphacoders.com/568/568490.jpg",
+    "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
+    "https://c4.wallpaperflare.com/wallpaper/446/836/908/mclaren-p1-concept-cars-orange-car-desktop-wallpaper-preview.jpg",
+    "https://image.shutterstock.com/image-photo/many-birds-flying-on-dramatic-260nw-2479534023.jpg",
+    ...customImages,
+  ];
+
 
   const isProjectRoute = location.pathname.startsWith("/projects/");
 
@@ -414,11 +422,10 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
                     key={index}
                     src={image}
                     alt={`Background ${index + 1}`}
-                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${
-                      selectedImage === image
-                        ? "border-4 border-green-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${selectedImage === image
+                      ? "border-2 border-black"
+                      : "border-gray-300"
+                      }`}
                     onClick={() => handleSelectBackground(image)}
                   />
                 ))}

@@ -8,15 +8,11 @@ import { Bell, SquareChevronDown } from "lucide-react";
 import { server } from "../constant";
 import { BsMenuUp } from "react-icons/bs";
 import { TbMenuOrder } from "react-icons/tb";
-// import { AiOutlineBell } from "react-icons/ai";
+
 const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
-  // console.log(user)
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
-  const profileDropdownRef = useRef(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
@@ -26,30 +22,15 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [organizationName, setOrganizationName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null); //added
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target)
-      ) {
-        setShowProfileDropdown(false);
-        setShowLogoutConfirmation(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, []);
 
   useEffect(() => {
@@ -62,7 +43,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         }
 
         const response = await axios.post(
-          `${server}/api/notifications/unread`, // Assume this endpoint fetches only unread notifications
+          `${server}/api/notifications/unread`,
           { userId },
           {
             headers: {
@@ -113,7 +94,6 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         }
       );
 
-      // Remove the notification from the state after marking it as read
       setNotifications((prevNotifications) =>
         prevNotifications.filter(
           (notification) => notification._id !== notificationId
@@ -123,18 +103,14 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
       console.error("Error updating notification read status:", error);
     }
   };
+
   const formatDate = (date) => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const day = days[date.getDay()];
     const dayOfMonth = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // months are 0-indexed
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${dayOfMonth}-${month}-${year}, ${day}`;
-  };
-
-  const handleLogoutClick = () => {
-    setShowLogoutConfirmation(true);
-    setShowProfileDropdown(false); // Close profile dropdown when logout confirmation opens
   };
 
   const confirmLogout = () => {
@@ -144,11 +120,6 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
   const cancelLogout = () => {
     setShowLogoutConfirmation(false);
-  };
-
-  const toggleProfileDropdown = () => {
-    setShowProfileDropdown(!showProfileDropdown);
-    setShowLogoutConfirmation(false); // Close logout confirmation when profile dropdown opens
   };
 
   const handleOpenSidebar = () => {
@@ -218,21 +189,8 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const getFirstLetter = () => {
     return user?.email ? user.email.charAt(0).toUpperCase() : "";
   };
-  const toggleNotificationModal = () => {
-    setShowNotificationModal(!showNotificationModal);
-  };
-  const handleSetReload = () => {
-    window.location.reload();
-  };
 
-  // const images = [
-  //   "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-  //   "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-  //   "https://c4.wallpaperflare.com/wallpaper/446/836/908/mclaren-p1-concept-cars-orange-car-desktop-wallpaper-preview.jpg",
-
-  //   ...customImages,
-  // ];
+  const isProjectRoute = location.pathname.startsWith("/projects/");
 
   const images = [
     "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
@@ -241,23 +199,46 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     "https://img.lovepik.com/element/40156/3639.png_1200.png",
     "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-    "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
-    "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
-    "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
-    "https://images8.alphacoders.com/568/568490.jpg",
-    "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
-    "https://c4.wallpaperflare.com/wallpaper/446/836/908/mclaren-p1-concept-cars-orange-car-desktop-wallpaper-preview.jpg",
-    "https://image.shutterstock.com/image-photo/many-birds-flying-on-dramatic-260nw-2479534023.jpg",
     ...customImages,
   ];
 
-
-  const isProjectRoute = location.pathname.startsWith("/projects/");
+  const profileContent = (
+    <div className="w-60  ">
+      <div className="px-4 py-2 text-sm text-gray-700">{user?.email}</div>
+      <div className="border-t"></div>
+      {showLogoutConfirmation ? (
+        <div className="">
+          <p className="text-sm justify-center items-center mb-2">
+            Are you sure you want to logout?
+          </p>
+          <div className="flex justify-between space-x-2">
+            <Button
+              onClick={confirmLogout}
+              className="bg-red-500 text-white hover:bg-red-600 transition-colors text-sm"
+            >
+              Yes
+            </Button>
+            <Button
+              onClick={cancelLogout}
+              className="bg-gray-500 text-white hover:bg-gray-600 transition-colors text-sm"
+            >
+              No
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          onClick={() => setShowLogoutConfirmation(true)}
+          className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
+        >
+          Logout
+        </Button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10  border-1 shadow-sm">
+    <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
       <div className="flex items-center">
         <div className="ml-3">
           <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
@@ -275,28 +256,17 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
       {isProjectRoute && (
         <div className="relative inline-block group">
           <button
-            className="text-black text-xl   hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4"
+            className="text-black text-xl hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4"
             onClick={handleOpenSidebar}
           >
-            <SquareChevronDown />
+            <SquareChevronDown size={20} />
           </button>
-          <span className="invisible absolute right-full  bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+          <span className="invisible absolute right-full bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
             Change background
           </span>
         </div>
       )}
-      {/* <div className="relative  hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4">
-        <AiOutlineBell
-          size={25}
-          className="cursor-pointer  text-gray-700"
-          onClick={toggleNotificationModal}
-        />
-        {notificationCount > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 mr-2 mb-6 h-4 flex items-center justify-center">
-            {notificationCount}
-          </span>
-        )}
-      </div> */}
+
       <Popover
         placement="bottomRight"
         title="Notifications"
@@ -347,60 +317,25 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         <div className="relative hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4">
           <Bell size={20} className="cursor-pointer text-gray-700" />
           {notificationCount > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-semibold rounded-full w-4 mr-0 mb-6 h-4 flex items-center justify-center">
+            <span className="absolute top-0 left-4 bg-red-500 text-white text-xs font-semibold rounded-full w-4 mr-0 mb-6 h-4 flex items-center justify-center">
               {notificationCount}
             </span>
           )}
         </div>
       </Popover>
 
-      <div
-        className="w-8 h-8 bg-[#8AAAE5] text-white flex items-center justify-center rounded-full font-semibold text-xl cursor-pointer"
-        onClick={toggleProfileDropdown}
+      <Popover
+        placement="bottomRight"
+        content={profileContent}
+        trigger="click"
       >
-        {getFirstLetter()}
-      </div>
-
-      {showProfileDropdown && (
-        <div ref={profileDropdownRef} className="ml-2 absolute top-20 right-4">
-          <div className="w-60 bg-white border border-gray-300 rounded-2xl shadow-xl">
-            <div className="px-4 py-2 text-sm text-gray-700">{user?.email}</div>
-            {/* <div className="px-4 py-2 text-sm text-gray-700">{user?.name}</div> */}
-            <div className="border-t border-gray-300"></div>
-            {showLogoutConfirmation ? (
-              <div className="px-4 py-2">
-                <p className="text-sm justify-center items-center mb-2">
-                  Are you sure want to logout?
-                </p>
-                <div className="flex justify-between space-x-2">
-                  <button
-                    onClick={confirmLogout}
-                    className="bg-red-500 text-white px-4 py-1 rounded-3xl hover:bg-red-600 transition-colors text-sm"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={cancelLogout}
-                    className="bg-gray-500 text-white px-4 py-1 rounded-3xl hover:bg-gray-600 transition-colors text-sm"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowLogoutConfirmation(true)}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-2xl"
-              >
-                Logout
-              </button>
-            )}
-          </div>
+        <div className="w-8 h-8 bg-[#8AAAE5] text-white flex items-center justify-center rounded-full font-semibold text-xl cursor-pointer">
+          {getFirstLetter()}
         </div>
-      )}
+      </Popover>
 
       {showSidebar && (
-        <div className="fixed inset-0  z-50 flex justify-end">
+        <div className="fixed inset-0 z-50 flex justify-end">
           <div
             className="bg-transparent w-80 p-4 rounded-tl-3xl shadow-lg relative overflow-y-auto"
             style={{ maxHeight: "100vh", backdropFilter: "blur(10px)" }}
@@ -432,7 +367,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
               </div>
               <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover mb-4 justify-center mb-4">
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  <AiOutlinePlus size={24} />
+                  <AiOutlinePlus size={30} />
                 </label>
                 <input
                   id="file-upload"
@@ -441,15 +376,6 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
                   onChange={handleFileChange}
                 />
               </div>
-
-              {/* {selectedImage && (
-                <button
-                  onClick={handleSetReload}
-                  className="bg-green-500 text-white py-2 px-4 rounded-xl mt-4"
-                >
-                  Set as Background Image
-                </button>
-              )} */}
             </div>
           </div>
         </div>
@@ -459,45 +385,3 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 };
 
 export default Navbar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

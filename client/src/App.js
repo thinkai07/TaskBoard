@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Projects from './components/Projects';
 import Tasks from './components/KanbanBoard';
-import TasksPage from './components/Taskspage'; // Import the new TasksPage component
 import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import RegistrationPage from './components/RegistrationPage';
@@ -13,13 +12,14 @@ import AdminPanel from './components/AdminPanel';
 import Organization from './components/Organization';
 import ResetPassword from './components/ResetPassword';
 import KanbanBoard from './components/KanbanBoard';
-// import Teams from './components/Teams';
+
 import SuccessPage from './components/SuccessPage';
 import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
+
 
 
 
@@ -79,15 +79,15 @@ const App = () => {
                   <Route path="projects" element={<Projects />} />
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
                   <Route path="/" element={<Overview />} />
-                  <Route path='/tasks' element={<TasksPage user={user} />} />
-                  <Route path='/members' element={<AdminPanel />} />
-                  {/* <Route path="/projects/:projectId/teams" element={<Teams />} /> */}
+                  {/* <Route path='/tasks' element={<TasksPage user={user} />} />  */}
+                  <Route path='/members' element={<AdminPanel />} /> 
+                  {/* <Route path="/projects/:projectId/teams" element={<Teams/>} /> */}
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/Auditlog" element={<AuditLog />} />
-                  <Route path="/Teamsorg" element={<Teamsorg/>}/>
-                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
-                  <Route path="/Rules" element={<RulesButton />} />
+                  <Route path="/Auditlog" element={<AuditLog/>} /> 
+                  <Route path="/Teamsorg" element={<Teamsorg/>} /> 
+                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
+                  <Route path="/Rules" element={<RulesButton/>} /> 
                 </Routes>
               </Layout>
             ) : (

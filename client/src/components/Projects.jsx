@@ -4,6 +4,9 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
+import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dayjs from "dayjs";
 import {
   Card,
@@ -69,7 +72,8 @@ const Projects = () => {
     teams: [],
   });
   const dropdownRef = useRef(null);
-
+  const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -105,7 +109,7 @@ const Projects = () => {
     }
   };
 
-
+  
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -151,7 +155,7 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-          name.toLowerCase().replace(/\s+/g, "") &&
+            name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -457,6 +461,19 @@ const Projects = () => {
       throw error;
     }
   };
+  if (!cards.length) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-light-white rounded-3xl p-8">
@@ -474,84 +491,86 @@ const Projects = () => {
       </div>
 
       <div className="flex flex-wrap justify-start">
-        {cards.map((card, index) => (
-          <Card
-            key={card._id}
-            className="m-4 w-64 cursor-pointer relative " // Adjust width
-            hoverable
-            onClick={() => handleCardClick(card._id)}
-            style={{ backgroundImage: card.bgUrl ? `url(${card.bgUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', objectFit: "co" }} // Set background image
-          >
-            <div className="flex justify-between items-center">
-              <Tooltip title={card.name}>
-                <h3 className="font-bold text-black truncate">{card.name}</h3>
-              </Tooltip>
-              {userRole !== "USER" && (
-                <Tooltip title="More actions">
-                  <EllipsisOutlined
-                    className=""
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowTooltipIndex(
-                        showTooltipIndex === index ? null : index
-                      );
-                    }}
-                  />
-                </Tooltip>
-              )}
-            </div>
-            <Tooltip title={card.description}>
-              <p className="truncate text-gray-500">{card.description}</p>
-            </Tooltip>
-            <div className="mt-2 flex justify-between items-center">
-              <p className="bg-green-100 text-black px-1 py-0.5 rounded-md text-sm inline-block">
-                Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
-              </p>
-              <Tooltip title={card.projectManager}>
-                <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
-                  {card.projectManager.charAt(0).toUpperCase()}
-                </div>
-              </Tooltip>
-            </div>
-            {card.projectManagerStatus === "unverify" && (
-              <span className="text-yellow-500">(Unverified)</span>
-            )}
-            {showTooltipIndex === index && (
-              <div
-                ref={dropdownRef}
-                className="absolute left-full top-0 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
-                onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
-              >
-                <Button
-                  type="text"
-                  block
-                  icon={<BsFillPencilFill />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRenameCard(index);
-                    setShowTooltipIndex(null); // Close menu after action
-                  }}
-                >
-                  Rename
-                </Button>
-                <Button
-                  type="text"
-                  block
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(index);
-                    setShowTooltipIndex(null); // Close menu after action
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            )}
-          </Card>
-        ))}
+  {cards.map((card, index) => (
+    <Card
+      key={card._id}
+      className="m-4 w-64 cursor-pointer relative" // Adjust width
+      hoverable
+      onClick={() => handleCardClick(card._id)}
+      style={{ backgroundImage: card.bgUrl ? `url(${card.bgUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
+    >
+      <div className="flex justify-between items-center">
+        <Tooltip >
+          <h3 className="font-bold text-black truncate">{card.name}</h3>
+        </Tooltip>
+        {userRole !== "USER" && (
+      
+        <button
+          className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTooltipIndex(showTooltipIndex === index ? null : index);
+          }}
+        >
+         <EllipsisVertical />
+        </button>
+   
+    )}
+
+
       </div>
+      <Tooltip >
+        <p className="truncate  text-gray-500">{card.description}</p>
+      </Tooltip>
+      <div className="mt-2 flex justify-between items-center">
+        <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
+          Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
+        </p>
+        <Tooltip title={card.projectManager}>
+          <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
+            {card.projectManager.charAt(0).toUpperCase()}
+          </div>
+        </Tooltip>
+      </div>
+      {card.projectManagerStatus === "unverify" && (
+        <span className="text-yellow-500">(Unverified)</span>
+      )}
+      {showTooltipIndex === index && (
+        <div
+          ref={dropdownRef}
+          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+          onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
+        >
+          <Button
+            type="text"
+            block
+            icon={<BsFillPencilFill />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRenameCard(index);
+              setShowTooltipIndex(null); // Close menu after action
+            }}
+          >
+            Rename
+          </Button>
+          <Button
+            type="text"
+            block
+            icon={<DeleteOutlined />}
+            danger
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(index);
+              setShowTooltipIndex(null); // Close menu after action
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      )}
+    </Card>
+  ))}
+</div>
 
 
       <Modal
@@ -579,8 +598,9 @@ const Projects = () => {
           onChange={(e) =>
             setNewProject((prev) => ({ ...prev, description: e.target.value }))
           }
-          className={`mt-4 ${newCardErrors.description ? "border-red-500" : ""
-            }`}
+          className={`mt-4 ${
+            newCardErrors.description ? "border-red-500" : ""
+          }`}
         />
         {newCardErrors.description && (
           <p className="text-red-500">Project Description is required</p>
@@ -598,7 +618,7 @@ const Projects = () => {
           onSearch={handleProjectManagerChange}
           filterOption={false}
           showSearch
-
+          
         >
           {emailSuggestions.map((user) => (
             <Option key={user._id} value={user.email}>
@@ -709,25 +729,3 @@ const Projects = () => {
 };
 
 export default Projects;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

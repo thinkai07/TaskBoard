@@ -59,6 +59,7 @@ const Projects = () => {
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [availableTeams, setAvailableTeams] = useState([]);
+  const [images, setImages] = useState([]);
   const [teamInputError, setTeamInputError] = useState(false);
   const [teamInputErrorMessage, setTeamInputErrorMessage] = useState("");
   const [teamInputValue, setTeamInputValue] = useState("");
@@ -163,6 +164,27 @@ const Projects = () => {
       return false;
     }
   };
+
+  const fetchUnsplashImages = async () => {
+    try {
+      const response = await fetch(`${server}/api/unsplash-images`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching images from server:', error);
+      return [];
+    }
+  };
+  
+  useEffect(() => {
+    const loadImages = async () => {
+      const unsplashImages = await fetchUnsplashImages();
+      setImages(unsplashImages);
+    };
+  
+    loadImages();
+  }, []);
+  
 
   const handleAddCard = () => {
     setAddProjectModalVisible(true);
@@ -580,6 +602,16 @@ const Projects = () => {
         onCancel={() => setAddProjectModalVisible(false)}
         width={600}
       >
+      <div className="mt-4 grid grid-cols-3 gap-4">
+    {images.map((image) => (
+      <img
+        key={image.id}
+        src={image.urls.small}
+        alt={image.description || 'Unsplash Image'}
+        className="w-full h-32 object-cover rounded"
+      />
+    ))}
+  </div>
         <Input
           placeholder="Project Name"
           value={newProject.name}

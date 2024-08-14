@@ -9,7 +9,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
-import { Modal, Form, Input, Button, notification } from "antd";
+import { Popover,Modal, Form, Input, Button, notification } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
@@ -29,6 +29,7 @@ import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { BsFillPencilFill } from "react-icons/bs";
 import { Plus } from "lucide-react";
+
 
 const initialBoard = {
   columns: [],
@@ -1701,6 +1702,102 @@ function KanbanBoard() {
     }
   };
 
+
+  const content = (
+    <div className="p-1">
+      <h2 className="text-lg font-semibold mb-4">Column Options</h2>
+
+      {!showRenameInput && !showConfirmation && (
+        <>
+          
+          <Button
+            onClick={() => setShowConfirmation(true)}
+            type="primary"
+            className="w-full mb-2"
+          >
+            Remove Column
+          </Button>
+          <Button onClick={closeModal} className="w-full mb-2">
+            Cancel
+          </Button>
+        </>
+      )}
+
+      {showConfirmation && (
+        <>
+          <p className="text-lg font-bold mb-4">
+            Are you sure you want to remove this column?
+          </p>
+          <div className="flex justify-between">
+            <Button
+              onClick={handleRemoveColumn}
+              type="danger"
+              className="px-10"
+            >
+              Yes
+            </Button>
+            <Button
+              onClick={() => setShowConfirmation(false)}
+              className="px-10"
+            >
+              No
+            </Button>
+          </div>
+        </>
+      )}
+
+      {showRenameInput && (
+        <>
+          <h2 className="text-lg font-bold mb-4">Rename Column</h2>
+          <Input
+            type="text"
+            value={newColumnName}
+            onChange={(e) => {
+              setNewColumnName(e.target.value.trimStart());
+              setRenameColumnError(false);
+            }}
+            placeholder="Enter the new name for the column"
+            className={`mb-4 ${renameColumnError ? "border-red-500" : ""}`}
+          />
+          {renameColumnError && (
+            <p className="text-red-500 text-sm mb-2">
+              Please enter a column name
+            </p>
+          )}
+          <div className="flex justify-between">
+            <Button
+              onClick={() => {
+                if (newColumnName.trim()) {
+                  handleRenameColumn(newColumnName);
+                  closeModal();
+                } else {
+                  setRenameColumnError(true);
+                }
+              }}
+              type="primary"
+            >
+              Confirm
+            </Button>
+            <Button
+              onClick={() => {
+                setShowRenameInput(false);
+                setRenameColumnError(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </>
+      )}
+
+      <Button
+        onClick={closeModal}
+        className="absolute top-0 right-0 m-4"
+        icon={<BsX />}
+      />
+    </div>
+  );
+
   return (
     <div
       className="p-4 overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
@@ -2343,134 +2440,119 @@ function KanbanBoard() {
           </Form.Item>
         </Form>
       </Modal>
-      {modalVisible && modalType === "options" && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Column Options</h2>
+      {/* {modalVisible && modalType === "options" && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded-3xl shadow-lg w-4/12">
+      <h2 className="text-lg font-bold mb-4">Column Options</h2>
+      
+      {!showRenameInput && !showConfirmation && (
+        <>
+          <button
+            onClick={() => setShowRenameInput(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
+          >
+            Rename Column
+          </button>
+          <button
+            onClick={() => setShowConfirmation(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
+          >
+            Remove Column
+          </button>
+          <button
+            onClick={closeModal}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl w-full mb-2"
+          >
+            Cancel
+          </button>
+        </>
+      )}
+
+      {showConfirmation && (
+        <>
+          <p className="text-lg font-bold mb-4">
+            Are you sure you want to remove this column?
+          </p>
+          <div className="flex justify-between">
             <button
-              onClick={() => setShowRenameInput(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
+              onClick={handleRemoveColumn}
+              className="bg-red-500 text-white px-10 py-2 rounded-full"
             >
-              Rename Column
+              Yes
             </button>
             <button
-              onClick={() => setShowConfirmation(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
+              onClick={() => setShowConfirmation(false)}
+              className="bg-gray-300 text-gray-700 px-10 py-2 rounded-full"
             >
-              Remove Column
+              No
+            </button>
+          </div>
+        </>
+      )}
+
+      {showRenameInput && (
+        <>
+          <h2 className="text-lg font-bold mb-4">Rename Column</h2>
+          <input
+            type="text"
+            value={newColumnName}
+            onChange={(e) => {
+              setNewColumnName(e.target.value.trimStart());
+              setRenameColumnError(false);
+            }}
+            className={`border rounded-2xl p-2 w-full mb-4 ${
+              renameColumnError ? "border-red-500" : "border-gray-300"
+            }`}
+            placeholder="Enter the new name for the column"
+          />
+          {renameColumnError && (
+            <p className="text-red-500 text-sm mb-2">
+              Please enter a column name
+            </p>
+          )}
+          <div className="flex justify-between">
+            <button
+              onClick={() => {
+                if (newColumnName.trim()) {
+                  handleRenameColumn(newColumnName);
+                  closeModal();
+                } else {
+                  setRenameColumnError(true);
+                }
+              }}
+              className="bg-green-500 text-white px-4 py-2 rounded-3xl"
+            >
+              Confirm
             </button>
             <button
-              onClick={closeModal}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl w-full mb-2"
+              onClick={() => {
+                setShowRenameInput(false);
+                setRenameColumnError(false);
+              }}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
             >
               Cancel
             </button>
-            <button onClick={closeModal} className="absolute top-0 right-0 m-4">
-              <BsX className="text-gray-500" />
-            </button>
           </div>
-
-          {showConfirmation && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-bold mb-4">
-                  Are you sure you want to remove this column?
-                </p>
-                <div className="flex justify-between">
-                  <button
-                    onClick={handleRemoveColumn}
-                    className="bg-red-500 text-white px-10 py-2 rounded-full"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={() => setShowConfirmation(false)}
-                    className="bg-gray-300 text-gray-700 px-10 py-2 rounded-full"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {showRenameInput && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
-                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
-                <input
-                  type="text"
-                  value={newColumnName}
-                  onChange={(e) => {
-                    setNewColumnName(e.target.value.trimStart());
-                    setRenameColumnError(false);
-                  }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${
-                    renameColumnError ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Enter the new name for the column"
-                />
-                {renameColumnError && (
-                  <p className="text-red-500 text-sm mb-2">
-                    Please enter a column name
-                  </p>
-                )}
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => {
-                      if (newColumnName.trim()) {
-                        setShowRenameInput(false);
-                        setShowRenameConfirmation(true);
-                      } else {
-                        setRenameColumnError(true);
-                      }
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowRenameInput(false);
-                      setRenameColumnError(false);
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showRenameConfirmation && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white p-6 rounded-3xl shadow-lg">
-                <p className="text-lg font-bold mb-4">
-                  Are you sure want to rename this column ?
-                </p>
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => {
-                      handleRenameColumn(newColumnName);
-                      setShowRenameConfirmation(false);
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={() => setShowRenameConfirmation(false)}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        </>
       )}
 
+      <button onClick={closeModal} className="absolute top-0 right-0 m-4">
+        <BsX className="text-gray-500" />
+      </button>
+    </div>
+  </div>
+)} */}
+
+<Popover
+      content={content}
+      visible={modalVisible && modalType === "options"}
+      onVisibleChange={closeModal}
+      trigger="click"
+      placement="bottomleft" 
+    >
+      {/* <Button type="primary">Open Column Options</Button> */}
+    </Popover>
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div

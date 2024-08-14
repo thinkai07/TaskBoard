@@ -13,6 +13,7 @@ const { type } = require("os");
 const http = require("http");
 const socketIo = require("socket.io");
 const axios = require("axios");
+const UNSPLASH_API_KEY = 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY';
 // Initialize the Express app
 const port = process.env.PORT;
 const app = express();
@@ -423,6 +424,28 @@ const sendRegistrationEmail = (email, name, token) => {
       }
     });
   };
+
+  //
+
+
+  //image unsplash 
+
+  app.get('/unsplash-images', async (req, res) => {
+    try {
+      const response = await axios.get('https://api.unsplash.com/photos', {
+        headers: {
+          Authorization: `Client-ID ${UNSPLASH_API_KEY}`,
+        },
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching images from Unsplash:', error);
+      res.status(500).json({ error: 'Failed to fetch images from Unsplash' });
+    }
+  });
+  
+  //
+
 
   //organisation register
   app.post("/register", async (req, res) => {

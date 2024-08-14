@@ -193,9 +193,11 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const isProjectRoute = location.pathname.startsWith("/projects/");
 
   const images = [
-    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
+   "https://images.pexels.com/photos/27724014/pexels-photo-27724014/free-photo-of-a-red-dragonfly-is-sitting-on-a-red-fire-hydrant.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/2253573/pexels-photo-2253573.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    "https://images.pexels.com/photos/406014/pexels-photo-406014.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg",
+    
     ...customImages,
   ];
 

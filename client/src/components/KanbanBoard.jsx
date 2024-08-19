@@ -1773,6 +1773,10 @@ function KanbanBoard() {
           </h1>
           <h1 className="text-xl font-semibold">
             Project Manager : <span className="font-normal">{projectManager}</span>
+            Project : <span className="font-normal">{projectName}</span>
+          </h1>
+          <h1 className="text-xl font-semibold">
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
         <div className="flex space-x-2 ">

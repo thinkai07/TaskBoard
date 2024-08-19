@@ -199,7 +199,16 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
     "https://img.lovepik.com/element/40156/3639.png_1200.png",
     "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
+    "https://img.lovepik.com/element/40156/3639.png_1200.png",
+    "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
+    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
+    "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
+    "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
+    "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
+    "https://images8.alphacoders.com/568/568490.jpg",
+    "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
     ...customImages,
   ];
 

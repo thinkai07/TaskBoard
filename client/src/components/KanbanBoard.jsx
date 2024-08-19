@@ -1703,10 +1703,12 @@ function KanbanBoard() {
         )}
       </div>
       <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="text-xl font-semibold">Project : {projectName}</h1>
+      <div>
           <h1 className="text-xl font-semibold">
-            Project Manager : {projectManager}
+            Project : <span className="font-normal">{projectName}</span>
+          </h1>
+          <h1 className="text-xl font-semibold">
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
         <div className="flex space-x-2 ">

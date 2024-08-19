@@ -17,6 +17,7 @@ import {
   Select,
   notification,
   Tooltip,
+  Image
 } from "antd";
 import {
   PlusOutlined,
@@ -73,6 +74,33 @@ const Projects = () => {
   });
   const dropdownRef = useRef(null);
   const [loading, setLoading] = useState(true);
+
+  const [unsplashImages, setUnsplashImages] = useState([]);
+const [selectedImage, setSelectedImage] = useState(null);
+
+// Add this function to fetch images from Unsplash
+const fetchUnsplashImages = async () => {
+  try {
+    const response = await axios.get('https://api.unsplash.com/photos/random', {
+      params: {
+        count: 10,
+        client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
+      }
+    });
+    setUnsplashImages(response.data);
+  } catch (error) {
+    console.error('Error fetching Unsplash images:', error);
+  }
+};
+
+// Call this function when the modal opens
+useEffect(() => {
+  if (addProjectModalVisible) {
+    fetchUnsplashImages();
+  }
+}, [addProjectModalVisible]);
+
+
   
 
   useEffect(() => {
@@ -172,6 +200,7 @@ const Projects = () => {
       projectManager: "",
       startDate: null,
       teams: [],
+      bgUrl:""
     });
     setNewCardErrors({
       name: false,
@@ -267,6 +296,13 @@ const Projects = () => {
           startDate: newProject.startDate,
           teams: newProject.teams,
           createdBy: createdBy,
+          bgUrl: selectedImage ? {
+            raw: selectedImage.urls.raw,
+            thumb: selectedImage.urls.thumb,
+            full: selectedImage.urls.full,
+            regular: selectedImage.urls.regular
+          } : null,
+        
         },
         {
           headers: {
@@ -274,7 +310,8 @@ const Projects = () => {
           },
         }
       );
-
+      console.log(projectResponse.data)
+     
       const newProjectData = projectResponse.data.project;
       setCards((prevCards) => [
         ...prevCards,
@@ -497,6 +534,7 @@ const Projects = () => {
       className="m-4 w-64 cursor-pointer relative" // Adjust width
       hoverable
       onClick={() => handleCardClick(card._id)}
+      
       style={{ backgroundImage: card.bgUrl ? `url(${card.bgUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
     >
       <div className="flex justify-between items-center">
@@ -666,6 +704,26 @@ const Projects = () => {
         {teamInputError && (
           <p className="text-red-500">At least one team is required</p>
         )}
+        <div className="mt-4">
+    <h4>Select Background Image</h4>
+    <div className="flex flex-wrap">
+      {unsplashImages.map((image) => (
+        <div 
+          key={image.id} 
+          className={`m-2 cursor-pointer ${selectedImage === image ? 'border-4 border-blue-500' : ''}`}
+          onClick={() => setSelectedImage(image)}
+        >
+          <Image
+            src={image.urls.thumb}
+            alt={image.alt_description}
+            width={100}
+            height={100}
+            preview={false}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
       </Modal>
 
       <Modal
@@ -724,6 +782,8 @@ const Projects = () => {
       >
         <p>Are you sure you want to delete this project?</p>
       </Modal>
+
+
     </div>
   );
 };

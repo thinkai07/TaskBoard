@@ -429,7 +429,7 @@ function RulesButton({tasks,}) {
             {currentStep === 2 && (
               <>
                 <h3 className="text-xl font-semibold mb-2">Select Action</h3>
-                <div className="grid grid-cols-4 gap-4">
+                <div className=" gap-10">
                   <ActionOption
                     icon={Clock}
                     label="Move to List"

@@ -1909,94 +1909,103 @@ function KanbanBoard() {
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
-        <Board
-          onCardDragEnd={handleCardMove}
-          onColumnDragEnd={handleColumnMove}
-          renderColumn={(card, columnId) => (
-            <div
-              style={{
-                backgroundColor: "white",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                padding: "0.5rem",
-                marginBottom: "0.5rem",
-                width: "300px",
-                height: "130px",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                borderRadius: "20px",
-              }}
-            >
-              <div style={{ marginBottom: "0.5rem" }}>
-                <h3
-                  className="font-bold"
-                  style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
-                >
-                  {card.title}
-                </h3>
-                <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
-                  {card.description}
-                </p>
-              </div>
-              <div
-                style={{ display: "flex", justifyContent: "space-between" }}
-              ></div>
-            </div>
-          )}
-          renderColumnHeader={({ title, id }) => (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                width: "300px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "0.5rem",
-                  padding: "0.5rem",
-                  backgroundColor: "#F7FAFC",
-                  borderRadius: "20px",
-                }}
-              >
-                <span className="truncate max-w-[200px]" title={title}>
-                  {title}
-                </span>
-                {canShowActions && (
-                  <button
-                    onClick={() => openModal(id, "options")}
-                    className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
-                  >
-                    <BsThreeDotsVertical />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => openModal(id, "addCard")}
-                style={{
-                  width: "100%",
-                  backgroundColor: "white",
-                  borderBottomLeftRadius: "0.375rem",
-                  borderBottomRightRadius: "0.375rem",
-                  padding: "0.5rem",
-                  color: "#4A5568",
-                  textAlign: "center",
-                  paddingLeft: "50%"
-                }}
-              >
-                <FaPlus />
-              </button>
-            </div>
-          )}
-          renderCard={renderCard}
-        >
-          {boardData}
-        </Board>
+  <Board
+    onCardDragEnd={handleCardMove}
+    onColumnDragEnd={handleColumnMove}
+    renderColumn={(card, columnId) => (
+      <div
+        style={{
+          backgroundColor: "white",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          padding: "0.5rem",
+          marginBottom: "0.5rem",
+          width: "300px",
+          height: "130px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          borderRadius: "20px",
+          marginTop: "1rem", 
+        }}
+      >
+        <div style={{ marginBottom: "0.5rem" }}>
+          <h3
+            className="font-bold"
+            style={{ fontSize: "1rem", marginBottom: "0.5rem" }}
+          >
+            {card.title}
+          </h3>
+          <p style={{ fontSize: "0.875rem", color: "#4A5568" }}>
+            {card.description}
+          </p>
+        </div>
+        <div
+          style={{ display: "flex", justifyContent: "space-between" }}
+        ></div>
       </div>
+    )}
+    renderColumnHeader={({ title, id }) => (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "300px",
+          backgroundColor: "#F7FAFC",
+          // position: "fixed",
+          marginBottom: "1rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "0.5rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#E2E8F0", // Slightly darker for contrast
+            borderTopLeftRadius: "8px",
+            borderTopRightRadius: "8px",
+            color: "#2D3748", // Darker text color
+            fontWeight: "bold",
+          }}
+        >
+          <span className="truncate max-w-[200px]" title={title}>
+            {title}
+          </span>
+          {canShowActions && (
+            <button
+              onClick={() => openModal(id, "options")}
+              className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
+            >
+              <BsThreeDotsVertical />
+            </button>
+          )}
+        </div>
+        <button
+          onClick={() => openModal(id, "addCard")}
+          style={{
+            width: "100%",
+            backgroundColor: "white",
+            borderBottomLeftRadius: "8px",
+            borderBottomRightRadius: "8px",
+            padding: "0.5rem",
+            color: "#4A5568",
+            textAlign: "center",
+            paddingLeft: "50%",
+            border: "1px solid #E2E8F0", // Border for the button
+          }}
+        >
+          <FaPlus />
+        </button>
+      </div>
+    )}
+    renderCard={renderCard}
+  >
+    {boardData}
+  </Board>
+</div>
+
 
       {modalVisible && modalType === "addCard" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

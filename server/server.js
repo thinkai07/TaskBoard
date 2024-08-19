@@ -1187,44 +1187,33 @@ app.post("/api/projects", async (req, res) => {
   }
 });
 
-app.put(
-  "/api/projects/:projectId/bgImage",
-  authenticateToken,
+
+
+app.put("/api/projects/:projectId/bgImage", authenticateToken,
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
       console.log(projectId);
-      const { bgUrls } = req.body;
+      const { bgUrl } = req.body;
 
-      let cloudinaryUrls = {};
-      if (bgUrls) {
-        try {
-          for (const [key, url] of Object.entries(bgUrls)) {
-            const result = await cloudinary.uploader.upload(url, {
-              folder: "document",
-            });
-            cloudinaryUrls[key] = result.secure_url;
-          }
-        } catch (cloudinaryError) {
-          console.error("Error uploading to Cloudinary:", cloudinaryError);
-          return res
-            .status(500)
-            .json({ message: "Error uploading images to Cloudinary" });
+        // const result = await cloudinary.uploader.upload(bgUrl, {
+        //   folder: "document",
+        // });
+
+        // const cloudinaryUrl = result.secure_url;
+
+        const updatedProject = await Project.findByIdAndUpdate(
+          projectId,
+          { bgUrl: bgUrl },
+          { new: true }
+        );
+
+        if (!updatedProject) {
+          return res.status(404).json({ message: "Project not found" });
         }
-      }
-
-      const updatedProject = await Project.findByIdAndUpdate(
-        projectId,
-        { bgUrl: cloudinaryUrls },
-        { new: true }
-      );
-
-      if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found" });
-      }
 
       res.status(200).json({
-        message: "Background image URLs updated successfully",
+        message: "Background image URL updated successfully",
         project: updatedProject,
       });
     } catch (error) {
@@ -1234,41 +1223,10 @@ app.put(
   }
 );
 
-// app.put("/api/projects/:projectId/bgImage", authenticateToken,
-//   async (req, res) => {
-//     try {
-//       const projectId = req.params.projectId;
-//       console.log(projectId);
-//       const { bgUrl } = req.body;
+// custom image
 
-//         const result = await cloudinary.uploader.upload(bgUrl, {
-//           folder: "document",
-//         });
 
-//         const cloudinaryUrl = result.secure_url;
 
-//         const updatedProject = await Project.findByIdAndUpdate(
-//           projectId,
-//           { bgUrl: cloudinaryUrl },
-//           { new: true }
-//         );
-
-//         if (!updatedProject) {
-//           return res.status(404).json({ message: "Project not found" });
-//         }
-
-//       res.status(200).json({
-//         message: "Background image URL updated successfully",
-//         project: updatedProject,
-//       });
-//     } catch (error) {
-//       console.error("Error updating background image:", error);
-//       res.status(500).json({ message: "Error updating background image" });
-//     }
-//   }
-// );
-
-//custom image
 app.put(
   "/api/projects/:projectId/customImages",
   authenticateToken,

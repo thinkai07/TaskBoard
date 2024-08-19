@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
@@ -194,11 +193,8 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const isProjectRoute = location.pathname.startsWith("/projects/");
 
   const images = [
-    "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
-    "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
+    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
     "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-    "https://img.lovepik.com/element/40156/3639.png_1200.png",
-    "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
     "https://img.lovepik.com/element/40156/3639.png_1200.png",
     "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",

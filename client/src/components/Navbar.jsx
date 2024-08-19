@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
@@ -259,7 +260,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
             className="text-black text-xl hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4"
             onClick={handleOpenSidebar}
           >
-            <SquareChevronDown size={20} />
+            {/* <SquareChevronDown size={20} /> */}
           </button>
           <span className="invisible absolute right-full bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
             Change background

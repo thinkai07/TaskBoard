@@ -535,7 +535,7 @@ useEffect(() => {
       hoverable
       onClick={() => handleCardClick(card._id)}
       
-      style={{ backgroundImage: card.bgUrl ? `url(${card.bgUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
+      style={{ backgroundImage: card.bgUrl.thumb ? `url(${card.bgUrl.thumb})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
     >
       <div className="flex justify-between items-center">
         <Tooltip >

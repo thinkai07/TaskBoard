@@ -999,6 +999,7 @@ app.post("/api/projects", async (req, res) => {
     startDate,
     createdBy,
     teams,
+    bgUrl
   } = req.body;
 
   try {
@@ -1044,7 +1045,7 @@ app.post("/api/projects", async (req, res) => {
       tasks: [],
       startDate,
       createdBy,
-      bgUrl: "",
+      bgUrl: bgUrl || null,
       repository: "", // Initialize repository field
       repoName: "", // Initialize repoName field
     });

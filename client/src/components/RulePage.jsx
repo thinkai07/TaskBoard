@@ -232,11 +232,6 @@ function RulesButton({ tasks }) {
   );
   return (
     <div className="relative">
-      {/* <Dropdown overlay={menu} trigger={['click']}>
-        <Button type="primary" shape="round">
-          Rules<ArrowRightOutlined />
-        </Button>
-      </Dropdown> */}
       <Dropdown overlay={menu} trigger={['click']}>
       <Button
       type="default"

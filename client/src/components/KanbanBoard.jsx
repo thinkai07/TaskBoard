@@ -16,7 +16,7 @@ import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
@@ -32,6 +32,9 @@ import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
 import { X } from 'lucide-react'
 import { BsFillPencilFill } from "react-icons/bs";
+import BackgroundChange from "./BackgroundChange";
+import { Bell, SquareChevronDown } from "lucide-react";
+import { Drawer } from 'antd';
 
 const initialBoard = {
   columns: [],
@@ -150,11 +153,40 @@ function KanbanBoard() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
 
+
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
 
   const [userRole, setUserRole] = useState("");
+
+
+  const location = useLocation();
+  //added
+  const [showBackgroundChange, setShowBackgroundChange] = useState(false);
+
+
+  //added for antd drawer
+  const [visible, setVisible] = useState(false);
+
+  const showDrawer = () => {
+    setVisible(true);
+  };
+
+  const onClose = () => {
+    setVisible(false);
+  };
+
+  //added
+  const isProjectRoute = location.pathname.startsWith("/projects/");
+  //added
+  const handleBackgroundChangeClick = () => {
+    setShowBackgroundChange(true);
+  };
+
+
+
+
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -1554,7 +1586,7 @@ function KanbanBoard() {
 
   return (
     <div
-      className="p-4 overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
       style={
         bgUrl
           ? {
@@ -1730,7 +1762,8 @@ function KanbanBoard() {
           </div>
         )}
       </div>
-      <div className="flex justify-between items-center mb-4">
+      {/* <div className="flex justify-between items-center mb-4"> */}
+      <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
           <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
@@ -1815,7 +1848,7 @@ function KanbanBoard() {
 
 
 
-          <Popover
+          {/* <Popover
             trigger="click"
             placement="bottomRight"
             content={
@@ -1834,7 +1867,47 @@ function KanbanBoard() {
             }
           >
             <Button type="text" icon={<SquareMenu />} />
-          </Popover>
+          </Popover> */}
+
+<>
+            <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
+
+            <Drawer
+              title="Settings"
+              placement="right"
+              onClose={onClose}
+              visible={visible}
+              width={300} // Adjust width as needed
+
+            >
+              {showBackgroundChange && (
+                <BackgroundChange onClose={() => setShowBackgroundChange(false)} />
+              )}
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Button
+                  type="default"
+                  icon={<SettingOutlined />}
+                  onClick={openGitModal}
+                  block
+                >
+                  Git Configuration
+                </Button>
+                <RulesButton tasks={tasks} />
+                {isProjectRoute && (
+                  <button
+                    type="default"
+                    icon={<SquareChevronDown />}
+                    className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200 "
+                    onClick={handleBackgroundChangeClick}
+                    block
+                  >
+                    <SquareChevronDown size={24} />
+                    Change Background
+                  </button>
+                )}
+              </Space>
+            </Drawer>
+          </>
 
 
 
@@ -1960,7 +2033,7 @@ function KanbanBoard() {
               </button>
             </div>
           )}
-          
+
           renderCard={renderCard}
         >
           {boardData}

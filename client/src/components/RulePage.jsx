@@ -53,22 +53,22 @@ function RulesButton({ tasks }) {
   const [cardStatuses, setCardStatuses] = useState([]);
   const [createdByCondition, setCreatedByCondition] = useState("");
 
-  useEffect(() => {
-    const fetchUserEmail = async () => {
-      try {
-        const response = await axios.get(`${server}/api/user`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        setUserEmail(response.data.user.email);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
+    useEffect(() => {
+        const fetchUserEmail = async () => {
+            try {
+                const response = await axios.get(`${server}/api/user`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                setUserEmail(response.data.user.email);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
 
-    fetchUserEmail();
-  }, []);
+        fetchUserEmail();
+    }, []);
 
   useEffect(() => {
     const fetchRules = async () => {
@@ -82,10 +82,10 @@ function RulesButton({ tasks }) {
       }
     };
 
-    if (projectId) {
-      fetchRules();
-    }
-  }, [projectId]);
+        if (projectId) {
+            fetchRules();
+        }
+    }, [projectId]);
 
   useEffect(() => {
     const fetchCardStatuses = async () => {
@@ -105,18 +105,18 @@ function RulesButton({ tasks }) {
     fetchCardStatuses();
   }, []);
 
-  const openRulesUI = () => {
-    setIsOpen(false);
-    setShowRulesUI(true);
-  };
+    const openRulesUI = () => {
+        setIsOpen(false);
+        setShowRulesUI(true);
+    };
 
-  const handleAddTrigger = () => {
-    setShowTriggers(true);
-  };
+    const handleAddTrigger = () => {
+        setShowTriggers(true);
+    };
 
-  const handleTriggerSelect = (trigger) => {
-    setSelectedTrigger(trigger);
-  };
+    const handleTriggerSelect = (trigger) => {
+        setSelectedTrigger(trigger);
+    };
 
   const handleAddButtonClick = () => {
     setTriggerAdded(true);
@@ -140,18 +140,18 @@ function RulesButton({ tasks }) {
     }
   };
 
-  const handleActionSelect = (action) => {
-    setSelectedAction(action);
-  };
+    const handleActionSelect = (action) => {
+        setSelectedAction(action);
+    };
 
-  const handleSaveRule = async () => {
-    try {
-      let triggerSentence = "";
-      if (selectedTrigger === "Card Move") {
-        triggerSentence = `When card status is marked as ${triggerCondition}`;
-      } else if (selectedTrigger === "Card Changes") {
-        triggerSentence = `When card is moved to ${triggerCondition}`;
-      }
+    const handleSaveRule = async () => {
+        try {
+            let triggerSentence = "";
+            if (selectedTrigger === "Card Move") {
+                triggerSentence = `When card status is marked as ${triggerCondition}`;
+            } else if (selectedTrigger === "Card Changes") {
+                triggerSentence = `When card is moved to ${triggerCondition}`;
+            }
 
       let actionSentence = "";
       if (selectedAction === "Move to List") {
@@ -209,19 +209,19 @@ function RulesButton({ tasks }) {
     setRuleToDelete(null);
   };
 
-  const confirmDelete = async () => {
-    if (ruleToDelete) {
-      try {
-        await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        setRules(rules.filter((rule) => rule._id !== ruleToDelete));
-        closeDeleteConfirmation();
-      } catch (error) {
-        console.error("Error deleting rule:", error);
-      }
-    }
-  };
+    const confirmDelete = async () => {
+        if (ruleToDelete) {
+            try {
+                await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setRules(rules.filter((rule) => rule._id !== ruleToDelete));
+                closeDeleteConfirmation();
+            } catch (error) {
+                console.error("Error deleting rule:", error);
+            }
+        }
+    };
 
   const menu = (
     <Menu>

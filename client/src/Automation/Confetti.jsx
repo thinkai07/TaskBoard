@@ -19,15 +19,15 @@ export const Confetti = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsConfettiRunning(false);
-    }, 5000); 
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div>
+    <div >
       {isConfettiRunning && (
-        <ReactConfetti
+        <ReactConfetti 
           width={windowDimensions.width}
           height={windowDimensions.height}
         />

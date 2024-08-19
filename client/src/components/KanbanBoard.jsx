@@ -8,7 +8,7 @@ import {
   BsClockHistory,
   BsPencilSquare,
   BsThreeDotsVertical,
-  BsTrash,
+  BsTrash,        
   BsX,
 } from "react-icons/bs";
 import { Tooltip } from 'antd';
@@ -16,13 +16,13 @@ import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
-import RulesButton from "../Automation/RulePage";
+import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
@@ -32,13 +32,9 @@ import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
 import { X } from 'lucide-react'
 import { BsFillPencilFill } from "react-icons/bs";
-import { Drawer } from 'antd';
-import Navbar from "../components/Navbar";
-import { Bell, SquareChevronDown } from "lucide-react";
 import BackgroundChange from "./BackgroundChange";
-
-
-
+import { Bell, SquareChevronDown } from "lucide-react";
+import { Drawer } from 'antd';
 
 const initialBoard = {
   columns: [],
@@ -95,11 +91,6 @@ const TimeProgressBar = ({ assignDate, dueDate }) => {
 };
 
 
-
-
-
-
-
 function KanbanBoard() {
   useTokenValidation();
   const [boardData, setBoardData] = useState(initialBoard);
@@ -119,7 +110,7 @@ function KanbanBoard() {
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showRenameInput, setShowRenameInput] = useState(false);
+  // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -156,12 +147,22 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
-
+  const [editingColumnId, setEditingColumnId] = useState(null);
+  const [tempColumnName, setTempColumnName] = useState("");
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
+
+
+  const handleTeamsClick = () => {
+    navigate(`/projects/${projectId}/teams`);
+  };
+
+  const [userRole, setUserRole] = useState("");
+
+
   const location = useLocation();
   //added
   const [showBackgroundChange, setShowBackgroundChange] = useState(false);
@@ -186,11 +187,8 @@ function KanbanBoard() {
   };
 
 
-  const handleTeamsClick = () => {
-    navigate(`/projects/${projectId}/teams`);
-  };
 
-  const [userRole, setUserRole] = useState("");
+
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -833,6 +831,57 @@ function KanbanBoard() {
   };
 
 
+  //coloumn rename automatic  
+  const handleColumnNameBlur = async (columnId) => {
+    if (tempColumnName.trim() === "") {
+      notification.error({
+        message: 'Column name cannot be empty',
+      });
+      setEditingColumnId(null);
+      return;
+    }
+
+    setEditingColumnId(null);
+    const column = boardData.columns.find(col => col.id === columnId);
+    if (column && tempColumnName !== column.title) {
+      try {
+        let updatedBy = await fetchUserEmail();
+        const response = await fetch(
+          `${server}/api/projects/${projectId}/tasks/${columnId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ name: tempColumnName, updatedBy: updatedBy }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to rename column");
+        }
+
+        setBoardData(prevState => ({
+          ...prevState,
+          columns: prevState.columns.map(col =>
+            col.id === columnId ? { ...col, title: tempColumnName } : col
+          )
+        }));
+
+        // notification.success({
+        //   message: 'Column Renamed Successfully',
+        // });
+      } catch (error) {
+        console.error("Error renaming column:", error);
+        notification.error({
+          message: 'Failed to rename column',
+        });
+      }
+    } else {
+      setTempColumnName("");
+    }
+  };
 
 
   const confirmRemoveCard = (columnId, cardId) => {
@@ -1059,57 +1108,62 @@ function KanbanBoard() {
     closeModal();
   };
 
-  const handleRemoveColumn = async () => {
-    if (selectedColumnId) {
-      let deletedBy;
-      try {
-        deletedBy = await fetchUserEmail();
-      } catch (error) {
-        console.error("Error fetching logged-in user's email:", error);
-        return;
-      }
 
-      try {
-        const response = await fetch(
-          `${server}/api/projects/${projectId}/tasks/${selectedColumnId}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ deletedBy }), // Include deletedBy
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to remove column");
-        }
-
-        setBoardData((prevState) => ({
-          ...prevState,
-          columns: prevState.columns.filter(
-            (column) => column.id !== selectedColumnId
-          ),
-        }));
-
-        // Show success message
-        setShowDeleteSuccess(true);
-
-        // Hide success message after 3 seconds
-        setTimeout(() => {
-          setShowDeleteSuccess(false);
-        }, 3000);
-        notification.success({
-          message: 'Column Deleted Successfully',
-
-        });
-      } catch (error) {
-        console.error("Error removing column:", error);
-      }
+  const handleRemoveColumn = async (columnId) => {
+    let deletedBy;
+    try {
+      deletedBy = await fetchUserEmail();
+    } catch (error) {
+      console.error("Error fetching logged-in user's email:", error);
+      return;
     }
-    closeModal();
-    setShowConfirmation(false);
+
+    try {
+      const response = await fetch(
+        `${server}/api/projects/${projectId}/tasks/${columnId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ deletedBy }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to remove column");
+      }
+
+      setBoardData((prevState) => ({
+        ...prevState,
+        columns: prevState.columns.filter(
+          (column) => column.id !== columnId
+        ),
+      }));
+
+      setShowDeleteSuccess(true);
+      setTimeout(() => {
+        setShowDeleteSuccess(false);
+      }, 3000);
+      notification.success({
+        message: 'Column Deleted Successfully',
+      });
+    } catch (error) {
+      console.error("Error removing column:", error);
+      notification.error({
+        message: 'Failed to delete column',
+        description: error.message,
+      });
+    }
+  };
+  const showRemoveColumnConfirmation = (columnId) => {
+    Modal.confirm({
+      title: 'Are you sure you want to remove this column?',
+      onOk() {
+        handleRemoveColumn(columnId);
+      },
+    });
   };
 
   const openModal = (columnId, type) => {
@@ -1288,10 +1342,6 @@ function KanbanBoard() {
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
     >
-      {/* <TimeProgressBar
-        assignDate={card.assignDate}
-        dueDate={card.dueDate}
-      /> */}
       <div className="p-4">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div className="react-kanban-card__title truncate" title={card.title}>
@@ -1310,16 +1360,6 @@ function KanbanBoard() {
             )}
           </div>
         </div>
-        {/* <div
-          className="react-kanban-card__description truncate"
-          title={card.description || ""}
-          style={{ flex: 1, marginRight: "10px" }}
-        >
-          {card.description && card.description.length > 35
-            ? card.description.slice(0, 35) + "..."
-            : card.description || ""}
-        </div> */}
-
         <div className="react-kanban-card__dueDate">
           {card.dueDate && (
             <div className="text-sm text-gray-500">
@@ -1336,16 +1376,6 @@ function KanbanBoard() {
           )}
         </div>
         <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
-          {/* <div className="react-kanban-card__status" style={{ marginRight: "19px" }}>
-            <select
-              value={card.status}
-              onChange={(e) => handleChangeStatus(card.id, e.target.value)}
-            >
-              <option value="pending">Pending</option>
-              <option value="inprogress">Inprogress</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div> */}
           <Dropdown overlay={statusMenu(card.id)} trigger={['click']} >
             <Button style={{ width: '100px', marginTop: '3%' }}>
               {card.status.charAt(0).toUpperCase() + card.status.slice(1)} <DownOutlined />
@@ -1558,7 +1588,7 @@ function KanbanBoard() {
 
   return (
     <div
-      className=" overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
       style={
         bgUrl
           ? {
@@ -1735,6 +1765,7 @@ function KanbanBoard() {
           </div>
         )}
       </div>
+      {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
           <h1 className="text-xl font-semibold">
@@ -1822,17 +1853,12 @@ function KanbanBoard() {
 
 
 
+          {/* <Popover
+            trigger="click"
+            placement="bottomRight"
+            content={
+              <Space direction="vertical">
 
-          {/* <>
-            <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
-            <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-            >
-              <Space direction="vertical" style={{ width: '100%' }}>
                 <Button
                   type="default"
                   icon={<SettingOutlined />}
@@ -1842,13 +1868,13 @@ function KanbanBoard() {
                   Git Configuration
                 </Button>
                 <RulesButton tasks={tasks} />
-
               </Space>
-            </Drawer>
-          </> */}
+            }
+          >
+            <Button type="text" icon={<SquareMenu />} />
+          </Popover> */}
 
-
-          <>
+<>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
@@ -1929,13 +1955,11 @@ function KanbanBoard() {
             </div>
           )}
           renderColumnHeader={({ title, id }) => (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                width: "300px",
-              }}
-            >
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "300px",
+            }}>
               <div
                 style={{
                   display: "flex",
@@ -1946,17 +1970,55 @@ function KanbanBoard() {
                   backgroundColor: "#F7FAFC",
                   borderRadius: "20px",
                 }}
+                onDoubleClick={() => {
+                  setEditingColumnId(id);
+                  setTempColumnName(title);
+                }}
               >
-                <span className="truncate max-w-[200px]" title={title}>
-                  {title}
-                </span>
-                {canShowActions && (
-                  <button
-                    onClick={() => openModal(id, "options")}
-                    className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
+                {editingColumnId === id ? (
+                  <input
+                    type="text"
+                    value={tempColumnName}
+                    onChange={(e) => setTempColumnName(e.target.value)}
+                    onBlur={() => handleColumnNameBlur(id)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleColumnNameBlur(id);
+                      }
+                    }}
+                    autoFocus
+                    className="w-full p-1 border rounded"
+                  />
+                ) : (
+                  <span
+                    className="truncate max-w-[200px]"
+                    title={title}
                   >
-                    <BsThreeDotsVertical />
-                  </button>
+                    {title}
+                  </span>
+                )}
+                {canShowActions && (
+                  <Popover
+                    content={
+                      <div>
+                        <Button
+                          type="text"
+                          block
+                          onClick={() => showRemoveColumnConfirmation(id)}
+                        >
+                          Remove Column
+                        </Button>
+                      </div>
+                    }
+                    trigger="click"
+                    placement="bottomRight"
+                  >
+                    <Button
+                      type="text"
+                      icon={<MoreOutlined />}
+                      className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
+                    />
+                  </Popover>
                 )}
               </div>
               <button
@@ -1976,6 +2038,7 @@ function KanbanBoard() {
               </button>
             </div>
           )}
+
           renderCard={renderCard}
         >
           {boardData}
@@ -2114,13 +2177,6 @@ function KanbanBoard() {
           </div>
         </div>
       )}
-      {showDeleteSuccess && (
-        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
-            <p className="font-semibold">Column deleted successfully</p>
-          </div>
-        </div>
-      )}
       {showSuccessMessage && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
@@ -2174,12 +2230,6 @@ function KanbanBoard() {
           <div className="bg-white p-6 rounded-3xl shadow-lg">
             <h2 className="text-lg font-bold mb-4">Column Options</h2>
             <button
-              onClick={() => setShowRenameInput(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
-            >
-              Rename Column
-            </button>
-            <button
               onClick={() => setShowConfirmation(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
             >
@@ -2195,7 +2245,6 @@ function KanbanBoard() {
               <BsX className="text-gray-500" />
             </button>
           </div>
-
           {showConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
@@ -2219,54 +2268,6 @@ function KanbanBoard() {
               </div>
             </div>
           )}
-          {showRenameInput && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-              <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
-                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
-                <input
-                  type="text"
-                  value={newColumnName}
-                  onChange={(e) => {
-                    setNewColumnName(e.target.value.trimStart());
-                    setRenameColumnError(false);
-                  }}
-                  className={`border rounded-2xl p-2 w-full mb-4 ${renameColumnError ? "border-red-500" : "border-gray-300"
-                    }`}
-                  placeholder="Enter the new name for the column"
-                />
-                {renameColumnError && (
-                  <p className="text-red-500 text-sm mb-2">
-                    Please enter a column name
-                  </p>
-                )}
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => {
-                      if (newColumnName.trim()) {
-                        setShowRenameInput(false);
-                        setShowRenameConfirmation(true);
-                      } else {
-                        setRenameColumnError(true);
-                      }
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowRenameInput(false);
-                      setRenameColumnError(false);
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {showRenameConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
@@ -2295,7 +2296,6 @@ function KanbanBoard() {
           )}
         </div>
       )}
-
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div

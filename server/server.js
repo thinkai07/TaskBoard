@@ -726,7 +726,11 @@ const deleteUser = async (userId) => {
 // // Schedule the job to run every minute
 // cron.schedule("* * * * *", async () => {
 //   console.log("Running scheduled job to delete unverified users...");
+// // Schedule the job to run every minute
+// cron.schedule("* * * * *", async () => {
+//   console.log("Running scheduled job to delete unverified users...");
 
+//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 //   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
 //   try {
@@ -734,7 +738,19 @@ const deleteUser = async (userId) => {
 //       status: "UNVERIFY",
 //       createdAt: { $lt: fiveMinutesAgo },
 //     });
+//   try {
+//     const usersToDelete = await User.find({
+//       status: "UNVERIFY",
+//       createdAt: { $lt: fiveMinutesAgo },
+//     });
 
+//     for (const user of usersToDelete) {
+//       await deleteUser(user._id);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching users for deletion:", error);
+//   }
+// });
 //     for (const user of usersToDelete) {
 //       await deleteUser(user._id);
 //     }
@@ -1664,6 +1680,7 @@ app.get("/api/projects/:projectId/tasks",
 //move tasks
 
 
+
 app.put("/api/projects/:projectId/tasks/:taskId/move",
   authenticateToken,
   async (req, res) => {
@@ -2171,6 +2188,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
 //card move
 
 
+
 app.put("/api/tasks/:taskId/cards/:cardId", authenticateToken,
   async (req, res) => {
     const { taskId, cardId } = req.params;
@@ -2421,6 +2439,7 @@ app.delete("/api/tasks/:taskId/cards/:cardId", authenticateToken, async (req, re
   }
 }
 );
+
 
 
 
@@ -3681,6 +3700,7 @@ const executeBackgroundJob = async () => {
 
 
 
+// setInterval(executeBackgroundJob, 5000);
 // setInterval(executeBackgroundJob, 5000);
 
 // Schedule the job to run every minute

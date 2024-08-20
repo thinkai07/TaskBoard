@@ -353,6 +353,11 @@ const taskLogSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Card",
   },
+  projectId:{
+    type: Schema.Types.ObjectId,
+    ref: "Project",
+
+  },
   hours: {
     type: Number,
     min: 0, // Ensures hours cannot be negative
@@ -868,8 +873,7 @@ app.get("/api/role", authenticateToken, async (req, res) => {
 
 // Add user
 
-app.post(
-  "/api/addUser",
+app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
@@ -1253,8 +1257,7 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
 
 
 
-app.put(
-  "/api/projects/:projectId/customImages",
+app.put("/api/projects/:projectId/customImages",
   authenticateToken,
   async (req, res) => {
     try {
@@ -1300,8 +1303,7 @@ app.get("/api/user-status", async (req, res) => {
   }
 });
 
-app.get(
-  "/api/projects/:organizationId",
+app.get("/api/projects/:organizationId",
   authenticateToken,
   async (req, res) => {
     const { organizationId } = req.params;
@@ -1555,8 +1557,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
 //tasks
 //add task
 
-app.post(
-  "/api/projects/:projectId/tasks",
+app.post("/api/projects/:projectId/tasks",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -1647,8 +1648,7 @@ app.post(
 );
 
 //get task
-app.get(
-  "/api/projects/:projectId/tasks",
+app.get("/api/projects/:projectId/tasks",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -1672,8 +1672,7 @@ app.get(
     }
   }
 );
-app.put(
-  "/api/projects/:projectId/tasks/:taskId/move",
+app.put("/api/projects/:projectId/tasks/:taskId/move",
   authenticateToken,
   async (req, res) => {
     const { projectId, taskId } = req.params;
@@ -2566,11 +2565,65 @@ const calculateUtilizedTime = (pausedAt, resumedAt) => {
   return totalTime;
 };
 
+app.post('/api/log-hours', async (req, res) => {
+  try {
+    const { taskId, cardId, hours, loggedBy, projectId } = req.body;
+
+    // Find the user who is logging the hours
+    const loggedByUser = await User.findOne({ email: loggedBy });
+    if (!loggedByUser) {
+      return res.status(404).json({ message: "User not found for loggedBy" });
+    }
+
+    // Find the card by ID
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Check if the card status is 'pending' and update it to 'in progress'
+    if (card.status === 'pending') {
+      card.status = 'inprogress';
+
+      // Log status update in comments
+      const statusComment = new Comment({
+        comment: `Card status updated to inprogress by ${loggedByUser.name}`,
+        commentBy: loggedByUser.name,
+        card: card._id,
+      });
+      await statusComment.save();
+      card.comments.push(statusComment._id);
+    }
+
+    // Save the updated card with the new status if it was changed
+    await card.save();
+
+    // Create a new Tasklog entry
+    const newLog = new Tasklogs({
+      taskId,
+      cardId,
+      projectId,
+      hours,
+      loggedBy: loggedByUser._id,
+    });
+
+    await newLog.save();
+
+    res.status(201).json({ message: 'Hours logged successfully', log: newLog, cardStatus: card.status });
+  } catch (error) {
+    console.error('Error logging hours:', error);
+    res.status(500).json({ message: 'Error logging hours' });
+  }
+});
+
+
+
 app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
   const { status, updatedBy, updatedDate } = req.body;
 
   try {
+    // Find the card by ID
     const card = await Card.findById(cardId);
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
@@ -2579,6 +2632,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
     const oldStatus = card.status;
     card.status = status;
 
+    // Update updatedBy and updatedDate fields
     if (!card.updatedBy) {
       card.updatedBy = [];
     }
@@ -2588,37 +2642,30 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
     }
     card.updatedDate.push(updatedDate);
 
-    if (status === "paused") {
-      card.pausedAt.push(new Date());
-    } else if (oldStatus === "paused" && status === "inprogress") {
-      card.resumedAt.push(new Date());
-    }
-
-    if (status === "completed") {
-      const utilizedTime = calculateUtilizedTime(card.pausedAt, card.resumedAt);
-      card.utilizedTime.push(utilizedTime);
-    }
-
+    // Save the updated card
     await card.save();
 
+    // Find the user who updated the card
     const updatedByUser = await User.findOne({ email: updatedBy });
     if (!updatedByUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Create a new audit log entry
     const newAuditLog = new AuditLog({
       entityType: "Card",
       entityId: cardId,
       actionType: "update",
       actionDate: updatedDate,
       performedBy: updatedByUser.name,
-      projectId: card.project,
-      taskId: card.task,
+      projectId: card.project, // Include projectId in the audit log
+      taskId: card.task, // Include taskId in the audit log
       changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
     });
 
     await newAuditLog.save();
 
+    // Log status update in comments
     const statusComment = new Comment({
       comment: `Card status updated to ${status} by ${updatedByUser.name}`,
       commentBy: updatedByUser.name,
@@ -2628,6 +2675,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
     card.comments.push(statusComment._id);
     await card.save();
 
+    // Emit event for real-time update
     io.emit("cardStatusUpdated", { cardId, newStatus: status });
 
     res.status(200).json({ message: "Card status updated successfully", card });
@@ -2637,103 +2685,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/log-hours', async (req, res) => {
-  try {
-    const { taskId, cardId, hours,loggedBy  } = req.body;
-    // const userId = req.user.email; // Assuming you have user authentication middleware
-
-    const loggedByUser = await User.findOne({ email: loggedBy });
-    if (!loggedByUser) {
-      return res.status(404).json({ message: "User not found for createdBy" });
-    }
-
-    const newLog = new Tasklogs({
-      taskId,
-      cardId,
-      hours,
-      loggedBy:loggedByUser._id,
-      
-      // loggedBy: userId,
-    });
-
-    await newLog.save();
-
-    res.status(201).json({ message: 'Hours logged successfully', log: newLog });
-  } catch (error) {
-    console.error('Error logging hours:', error);
-    res.status(500).json({ message: 'Error logging hours' });
-  }
-});
-
-
-// app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
-//   const { cardId } = req.params;
-//   const { status, updatedBy, updatedDate } = req.body;
-
-//   try {
-//     // Find the card by ID
-//     const card = await Card.findById(cardId);
-//     if (!card) {
-//       return res.status(404).json({ message: "Card not found" });
-//     }
-
-//     const oldStatus = card.status;
-//     card.status = status;
-
-//     // Update updatedBy and updatedDate fields
-//     if (!card.updatedBy) {
-//       card.updatedBy = [];
-//     }
-//     card.updatedBy.push(updatedBy);
-//     if (!card.updatedDate) {
-//       card.updatedDate = [];
-//     }
-//     card.updatedDate.push(updatedDate);
-
-//     // Save the updated card
-//     await card.save();
-
-//     // Find the user who updated the card
-//     const updatedByUser = await User.findOne({ email: updatedBy });
-//     if (!updatedByUser) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // Create a new audit log entry
-//     const newAuditLog = new AuditLog({
-//       entityType: "Card",
-//       entityId: cardId,
-//       actionType: "update",
-//       actionDate: updatedDate,
-//       performedBy: updatedByUser.name,
-//       projectId: card.project, // Include projectId in the audit log
-//       taskId: card.task, // Include taskId in the audit log
-//       changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
-//     });
-
-//     await newAuditLog.save();
-
-//     // Log status update in comments
-//     const statusComment = new Comment({
-//       comment: `Card status updated to ${status} by ${updatedByUser.name}`,
-//       commentBy: updatedByUser.name,
-//       card: card._id,
-//     });
-//     await statusComment.save();
-//     card.comments.push(statusComment._id);
-//     await card.save();
-
-//     // Emit event for real-time update
-//     io.emit("cardStatusUpdated", { cardId, newStatus: status });
-
-//     res.status(200).json({ message: "Card status updated successfully", card });
-//   } catch (error) {
-//     console.error("Error updating card status:", error);
-//     res.status(500).json({ message: "Error updating card status" });
-//   }
-// });
-
-//teams related apis
+// //teams related apis
 
 
 app.post("/api/projects/:projectId/teams/addUser",
@@ -3331,8 +3283,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
   }
 );
 
-app.get(
-  "/api/projects/:projectId/users/search",
+app.get("/api/projects/:projectId/users/search",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -3386,8 +3337,7 @@ app.get(
 }
 );
 
-app.get(
-  "/api/projects/:projectId/teams",
+app.get("/api/projects/:projectId/teams",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -3635,6 +3585,7 @@ app.get("/api/calendar/:organizationId",
           createdDate: card.createdDate,
           status: card.status,
           type: "Assign Date",
+          estimatedHours:card.estimatedHours,
         },
       ])
       .filter((event) => event.date);

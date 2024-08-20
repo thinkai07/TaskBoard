@@ -14,6 +14,9 @@ import {
   InputNumber,
   Table,
   Tooltip,
+  Popover,
+  Input,
+  message
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
@@ -29,6 +32,12 @@ const Calendar = () => {
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const navigate = useNavigate();
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [logHoursVisible, setLogHoursVisible] = useState(false);
+  const [loggedHours, setLoggedHours] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -153,6 +162,77 @@ const Calendar = () => {
     navigate(`/projects/${projectId}/view`);
   };
 
+  const handleStartLogging = (cardId) => {
+    setActiveCardId(cardId);
+    setLogHoursVisible(true);
+  };
+
+  const handleLogHours = async () => {
+    if (activeCardId && loggedHours) {
+      try {
+        const activeEvent = selectedEvents.find(event => event.cardId === activeCardId);
+        const response = await axios.post(
+          `${server}/api/log-hours`,
+          {
+            taskId: activeEvent.taskId,
+            cardId: activeCardId,
+            hours: parseFloat(loggedHours),
+            loggedBy: userEmail
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        console.log(response.data.message);
+        // Reset states
+        setActiveCardId(null);
+        setLogHoursVisible(false);
+        setLoggedHours("");
+        // Optionally, refresh the events data here
+      } catch (error) {
+        console.error("Error logging hours:", error);
+      }
+    }
+  };
+
+  const logHoursContent = (
+    <div>
+      <Input
+        placeholder="Enter hours"
+        value={loggedHours}
+        onChange={(e) => setLoggedHours(e.target.value)}
+        style={{ marginBottom: '10px' }}
+      />
+      <Button type="primary" onClick={handleLogHours}>
+        Submit
+      </Button>
+    </div>
+  );
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`${server}/api/user`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.data.success) {
+          setUserEmail(response.data.user.email);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        message.error("Failed to fetch user data");
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+
   const columns = [
     { title: "Project Name", dataIndex: "projectName", key: "projectName" },
     { title: "Task Name", dataIndex: "taskName", key: "taskName" },
@@ -163,9 +243,29 @@ const Calendar = () => {
       title: "Action",
       key: "action",
       render: (_, record) => (
-        <Button type="primary" onClick={() => handleViewProjectTasks(record.projectId)}>
-          View
-        </Button>
+        <>
+          <Popover
+            content={logHoursContent}
+            title="Log Hours"
+            trigger="click"
+            visible={logHoursVisible && activeCardId === record.cardId}
+            onVisibleChange={(visible) => !visible && setLogHoursVisible(false)}
+          >
+            <Button
+              type="primary"
+              onClick={() => handleStartLogging(record.cardId)}
+            >
+              Start
+            </Button>
+          </Popover>
+          <Button
+            type="primary"
+            onClick={() => handleViewProjectTasks(record.projectId)}
+            style={{ marginLeft: '10px' }}
+          >
+            View
+          </Button>
+        </>
       ),
     },
   ];

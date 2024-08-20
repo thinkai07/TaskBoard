@@ -344,6 +344,30 @@ const auditLogSchema = new Schema(
   }
 );
 
+const taskLogSchema = new Schema({
+  taskId: {
+    type: Schema.Types.ObjectId,
+    ref: "Task",
+  },
+  cardId: {
+    type: Schema.Types.ObjectId,
+    ref: "Card",
+  },
+  hours: {
+    type: Number,
+    min: 0, // Ensures hours cannot be negative
+  },
+  logDate: {
+    type: Date,
+    default: Date.now,
+  },
+ 
+  loggedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+});
+
 // Creating models
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
@@ -356,6 +380,7 @@ const Comment = mongoose.model("Comment", commentSchema);
 const Activity = mongoose.model("Activity", activitySchema);
 const Notification = mongoose.model("Notification", NotificationSchema);
 const Rule = mongoose.model("Rule", ruleSchema);
+const Tasklogs = mongoose.model("Tasklogs", taskLogSchema);
 module.exports = {
   User,
   Task,
@@ -368,6 +393,7 @@ module.exports = {
   Activity,
   Notification,
   Rule,
+  Tasklogs
 };
 
 const tempOrganizationSchema = new Schema({
@@ -1274,48 +1300,6 @@ app.get("/api/user-status", async (req, res) => {
   }
 });
 
-// // Endpoint to display projects based on organization ID
-// app.get("/api/projects/:organizationId", authenticateToken,
-//   async (req, res) => {
-//     const { organizationId } = req.params;
-//     const userEmail = req.user.email;
-//     const userRole = req.user.role;
-
-//     try {
-//       const organization = await Organization.findById(organizationId);
-//       if (!organization) {
-//         return res.status(404).json({ message: "Organization not found" });
-//       }
-
-//       let projects;
-//       if (userRole === "ADMIN") {
-//         // Admins can see all projects
-//         projects = await Project.find({ organization: organizationId });
-//       } else {
-//         // Find the user
-//         const user = await User.findOne({ email: userEmail });
-//         if (!user) {
-//           return res.status(404).json({ message: "User not found" });
-//         }
-
-//         // Find projects where the user is either the project manager or part of a team
-//         projects = await Project.find({
-//           organization: organizationId,
-//           $or: [
-//             { projectManager: userEmail },
-//             { teams: { $in: await Team.find({ "users.user": user._id }) } },
-//           ],
-//         });
-//       }
-
-//       res.status(200).json({ projects });
-//     } catch (error) {
-//       console.error("Error retrieving projects:", error);
-//       res.status(500).json({ message: "Error retrieving projects" });
-//     }
-//   }
-// );
-
 app.get(
   "/api/projects/:organizationId",
   authenticateToken,
@@ -1688,83 +1672,6 @@ app.get(
     }
   }
 );
-//move tasks
-// app.put("/api/projects/:projectId/tasks/:taskId/move",
-//   authenticateToken,
-//   async (req, res) => {
-//     const { projectId, taskId } = req.params;
-//     const { newIndex, movedBy, movedDate } = req.body;
-
-//     try {
-//       const project = await Project.findById(projectId);
-//       if (!project) {
-//         return res.status(404).json({ message: "Project not found" });
-//       }
-
-//       const taskIndex = project.tasks.indexOf(taskId);
-//       if (taskIndex === -1) {
-//         return res.status(404).json({ message: "Task not found in project" });
-//       }
-
-//       // Remove task from current position and insert at new position
-//       project.tasks.splice(taskIndex, 1);
-//       project.tasks.splice(newIndex, 0, taskId);
-
-//       // Update the task with movedBy and movedDate
-//       const task = await Task.findById(taskId);
-//       if (task) {
-//         task.movedBy.push(movedBy);
-//         task.movedDate.push(movedDate);
-//         await task.save();
-//       }
-
-//       await project.save();
-
-//       // Create a new audit log entry
-//       const movedByUser = await User.findOne({ email: movedBy });
-//       if (!movedByUser) {
-//         return res.status(404).json({ message: "User not found for movedBy" });
-//       }
-
-//       const newAuditLog = new AuditLog({
-//         projectId: projectId,
-//         entityType: "Task",
-//         entityId: taskId,
-//         actionType: "move",
-//         actionDate: movedDate,
-//         performedBy: movedByUser.name, // Save the email of the user
-//         changes: [
-//           {
-//             field: "index",
-//             oldValue: taskIndex,
-//             newValue: newIndex,
-//           },
-//           {
-//             field: "movedBy",
-//             oldValue: null,
-//             newValue: movedBy,
-//           },
-//           {
-//             field: "movedDate",
-//             oldValue: null,
-//             newValue: movedDate,
-//           },
-//         ],
-//       });
-
-//       await newAuditLog.save();
-
-//       // Emit event for real-time update
-//       io.emit("taskMoved", { projectId, taskId, newIndex });
-
-//       res.status(200).json({ message: "Task moved successfully" });
-//     } catch (error) {
-//       console.error("Error moving task:", error);
-//       res.status(500).json({ message: "Error moving task" });
-//     }
-//   }
-// );
-
 app.put(
   "/api/projects/:projectId/tasks/:taskId/move",
   authenticateToken,
@@ -1856,8 +1763,7 @@ app.put(
 );
 
 //delelte column
-app.delete(
-  "/api/projects/:projectId/tasks/:taskId",
+app.delete("/api/projects/:projectId/tasks/:taskId",
   authenticateToken,
   async (req, res) => {
     const { projectId, taskId } = req.params;
@@ -1930,8 +1836,7 @@ app.delete(
   }
 );
 // Update (rename) task
-app.put(
-  "/api/projects/:projectId/tasks/:taskId",
+app.put("/api/projects/:projectId/tasks/:taskId",
   authenticateToken,
   async (req, res) => {
     const { projectId, taskId } = req.params;
@@ -2121,8 +2026,7 @@ app.post("/api/notifications", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch notifications" });
   }
 });
-app.patch(
-  "/api/notifications/:notificationId",
+app.patch("/api/notifications/:notificationId",
   authenticateToken,
   async (req, res) => {
     const { notificationId } = req.params;
@@ -2386,8 +2290,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
 //   }
 // });
 
-app.put(
-  "/api/tasks/:taskId/cards/:cardId",
+app.put("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
     const { taskId, cardId } = req.params;
@@ -2738,6 +2641,35 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/log-hours', async (req, res) => {
+  try {
+    const { taskId, cardId, hours,loggedBy  } = req.body;
+    // const userId = req.user.email; // Assuming you have user authentication middleware
+
+    const loggedByUser = await User.findOne({ email: loggedBy });
+    if (!loggedByUser) {
+      return res.status(404).json({ message: "User not found for createdBy" });
+    }
+
+    const newLog = new Tasklogs({
+      taskId,
+      cardId,
+      hours,
+      loggedBy:loggedByUser._id,
+      
+      // loggedBy: userId,
+    });
+
+    await newLog.save();
+
+    res.status(201).json({ message: 'Hours logged successfully', log: newLog });
+  } catch (error) {
+    console.error('Error logging hours:', error);
+    res.status(500).json({ message: 'Error logging hours' });
+  }
+});
+
+
 // app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 //   const { cardId } = req.params;
 //   const { status, updatedBy, updatedDate } = req.body;
@@ -2806,8 +2738,9 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 // });
 
 //teams related apis
-app.post(
-  "/api/projects/:projectId/teams/addUser",
+
+
+app.post("/api/projects/:projectId/teams/addUser",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -2874,8 +2807,7 @@ app.post(
   }
 );
 // Endpoint to get all users under all teams based on project ID
-app.get(
-  "/api/projects/:projectId/teams/users",
+app.get("/api/projects/:projectId/teams/users",
   authenticateToken,
   async (req, res) => {
     const { projectId } = req.params;
@@ -2913,8 +2845,7 @@ app.get(
   }
 );
 // Endpoint to get users under a specific team based on project ID and team name
-app.get(
-  "/api/projects/:projectId/teams/:teamName/users",
+app.get("/api/projects/:projectId/teams/:teamName/users",
   authenticateToken,
   async (req, res) => {
     const { projectId, teamName } = req.params;
@@ -2949,8 +2880,7 @@ app.get(
 );
 
 // Endpoint to delete a user from a team
-app.delete(
-  "/api/projects/:projectId/teams/:teamName/users",
+app.delete("/api/projects/:projectId/teams/:teamName/users",
   authenticateToken,
   async (req, res) => {
     const { projectId, teamName } = req.params;
@@ -2996,8 +2926,7 @@ app.delete(
 
 // Create a team inside an organization and a GitHub organization
 
-app.post(
-  "/api/organizations/:organizationId/teams",
+app.post("/api/organizations/:organizationId/teams",
   authenticateToken,
   async (req, res) => {
     const { organizationId } = req.params;
@@ -3065,8 +2994,7 @@ app.post(
     }
   }
 );
-app.get(
-  "/api/organizations/:organizationId/teams",
+app.get("/api/organizations/:organizationId/teams",
   authenticateToken,
   async (req, res) => {
     const { organizationId } = req.params;
@@ -3089,8 +3017,7 @@ app.get(
 }
 );
 // Delete team inside organization
-app.delete(
-  "/api/organizations/:organizationId/teams/:teamId",
+app.delete("/api/organizations/:organizationId/teams/:teamId",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
@@ -3145,8 +3072,7 @@ app.delete(
   }
 );
 // Edit team inside organization
-app.put(
-  "/api/organizations/:organizationId/teams/:teamId",
+app.put("/api/organizations/:organizationId/teams/:teamId",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
@@ -3198,8 +3124,7 @@ app.put(
 );
 
 //create users inside teams
-app.post(
-  "/api/organizations/:organizationId/teams/:teamId/users",
+app.post("/api/organizations/:organizationId/teams/:teamId/users",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
@@ -3287,8 +3212,7 @@ app.post(
 }
 );
 
-app.get(
-  "/api/organizations/:organizationId/teams/:teamId/users",
+app.get("/api/organizations/:organizationId/teams/:teamId/users",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
@@ -3333,8 +3257,7 @@ app.get(
 }
 );
 
-app.delete(
-  "/api/organizations/:organizationId/teams/:teamId/users/:userId",
+app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId, userId } = req.params;
@@ -3513,8 +3436,7 @@ app.get("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
-app.get(
-  "/api/overview/:organizationId",
+app.get("/api/overview/:organizationId",
   authenticateToken,
   async (req, res) => {
     const { organizationId } = req.params;
@@ -3661,8 +3583,7 @@ app.get(
 }
 );
 
-app.get(
-  "/api/calendar/:organizationId",
+app.get("/api/calendar/:organizationId",
   authenticateToken,
   async (req, res) => {
     const { organizationId } = req.params;

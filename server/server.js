@@ -2641,6 +2641,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
   }
 });
 
+//loghours
 app.post('/api/log-hours', async (req, res) => {
   try {
     const { taskId, cardId, hours,loggedBy  } = req.body;
@@ -3335,10 +3336,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
   }
 );
 
-app.get(
-  "/api/projects/:projectId/users/search",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/users/search",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
     const { email } = req.query;
 
@@ -3390,10 +3388,7 @@ app.get(
 }
 );
 
-app.get(
-  "/api/projects/:projectId/teams",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/teams",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
     try {
       const project = await Project.findById(projectId).populate({
@@ -3436,9 +3431,7 @@ app.get("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/api/overview/:organizationId",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/overview/:organizationId",authenticateToken,async (req, res) => {
     const { organizationId } = req.params;
     const userEmail = req.user.email;
     const userRole = req.user.role;
@@ -3583,9 +3576,7 @@ app.get("/api/overview/:organizationId",
 }
 );
 
-app.get("/api/calendar/:organizationId",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/calendar/:organizationId",authenticateToken,async (req, res) => {
     const { organizationId } = req.params;
     const userEmail = req.user.email;
     const userRole = req.user.role;

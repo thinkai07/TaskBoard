@@ -16,7 +16,7 @@ import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate,useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
@@ -533,6 +533,7 @@ function KanbanBoard() {
               assignDate: card.assignDate,
               dueDate: card.dueDate,
               comments: card.comments || [],
+
             })),
           };
         })
@@ -600,7 +601,7 @@ function KanbanBoard() {
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
     const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
-  
+
     if (
       !cardTitle ||
       !cardDescription ||
@@ -615,10 +616,10 @@ function KanbanBoard() {
       });
       return;
     }
-  
+
     try {
       const createdBy = await fetchUserEmail();
-  
+
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -629,11 +630,11 @@ function KanbanBoard() {
           },
         }
       );
-  
+
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
-  
+
       const { users } = await searchResponse.json();
       if (users.length === 0) {
         notification.warning({
@@ -641,7 +642,7 @@ function KanbanBoard() {
         });
         return;
       }
-  
+
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -661,19 +662,19 @@ function KanbanBoard() {
           }),
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-  
+
       await clearFieldsAndRefresh();
       e.target.title.value = "";
       e.target.description.value = "";
       e.target.estimatedHours.value = "";
       setEmail("");
-  
+
       setModalVisible(false);
-  
+
       await fetchTasks();
       notification.success({
         message: 'Task added Successfully',
@@ -683,7 +684,7 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
-  
+
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
     setEmail(emailInput);
@@ -1866,7 +1867,7 @@ function KanbanBoard() {
             <Button type="text" icon={<SquareMenu />} />
           </Popover> */}
 
-<>
+          <>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
@@ -2127,21 +2128,21 @@ function KanbanBoard() {
                 className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
               />
 
-<label
-          htmlFor="estimatedHours"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Estimated Hours
-        </label>
-        <input
-          type="number"
-          name="estimatedHours"
-          className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-          placeholder="Estimated Hours"
-          required
-          min="0"
-          step="0.1"
-        />
+              <label
+                htmlFor="estimatedHours"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Estimated Hours
+              </label>
+              <input
+                type="number"
+                name="estimatedHours"
+                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
+                placeholder="Estimated Hours"
+                required
+                min="0"
+                step="0.1"
+              />
 
               {/* Email suggestions list */}
               <div className="flex px-4 py-2 justify-between">

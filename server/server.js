@@ -2007,7 +2007,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 
 app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
-  const { name, description, assignedTo, assignDate, dueDate, createdBy ,estimatedHours} =
+  const { name, description, assignedTo, assignDate, dueDate, createdBy, estimatedHours } =
     req.body;
 
   try {
@@ -2020,7 +2020,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
-   
+
 
     const newCard = new Card({
       name,
@@ -3751,7 +3751,7 @@ app.get("/api/calendar/:organizationId",
             cardName: card.name,
             assignedTo: card.assignedTo,
             createdDate: card.createdDate,
-            estimatedTime: card.estimatedTime, // Include estimated time
+            estimatedHours: card.estimatedHours,
             status: card.status,
             type: "Assign Date",
           },

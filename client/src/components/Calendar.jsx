@@ -238,6 +238,10 @@ const Calendar = () => {
     { title: "Task Name", dataIndex: "taskName", key: "taskName" },
     { title: "Column Name", dataIndex: "cardName", key: "cardName" },
     { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
+    {
+      title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours", // Add the estimated hours column
+    },
+    
     { title: "Status", dataIndex: "status", key: "status" },
     {
       title: "Action",

@@ -70,6 +70,7 @@ const Calendar = () => {
           }
         );
         setEvents(response.data);
+        console.log("projectid",response.data)
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -174,6 +175,7 @@ const Calendar = () => {
         const response = await axios.post(
           `${server}/api/log-hours`,
           {
+            projectId:activeEvent.projectId,
             taskId: activeEvent.taskId,
             cardId: activeCardId,
             hours: parseFloat(loggedHours),
@@ -243,6 +245,9 @@ const Calendar = () => {
     },
     
     { title: "Status", dataIndex: "status", key: "status" },
+    {
+      title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours", // Add the estimated hours column
+    },
     {
       title: "Action",
       key: "action",

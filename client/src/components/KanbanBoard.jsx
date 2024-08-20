@@ -24,8 +24,6 @@ import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
-import { FcEmptyTrash } from "react-icons/fc";
-import { MdCancel } from "react-icons/md";
 import { Popover, Button, Space, Modal, Form, Input } from 'antd';
 import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
 import { SquareMenu } from 'lucide-react';
@@ -40,55 +38,6 @@ const initialBoard = {
   columns: [],
 };
 
-const TimeProgressBar = ({ assignDate, dueDate }) => {
-  const [progress, setProgress] = useState(0);
-  const [isOverdue, setIsOverdue] = useState(false);
-
-  useEffect(() => {
-    const updateProgress = () => {
-      const now = new Date();
-      const start = new Date(assignDate);
-      const end = new Date(dueDate);
-      const total = end - start;
-      const elapsed = now - start;
-
-      if (now > end) {
-        setProgress(100);
-        setIsOverdue(true);
-      } else {
-        const calculatedProgress = (elapsed / total) * 100;
-        setProgress(Math.min(calculatedProgress, 100));
-        setIsOverdue(false);
-      }
-    };
-
-    updateProgress();
-    const timer = setInterval(updateProgress, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, [assignDate, dueDate]);
-
-  return (
-    <div
-      className="relative h-3 w-full rounded-lg"
-      style={{
-        background: isOverdue
-          ? '#ff4d4d'
-          : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
-      }}
-    >
-
-      <div
-        className="absolute inset-0 flex items-center justify-center text-black font-bold"
-        style={{ fontSize: '0.75rem' }}
-      >
-        {Math.round(progress)}%
-      </div>
-    </div>
-  );
-};
-
-
 function KanbanBoard() {
   useTokenValidation();
   const [boardData, setBoardData] = useState(initialBoard);
@@ -99,7 +48,6 @@ function KanbanBoard() {
   const containerRef = useRef(null);
   const { projectId } = useParams();
   const [bgUrl, setBgUrl] = useState("");
-  const [renameColumnError, setRenameColumnError] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -108,7 +56,6 @@ function KanbanBoard() {
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -183,10 +130,6 @@ function KanbanBoard() {
   const handleBackgroundChangeClick = () => {
     setShowBackgroundChange(true);
   };
-
-
-
-
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -687,6 +630,8 @@ function KanbanBoard() {
     }
   };
 
+
+  
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
     setEmail(emailInput);
@@ -1590,7 +1535,7 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
-            backgroundImage: `url(${bgUrl.raw})`,
+            backgroundImage: `url(${bgUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
 

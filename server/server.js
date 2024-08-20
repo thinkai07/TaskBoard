@@ -256,8 +256,8 @@ const cardSchema = new Schema(
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
-    pausedAt: [{ type: Date }], // To store the timestamps when paused
-    resumedAt: [{ type: Date }], // To store the timestamps when resumed
+
+  
   },
   {
     timestamps: { deletedDate: "deletedDate" },
@@ -3529,15 +3529,14 @@ app.get("/api/overview/:organizationId",
 }
 );
 
-app.get("/api/calendar/:organizationId",
-  authenticateToken,
-  async (req, res) => {
-    const { organizationId } = req.params;
-    const userEmail = req.user.email;
-    const userRole = req.user.role;
+app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => {
+  const { organizationId } = req.params;
+  const userEmail = req.user.email;
+  const userRole = req.user.role;
 
   try {
     let assignedCards;
+
     if (userRole === "ADMIN") {
       assignedCards = await Card.find()
         .populate({
@@ -3547,7 +3546,6 @@ app.get("/api/calendar/:organizationId",
         })
         .populate("task", "name");
     } else {
-      // Find projects where the user is the project manager
       const managedProjects = await Project.find({
         organization: organizationId,
         projectManager: userEmail,
@@ -3569,6 +3567,20 @@ app.get("/api/calendar/:organizationId",
         .populate("task", "name");
     }
 
+    const cardIds = assignedCards.map((card) => card._id);
+
+    // Calculate the sum of logged hours for each card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: { $in: cardIds } } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } }
+    ]);
+
+    // Create a map of cardId to total logged hours
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
     const events = assignedCards
       .filter((card) => card.project && card.task)
       .flatMap((card) => [
@@ -3585,7 +3597,9 @@ app.get("/api/calendar/:organizationId",
           createdDate: card.createdDate,
           status: card.status,
           type: "Assign Date",
-          estimatedHours:card.estimatedHours,
+          estimatedHours: card.estimatedHours,
+          utilizedHours: hoursMap[card._id] || 0,  // Include total logged hours
+          endDate:card.dueDate,
         },
       ])
       .filter((event) => event.date);
@@ -3595,8 +3609,77 @@ app.get("/api/calendar/:organizationId",
     console.error("Error retrieving calendar data:", error);
     res.status(500).json({ message: "Error retrieving calendar data" });
   }
-}
-);
+});
+
+
+// app.get("/api/calendar/:organizationId",
+//   authenticateToken,
+//   async (req, res) => {
+//     const { organizationId } = req.params;
+//     const userEmail = req.user.email;
+//     const userRole = req.user.role;
+
+//   try {
+//     let assignedCards;
+//     if (userRole === "ADMIN") {
+//       assignedCards = await Card.find()
+//         .populate({
+//           path: "project",
+//           match: { organization: organizationId },
+//           select: "_id name projectManager",
+//         })
+//         .populate("task", "name");
+//     } else {
+//       // Find projects where the user is the project manager
+//       const managedProjects = await Project.find({
+//         organization: organizationId,
+//         projectManager: userEmail,
+//       }).select("_id");
+
+//       const managedProjectIds = managedProjects.map((project) => project._id);
+
+//       assignedCards = await Card.find({
+//         $or: [
+//           { assignedTo: userEmail },
+//           { project: { $in: managedProjectIds } },
+//         ],
+//       })
+//         .populate({
+//           path: "project",
+//           match: { organization: organizationId },
+//           select: "_id name projectManager",
+//         })
+//         .populate("task", "name");
+//     }
+
+//     const events = assignedCards
+//       .filter((card) => card.project && card.task)
+//       .flatMap((card) => [
+//         {
+//           id: `${card._id}-assign`,
+//           date: card.assignDate,
+//           projectId: card.project._id,
+//           projectName: card.project.name,
+//           taskId: card.task._id,
+//           taskName: card.task.name,
+//           cardId: card._id,
+//           cardName: card.name,
+//           assignedTo: card.assignedTo,
+//           createdDate: card.createdDate,
+//           status: card.status,
+//           type: "Assign Date",
+//           estimatedHours:card.estimatedHours,
+//         },
+//       ])
+//       .filter((event) => event.date);
+
+//     res.json(events);
+//   } catch (error) {
+//     console.error("Error retrieving calendar data:", error);
+//     res.status(500).json({ message: "Error retrieving calendar data" });
+//   }
+// }
+// );
 
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
   try {

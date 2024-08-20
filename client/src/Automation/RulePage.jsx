@@ -233,7 +233,7 @@ function RulesButton({ tasks }) {
 
   return (
     <div className="relative">
-      <Dropdown overlay={menu} trigger={['click']} className="hover:bg-gray-200">
+      <Dropdown overlay={menu} trigger={['click']} >
         <Button
           type="default"
 

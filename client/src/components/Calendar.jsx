@@ -14,6 +14,8 @@ import {
   InputNumber,
   Table,
   Tooltip,
+  Popover,
+  Input,message
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
@@ -29,6 +31,58 @@ const Calendar = () => {
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const navigate = useNavigate();
+  const [visiblePopover, setVisiblePopover] = useState(null); //added
+  const [inputValue, setInputValue] = useState("");   //added
+  
+  const [inputDescription, setInputDescription] = useState("");
+
+  //added
+  const handleStartClick = (key) => {
+    setVisiblePopover(key);
+  };
+
+
+  //added
+
+  const handleSubmit = async (record) => {
+    try {
+      const response = await axios.post(
+        `${server}/api/log-hours`,
+        {
+          taskId: record.taskId,
+          cardId: record.cardId,
+          hours: parseFloat(inputValue),
+          description: inputDescription,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      message.success("Hours logged successfully");
+      setVisiblePopover(null);
+      setInputValue("");
+      setInputDescription("");
+
+      // Refresh the events
+      const updatedEventsResponse = await axios.get(
+        `${server}/api/calendar/${organizationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setEvents(updatedEventsResponse.data);
+    } catch (error) {
+      console.error("Error logging hours:", error);
+      message.error("Failed to log hours");
+    }
+  };
+
+
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -153,12 +207,94 @@ const Calendar = () => {
     navigate(`/projects/${projectId}/view`);
   };
 
+  // const columns = [
+  //   { title: "Project Name", dataIndex: "projectName", key: "projectName" },
+  //   { title: "Task Name", dataIndex: "taskName", key: "taskName" },
+  //   { title: "Column Name", dataIndex: "cardName", key: "cardName" },
+  //   { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
+  //   { title: "Status", dataIndex: "status", key: "status" },
+  //   { title: "Estimated hours", dataIndex: "Estimated hours", key: "Estimated hours" },
+  //   { title: "Utilized hours", dataIndex: "Utilized hours", key: "Utilized hours" },
+  //   {
+  //     title: "Log hours",
+  //     key: "Log hours",
+  //     render: (cardId, record) => (
+  //       <Popover
+  //         content={
+  //           <div>
+  //             <Input
+  //               placeholder="Enter hours"
+  //               value={inputValue}
+  //               onChange={(e) => setInputValue(e.target.value)}
+  //               style={{ marginBottom: 10 }}
+  //             />
+             
+  //             <Button
+  //               type="primary"
+  //               onClick={() => handleSubmit(record.cardId)}
+  //             >
+  //               Submit
+  //             </Button>
+  //           </div>
+  //         }
+  //         title="Log Hours"
+  //         trigger="click"
+  //         visible={visiblePopover === record.cardId}
+  //         onVisibleChange={(visible) => setVisiblePopover(visible ? record.cardId : null)}
+  //       >
+  //         <Button type="primary" onClick={() => handleStartClick(record.cardId)}>Start</Button>
+  //       </Popover>
+  //     ),
+  //   },
+  //   {
+  //     title: "Action",
+  //     key: "action",
+  //     render: (_, record) => (
+  //       <Button type="primary" onClick={() => handleViewProjectTasks(record.projectId)}>
+  //         View
+  //       </Button>
+  //     ),
+  //   },
+  // ];
+
   const columns = [
     { title: "Project Name", dataIndex: "projectName", key: "projectName" },
     { title: "Task Name", dataIndex: "taskName", key: "taskName" },
     { title: "Column Name", dataIndex: "cardName", key: "cardName" },
     { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
     { title: "Status", dataIndex: "status", key: "status" },
+    { title: "Estimated hours", dataIndex: "estimatedTime", key: "estimatedTime" }, // Ensure field name matches
+    { title: "Utilized hours", dataIndex: "utilizedTime", key: "utilizedTime" }, // Update as needed
+    {
+      title: "Log hours",
+      key: "Log hours",
+      render: (cardId, record) => (
+        <Popover
+          content={
+            <div>
+              <Input
+                placeholder="Enter hours"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                style={{ marginBottom: 10 }}
+              />
+              <Button
+                type="primary"
+                onClick={() => handleSubmit(record.cardId)}
+              >
+                Submit
+              </Button>
+            </div>
+          }
+          title="Log Hours"
+          trigger="click"
+          visible={visiblePopover === record.cardId}
+          onVisibleChange={(visible) => setVisiblePopover(visible ? record.cardId : null)}
+        >
+          <Button type="primary" onClick={() => handleStartClick(record.cardId)}>Start</Button>
+        </Popover>
+      ),
+    },
     {
       title: "Action",
       key: "action",
@@ -169,6 +305,7 @@ const Calendar = () => {
       ),
     },
   ];
+  
 
   return (
     <div className="p-4 text-md">
@@ -235,21 +372,19 @@ const Calendar = () => {
             (event) => dayjs(event.date).format("YYYY-MM-DD") === formattedDate
           );
           const hasEvents = eventsForDay.length > 0;
-          
+
 
           return (
             <div
               key={formattedDate}
-              className={`border p-2 rounded-lg ${
-                isToday ? "bg-blue-100" : "bg-white"
-              } shadow-md hover:bg-blue-200 cursor-pointer`}
+              className={`border p-2 rounded-lg ${isToday ? "bg-blue-100" : "bg-white"
+                } shadow-md hover:bg-blue-200 cursor-pointer`}
               onClick={() => handleDateClick(formattedDate)}
               title={hasEvents ? "" : "No tasks on this date"}
             >
               <div
-                className={`font-medium ${
-                  isToday ? "text-blue-600" : "text-gray-800"
-                }`}
+                className={`font-medium ${isToday ? "text-blue-600" : "text-gray-800"
+                  }`}
               >
                 {dayjs(date).format("D")}
               </div>
@@ -267,8 +402,27 @@ const Calendar = () => {
       >
         <Table columns={columns} dataSource={selectedEvents} rowKey="id" />
       </Modal>
+      {/* <Table
+        columns={columns}
+    
+        rowKey="key" // Ensure each row has a unique key
+      /> */}
     </div>
   );
 };
 
 export default Calendar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

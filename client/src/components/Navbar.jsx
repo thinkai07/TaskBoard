@@ -199,8 +199,6 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
     "https://img.lovepik.com/element/40156/3639.png_1200.png",
     "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
-    "https://img.lovepik.com/element/40156/3639.png_1200.png",
-    "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
     "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
     "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",

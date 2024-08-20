@@ -254,7 +254,7 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    estimatedTime: { type: Number, default: 0 },
+    estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
     pausedAt: [{ type: Date }], // To store the timestamps when paused
     resumedAt: [{ type: Date }], // To store the timestamps when resumed
@@ -2007,7 +2007,8 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 
 app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
-  const { name, description, assignedTo, createdBy, estimatedTime } = req.body;
+  const { name, description, assignedTo, assignDate, dueDate, createdBy ,estimatedHours} =
+    req.body;
 
   try {
     const task = await Task.findById(taskId);
@@ -2019,18 +2020,15 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
+   
 
-    // const assignDateObj = new Date(assignDate);
-    // const dueDateObj = new Date(dueDate);
-
-    // Create a new card with estimatedTime
     const newCard = new Card({
       name,
       description,
       assignedTo,
-      // assignDate: assignDateObj,
-      // dueDate: dueDateObj,
-      estimatedTime, // Store estimated time
+      assignDate,
+      dueDate,
+      estimatedHours, // Add calculated estimated time
       task: taskId,
       project: task.project,
       createdDate: new Date(),
@@ -2056,7 +2054,8 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       taskId: task._id,
       changes: [
         { field: "name", oldValue: null, newValue: name },
-        // { field: "estimatedTime", oldValue: null, newValue: estimatedTime }, // Log estimatedTime change
+        { field: "estimatedTime", oldValue: null, newValue: estimatedHours }, // Log estimatedTime change
+        // Add other relevant changes if needed
       ],
     });
 

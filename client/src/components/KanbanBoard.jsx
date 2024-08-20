@@ -599,26 +599,26 @@ function KanbanBoard() {
     const cardDescription = e.target.description.value.trim() || "";
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
-
+    const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
+  
     if (
       !cardTitle ||
       !cardDescription ||
       !selectedColumnId ||
       !email ||
       !assignDate ||
-      !dueDate
+      !dueDate ||
+      !estimatedHours
     ) {
       notification.warning({
         message: "Please fill in all fields",
       });
       return;
     }
-
+  
     try {
-      // Fetch the logged-in user's email
       const createdBy = await fetchUserEmail();
-
-      // Search for the user within the project's teams
+  
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -629,11 +629,11 @@ function KanbanBoard() {
           },
         }
       );
-
+  
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
-
+  
       const { users } = await searchResponse.json();
       if (users.length === 0) {
         notification.warning({
@@ -641,8 +641,7 @@ function KanbanBoard() {
         });
         return;
       }
-
-      // Proceed to add the card
+  
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -657,36 +656,34 @@ function KanbanBoard() {
             assignedTo: email,
             assignDate: assignDate,
             dueDate: dueDate,
-            createdBy: createdBy, // Include createdBy
+            estimatedHours: estimatedHours,  // Include estimatedHours
+            createdBy: createdBy,
           }),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-
+  
       await clearFieldsAndRefresh();
-      // Clear input fields
       e.target.title.value = "";
       e.target.description.value = "";
+      e.target.estimatedHours.value = "";
       setEmail("");
-
-      // Close the modal
+  
       setModalVisible(false);
-
-      // Refresh board data
+  
       await fetchTasks();
       notification.success({
         message: 'Task added Successfully',
-
       });
     } catch (error) {
       console.error("Error adding card:", error);
       alert(error.message);
     }
   };
-
+  
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
     setEmail(emailInput);
@@ -2085,6 +2082,7 @@ function KanbanBoard() {
                 placeholder="Enter email address"
                 className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
               />
+
               {emailSuggestions.length > 0 && (
                 <ul
                   className="absolute bg-white border border-gray-300 rounded-3xl mt-2 w-80 z-10"
@@ -2108,7 +2106,7 @@ function KanbanBoard() {
                 htmlFor="assignDate"
                 className="block text-sm font-medium text-gray-700"
               >
-                Assigned Date
+                Start Date
               </label>
               <input
                 type="datetime-local"
@@ -2120,7 +2118,7 @@ function KanbanBoard() {
                 htmlFor="dueDate"
                 className="block text-sm font-medium text-gray-700"
               >
-                Due Date
+                End Date
               </label>
               <input
                 type="datetime-local"
@@ -2128,6 +2126,22 @@ function KanbanBoard() {
                 required
                 className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
               />
+
+<label
+          htmlFor="estimatedHours"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Estimated Hours
+        </label>
+        <input
+          type="number"
+          name="estimatedHours"
+          className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
+          placeholder="Estimated Hours"
+          required
+          min="0"
+          step="0.1"
+        />
 
               {/* Email suggestions list */}
               <div className="flex px-4 py-2 justify-between">

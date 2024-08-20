@@ -1590,7 +1590,7 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
-            backgroundImage: `url(${bgUrl})`,
+            backgroundImage: `url(${bgUrl.raw})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
 

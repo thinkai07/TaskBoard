@@ -361,7 +361,7 @@ const taskLogSchema = new Schema({
     type: Date,
     default: Date.now,
   },
- 
+
   loggedBy: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -1222,21 +1222,21 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
       console.log(projectId);
       const { bgUrl } = req.body;
 
-        // const result = await cloudinary.uploader.upload(bgUrl, {
-        //   folder: "document",
-        // });
+      // const result = await cloudinary.uploader.upload(bgUrl, {
+      //   folder: "document",
+      // });
 
-        // const cloudinaryUrl = result.secure_url;
+      // const cloudinaryUrl = result.secure_url;
 
-        const updatedProject = await Project.findByIdAndUpdate(
-          projectId,
-          { bgUrl: bgUrl },
-          { new: true }
-        );
+      const updatedProject = await Project.findByIdAndUpdate(
+        projectId,
+        { bgUrl: bgUrl },
+        { new: true }
+      );
 
-        if (!updatedProject) {
-          return res.status(404).json({ message: "Project not found" });
-        }
+      if (!updatedProject) {
+        return res.status(404).json({ message: "Project not found" });
+      }
 
       res.status(200).json({
         message: "Background image URL updated successfully",
@@ -2759,7 +2759,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 
 app.post('/api/log-hours', async (req, res) => {
   try {
-    const { taskId, cardId, hours,loggedBy  } = req.body;
+    const { taskId, cardId, hours, loggedBy } = req.body;
     // const userId = req.user.email; // Assuming you have user authentication middleware
 
     const loggedByUser = await User.findOne({ email: loggedBy });
@@ -2771,8 +2771,8 @@ app.post('/api/log-hours', async (req, res) => {
       taskId,
       cardId,
       hours,
-      loggedBy:loggedByUser._id,
-      
+      loggedBy: loggedByUser._id,
+
       // loggedBy: userId,
     });
 
@@ -3706,65 +3706,65 @@ app.get("/api/calendar/:organizationId",
     const userEmail = req.user.email;
     const userRole = req.user.role;
 
-  try {
-    let assignedCards;
-    if (userRole === "ADMIN") {
-      assignedCards = await Card.find()
-        .populate({
-          path: "project",
-          match: { organization: organizationId },
-          select: "_id name projectManager",
-        })
-        .populate("task", "name");
-    } else {
-      const managedProjects = await Project.find({
-        organization: organizationId,
-        projectManager: userEmail,
-      }).select("_id");
+    try {
+      let assignedCards;
+      if (userRole === "ADMIN") {
+        assignedCards = await Card.find()
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      } else {
+        const managedProjects = await Project.find({
+          organization: organizationId,
+          projectManager: userEmail,
+        }).select("_id");
 
-      const managedProjectIds = managedProjects.map((project) => project._id);
+        const managedProjectIds = managedProjects.map((project) => project._id);
 
-      assignedCards = await Card.find({
-        $or: [
-          { assignedTo: userEmail },
-          { project: { $in: managedProjectIds } },
-        ],
-      })
-        .populate({
-          path: "project",
-          match: { organization: organizationId },
-          select: "_id name projectManager",
+        assignedCards = await Card.find({
+          $or: [
+            { assignedTo: userEmail },
+            { project: { $in: managedProjectIds } },
+          ],
         })
-        .populate("task", "name");
+          .populate({
+            path: "project",
+            match: { organization: organizationId },
+            select: "_id name projectManager",
+          })
+          .populate("task", "name");
+      }
+
+      const events = assignedCards
+        .filter((card) => card.project && card.task)
+        .flatMap((card) => [
+          {
+            id: `${card._id}-assign`,
+            date: card.assignDate,
+            projectId: card.project._id,
+            projectName: card.project.name,
+            taskId: card.task._id,
+            taskName: card.task.name,
+            cardId: card._id,
+            cardName: card.name,
+            assignedTo: card.assignedTo,
+            createdDate: card.createdDate,
+            estimatedTime: card.estimatedTime, // Include estimated time
+            status: card.status,
+            type: "Assign Date",
+          },
+        ])
+        .filter((event) => event.date);
+
+      res.json(events);
+    } catch (error) {
+      console.error("Error retrieving calendar data:", error);
+      res.status(500).json({ message: "Error retrieving calendar data" });
     }
-
-    const events = assignedCards
-      .filter((card) => card.project && card.task)
-      .flatMap((card) => [
-        {
-          id: `${card._id}-assign`,
-          date: card.assignDate,
-          projectId: card.project._id,
-          projectName: card.project.name,
-          taskId: card.task._id,
-          taskName: card.task.name,
-          cardId: card._id,
-          cardName: card.name,
-          assignedTo: card.assignedTo,
-          createdDate: card.createdDate,
-          estimatedTime: card.estimatedTime, // Include estimated time
-          status: card.status,
-          type: "Assign Date",
-        },
-      ])
-      .filter((event) => event.date);
-
-    res.json(events);
-  } catch (error) {
-    console.error("Error retrieving calendar data:", error);
-    res.status(500).json({ message: "Error retrieving calendar data" });
-  }
-});
+  });
 
 
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {

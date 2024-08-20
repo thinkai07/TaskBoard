@@ -16,7 +16,7 @@ import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
@@ -593,197 +593,6 @@ function KanbanBoard() {
   };
 
   // // // Update handleAddCard function
-  // const handleAddCard = async (e) => {
-  //   e.preventDefault();
-  //   const cardTitle = e.target.title.value.trim() || "";
-  //   const cardDescription = e.target.description.value.trim() || "";
-  //   const assignDate = e.target.assignDate.value;
-  //   const dueDate = e.target.dueDate.value;
-
-
-  //   if (
-  //     !cardTitle ||
-  //     !cardDescription ||
-  //     !selectedColumnId ||
-  //     !email ||
-  //     !assignDate ||
-  //     !dueDate
-  //   ) {
-  //     notification.warning({
-  //       message: "Please fill in all fields",
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     // Fetch the logged-in user's email
-  //     const createdBy = await fetchUserEmail();
-
-  //     // Search for the user within the project's teams
-  //     const searchResponse = await fetch(
-  //       `${server}/api/projects/${projectId}/users/search?email=${email}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (!searchResponse.ok) {
-  //       throw new Error("User is not part of the project");
-  //     }
-
-  //     const { users } = await searchResponse.json();
-  //     if (users.length === 0) {
-  //       notification.warning({
-  //         message: "The entered email is not part of the project",
-  //       });
-  //       return;
-  //     }
-
-  //     // Proceed to add the card
-  //     const response = await fetch(
-  //       `${server}/api/tasks/${selectedColumnId}/cards`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //         body: JSON.stringify({
-  //           name: cardTitle,
-  //           description: cardDescription,
-  //           assignedTo: email,
-  //           assignDate: assignDate,
-  //           dueDate: dueDate,
-  //           createdBy: createdBy, // Include createdBy
-  //         }),
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to add card");
-  //     }
-
-  //     await clearFieldsAndRefresh();
-  //     // Clear input fields
-  //     e.target.title.value = "";
-  //     e.target.description.value = "";
-  //     setEmail("");
-
-  //     // Close the modal
-  //     setModalVisible(false);
-
-  //     // Refresh board data
-  //     await fetchTasks();
-  //     notification.success({
-  //       message: 'Task added Successfully',
-
-  //     });
-  //   } catch (error) {
-  //     console.error("Error adding card:", error);
-  //     alert(error.message);
-  //   }
-  // };
-
-  // const handleAddCard = async (e) => {
-  //   e.preventDefault();
-  //   const cardTitle = e.target.title.value.trim() || "";
-  //   const cardDescription = e.target.description.value.trim() || "";
-  //   // const assignDate = e.target.assignDate.value;
-  //   // const dueDate = e.target.dueDate.value;
-  //   const estimatedTime = e.target.estimatedTime.value; // Get estimated time from the form
-
-  //   if (
-  //     !cardTitle ||
-  //     !cardDescription ||
-  //     !selectedColumnId ||
-  //     !email ||
-  //     // !assignDate ||
-  //     // !dueDate ||
-  //     !estimatedTime
-  //   ) {
-  //     notification.warning({
-  //       message: "Please fill in all fields",
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     // Fetch the logged-in user's email
-  //     const createdBy = await fetchUserEmail();
-
-  //     // Search for the user within the project's teams
-  //     const searchResponse = await fetch(
-  //       `${server}/api/projects/${projectId}/users/search?email=${email}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (!searchResponse.ok) {
-  //       throw new Error("User is not part of the project");
-  //     }
-
-  //     const { users } = await searchResponse.json();
-  //     if (users.length === 0) {
-  //       notification.warning({
-  //         message: "The entered email is not part of the project",
-  //       });
-  //       return;
-  //     }
-
-  //     // Proceed to add the card
-  //     const response = await fetch(
-  //       `${server}/api/tasks/${selectedColumnId}/cards`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //         body: JSON.stringify({
-  //           name: cardTitle,
-  //           description: cardDescription,
-  //           assignedTo: email,
-  //           // assignDate: assignDate,
-  //           // dueDate: dueDate,
-  //           estimatedTime: Number(estimatedTime), // Pass estimated time as a number
-  //           createdBy: createdBy, // Include createdBy
-  //         }),
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to add card");
-  //     }
-
-  //     await clearFieldsAndRefresh();
-  //     e.target.title.value = "";
-  //     e.target.description.value = "";
-  //     setEmail("");
-
-  //     // Close the modal
-  //     setModalVisible(false);
-
-  //     // Refresh board data
-  //     await fetchTasks();
-  //     notification.success({
-  //       message: 'Task added Successfully',
-  //     });
-  //   } catch (error) {
-  //     console.error("Error adding card:", error);
-  //     alert(error.message);
-  //   }
-  // };
-
-
   const handleAddCard = async (e) => {
     e.preventDefault();
     const cardTitle = e.target.title.value.trim() || "";
@@ -877,16 +686,6 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
-
-
-
-
-
-
-
-
-
-
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -1612,7 +1411,7 @@ function KanbanBoard() {
     </div>
   );
 
-
+  ////
   const fetchTasks1 = async () => {
     try {
       const response = await axios.get(
@@ -1793,7 +1592,7 @@ function KanbanBoard() {
           ? {
             backgroundImage: `url(${bgUrl.raw})`,
             backgroundSize: "cover",
-            backgroundPosition: "center", 
+            backgroundPosition: "center",
 
             width: "100%",
           }
@@ -2070,7 +1869,7 @@ function KanbanBoard() {
             <Button type="text" icon={<SquareMenu />} />
           </Popover> */}
 
-          <>
+<>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
@@ -2164,7 +1963,7 @@ function KanbanBoard() {
                   marginBottom: "0.5rem",
                   padding: "0.5rem",
                   backgroundColor: "#F7FAFC",
-                  borderRadius: "20px",
+                  // borderRadius: "20px",
                 }}
                 onDoubleClick={() => {
                   setEditingColumnId(id);
@@ -2328,20 +2127,6 @@ function KanbanBoard() {
                 name="dueDate"
                 required
                 className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
-
-              <label
-                htmlFor="estimatedTime"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Estimated Time
-              </label>
-              <input
-                type="number"
-                name="estimatedTime" // Change here
-                required
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-                onChange={(e) => (e.target.value = e.target.value)}
               />
 
               {/* Email suggestions list */}

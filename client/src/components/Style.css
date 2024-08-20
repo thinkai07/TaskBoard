@@ -1,35 +1,14 @@
-/* .react-kanban-column {
-  width: auto; 
-  padding: 1px;
-  border-radius: 8px;
-  background-color: #f1efef;
-  margin: 9px;
-  margin-bottom: 60px;
-  max-height: 490px; 
-  overflow-y: auto; 
-} */
-
-/* .react-kanban-card {
-  box-sizing: border-box;
-  max-width: 250px;
-  min-width: 300px;
-  margin-top: 20%;
-  overflow: scroll; 
-  background-color: #fffafa;
-  padding: 8px 12px 4px;
-  
-} */
-
 .react-kanban-card {
   box-sizing: border-box;
-  max-width: 240px;  
-  min-width: 300px;  
+  max-width: 240px;
+  min-width: 300px;
   margin: 1px auto; 
-  margin-top: 100px;  
-  background-color: #fffafa; 
+  margin-top: 8px;
+  background-color: #f7f6f6; 
   padding: 12px; 
   border-radius: 5px; 
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+  
 }
 
 .react-kanban-column {
@@ -39,7 +18,7 @@
   background-color: #f1efef; 
   margin: 9px;
   margin-bottom: 60px;
-  max-height: 490px; 
+  max-height: 530px; 
   overflow-y: auto; 
 }
 
@@ -70,5 +49,4 @@ font-weight: bold;
 display: flex;
 justify-content: space-between;
 }
-
 

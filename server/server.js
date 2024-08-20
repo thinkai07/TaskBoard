@@ -254,7 +254,7 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    estimatedTime: { type: Number, default: 0 },
+    estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
     pausedAt: [{ type: Date }], // To store the timestamps when paused
     resumedAt: [{ type: Date }], // To store the timestamps when resumed
@@ -1910,7 +1910,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 //create cards
 app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
-  const { name, description, assignedTo, assignDate, dueDate, createdBy } =
+  const { name, description, assignedTo, assignDate, dueDate, createdBy ,estimatedHours} =
     req.body;
 
   try {
@@ -1923,11 +1923,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
-
-    // Calculate estimated time in milliseconds
-    const assignDateObj = new Date(assignDate);
-    const dueDateObj = new Date(dueDate);
-    const estimatedTime = Math.max((dueDateObj - assignDateObj) / 60000, 0); // Convert to minutes
+   
 
     const newCard = new Card({
       name,
@@ -1935,7 +1931,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       assignedTo,
       assignDate,
       dueDate,
-      estimatedTime, // Add calculated estimated time
+      estimatedHours, // Add calculated estimated time
       task: taskId,
       project: task.project,
       createdDate: new Date(),
@@ -1962,7 +1958,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       taskId: task._id,
       changes: [
         { field: "name", oldValue: null, newValue: name },
-        { field: "estimatedTime", oldValue: null, newValue: estimatedTime }, // Log estimatedTime change
+        { field: "estimatedTime", oldValue: null, newValue: estimatedHours }, // Log estimatedTime change
         // Add other relevant changes if needed
       ],
     });

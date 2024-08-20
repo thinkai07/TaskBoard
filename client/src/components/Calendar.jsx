@@ -239,38 +239,6 @@ const Calendar = () => {
     { title: "Column Name", dataIndex: "cardName", key: "cardName" },
     { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
     { title: "Status", dataIndex: "status", key: "status" },
-    { title: "Estimated hours", dataIndex: "estimatedTime", key: "estimatedTime" }, // Ensure field name matches
-    { title: "Utilized hours", dataIndex: "utilizedTime", key: "utilizedTime" }, // Update as needed
-    {
-      title: "Log hours",
-      key: "Log hours",
-      render: (cardId, record) => (
-        <Popover
-          content={
-            <div>
-              <Input
-                placeholder="Enter hours"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                style={{ marginBottom: 10 }}
-              />
-              <Button
-                type="primary"
-                onClick={() => handleSubmit(record.cardId)}
-              >
-                Submit
-              </Button>
-            </div>
-          }
-          title="Log Hours"
-          trigger="click"
-          visible={visiblePopover === record.cardId}
-          onVisibleChange={(visible) => setVisiblePopover(visible ? record.cardId : null)}
-        >
-          <Button type="primary" onClick={() => handleStartClick(record.cardId)}>Start</Button>
-        </Popover>
-      ),
-    },
     {
       title: "Action",
       key: "action",
@@ -301,7 +269,6 @@ const Calendar = () => {
       ),
     },
   ];
-  
 
   return (
     <div className="p-4 text-md">
@@ -368,19 +335,21 @@ const Calendar = () => {
             (event) => dayjs(event.date).format("YYYY-MM-DD") === formattedDate
           );
           const hasEvents = eventsForDay.length > 0;
-
+          
 
           return (
             <div
               key={formattedDate}
-              className={`border p-2 rounded-lg ${isToday ? "bg-blue-100" : "bg-white"
-                } shadow-md hover:bg-blue-200 cursor-pointer`}
+              className={`border p-2 rounded-lg ${
+                isToday ? "bg-blue-100" : "bg-white"
+              } shadow-md hover:bg-blue-200 cursor-pointer`}
               onClick={() => handleDateClick(formattedDate)}
               title={hasEvents ? "" : "No tasks on this date"}
             >
               <div
-                className={`font-medium ${isToday ? "text-blue-600" : "text-gray-800"
-                  }`}
+                className={`font-medium ${
+                  isToday ? "text-blue-600" : "text-gray-800"
+                }`}
               >
                 {dayjs(date).format("D")}
               </div>
@@ -398,18 +367,11 @@ const Calendar = () => {
       >
         <Table columns={columns} dataSource={selectedEvents} rowKey="id" />
       </Modal>
-      {/* <Table
-        columns={columns}
-    
-        rowKey="key" // Ensure each row has a unique key
-      /> */}
     </div>
   );
 };
 
 export default Calendar;
-
-
 
 
 

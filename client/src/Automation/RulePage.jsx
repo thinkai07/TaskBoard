@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined ,ToolOutlined} from "@ant-design/icons";
+import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined, ToolOutlined } from "@ant-design/icons";
 import { Button, Select, Input, Modal, Card, Steps, Typography, Space, Dropdown, Menu } from "antd";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
@@ -233,14 +233,14 @@ function RulesButton({ tasks }) {
 
   return (
     <div className="relative">
-      <Dropdown overlay={menu} trigger={['click']}>
-      <Button
-      type="default"
-    
-      icon={<ToolOutlined />}
-    >
-      Automation
-    </Button>
+      <Dropdown overlay={menu} trigger={['click']} className="hover:bg-gray-200">
+        <Button
+          type="default"
+
+          icon={<ToolOutlined />}
+        >
+          Automation
+        </Button>
       </Dropdown>
 
       <Modal

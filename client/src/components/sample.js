@@ -16,7 +16,7 @@ import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate,useLocation} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
@@ -24,70 +24,14 @@ import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
 import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
-import { FcEmptyTrash } from "react-icons/fc";
-import { MdCancel } from "react-icons/md";
 import { Popover, Button, Space, Modal, Form, Input } from 'antd';
-import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
 import { SquareMenu } from 'lucide-react';
 import { Plus } from "lucide-react";
-import { X } from 'lucide-react'
 import { BsFillPencilFill } from "react-icons/bs";
-import BackgroundChange from "./BackgroundChange";
-import { Bell, SquareChevronDown } from "lucide-react";
-import { Drawer } from 'antd';
 
 const initialBoard = {
   columns: [],
 };
-
-const TimeProgressBar = ({ assignDate, dueDate }) => {
-  const [progress, setProgress] = useState(0);
-  const [isOverdue, setIsOverdue] = useState(false);
-
-  useEffect(() => {
-    const updateProgress = () => {
-      const now = new Date();
-      const start = new Date(assignDate);
-      const end = new Date(dueDate);
-      const total = end - start;
-      const elapsed = now - start;
-
-      if (now > end) {
-        setProgress(100);
-        setIsOverdue(true);
-      } else {
-        const calculatedProgress = (elapsed / total) * 100;
-        setProgress(Math.min(calculatedProgress, 100));
-        setIsOverdue(false);
-      }
-    };
-
-    updateProgress();
-    const timer = setInterval(updateProgress, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, [assignDate, dueDate]);
-
-  return (
-    <div
-      className="relative h-3 w-full rounded-lg"
-      style={{
-        background: isOverdue
-          ? '#ff4d4d'
-          : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
-      }}
-    >
-
-      <div
-        className="absolute inset-0 flex items-center justify-center text-black font-bold"
-        style={{ fontSize: '0.75rem' }}
-      >
-        {Math.round(progress)}%
-      </div>
-    </div>
-  );
-};
-
 
 function KanbanBoard() {
   useTokenValidation();
@@ -108,7 +52,6 @@ function KanbanBoard() {
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -138,13 +81,6 @@ function KanbanBoard() {
     description: "",
     email: "",
   });
-  const [assignDate, setAssignDate] = useState("");
-  const [repoName, setRepoName] = useState("");
-  const [repository, setRepository] = useState("");
-  const newRepoRef = useRef(null);
-  const existingRepoRef = useRef(null);
-  const [isGitModalOpen, setIsGitModalOpen] = useState(false);
-  const [copiedButton, setCopiedButton] = useState(null);
   const [editingColumnId, setEditingColumnId] = useState(null);
   const [tempColumnName, setTempColumnName] = useState("");
 
@@ -153,40 +89,11 @@ function KanbanBoard() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
 
   const [userRole, setUserRole] = useState("");
-
-
-  const location = useLocation();
-  //added
-  const [showBackgroundChange, setShowBackgroundChange] = useState(false);
-
-
-  //added for antd drawer
-  const [visible, setVisible] = useState(false);
-
-  const showDrawer = () => {
-    setVisible(true);
-  };
-
-  const onClose = () => {
-    setVisible(false);
-  };
-
-  //added
-  const isProjectRoute = location.pathname.startsWith("/projects/");
-  //added
-  const handleBackgroundChangeClick = () => {
-    setShowBackgroundChange(true);
-  };
-
-
-
-
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -867,9 +774,9 @@ function KanbanBoard() {
           )
         }));
 
-        // notification.success({
-        //   message: 'Column Renamed Successfully',
-        // });
+        notification.success({
+          message: 'Column Renamed Successfully',
+        });
       } catch (error) {
         console.error("Error renaming column:", error);
         notification.error({
@@ -1106,62 +1013,57 @@ function KanbanBoard() {
     closeModal();
   };
 
-
-  const handleRemoveColumn = async (columnId) => {
-    let deletedBy;
-    try {
-      deletedBy = await fetchUserEmail();
-    } catch (error) {
-      console.error("Error fetching logged-in user's email:", error);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${server}/api/projects/${projectId}/tasks/${columnId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ deletedBy }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to remove column");
+  const handleRemoveColumn = async () => {
+    if (selectedColumnId) {
+      let deletedBy;
+      try {
+        deletedBy = await fetchUserEmail();
+      } catch (error) {
+        console.error("Error fetching logged-in user's email:", error);
+        return;
       }
 
-      setBoardData((prevState) => ({
-        ...prevState,
-        columns: prevState.columns.filter(
-          (column) => column.id !== columnId
-        ),
-      }));
+      try {
+        const response = await fetch(
+          `${server}/api/projects/${projectId}/tasks/${selectedColumnId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ deletedBy }), // Include deletedBy
+          }
+        );
 
-      setShowDeleteSuccess(true);
-      setTimeout(() => {
-        setShowDeleteSuccess(false);
-      }, 3000);
-      notification.success({
-        message: 'Column Deleted Successfully',
-      });
-    } catch (error) {
-      console.error("Error removing column:", error);
-      notification.error({
-        message: 'Failed to delete column',
-        description: error.message,
-      });
+        if (!response.ok) {
+          throw new Error("Failed to remove column");
+        }
+
+        setBoardData((prevState) => ({
+          ...prevState,
+          columns: prevState.columns.filter(
+            (column) => column.id !== selectedColumnId
+          ),
+        }));
+
+        // Show success message
+        setShowDeleteSuccess(true);
+
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setShowDeleteSuccess(false);
+        }, 3000);
+        notification.success({
+          message: 'Column Deleted Successfully',
+
+        });
+      } catch (error) {
+        console.error("Error removing column:", error);
+      }
     }
-  };
-  const showRemoveColumnConfirmation = (columnId) => {
-    Modal.confirm({
-      title: 'Are you sure you want to remove this column?',
-      onOk() {
-        handleRemoveColumn(columnId);
-      },
-    });
+    closeModal();
+    setShowConfirmation(false);
   };
 
   const openModal = (columnId, type) => {
@@ -1584,105 +1486,9 @@ function KanbanBoard() {
     }
   };
 
-
-  const content = (
-    <div className="p-1">
-      <h2 className="text-lg font-semibold mb-4">Column Options</h2>
-
-      {!showRenameInput && !showConfirmation && (
-        <>
-          
-          <Button
-            onClick={() => setShowConfirmation(true)}
-            type="primary"
-            className="w-full mb-2"
-          >
-            Remove Column
-          </Button>
-          <Button onClick={closeModal} className="w-full mb-2">
-            Cancel
-          </Button>
-        </>
-      )}
-
-      {showConfirmation && (
-        <>
-          <p className="text-lg font-bold mb-4">
-            Are you sure you want to remove this column?
-          </p>
-          <div className="flex justify-between">
-            <Button
-              onClick={handleRemoveColumn}
-              type="danger"
-              className="px-10"
-            >
-              Yes
-            </Button>
-            <Button
-              onClick={() => setShowConfirmation(false)}
-              className="px-10"
-            >
-              No
-            </Button>
-          </div>
-        </>
-      )}
-
-      {showRenameInput && (
-        <>
-          <h2 className="text-lg font-bold mb-4">Rename Column</h2>
-          <Input
-            type="text"
-            value={newColumnName}
-            onChange={(e) => {
-              setNewColumnName(e.target.value.trimStart());
-              setRenameColumnError(false);
-            }}
-            placeholder="Enter the new name for the column"
-            className={`mb-4 ${renameColumnError ? "border-red-500" : ""}`}
-          />
-          {renameColumnError && (
-            <p className="text-red-500 text-sm mb-2">
-              Please enter a column name
-            </p>
-          )}
-          <div className="flex justify-between">
-            <Button
-              onClick={() => {
-                if (newColumnName.trim()) {
-                  handleRenameColumn(newColumnName);
-                  closeModal();
-                } else {
-                  setRenameColumnError(true);
-                }
-              }}
-              type="primary"
-            >
-              Confirm
-            </Button>
-            <Button
-              onClick={() => {
-                setShowRenameInput(false);
-                setRenameColumnError(false);
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </>
-      )}
-
-      <Button
-        onClick={closeModal}
-        className="absolute top-0 right-0 m-4"
-        icon={<BsX />}
-      />
-    </div>
-  );
-
   return (
     <div
-      className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="p-4 overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
       style={
         bgUrl
           ? {
@@ -1858,8 +1664,7 @@ function KanbanBoard() {
           </div>
         )}
       </div>
-      {/* <div className="flex justify-between items-center mb-4"> */}
-      <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
@@ -1944,7 +1749,7 @@ function KanbanBoard() {
 
 
 
-          {/* <Popover
+          <Popover
             trigger="click"
             placement="bottomRight"
             content={
@@ -1963,47 +1768,7 @@ function KanbanBoard() {
             }
           >
             <Button type="text" icon={<SquareMenu />} />
-          </Popover> */}
-
-<>
-            <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
-
-            <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-
-            >
-              {showBackgroundChange && (
-                <BackgroundChange onClose={() => setShowBackgroundChange(false)} />
-              )}
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-                {isProjectRoute && (
-                  <button
-                    type="default"
-                    icon={<SquareChevronDown />}
-                    className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200 "
-                    onClick={handleBackgroundChangeClick}
-                    block
-                  >
-                    <SquareChevronDown size={24} />
-                    Change Background
-                  </button>
-                )}
-              </Space>
-            </Drawer>
-          </>
+          </Popover>
 
 
 
@@ -2045,6 +1810,7 @@ function KanbanBoard() {
               ></div>
             </div>
           )}
+
           renderColumnHeader={({ title, id }) => (
             <div style={{
               display: "flex",
@@ -2089,27 +1855,12 @@ function KanbanBoard() {
                   </span>
                 )}
                 {canShowActions && (
-                  <Popover
-                    content={
-                      <div>
-                        <Button
-                          type="text"
-                          block
-                          onClick={() => showRemoveColumnConfirmation(id)}
-                        >
-                          Remove Column
-                        </Button>
-                      </div>
-                    }
-                    trigger="click"
-                    placement="bottomRight"
+                  <button
+                    onClick={() => openModal(id, "options")}
+                    className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
                   >
-                    <Button
-                      type="text"
-                      icon={<MoreOutlined />}
-                      className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
-                    />
-                  </Popover>
+                    <BsThreeDotsVertical />
+                  </button>
                 )}
               </div>
               <button
@@ -2129,7 +1880,6 @@ function KanbanBoard() {
               </button>
             </div>
           )}
-
           renderCard={renderCard}
         >
           {boardData}
@@ -2268,6 +2018,13 @@ function KanbanBoard() {
           </div>
         </div>
       )}
+      {showDeleteSuccess && (
+        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
+            <p className="font-semibold">Column deleted successfully</p>
+          </div>
+        </div>
+      )}
       {showSuccessMessage && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
@@ -2387,74 +2144,6 @@ function KanbanBoard() {
           )}
         </div>
       )}
-      {isGitModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
-              }`}
-          >
-            <button
-              onClick={closeGitModal}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-              aria-label="Close modal"
-            >
-              <X size={24} />
-            </button>
-            <h2 className="text-xl font-semibold mb-6 border-b pb-2">Git Configuration</h2>
-            <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-2">Quick setup — if you've done this kind of thing before</p>
-              <div className="flex justify-between items-center bg-gray-100 p-3 rounded-md shadow-sm">
-                <code className="text-sm overflow-x-auto">{repository}</code>
-                <button
-                  onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
-                >
-                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
-                </button>
-              </div>
-            </div>
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-gray-800 mb-2">...or create a new repository on the command line</p>
-              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
-                <pre ref={newRepoRef} className="whitespace-pre-wrap">
-                  <code>
-                    {`echo "# ${repoName}" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin ${repository}
-git push -u origin main`}
-                  </code>
-                </pre>
-                <button
-                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
-                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
-                >
-                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-800 mb-2">...or push an existing repository from the command line</p>
-              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
-                <pre ref={existingRepoRef} className="whitespace-pre-wrap">
-                  {`git remote add origin ${repository}
-git branch -M main
-git push -u origin main`}
-                </pre>
-                <button
-                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
-                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
-                >
-                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

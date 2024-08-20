@@ -9,7 +9,6 @@ import {
   Calendar as AntCalendar,
   Badge,
   Button,
-  Modal,
   Select,
   InputNumber,
   Table,
@@ -26,9 +25,6 @@ const Calendar = () => {
   useTokenValidation();
   const [events, setEvents] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedEvents, setSelectedEvents] = useState([]);
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const navigate = useNavigate();
@@ -36,8 +32,6 @@ const Calendar = () => {
   const [logHoursVisible, setLogHoursVisible] = useState(false);
   const [loggedHours, setLoggedHours] = useState("");
   const [userEmail, setUserEmail] = useState("");
-
-
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -99,16 +93,8 @@ const Calendar = () => {
       (event) => dayjs(event.date).format("YYYY-MM-DD") === date
     );
     if (eventsForSelectedDate.length > 0) {
-      setSelectedDate(date);
-      setShowModal(true);
-      setSelectedEvents(eventsForSelectedDate);
+      navigate(`/calendar/${date}`, { state: { events: eventsForSelectedDate } });
     }
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setSelectedDate(null);
-    setSelectedEvents([]);
   };
 
   const handleChangeMonth = (value) => {
@@ -159,61 +145,6 @@ const Calendar = () => {
     );
   };
 
-  const handleViewProjectTasks = (projectId) => {
-    navigate(`/projects/${projectId}/view`);
-  };
-
-  const handleStartLogging = (cardId) => {
-    setActiveCardId(cardId);
-    setLogHoursVisible(true);
-  };
-
-  const handleLogHours = async () => {
-    if (activeCardId && loggedHours) {
-      try {
-        const activeEvent = selectedEvents.find(event => event.cardId === activeCardId);
-        const response = await axios.post(
-          `${server}/api/log-hours`,
-          {
-            projectId:activeEvent.projectId,
-            taskId: activeEvent.taskId,
-            cardId: activeCardId,
-            hours: parseFloat(loggedHours),
-            loggedBy: userEmail
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        console.log(response.data.message);
-        // Reset states
-        setActiveCardId(null);
-        setLogHoursVisible(false);
-        setLoggedHours("");
-        // Optionally, refresh the events data here
-      } catch (error) {
-        console.error("Error logging hours:", error);
-      }
-    }
-  };
-
-  const logHoursContent = (
-    <div>
-      <Input
-        placeholder="Enter hours"
-        value={loggedHours}
-        onChange={(e) => setLoggedHours(e.target.value)}
-        style={{ marginBottom: '10px' }}
-      />
-      <Button type="primary" onClick={handleLogHours}>
-        Submit
-      </Button>
-    </div>
-  );
-
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -233,51 +164,6 @@ const Calendar = () => {
 
     fetchUserData();
   }, []);
-
-
-  const columns = [
-    { title: "Project Name", dataIndex: "projectName", key: "projectName" },
-    { title: "Task Name", dataIndex: "taskName", key: "taskName" },
-    { title: "Column Name", dataIndex: "cardName", key: "cardName" },
-    { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
-    {
-      title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours", // Add the estimated hours column
-    },
-    
-    { title: "Status", dataIndex: "status", key: "status" },
-    {
-      title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours", // Add the estimated hours column
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <>
-          <Popover
-            content={logHoursContent}
-            title="Log Hours"
-            trigger="click"
-            visible={logHoursVisible && activeCardId === record.cardId}
-            onVisibleChange={(visible) => !visible && setLogHoursVisible(false)}
-          >
-            <Button
-              type="primary"
-              onClick={() => handleStartLogging(record.cardId)}
-            >
-              Start
-            </Button>
-          </Popover>
-          <Button
-            type="primary"
-            onClick={() => handleViewProjectTasks(record.projectId)}
-            style={{ marginLeft: '10px' }}
-          >
-            View
-          </Button>
-        </>
-      ),
-    },
-  ];
 
   return (
     <div className="p-4 text-md">
@@ -365,15 +251,6 @@ const Calendar = () => {
           );
         })}
       </div>
-      <Modal
-        visible={showModal}
-        title={`Project Details for ${selectedDate}`}
-        onCancel={handleModalClose}
-        footer={null}
-        width="80%"
-      >
-        <Table columns={columns} dataSource={selectedEvents} rowKey="id" />
-      </Modal>
     </div>
   );
 };

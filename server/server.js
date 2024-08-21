@@ -13,6 +13,7 @@ const { type } = require("os");
 const http = require("http");
 const socketIo = require("socket.io");
 const axios = require("axios");
+const UNSPLASH_API_KEY = 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY';
 // Initialize the Express app
 const port = process.env.PORT;
 const app = express();

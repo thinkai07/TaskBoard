@@ -2,8 +2,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
-import { Dropdown, Menu } from 'antd';  //added
-import { DownOutlined } from '@ant-design/icons'; //added
+import { Dropdown, Menu } from "antd"; //added
+import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
   BsPencilSquare,
@@ -11,11 +11,12 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
-import { Tooltip } from 'antd';
+import { Tooltip } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
@@ -26,16 +27,16 @@ import RulesButton from "./RulePage";
 import { FaPlus } from "react-icons/fa";
 import { FcEmptyTrash } from "react-icons/fc";
 import { MdCancel } from "react-icons/md";
-import { Popover, Button, Space, Modal, Form, Input } from 'antd';
-import { MoreOutlined, SettingOutlined, ToolOutlined } from '@ant-design/icons';
-import { SquareMenu } from 'lucide-react';
+import { Popover, Button, Space, Modal, Form, Input } from "antd";
+import { MoreOutlined, SettingOutlined, ToolOutlined } from "@ant-design/icons";
+import { SquareMenu } from "lucide-react";
 import { Plus } from "lucide-react";
-import { X } from 'lucide-react'
+import { X } from "lucide-react";
 import { BsFillPencilFill } from "react-icons/bs";
 import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
-import { Drawer } from 'antd';
-
+import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
+import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 const initialBoard = {
   columns: [],
 };
@@ -73,21 +74,19 @@ const TimeProgressBar = ({ assignDate, dueDate }) => {
       className="relative h-3 w-full rounded-lg"
       style={{
         background: isOverdue
-          ? '#ff4d4d'
+          ? "#ff4d4d"
           : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
       }}
     >
-
       <div
         className="absolute inset-0 flex items-center justify-center text-black font-bold"
-        style={{ fontSize: '0.75rem' }}
+        style={{ fontSize: "0.75rem" }}
       >
         {Math.round(progress)}%
       </div>
     </div>
   );
 };
-
 
 function KanbanBoard() {
   useTokenValidation();
@@ -114,12 +113,15 @@ function KanbanBoard() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [memberAdded, setMemberAdded] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(true);
+  const [activities, setActivities] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [renameCardDescription, setRenameCardDescription] = useState("");
   const [selectedCardId, setSelectedCardId] = useState(null);
   const suggestionListRef = useRef(null);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
@@ -150,9 +152,20 @@ function KanbanBoard() {
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState([]);
+  // const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userComment, setUserComment] = useState("");
+  const [comments, setComments] = useState([]);
+  const [assignedTo, setAssignedTo] = useState([]);
+  // const [projectName, setProjectName] = useState("");
+  const [assignedBy, setAssignedBy] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [estimatedTimePercent, setEstimatedTimePercent] = useState(0);
+  const [utilizedTimePercent, setUtilizedTimePercent] = useState(0);
+  const [remainingTimePercent, setRemainingTimePercent] = useState(0);
 
+  const { TextArea } = Input;
+  const { Text, Title } = Typography;
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -160,11 +173,9 @@ function KanbanBoard() {
 
   const [userRole, setUserRole] = useState("");
 
-
   const location = useLocation();
   //added
   const [showBackgroundChange, setShowBackgroundChange] = useState(false);
-
 
   //added for antd drawer
   const [visible, setVisible] = useState(false);
@@ -177,16 +188,33 @@ function KanbanBoard() {
     setVisible(false);
   };
 
+  // const handleTitleBlur = () => {
+  //   if (!renameCardTitle.trim()) {
+  //     setRenameCardErrors((prev) => ({
+  //       ...prev,
+  //       title: "Title is required",
+  //     }));
+  //   }
+  //   setIsEditingTitle(false); // Hide input after blur
+  // };
+
+  // // Handle description blur
+  // const handleDescriptionBlur = () => {
+  //   if (!renameCardDescription.trim()) {
+  //     setRenameCardErrors((prev) => ({
+  //       ...prev,
+  //       description: "Description is required",
+  //     }));
+  //   }
+  //   setIsEditingDescription(false); // Hide textarea after blur
+  // };
+
   //added
   const isProjectRoute = location.pathname.startsWith("/projects/");
   //added
   const handleBackgroundChangeClick = () => {
     setShowBackgroundChange(true);
   };
-
-
-
-
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -231,7 +259,6 @@ function KanbanBoard() {
           ),
         }));
       });
-
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
         setBoardData((prevState) => ({
@@ -307,9 +334,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -357,7 +384,6 @@ function KanbanBoard() {
           return { ...prevState, columns: updatedColumns };
         });
       });
-
     }
     return () => {
       if (socket) {
@@ -369,7 +395,6 @@ function KanbanBoard() {
         socket.off("cardMoved");
         socket.off("cardDeleted");
         socket.off("cardRenamed");
-
       }
     };
   }, [socket, projectId]);
@@ -486,7 +511,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-      projects.find((project) => project._id === projectId)?.projectManager);
+        projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -725,8 +750,6 @@ function KanbanBoard() {
     }
   };
 
-
-
   useEffect(() => {
     if (projectId) {
       fetchTasks();
@@ -753,8 +776,6 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
-
-
   // Polling function
   const pollForUpdates = async () => {
     await fetchTasks();
@@ -767,7 +788,6 @@ function KanbanBoard() {
     // Clean up the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, []);
-
 
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
@@ -826,19 +846,18 @@ function KanbanBoard() {
     }
   };
 
-
-  //coloumn rename automatic  
+  //coloumn rename automatic
   const handleColumnNameBlur = async (columnId) => {
     if (tempColumnName.trim() === "") {
       notification.error({
-        message: 'Column name cannot be empty',
+        message: "Column name cannot be empty",
       });
       setEditingColumnId(null);
       return;
     }
 
     setEditingColumnId(null);
-    const column = boardData.columns.find(col => col.id === columnId);
+    const column = boardData.columns.find((col) => col.id === columnId);
     if (column && tempColumnName !== column.title) {
       try {
         let updatedBy = await fetchUserEmail();
@@ -850,7 +869,10 @@ function KanbanBoard() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-            body: JSON.stringify({ name: tempColumnName, updatedBy: updatedBy }),
+            body: JSON.stringify({
+              name: tempColumnName,
+              updatedBy: updatedBy,
+            }),
           }
         );
 
@@ -858,11 +880,11 @@ function KanbanBoard() {
           throw new Error("Failed to rename column");
         }
 
-        setBoardData(prevState => ({
+        setBoardData((prevState) => ({
           ...prevState,
-          columns: prevState.columns.map(col =>
+          columns: prevState.columns.map((col) =>
             col.id === columnId ? { ...col, title: tempColumnName } : col
-          )
+          ),
         }));
 
         // notification.success({
@@ -871,14 +893,13 @@ function KanbanBoard() {
       } catch (error) {
         console.error("Error renaming column:", error);
         notification.error({
-          message: 'Failed to rename column',
+          message: "Failed to rename column",
         });
       }
     } else {
       setTempColumnName("");
     }
   };
-
 
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
@@ -914,9 +935,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -932,8 +953,7 @@ function KanbanBoard() {
           setShowSuccessMessage(false);
         }, 3000);
         notification.success({
-          message: 'task deleted Successfully',
-
+          message: "task deleted Successfully",
         });
       } catch (error) {
         console.error("Error removing card:", error);
@@ -1094,8 +1114,7 @@ function KanbanBoard() {
           ),
         }));
         notification.success({
-          message: 'Column Renamed Successfully',
-
+          message: "Column Renamed Successfully",
         });
       } catch (error) {
         console.error("Error renaming column:", error);
@@ -1103,7 +1122,6 @@ function KanbanBoard() {
     }
     closeModal();
   };
-
 
   const handleRemoveColumn = async (columnId) => {
     let deletedBy;
@@ -1133,9 +1151,7 @@ function KanbanBoard() {
 
       setBoardData((prevState) => ({
         ...prevState,
-        columns: prevState.columns.filter(
-          (column) => column.id !== columnId
-        ),
+        columns: prevState.columns.filter((column) => column.id !== columnId),
       }));
 
       setShowDeleteSuccess(true);
@@ -1143,19 +1159,19 @@ function KanbanBoard() {
         setShowDeleteSuccess(false);
       }, 3000);
       notification.success({
-        message: 'Column Deleted Successfully',
+        message: "Column Deleted Successfully",
       });
     } catch (error) {
       console.error("Error removing column:", error);
       notification.error({
-        message: 'Failed to delete column',
+        message: "Failed to delete column",
         description: error.message,
       });
     }
   };
   const showRemoveColumnConfirmation = (columnId) => {
     Modal.confirm({
-      title: 'Are you sure you want to remove this column?',
+      title: "Are you sure you want to remove this column?",
       onOk() {
         handleRemoveColumn(columnId);
       },
@@ -1326,9 +1342,9 @@ function KanbanBoard() {
     <Menu
       onClick={(e) => handleChangeStatus(cardId, e.key)}
       items={[
-        { key: 'pending', label: 'Pending' },
-        { key: 'inprogress', label: 'Inprogress' },
-        { key: 'completed', label: 'Completed' },
+        { key: "pending", label: "Pending" },
+        { key: "inprogress", label: "Inprogress" },
+        { key: "completed", label: "Completed" },
       ]}
     />
   );
@@ -1339,7 +1355,22 @@ function KanbanBoard() {
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
     >
       <div className="p-4">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+          onClick={() =>
+            openRenameCardModal(
+              card.columnId,
+              card.id,
+              card.title,
+              card.description,
+              card.comments
+            )
+          }
+        >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
               ? card.title.slice(0, 28) + "..."
@@ -1371,40 +1402,60 @@ function KanbanBoard() {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: 'flex-start', justifyContent: "space-between" }}>
-          <Dropdown overlay={statusMenu(card.id)} trigger={['click']} >
-            <Button style={{ width: '100px', marginTop: '3%' }}>
-              {card.status.charAt(0).toUpperCase() + card.status.slice(1)} <DownOutlined />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
+        >
+          <Dropdown
+            overlay={statusMenu(card.id)}
+            trigger={["hover"]}
+            mouseEnterDelay={0.2}
+            mouseLeaveDelay={0.2}
+          >
+            <Button style={{ width: "100px", marginTop: "3%" }}>
+              {card.status.charAt(0).toUpperCase() + card.status.slice(1)}{" "}
+              <DownOutlined />
             </Button>
           </Dropdown>
-
 
           {canShowActions && (
             <button
               className="delete-card-button"
-              onClick={() => confirmRemoveCard(card.columnId, card.id)}
-              style={{ marginRight: "10px", color: "red", paddingTop: "5px", marginLeft: "30%", marginTop: '3%' }}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent click event from bubbling up
+                confirmRemoveCard(card.columnId, card.id);
+              }}
+              style={{
+                marginRight: "10px",
+                color: "red",
+                paddingTop: "5px",
+                marginLeft: "30%",
+                marginTop: "3%",
+              }}
             >
-              <BsTrash />
+              {/* <BsTrash /> */}
             </button>
           )}
           <button
             className="delete-card-button"
-            onClick={() =>
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent click event from bubbling up
               openRenameCardModal(
                 card.columnId,
                 card.id,
                 card.title,
                 card.description,
                 card.comments
-              )
-            }
-            style={{ color: 'black', marginTop: "4%" }}
+              );
+            }}
+            style={{ color: "black", marginTop: "4%" }}
           >
-            <BsFillPencilFill />
+            {/* <BsFillPencilFill /> */}
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -1421,84 +1472,83 @@ function KanbanBoard() {
         }
       );
       setTasks(response.data.tasks);
-      console.log("tasks1 done")
+      console.log("tasks1 done");
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
   };
   useEffect(() => {
-    fetchTasks1()
+    fetchTasks1();
+  }, [boardData]);
 
-  }, [boardData])
+  // const handleSaveComment = async () => {
+  //   if (comment.trim()) {
+  //     try {
+  //       const updatedBy = await fetchUserEmail();
 
-  const handleSaveComment = async () => {
-    if (comment.trim()) {
-      try {
-        const updatedBy = await fetchUserEmail();
+  //       const response = await fetch(
+  //         `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
+  //         {
+  //           method: "PUT",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           },
+  //           body: JSON.stringify({
+  //             updatedBy: updatedBy,
+  //             comment: comment.trim(),
+  //             name: renameCardTitle,
+  //             description: renameCardDescription,
+  //           }),
+  //         }
+  //       );
 
-        const response = await fetch(
-          `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              updatedBy: updatedBy,
-              comment: comment.trim(),
-              name: renameCardTitle,
-              description: renameCardDescription,
-            }),
-          }
-        );
+  //       if (!response.ok) {
+  //         throw new Error("Failed to save comment");
+  //       }
 
-        if (!response.ok) {
-          throw new Error("Failed to save comment");
-        }
+  //       // Update local state immediately
+  //       setBoardData((prevState) => {
+  //         const updatedColumns = prevState.columns.map((column) => {
+  //           if (column.id === selectedColumnId) {
+  //             return {
+  //               ...column,
+  //               cards: column.cards.map((card) => {
+  //                 if (card.id === selectedCardId) {
+  //                   return {
+  //                     ...card,
+  //                     comments: [
+  //                       ...card.comments,
+  //                       { commentBy: userEmail, comment: comment.trim() },
+  //                     ],
+  //                   };
+  //                 }
+  //                 return card;
+  //               }),
+  //             };
+  //           }
+  //           return column;
+  //         });
 
-        // Update local state immediately
-        setBoardData((prevState) => {
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === selectedColumnId) {
-              return {
-                ...column,
-                cards: column.cards.map((card) => {
-                  if (card.id === selectedCardId) {
-                    return {
-                      ...card,
-                      comments: [
-                        ...card.comments,
-                        { commentBy: userEmail, comment: comment.trim() },
-                      ],
-                    };
-                  }
-                  return card;
-                }),
-              };
-            }
-            return column;
-          });
+  //         return { ...prevState, columns: updatedColumns };
+  //       });
 
-          return { ...prevState, columns: updatedColumns };
-        });
+  //       // Update the comments state
+  //       setComments([
+  //         ...comments,
+  //         { commentBy: userEmail, comment: comment.trim() },
+  //       ]);
 
-        // Update the comments state
-        setComments([
-          ...comments,
-          { commentBy: userEmail, comment: comment.trim() },
-        ]);
+  //       // Clear the comment input
+  //       setComment("");
 
-        // Clear the comment input
-        setComment("");
-
-        // Optionally fetch the latest data from the server
-        await fetchTasks();
-      } catch (error) {
-        console.error("Error saving comment:", error);
-      }
-    }
-  };
+  //       // Optionally fetch the latest data from the server
+  //       await fetchTasks();
+  //     } catch (error) {
+  //       console.error("Error saving comment:", error);
+  //     }
+  //   }
+  // };
 
   const handleRenameCard = async (e) => {
     e.preventDefault();
@@ -1554,10 +1604,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                    ...card,
-                    title: trimmedTitle,
-                    description: trimmedDescription,
-                  }
+                      ...card,
+                      title: trimmedTitle,
+                      description: trimmedDescription,
+                    }
                   : card
               ),
             };
@@ -1582,6 +1632,202 @@ function KanbanBoard() {
     }
   };
 
+  const handleCancel = () => {
+    setRenameCardModalVisible(false);
+    setRenameCardErrors({ title: "", description: "" });
+  };
+
+  // Handle saving title
+  const handleTitleBlur = () => {
+    if (renameCardTitle.trim()) {
+      // Save title logic here
+      console.log("Title saved:", renameCardTitle);
+    }
+  };
+
+  // Handle saving description
+  const handleDescriptionBlur = () => {
+    if (renameCardDescription.trim()) {
+      // Save description logic here
+      console.log("Description saved:", renameCardDescription);
+    }
+  };
+
+  // Handle saving comment when pressing Enter
+  // const handleCommentEnter = (e) => {
+  //   if (e.key === "Enter" && userComment.trim()) {
+  //     setComments([...comments, { commentBy: userEmail, comment: userComment }]);
+  //     setUserComment("");
+  //   }
+  // };
+
+  const items = [
+    {
+      key: "1",
+      label: "Activities",
+      children: (
+        <div className="mt-4 h-96 overflow-y-auto">
+          {activities.length > 0 ? (
+            activities.map((activity, idx) => (
+              <div key={idx} className="mb-4">
+                <Text>{activity.description}</Text>
+                <div className="text-gray-500 text-xs">
+                  {activity.timestamp}
+                </div>
+              </div>
+            ))
+          ) : (
+            <Text>No activities found.</Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "2",
+      label: "Log-in Hours",
+      children: (
+        <div className="mt-4 h-96 overflow-y-auto">
+          {/* Log-in Hours content */}
+          {/* <p>Log-in Hours content goes here...</p> */}
+        </div>
+      ),
+    },
+    {
+      key: "3",
+      label: "Comments",
+      children: (
+        <div className="mt-4 h-96 overflow-y-auto">
+          <div className="flex items-center mb-4 pt-6">
+            <CommentOutlined className="mr-2" />
+            <Title level={4}>Comments</Title>
+          </div>
+
+          <div className="flex items-center mb-2">
+            <Avatar style={{ backgroundColor: "#1890ff" }}>
+              {userEmail.charAt(0).toUpperCase()}
+            </Avatar>
+            <Input
+              value={userComment}
+              onChange={(e) => setUserComment(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveComment();
+                }
+              }}
+              placeholder="Write your comment"
+              className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+            />
+          </div>
+
+          {commentsVisible && comments.length > 0 ? (
+            <List
+              dataSource={comments.slice().reverse()}
+              renderItem={(comment, idx) => (
+                <List.Item
+                  key={idx}
+                  className={`ml-2 text-gray-700 mt-2 ${
+                    idx === 0 ? "bg-gray-100" : "bg-white"
+                  }`}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar style={{ backgroundColor: "#1890ff" }}>
+                        {comment.commentBy[0].toUpperCase()}
+                      </Avatar>
+                    }
+                    title={<strong>{comment.commentBy}</strong>}
+                    description={comment.comment}
+                  />
+                </List.Item>
+              )}
+            />
+          ) : (
+            <Text>No comments yet.</Text>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  // The function for handling comment submission
+  const handleSaveComment = async () => {
+    if (userComment.trim()) {
+      try {
+        const updatedBy = await fetchUserEmail();
+
+        const response = await fetch(
+          `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              updatedBy: updatedBy,
+              comment: userComment.trim(),
+              name: renameCardTitle,
+              description: renameCardDescription,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to save comment");
+        }
+
+        // Update local state immediately
+        setBoardData((prevState) => {
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === selectedColumnId) {
+              return {
+                ...column,
+                cards: column.cards.map((card) => {
+                  if (card.id === selectedCardId) {
+                    return {
+                      ...card,
+                      comments: [
+                        ...card.comments,
+                        { commentBy: userEmail, comment: userComment.trim() },
+                      ],
+                    };
+                  }
+                  return card;
+                }),
+              };
+            }
+            return column;
+          });
+
+          return { ...prevState, columns: updatedColumns };
+        });
+
+        // Update the comments state
+        setComments([
+          ...comments,
+          { commentBy: userEmail, comment: userComment.trim() },
+        ]);
+
+        // Optionally update the activities state as well
+        setActivities([
+          ...activities,
+          {
+            description: `Comment added by ${userEmail}`,
+            timestamp: new Date().toLocaleString(),
+          },
+        ]);
+
+        // Clear the comment input
+        setUserComment("");
+
+        // Optionally fetch the latest data from the server
+        await fetchTasks();
+      } catch (error) {
+        console.error("Error saving comment:", error);
+      }
+    }
+  };
+
   return (
     <div
       className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
@@ -1592,173 +1838,144 @@ function KanbanBoard() {
             backgroundSize: "cover",
             backgroundPosition: "center",
 
-            width: "100%",
-          }
+              width: "100%",
+            }
           : {}
       }
     >
       <div>
-        {renameCardModalVisible && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-3xl w-5/12 relative">
-              {/* Close Icon */}
-              <button
-                onClick={() => {
-                  setRenameCardModalVisible(false);
-                  setRenameCardErrors({ title: "", description: "" });
-                }}
-                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
-              <form onSubmit={handleRenameCard}>
+        <Modal
+          visible={renameCardModalVisible}
+          onCancel={handleCancel}
+          footer={null}
+          width="50%"
+          closeIcon={<CloseOutlined />}
+        >
+          <form onSubmit={handleRenameCard}>
+            <div className="flex justify-between">
+              {/* Left Side: Card Title and Description */}
+              <div className="w-2/3 pr-4">
                 <div className="mb-4">
-                  <input
-                    type="text"
-                    value={renameCardTitle}
-                    onChange={(e) => {
-                      setRenameCardTitle(e.target.value);
-                      setRenameCardErrors((prev) => ({ ...prev, title: "" }));
-                    }}
-                    className={`border ${renameCardErrors.title
-                      ? "border-red-500"
-                      : "border-gray-300"
-                      } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Title"
-                  />
+                  {isEditingTitle ? (
+                    <Input
+                      value={renameCardTitle}
+                      onChange={(e) => {
+                        setRenameCardTitle(e.target.value);
+                        setRenameCardErrors((prev) => ({
+                          ...prev,
+                          title: "",
+                        }));
+                      }}
+                      onBlur={handleTitleBlur}
+                      onPressEnter={handleTitleBlur}
+                      className={`${
+                        renameCardErrors.title
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-xl px-4 py-2 mt-5 w-full`}
+                      placeholder="Card Title"
+                      autoFocus
+                    />
+                  ) : (
+                    <Text
+                      onDoubleClick={() => setIsEditingTitle(true)}
+                      className="cursor-pointer"
+                    >
+                      {renameCardTitle}
+                    </Text>
+                  )}
                   {renameCardErrors.title && (
-                    <p className="text-red-500 text-sm mt-1">
+                    <Text type="danger" className="text-sm mt-1">
                       {renameCardErrors.title}
-                    </p>
+                    </Text>
                   )}
+                </div>
+
+                <div className="mb-4">
+                  {isEditingDescription ? (
+                    <TextArea
+                      value={renameCardDescription}
+                      onChange={(e) => {
+                        setRenameCardDescription(e.target.value);
+                        setRenameCardErrors((prev) => ({
+                          ...prev,
+                          description: "",
+                        }));
+                      }}
+                      onBlur={handleDescriptionBlur}
+                      onPressEnter={handleDescriptionBlur}
+                      className={`${
+                        renameCardErrors.description
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-xl px-4 py-2 w-full`}
+                      placeholder="Card Description"
+                      autoFocus
+                    />
+                  ) : (
+                    <Text
+                      onDoubleClick={() => setIsEditingDescription(true)}
+                      className="cursor-pointer"
+                    >
+                      {renameCardDescription}
+                    </Text>
+                  )}
+                  {renameCardErrors.description && (
+                    <Text type="danger" className="text-sm mt-1">
+                      {renameCardErrors.description}
+                    </Text>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Side: Project Info */}
+              <div className="w-1/3 pl-1">
+                <div className="mb-4">
+                  <Text strong>Project Name:</Text>
+                  <Text>{projectName}</Text>
                 </div>
                 <div className="mb-4">
-                  <textarea
-                    value={renameCardDescription}
-                    onChange={(e) => {
-                      setRenameCardDescription(e.target.value);
-                      setRenameCardErrors((prev) => ({
-                        ...prev,
-                        description: "",
-                      }));
-                    }}
-                    className={`border ${renameCardErrors.description
-                      ? "border-red-500"
-                      : "border-gray-300"
-                      } rounded-3xl px-4 py-2 w-full`}
-                    placeholder="Card Description"
-                  />
-                  {renameCardErrors.description && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {renameCardErrors.description}
-                    </p>
-                  )}
+                  <Text strong>Assigned To:</Text>
+                  <Text>{assignedTo}</Text>
                 </div>
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenameCardModalVisible(false);
-                      setRenameCardErrors({ title: "", description: "" });
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
-                  >
-                    Save
-                  </button>
+                <div className="mb-4">
+                  <Text strong>Assigned By:</Text>
+                  <Text>{assignedBy}</Text>
                 </div>
-              </form>
-              <div className="mt-4 h-96 overflow-y-auto">
-                <div className="flex items-center mb-4 pt-6">
-                  <RxActivityLog size={24} className="mr-2" />
-                  <h2 className="text-lg font-bold">Activity</h2>
-                  <button
-                    onClick={() => setCommentsVisible(!commentsVisible)}
-                    className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
-                  >
-                    {commentsVisible ? "Hide Comments" : "Show Comments"}
-                  </button>
+                <div className="mb-4">
+                  <Text strong>End Date:</Text>
+                  <Text>{endDate}</Text>
                 </div>
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                    {userEmail.charAt(0).toUpperCase()}
-                  </div>
-
-                  <input
-                    type="text"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Write your comment"
-                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSaveComment}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
-                >
-                  Save Comment
-                </button>
-                {commentsVisible && (
-                  <div className="flex flex-col space-y-4 pt-6">
-                    {comments
-                      .slice()
-                      .reverse()
-                      .map((comment, idx) => (
-                        <div
-                          key={idx}
-                          className={`ml-2 text-gray-700 mt-2 flex items-start ${idx === 0
-                            ? "bg-gray-100 p-2 rounded-lg"
-                            : "bg-white p-2 rounded-lg"
-                            }`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
-                            {comment.commentBy[0].toUpperCase()}
-                          </div>
-                          <p className="ml-2">
-                            <span className="font-bold">
-                              {comment.commentBy}
-                            </span>
-                            : {comment.comment}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        )}
 
-        {showSuccessPopup && (
-          <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
-            <div className="bg-green-400 p-2 rounded-xl">
-              <h2 className="text-lg text-white font-bold mb-2">
-                Card renamed successfully
-              </h2>
+            {/* Progress Section */}
+            <div className="flex justify-between mt-6">
+              <div className="w-1/3 pr-4">
+                {/* <Tabs defaultActiveKey="1" items={items} className="mt-0 h-96 w-96" /> */}
+              </div>
+              <div className="w-1/3 pl-1">
+                <Text strong className="block mb-4 text-xl">
+                  Progress
+                </Text>
+                <div className="mb-4">
+                  <Text>Estimated Time:</Text>
+                  <Progress percent={estimatedTimePercent || 0} />
+                </div>
+                <div className="mb-4">
+                  <Text>Utilized Time:</Text>
+                  <Progress percent={utilizedTimePercent || 0} />
+                </div>
+                <div className="mb-4">
+                  <Text>Remaining Time:</Text>
+                  <Progress percent={remainingTimePercent || 0} />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          </form>
+
+          <Tabs defaultActiveKey="1" items={items} className="mt-6" />
+        </Modal>
       </div>
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
@@ -1769,8 +1986,6 @@ function KanbanBoard() {
           </h1>
         </div>
         <div className="flex space-x-2 ">
-
-
           {isModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-slate-700 z-50 bg-opacity-50">
               <div className="bg-white p-6 w-96 rounded-3xl shadow-4xl">
@@ -1834,7 +2049,6 @@ function KanbanBoard() {
             </div>
           )}
 
-
           <Button
             type="primary"
             icon={<Plus />}
@@ -1843,8 +2057,6 @@ function KanbanBoard() {
           >
             New Column
           </Button>
-
-
 
           {/* <Popover
             trigger="click"
@@ -1868,6 +2080,7 @@ function KanbanBoard() {
           </Popover> */}
 
           <>
+          <>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
@@ -1876,12 +2089,13 @@ function KanbanBoard() {
               onClose={onClose}
               visible={visible}
               width={300} // Adjust width as needed
-
             >
               {showBackgroundChange && (
-                <BackgroundChange onClose={() => setShowBackgroundChange(false)} />
+                <BackgroundChange
+                  onClose={() => setShowBackgroundChange(false)}
+                />
               )}
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space direction="vertical" style={{ width: "100%" }}>
                 <Button
                   type="default"
                   icon={<SettingOutlined />}
@@ -1906,9 +2120,6 @@ function KanbanBoard() {
               </Space>
             </Drawer>
           </>
-
-
-
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
@@ -1948,11 +2159,16 @@ function KanbanBoard() {
             </div>
           )}
           renderColumnHeader={({ title, id }) => (
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "300px",
-            }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "300px",
+                // position:"fixed",
+                position: "sticky",
+                // zIndex: 1000,
+              }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -1975,7 +2191,7 @@ function KanbanBoard() {
                     onChange={(e) => setTempColumnName(e.target.value)}
                     onBlur={() => handleColumnNameBlur(id)}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         handleColumnNameBlur(id);
                       }
                     }}
@@ -1983,10 +2199,7 @@ function KanbanBoard() {
                     className="w-full p-1 border rounded"
                   />
                 ) : (
-                  <span
-                    className="truncate max-w-[200px]"
-                    title={title}
-                  >
+                  <span className="truncate max-w-[200px]" title={title}>
                     {title}
                   </span>
                 )}
@@ -2022,16 +2235,15 @@ function KanbanBoard() {
                   borderBottomLeftRadius: "0.375rem",
                   borderBottomRightRadius: "0.375rem",
                   padding: "0.5rem",
-                  color: "#4A5568",
+                  color: "#5f5e5e",
                   textAlign: "center",
-                  paddingLeft: "50%"
+                  paddingLeft: "50%",
                 }}
               >
                 <FaPlus />
               </button>
             </div>
           )}
-
           renderCard={renderCard}
         >
           {boardData}
@@ -2232,7 +2444,6 @@ function KanbanBoard() {
             </Form.Item>
           </Form>
         </Modal>
-
       )}
 
       {modalVisible && modalType === "options" && (
@@ -2309,8 +2520,9 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
-              }`}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
+              isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
+            }`}
           >
             <button
               onClick={closeGitModal}
@@ -2319,21 +2531,31 @@ function KanbanBoard() {
             >
               <X size={24} />
             </button>
-            <h2 className="text-xl font-semibold mb-6 border-b pb-2">Git Configuration</h2>
+            <h2 className="text-xl font-semibold mb-6 border-b pb-2">
+              Git Configuration
+            </h2>
             <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-2">Quick setup — if you've done this kind of thing before</p>
+              <p className="text-sm text-gray-600 mb-2">
+                Quick setup — if you've done this kind of thing before
+              </p>
               <div className="flex justify-between items-center bg-gray-100 p-3 rounded-md shadow-sm">
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
                   className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
                 >
-                  {copiedButton === "button1" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button1" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
             <div className="mb-6">
-              <p className="text-sm font-semibold text-gray-800 mb-2">...or create a new repository on the command line</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                ...or create a new repository on the command line
+              </p>
               <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
                 <pre ref={newRepoRef} className="whitespace-pre-wrap">
                   <code>
@@ -2347,15 +2569,23 @@ git push -u origin main`}
                   </code>
                 </pre>
                 <button
-                  onClick={() => copyToClipboard(newRepoRef.current.innerText, "button2")}
+                  onClick={() =>
+                    copyToClipboard(newRepoRef.current.innerText, "button2")
+                  }
                   className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
                 >
-                  {copiedButton === "button2" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button2" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800 mb-2">...or push an existing repository from the command line</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                ...or push an existing repository from the command line
+              </p>
               <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
                 <pre ref={existingRepoRef} className="whitespace-pre-wrap">
                   {`git remote add origin ${repository}
@@ -2363,17 +2593,25 @@ git branch -M main
 git push -u origin main`}
                 </pre>
                 <button
-                  onClick={() => copyToClipboard(existingRepoRef.current.innerText, "button3")}
+                  onClick={() =>
+                    copyToClipboard(
+                      existingRepoRef.current.innerText,
+                      "button3"
+                    )
+                  }
                   className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
                 >
-                  {copiedButton === "button3" ? "Copied" : <MdOutlineContentCopy />}
+                  {copiedButton === "button3" ? (
+                    "Copied"
+                  ) : (
+                    <MdOutlineContentCopy />
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,6 +1,7 @@
 .react-kanban-card {
   box-sizing: border-box;
   max-width: 240px;
+  max-width: 240px;
   min-width: 300px;
   margin: 1px auto; 
   margin-top: 8px;
@@ -41,6 +42,26 @@
 
 
 
+/* WebKit browsers */
+.react-kanban-column::-webkit-scrollbar {
+  width: 10px; 
+}
+
+.react-kanban-column::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.react-kanban-column::-webkit-scrollbar-thumb {
+  background: #dcdbdb;
+  border-radius: 2px;
+}
+
+.react-kanban-column::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+
+
 .react-kanban-card__title {
   border-bottom: 70px #eee;
   padding-bottom: 5px;
@@ -48,3 +69,4 @@
   display: flex;
   justify-content: space-between;
 }
+

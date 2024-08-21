@@ -17,7 +17,7 @@ import { DownOutlined } from "@ant-design/icons";
 import { Dropdown, Menu, Select } from "antd";
 import { Button } from "antd";
 import { AiOutlineProject } from "react-icons/ai";
-import { FaTasks } from "react-icons/fa";
+import { FaSpinner, FaTasks } from "react-icons/fa";
 import { IoIosPeople } from "react-icons/io";
 
 ChartJS.register(
@@ -425,7 +425,13 @@ const Overview = () => {
   };
 
   if (!overviewData.projects.length) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center mt-80 items-center">
+        {" "}
+        <FaSpinner className="animate-spin" />
+        <span className="items-center ml-2"> Loading...</span>
+      </div>
+    );
   }
 
   return (
@@ -447,7 +453,7 @@ const Overview = () => {
               borderRadius: "8px",
               display: "flex",
               alignItems: "center",
-              width: "200px",
+              width: "210px",
               textAlign: "left",
               position: "relative",
             }}
@@ -467,7 +473,7 @@ const Overview = () => {
             style={{ display: "flex", flexDirection: "column", gap: "16px" }}
           >
             <div className="flex justify-center gap-16">
-              <div className="bg-[#D1E9FC] shadow-lg rounded-2xl p-5 text-center w-60 h-40 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
+              <div className="bg-[#D1E9FC] shadow-lg rounded-2xl p-5 text-center w-52 h-36 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
                 <span className="flex justify-center">
                   <span className="flex justify-center items-center text-xl bg-[#B5CFED] w-10 h-10 rounded-full">
                     <AiOutlineProject />
@@ -482,7 +488,7 @@ const Overview = () => {
                 </p>
               </div>
 
-              <div className="bg-[#FFE7D9] shadow-lg rounded-2xl p-5 text-center w-60 h-40 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
+              <div className="bg-[#FFE7D9] shadow-lg rounded-2xl p-5 text-center w-52 h-36 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
                 <span className="flex justify-center">
                   <span className="flex justify-center text-2xl w-10 h-10 items-center bg-[#F6CAC1] rounded-full">
                     <IoIosPeople color="#A14C60" />
@@ -496,7 +502,7 @@ const Overview = () => {
                 </p>
               </div>
 
-              <div className="bg-[#FFF7CC] shadow-lg rounded-2xl p-5 text-center w-60 h-40 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
+              <div className="bg-[#FFF7CC] shadow-lg rounded-2xl p-5 text-center w-52 h-36 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
                 <span className="flex justify-center">
                   <span className="flex justify-center w-10 h-10 items-center bg-[#FAEEC0] text-xl rounded-full">
                     <FaTasks color="#9c8349" />
@@ -511,16 +517,16 @@ const Overview = () => {
                 </p>
               </div>
 
-              <div className="bg-[#D0F2FE] shadow-lg rounded-2xl p-3 text-center w-60 h-40 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
+              <div className="bg-[#D0F2FE] shadow-lg rounded-2xl p-3 text-center w-52 h-36 transition-transform duration-300 transform hover:scale-105 hover:shadow-xl">
                 <Pie data={data} options={options} />
               </div>
             </div>
 
             <div
               // style={{ flex: 1.2, minWidth: "200px" }}
-              className="flex flex-row justify-around mt-10"
+              className="flex flex-row justify-around mt-6"
             >
-              <div className="shadow-md rounded-md w-[550px]  p-4">
+              <div className="shadow-md rounded-md w-[500px]   p-4">
                 <div
                   style={{
                     display: "flex",
@@ -539,7 +545,7 @@ const Overview = () => {
                   </h3>
                 </div>
 
-                <div className="mt-20">
+                <div className="mt-4">
                   <Doughnut
                     data={selectedUser ? data1 : defaultDoughnutData}
                     options={options}
@@ -547,7 +553,7 @@ const Overview = () => {
                 </div>
               </div>
 
-              <div className="shadow-md rounded-md w-[550px] h-80 p-4">
+              <div className="shadow-md rounded-md w-[500px] h-60 p-4">
                 <h3
                   style={{
                     fontSize: "17px",
@@ -564,7 +570,7 @@ const Overview = () => {
               </div>
             </div>
 
-            <div className="mt-10 p-6">
+            <div className="mt- p-4">
               <h3
                 style={{
                   fontSize: "17px",
@@ -595,25 +601,25 @@ const Overview = () => {
                   >
                     <thead className="sticky top-0 z-10 bg-gray-100">
                       <tr>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Project Name
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Project Members
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Total Tasks
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Pending Tasks
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           In-Progress Tasks
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Completed Tasks
                         </th>
-                        <th className="px-4 py-3 border-b-2 border-gray-200 text-left">
+                        <th className="px-4 py-3 border-b-2 border-gray-200 text-gray-700 text-left">
                           Action
                         </th>
                       </tr>

@@ -95,12 +95,12 @@ const CalendarDateDetails = () => {
     { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
     { title: "Status", dataIndex: "status", key: "status" },
     {
-        title: "End Date",
-        dataIndex: "endDate",
-        key: "endDate",
-        render: (date) => new Date(date).toLocaleDateString('en-GB')
-      }
-,      
+      title: "End Date",
+      dataIndex: "endDate",
+      key: "endDate",
+      render: (date) => new Date(date).toLocaleDateString('en-GB')
+    }
+    ,
     { title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours" },
     { title: "Utilized Hours", dataIndex: "utilizedHours", key: "utilizedHours" },
     {
@@ -137,11 +137,11 @@ const CalendarDateDetails = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-semibold mb-4 text-blue-600">
-  Project Details for {new Date(events[0]?.date).toLocaleDateString('en-GB')}
-</h2>
+        Project Details for {new Date(events[0]?.date).toLocaleDateString('en-GB')}
+      </h2>
 
       <Button onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
-      <Table columns={columns} dataSource={events} rowKey="id" />
+      <Table columns={columns} dataSource={events} rowKey="id" pagination={{ pageSize: 6 }} />
     </div>
   );
 };

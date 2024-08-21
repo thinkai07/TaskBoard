@@ -257,7 +257,7 @@ const cardSchema = new Schema(
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
 
-  
+
   },
   {
     timestamps: { deletedDate: "deletedDate" },
@@ -353,7 +353,7 @@ const taskLogSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Card",
   },
-  projectId:{
+  projectId: {
     type: Schema.Types.ObjectId,
     ref: "Project",
 
@@ -2095,27 +2095,27 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
 
 //added for logs
-app.post('/api/log-hours', async (req, res) => {
-  try {
-    const { taskId, cardId, hours, } = req.body;
-    // const userId = req.user.email; // Assuming you have user authentication middleware
+// app.post('/api/log-hours', async (req, res) => {
+//   try {
+//     const { taskId, cardId, hours, } = req.body;
+//     // const userId = req.user.email; // Assuming you have user authentication middleware
 
-    const newLog = new Tasklogs({
-      taskId,
-      cardId,
-      hours,
+//     const newLog = new Tasklogs({
+//       taskId,
+//       cardId,
+//       hours,
 
-      // loggedBy: userId,
-    });
+//       // loggedBy: userId,
+//     });
 
-    await newLog.save();
+//     await newLog.save();
 
-    res.status(201).json({ message: 'Hours logged successfully', log: newLog });
-  } catch (error) {
-    console.error('Error logging hours:', error);
-    res.status(500).json({ message: 'Error logging hours' });
-  }
-});
+//     res.status(201).json({ message: 'Hours logged successfully', log: newLog });
+//   } catch (error) {
+//     console.error('Error logging hours:', error);
+//     res.status(500).json({ message: 'Error logging hours' });
+//   }
+// });
 
 
 
@@ -2140,6 +2140,7 @@ app.post("/api/notifications", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch notifications" });
   }
 });
+
 app.patch("/api/notifications/:notificationId",
   authenticateToken,
   async (req, res) => {
@@ -2684,6 +2685,9 @@ const calculateUtilizedTime = (pausedAt, resumedAt) => {
   return totalTime;
 };
 
+
+
+//for log hours
 app.post('/api/log-hours', async (req, res) => {
   try {
     const { taskId, cardId, hours, loggedBy, projectId } = req.body;
@@ -2737,6 +2741,7 @@ app.post('/api/log-hours', async (req, res) => {
 
 
 
+//for update status
 app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
   const { status, updatedBy, updatedDate } = req.body;
@@ -2803,6 +2808,10 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error updating card status" });
   }
 });
+
+
+
+
 
 // //teams related apis
 
@@ -3670,7 +3679,7 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
         projectManager: userEmail,
       }).select("_id");
 
-        const managedProjectIds = managedProjects.map((project) => project._id);
+      const managedProjectIds = managedProjects.map((project) => project._id);
 
       assignedCards = await Card.find({
         $or: [
@@ -3718,7 +3727,7 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
           type: "Assign Date",
           estimatedHours: card.estimatedHours,
           utilizedHours: hoursMap[card._id] || 0,  // Include total logged hours
-          endDate:card.dueDate,
+          endDate: card.dueDate,
         },
       ])
       .filter((event) => event.date);

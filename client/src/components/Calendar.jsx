@@ -64,7 +64,7 @@ const Calendar = () => {
           }
         );
         setEvents(response.data);
-        console.log("projectid",response.data)
+        console.log("projectid", response.data)
       } catch (error) {
         console.error("Error fetching events:", error);
       }

@@ -40,52 +40,7 @@ const initialBoard = {
   columns: [],
 };
 
-const TimeProgressBar = ({ assignDate, dueDate }) => {
-  const [progress, setProgress] = useState(0);
-  const [isOverdue, setIsOverdue] = useState(false);
 
-  useEffect(() => {
-    const updateProgress = () => {
-      const now = new Date();
-      const start = new Date(assignDate);
-      const end = new Date(dueDate);
-      const total = end - start;
-      const elapsed = now - start;
-
-      if (now > end) {
-        setProgress(100);
-        setIsOverdue(true);
-      } else {
-        const calculatedProgress = (elapsed / total) * 100;
-        setProgress(Math.min(calculatedProgress, 100));
-        setIsOverdue(false);
-      }
-    };
-
-    updateProgress();
-    const timer = setInterval(updateProgress, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, [assignDate, dueDate]);
-
-  return (
-    <div
-      className="relative h-3 w-full rounded-lg"
-      style={{
-        background: isOverdue
-          ? "#ff4d4d"
-          : `linear-gradient(to right, #3b82f6 ${progress}%, #e5e7eb ${progress}%)`,
-      }}
-    >
-      <div
-        className="absolute inset-0 flex items-center justify-center text-black font-bold"
-        style={{ fontSize: "0.75rem" }}
-      >
-        {Math.round(progress)}%
-      </div>
-    </div>
-  );
-};
 
 function KanbanBoard() {
   useTokenValidation();
@@ -333,9 +288,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -510,7 +465,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -557,6 +512,7 @@ function KanbanBoard() {
               assignDate: card.assignDate,
               dueDate: card.dueDate,
               comments: card.comments || [],
+
             })),
           };
         })
@@ -624,7 +580,7 @@ function KanbanBoard() {
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
     const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
-  
+
     if (
       !cardTitle ||
       !cardDescription ||
@@ -639,10 +595,10 @@ function KanbanBoard() {
       });
       return;
     }
-  
+
     try {
       const createdBy = await fetchUserEmail();
-  
+
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -653,11 +609,11 @@ function KanbanBoard() {
           },
         }
       );
-  
+
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
-  
+
       const { users } = await searchResponse.json();
       if (users.length === 0) {
         notification.warning({
@@ -665,7 +621,7 @@ function KanbanBoard() {
         });
         return;
       }
-  
+
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -685,29 +641,32 @@ function KanbanBoard() {
           }),
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-  
+
       await clearFieldsAndRefresh();
       e.target.title.value = "";
       e.target.description.value = "";
       e.target.estimatedHours.value = "";
       setEmail("");
-  
+
       setModalVisible(false);
-  
+
       await fetchTasks();
       notification.success({
+
         message: 'Task added Successfully',
+
+
       });
     } catch (error) {
       console.error("Error adding card:", error);
       alert(error.message);
     }
   };
-  
+
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
     setEmail(emailInput);
@@ -933,9 +892,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -1602,10 +1561,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1664,7 +1623,7 @@ function KanbanBoard() {
       key: "1",
       label: "Activities",
       children: (
-        <div className="mt-4 h-96 overflow-y-auto">
+        <div className="mt- h-96 overflow-y-auto">
           {activities.length > 0 ? (
             activities.map((activity, idx) => (
               <div key={idx} className="mb-4">
@@ -1723,9 +1682,8 @@ function KanbanBoard() {
               renderItem={(comment, idx) => (
                 <List.Item
                   key={idx}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
+                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                    }`}
                 >
                   <List.Item.Meta
                     avatar={
@@ -1832,148 +1790,160 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
+
             backgroundImage: `url(${bgUrl.raw})`,
             backgroundSize: "cover",
-            backgroundPosition: "center", 
+            backgroundPosition: "center",
 
-              width: "100%",
-            }
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+
+
+            width: "100%",
+          }
           : {}
       }
     >
       <div>
-        <Modal
-          visible={renameCardModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-          width="50%"
-          closeIcon={<CloseOutlined />}
-        >
-          <form onSubmit={handleRenameCard}>
-            <div className="flex justify-between">
-              {/* Left Side: Card Title and Description */}
-              <div className="w-2/3 pr-4">
-                <div className="mb-4">
-                  {isEditingTitle ? (
-                    <Input
-                      value={renameCardTitle}
-                      onChange={(e) => {
-                        setRenameCardTitle(e.target.value);
-                        setRenameCardErrors((prev) => ({
-                          ...prev,
-                          title: "",
-                        }));
-                      }}
-                      onBlur={handleTitleBlur}
-                      onPressEnter={handleTitleBlur}
-                      className={`${
-                        renameCardErrors.title
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 mt-5 w-full`}
-                      placeholder="Card Title"
-                      autoFocus
-                    />
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingTitle(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardTitle}
-                    </Text>
-                  )}
-                  {renameCardErrors.title && (
-                    <Text type="danger" className="text-sm mt-1">
-                      {renameCardErrors.title}
-                    </Text>
-                  )}
-                </div>
+      <Modal
+  visible={renameCardModalVisible}
+  onCancel={handleCancel}
+  footer={null}
+  width="60%"
+  closeIcon={<CloseOutlined />}
+  centered
+  className="rounded-lg shadow-lg"
+  bodyStyle={{ padding: '20px', maxHeight: '80vh' }}
+>
+  <form onSubmit={handleRenameCard}>
+    <div className="flex justify-between">
+      {/* Left Side: Card Title and Description */}
+      <div className="w-2/3 pr-4">
+        <div className="mb-4">
+          {isEditingTitle ? (
+            <Input
+              value={renameCardTitle}
+              onChange={(e) => {
+                setRenameCardTitle(e.target.value);
+                setRenameCardErrors((prev) => ({
+                  ...prev,
+                  title: "",
+                }));
+              }}
+              onBlur={handleTitleBlur}
+              onPressEnter={handleTitleBlur}
+              className={`${renameCardErrors.title ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-2 mt-5 w-full`}
+              placeholder="Card Title"
+              autoFocus
+            />
+          ) : (
+            <Text
+              onDoubleClick={() => setIsEditingTitle(true)}
+              className="cursor-pointer"
+            >
+              {renameCardTitle}
+            </Text>
+          )}
+          {renameCardErrors.title && (
+            <Text type="danger" className="text-sm mt-1">
+              {renameCardErrors.title}
+            </Text>
+          )}
+        </div>
 
-                <div className="mb-4">
-                  {isEditingDescription ? (
-                    <TextArea
-                      value={renameCardDescription}
-                      onChange={(e) => {
-                        setRenameCardDescription(e.target.value);
-                        setRenameCardErrors((prev) => ({
-                          ...prev,
-                          description: "",
-                        }));
-                      }}
-                      onBlur={handleDescriptionBlur}
-                      onPressEnter={handleDescriptionBlur}
-                      className={`${
-                        renameCardErrors.description
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 w-full`}
-                      placeholder="Card Description"
-                      autoFocus
-                    />
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingDescription(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardDescription}
-                    </Text>
-                  )}
-                  {renameCardErrors.description && (
-                    <Text type="danger" className="text-sm mt-1">
-                      {renameCardErrors.description}
-                    </Text>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Side: Project Info */}
-              <div className="w-1/3 pl-1">
-                <div className="mb-4">
-                  <Text strong>Project Name:</Text>
-                  <Text>{projectName}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned To:</Text>
-                  <Text>{assignedTo}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned By:</Text>
-                  <Text>{assignedBy}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>End Date:</Text>
-                  <Text>{endDate}</Text>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Section */}
-            <div className="flex justify-between mt-6">
-              <div className="w-1/3 pr-4">
-                {/* <Tabs defaultActiveKey="1" items={items} className="mt-0 h-96 w-96" /> */}
-              </div>
-              <div className="w-1/3 pl-1">
-                <Text strong className="block mb-4 text-xl">
-                  Progress
+        <div className="mb-4">
+          {isEditingDescription ? (
+            <>
+              <TextArea
+                value={renameCardDescription}
+                onChange={(e) => {
+                  setRenameCardDescription(e.target.value);
+                  setRenameCardErrors((prev) => ({
+                    ...prev,
+                    description: "",
+                  }));
+                }}
+                onBlur={handleDescriptionBlur}
+                onPressEnter={handleDescriptionBlur}
+                className={`${renameCardErrors.description ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-2 w-full`}
+                placeholder="Card Description"
+                autoFocus
+              />
+              {renameCardErrors.description && (
+                <Text type="danger" className="text-sm mt-1">
+                  {renameCardErrors.description}
                 </Text>
-                <div className="mb-4">
-                  <Text>Estimated Time:</Text>
-                  <Progress percent={estimatedTimePercent || 0} />
-                </div>
-                <div className="mb-4">
-                  <Text>Utilized Time:</Text>
-                  <Progress percent={utilizedTimePercent || 0} />
-                </div>
-                <div className="mb-4">
-                  <Text>Remaining Time:</Text>
-                  <Progress percent={remainingTimePercent || 0} />
-                </div>
+              )}
+              <div className="flex justify-end mt-4">
+                <Button
+                  onClick={() => setIsEditingDescription(false)}
+                  className="mr-2"
+                >
+                  Cancel
+                </Button>
+                <Button type="primary" onClick={handleRenameCard}>
+                  Save
+                </Button>
               </div>
-            </div>
-          </form>
+            </>
+          ) : (
+            <Text
+              onDoubleClick={() => setIsEditingDescription(true)}
+              className="cursor-pointer"
+            >
+              {renameCardDescription}
+            </Text>
+          )}
+        </div>
 
-          <Tabs defaultActiveKey="1" items={items} className="mt-6" />
-        </Modal>
+        <div className="mb-4">
+          <Tabs defaultActiveKey="1" items={items} />
+        </div>
+      </div>
+
+      {/* Right Side: Project Info */}
+      <div className="w-1/3 pl-4">
+        <div className="mb-4">
+          <Text strong>Project Name:</Text>
+          <Text>{projectName}</Text>
+        </div>
+        <div className="mb-4">
+          <Text strong>Assigned To:</Text>
+          <Text>{assignedTo}</Text>
+        </div>
+        <div className="mb-4">
+          <Text strong>Assigned By:</Text>
+          <Text>{assignedBy}</Text>
+        </div>
+        <div className="mb-4">
+          <Text strong>End Date:</Text>
+          <Text>{endDate}</Text>
+        </div>
+        <div className="flex justify-between mt-6">
+          <div className="w-full mt-20 ">
+            <Text strong className="block mb-4 text-xl">
+              Progress
+            </Text>
+            <div className="mb-4">
+              <Text>Estimated Time:</Text>
+              <Progress percent={estimatedTimePercent || 0} />
+            </div>
+            <div className="mb-4">
+              <Text>Utilized Time:</Text>
+              <Progress percent={utilizedTimePercent || 0} />
+            </div>
+            <div className="mb-4">
+              <Text>Remaining Time:</Text>
+              <Progress percent={remainingTimePercent || 0} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</Modal>
+
       </div>
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
@@ -2171,10 +2141,16 @@ function KanbanBoard() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+
+                  marginBottom: "0.5rem",
+                  padding: "0.5rem",
+                  backgroundColor: "#F7FAFC",
+
                   // marginBottom: "0.5rem",
                   // padding: "0.5rem",
 
                   backgroundColor: "#ededed",
+
                   // borderRadius: "20px",
                 }}
                 onDoubleClick={() => {
@@ -2338,21 +2314,21 @@ function KanbanBoard() {
                 className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
               />
 
-<label
-          htmlFor="estimatedHours"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Estimated Hours
-        </label>
-        <input
-          type="number"
-          name="estimatedHours"
-          className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-          placeholder="Estimated Hours"
-          required
-          min="0"
-          step="0.1"
-        />
+              <label
+                htmlFor="estimatedHours"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Estimated Hours
+              </label>
+              <input
+                type="number"
+                name="estimatedHours"
+                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
+                placeholder="Estimated Hours"
+                required
+                min="0"
+                step="0.1"
+              />
 
               {/* Email suggestions list */}
               <div className="flex px-4 py-2 justify-between">
@@ -2518,9 +2494,8 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
-              isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
           >
             <button
               onClick={closeGitModal}

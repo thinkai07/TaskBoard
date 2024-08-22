@@ -17,7 +17,6 @@ import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useNavigate, useLocation } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";

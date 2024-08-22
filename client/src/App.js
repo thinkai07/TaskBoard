@@ -19,6 +19,7 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
+import CalendarDateDetails from './Pages/CalendarDateDetails';
 
 
 
@@ -88,6 +89,7 @@ const App = () => {
                   <Route path="/Teamsorg" element={<Teamsorg/>} /> 
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
                   <Route path="/Rules" element={<RulesButton/>} /> 
+                  <Route path="/calendar/:date" element={<CalendarDateDetails />} />
                 </Routes>
               </Layout>
             ) : (

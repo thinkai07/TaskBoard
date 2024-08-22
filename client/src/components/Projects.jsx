@@ -7,6 +7,7 @@ import useTokenValidation from "./UseTockenValidation";
 import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {images as staticImages} from '../assets/Images'
 import dayjs from "dayjs";
 import {
   Card,
@@ -83,13 +84,14 @@ const fetchUnsplashImages = async () => {
   try {
     const response = await axios.get('https://api.unsplash.com/photos/random', {
       params: {
-        count: 10,
+        count: 8,
         client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
       }
     });
     setUnsplashImages(response.data);
   } catch (error) {
     console.error('Error fetching Unsplash images:', error);
+    setUnsplashImages(staticImages);
   }
 };
 
@@ -789,3 +791,21 @@ useEffect(() => {
 };
 
 export default Projects;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

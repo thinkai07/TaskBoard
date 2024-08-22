@@ -4,11 +4,10 @@
   min-width: 300px;
   margin: 1px auto; 
   margin-top: 8px;
-  background-color: #f7f6f6; 
+  background-color: #fffafa; 
   padding: 12px; 
   border-radius: 5px; 
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-  
 }
 
 .react-kanban-column {

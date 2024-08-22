@@ -9,11 +9,13 @@ import {
   Calendar as AntCalendar,
   Badge,
   Button,
-  Modal,
   Select,
   InputNumber,
   Table,
   Tooltip,
+  Popover,
+  Input,
+  message
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
@@ -23,12 +25,13 @@ const Calendar = () => {
   useTokenValidation();
   const [events, setEvents] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedEvents, setSelectedEvents] = useState([]);
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const navigate = useNavigate();
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [logHoursVisible, setLogHoursVisible] = useState(false);
+  const [loggedHours, setLoggedHours] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -61,6 +64,7 @@ const Calendar = () => {
           }
         );
         setEvents(response.data);
+        console.log("projectid",response.data)
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -89,16 +93,8 @@ const Calendar = () => {
       (event) => dayjs(event.date).format("YYYY-MM-DD") === date
     );
     if (eventsForSelectedDate.length > 0) {
-      setSelectedDate(date);
-      setShowModal(true);
-      setSelectedEvents(eventsForSelectedDate);
+      navigate(`/calendar/${date}`, { state: { events: eventsForSelectedDate } });
     }
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setSelectedDate(null);
-    setSelectedEvents([]);
   };
 
   const handleChangeMonth = (value) => {
@@ -149,26 +145,25 @@ const Calendar = () => {
     );
   };
 
-  const handleViewProjectTasks = (projectId) => {
-    navigate(`/projects/${projectId}/view`);
-  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`${server}/api/user`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.data.success) {
+          setUserEmail(response.data.user.email);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        message.error("Failed to fetch user data");
+      }
+    };
 
-  const columns = [
-    { title: "Project Name", dataIndex: "projectName", key: "projectName" },
-    { title: "Task Name", dataIndex: "taskName", key: "taskName" },
-    { title: "Column Name", dataIndex: "cardName", key: "cardName" },
-    { title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo" },
-    { title: "Status", dataIndex: "status", key: "status" },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Button type="primary" onClick={() => handleViewProjectTasks(record.projectId)}>
-          View
-        </Button>
-      ),
-    },
-  ];
+    fetchUserData();
+  }, []);
 
   return (
     <div className="p-4 text-md">
@@ -258,15 +253,6 @@ const Calendar = () => {
           );
         })}
       </div>
-      <Modal
-        visible={showModal}
-        title={`Project Details for ${selectedDate}`}
-        onCancel={handleModalClose}
-        footer={null}
-        width="80%"
-      >
-        <Table columns={columns} dataSource={selectedEvents} rowKey="id" />
-      </Modal>
     </div>
   );
 };

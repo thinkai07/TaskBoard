@@ -165,6 +165,7 @@ function KanbanBoard() {
 
   const { TextArea } = Input;
   const { Text, Title } = Typography;
+  const [taskLogs, setTaskLogs] = useState([]);
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -333,9 +334,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -510,7 +511,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -557,6 +558,9 @@ function KanbanBoard() {
               assignDate: card.assignDate,
               dueDate: card.dueDate,
               comments: card.comments || [],
+              activities: card.activities || [],
+              taskLogs: card.taskLogs || [],
+              estimatedHours: card.estimatedHours
 
             })),
           };
@@ -565,6 +569,7 @@ function KanbanBoard() {
       setBgUrl(bgUrl);
       console.log(bgUrl);
       setBoardData({ columns });
+
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
@@ -591,7 +596,10 @@ function KanbanBoard() {
     cardId,
     currentTitle,
     currentDescription,
-    currentComments
+    currentComments,
+    currentActivities,
+    currentTaskLogs,
+
   ) => {
     console.log("openRenameCardModal called with:", cardId, currentComments);
 
@@ -601,6 +609,8 @@ function KanbanBoard() {
     setRenameCardDescription(currentDescription);
     setComments(currentComments || []); // Ensure comments are set correctly
     setRenameCardModalVisible(true);
+    setActivities(currentActivities || [])
+    setTaskLogs(currentTaskLogs || []);
   };
 
   const clearFieldsAndRefresh = async () => {
@@ -625,6 +635,7 @@ function KanbanBoard() {
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
     const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
+
 
     if (
       !cardTitle ||
@@ -701,7 +712,10 @@ function KanbanBoard() {
 
       await fetchTasks();
       notification.success({
+
         message: 'Task added Successfully',
+
+
       });
     } catch (error) {
       console.error("Error adding card:", error);
@@ -934,9 +948,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -1366,7 +1380,9 @@ function KanbanBoard() {
               card.id,
               card.title,
               card.description,
-              card.comments
+              card.comments,
+              card.activities,
+              card.taskLogs,
             )
           }
         >
@@ -1447,7 +1463,9 @@ function KanbanBoard() {
                 card.id,
                 card.title,
                 card.description,
-                card.comments
+                card.comments,
+                card.activities,
+                card.taskLogs
               );
             }}
             style={{ color: "black", marginTop: "4%" }}
@@ -1480,74 +1498,6 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
-  // const handleSaveComment = async () => {
-  //   if (comment.trim()) {
-  //     try {
-  //       const updatedBy = await fetchUserEmail();
-
-  //       const response = await fetch(
-  //         `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-  //         {
-  //           method: "PUT",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //           },
-  //           body: JSON.stringify({
-  //             updatedBy: updatedBy,
-  //             comment: comment.trim(),
-  //             name: renameCardTitle,
-  //             description: renameCardDescription,
-  //           }),
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error("Failed to save comment");
-  //       }
-
-  //       // Update local state immediately
-  //       setBoardData((prevState) => {
-  //         const updatedColumns = prevState.columns.map((column) => {
-  //           if (column.id === selectedColumnId) {
-  //             return {
-  //               ...column,
-  //               cards: column.cards.map((card) => {
-  //                 if (card.id === selectedCardId) {
-  //                   return {
-  //                     ...card,
-  //                     comments: [
-  //                       ...card.comments,
-  //                       { commentBy: userEmail, comment: comment.trim() },
-  //                     ],
-  //                   };
-  //                 }
-  //                 return card;
-  //               }),
-  //             };
-  //           }
-  //           return column;
-  //         });
-
-  //         return { ...prevState, columns: updatedColumns };
-  //       });
-
-  //       // Update the comments state
-  //       setComments([
-  //         ...comments,
-  //         { commentBy: userEmail, comment: comment.trim() },
-  //       ]);
-
-  //       // Clear the comment input
-  //       setComment("");
-
-  //       // Optionally fetch the latest data from the server
-  //       await fetchTasks();
-  //     } catch (error) {
-  //       console.error("Error saving comment:", error);
-  //     }
-  //   }
-  // };
 
   const handleRenameCard = async (e) => {
     e.preventDefault();
@@ -1603,10 +1553,10 @@ function KanbanBoard() {
               cards: column.cards.map((card) =>
                 card.id === selectedCardId
                   ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
+                    ...card,
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  }
                   : card
               ),
             };
@@ -1652,13 +1602,7 @@ function KanbanBoard() {
     }
   };
 
-  // Handle saving comment when pressing Enter
-  // const handleCommentEnter = (e) => {
-  //   if (e.key === "Enter" && userComment.trim()) {
-  //     setComments([...comments, { commentBy: userEmail, comment: userComment }]);
-  //     setUserComment("");
-  //   }
-  // };
+
 
   const items = [
     {
@@ -1667,14 +1611,26 @@ function KanbanBoard() {
       children: (
         <div className="mt-4 h-96 overflow-y-auto">
           {activities.length > 0 ? (
-            activities.map((activity, idx) => (
-              <div key={idx} className="mb-4">
-                <Text>{activity.description}</Text>
-                <div className="text-gray-500 text-xs">
-                  {activity.timestamp}
-                </div>
-              </div>
-            ))
+            <List
+              dataSource={activities}
+              renderItem={(activity, idx) => (
+                <List.Item
+                  key={activity.id}
+                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                    }`}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar style={{ backgroundColor: "#1890ff" }}>
+                        {activity.commentBy[0].toUpperCase()}
+                      </Avatar>
+                    }
+                    title={<strong>{activity.commentBy}</strong>}
+                    description={activity.comment}
+                  />
+                </List.Item>
+              )}
+            />
           ) : (
             <Text>No activities found.</Text>
           )}
@@ -1686,8 +1642,30 @@ function KanbanBoard() {
       label: "Log-in Hours",
       children: (
         <div className="mt-4 h-96 overflow-y-auto">
-          {/* Log-in Hours content */}
-          {/* <p>Log-in Hours content goes here...</p> */}
+          {taskLogs.length > 0 ? (
+            <List
+              dataSource={taskLogs}
+              renderItem={(taskLog, idx) => (
+                <List.Item
+                  key={taskLog.id}
+                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                    }`}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar style={{ backgroundColor: "#1890ff" }}>
+                        {taskLog.loggedBy.name[0].toUpperCase()}
+                      </Avatar>
+                    }
+                    title={<strong>{taskLog.loggedBy.name}</strong>}
+                    description={taskLog.hours}
+                  />
+                </List.Item>
+              )}
+            />
+          ) : (
+            <Text>No log-in hours found.</Text>
+          )}
         </div>
       ),
     },
@@ -1724,9 +1702,8 @@ function KanbanBoard() {
               renderItem={(comment, idx) => (
                 <List.Item
                   key={idx}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
+                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                    }`}
                 >
                   <List.Item.Meta
                     avatar={
@@ -1747,6 +1724,8 @@ function KanbanBoard() {
       ),
     },
   ];
+
+
 
   // The function for handling comment submission
   const handleSaveComment = async () => {
@@ -1789,6 +1768,10 @@ function KanbanBoard() {
                         ...card.comments,
                         { commentBy: userEmail, comment: userComment.trim() },
                       ],
+                      activities: [
+                        ...card.activities,
+                        { commentBy: userEmail, comment: userComment.trim() }
+                      ],
                     };
                   }
                   return card;
@@ -1807,14 +1790,7 @@ function KanbanBoard() {
           { commentBy: userEmail, comment: userComment.trim() },
         ]);
 
-        // Optionally update the activities state as well
-        setActivities([
-          ...activities,
-          {
-            description: `Comment added by ${userEmail}`,
-            timestamp: new Date().toLocaleString(),
-          },
-        ]);
+
 
         // Clear the comment input
         setUserComment("");
@@ -1833,12 +1809,18 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
+
             backgroundImage: `url(${bgUrl.raw})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
 
-              width: "100%",
-            }
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+
+
+            width: "100%",
+          }
           : {}
       }
     >
@@ -1847,8 +1829,11 @@ function KanbanBoard() {
           visible={renameCardModalVisible}
           onCancel={handleCancel}
           footer={null}
-          width="50%"
+          width="60%"
           closeIcon={<CloseOutlined />}
+          centered
+          className="rounded-lg shadow-lg"
+          bodyStyle={{ padding: '20px', maxHeight: '80vh' }}
         >
           <form onSubmit={handleRenameCard}>
             <div className="flex justify-between">
@@ -1867,11 +1852,10 @@ function KanbanBoard() {
                       }}
                       onBlur={handleTitleBlur}
                       onPressEnter={handleTitleBlur}
-                      className={`${
-                        renameCardErrors.title
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 mt-5 w-full`}
+                      className={`${renameCardErrors.title
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        } rounded-xl px-4 py-2 mt-5 w-full`}
                       placeholder="Card Title"
                       autoFocus
                     />
@@ -1888,9 +1872,11 @@ function KanbanBoard() {
                       {renameCardErrors.title}
                     </Text>
                   )}
+
                 </div>
 
-                <div className="mb-4">
+
+                {/* <div className="mb-4">
                   {isEditingDescription ? (
                     <TextArea
                       value={renameCardDescription}
@@ -1903,11 +1889,10 @@ function KanbanBoard() {
                       }}
                       onBlur={handleDescriptionBlur}
                       onPressEnter={handleDescriptionBlur}
-                      className={`${
-                        renameCardErrors.description
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 w-full`}
+                      className={`${renameCardErrors.description
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        } rounded-xl px-4 py-2 w-full`}
                       placeholder="Card Description"
                       autoFocus
                     />
@@ -1924,11 +1909,59 @@ function KanbanBoard() {
                       {renameCardErrors.description}
                     </Text>
                   )}
+                </div> */}
+
+                <div className="mb-4">
+                  {isEditingDescription ? (
+                    <>
+                      <TextArea
+                        value={renameCardDescription}
+                        onChange={(e) => {
+                          setRenameCardDescription(e.target.value);
+                          setRenameCardErrors((prev) => ({
+                            ...prev,
+                            description: "",
+                          }));
+                        }}
+                        onBlur={handleDescriptionBlur}
+                        onPressEnter={handleDescriptionBlur}
+                        className={`${renameCardErrors.description ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-2 w-full`}
+                        placeholder="Card Description"
+                        autoFocus
+                      />
+                      {renameCardErrors.description && (
+                        <Text type="danger" className="text-sm mt-1">
+                          {renameCardErrors.description}
+                        </Text>
+                      )}
+                      <div className="flex justify-end mt-4">
+                        <Button
+                          onClick={() => setIsEditingDescription(false)}
+                          className="mr-2"
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="primary" onClick={handleRenameCard}>
+                          Save
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Text
+                      onDoubleClick={() => setIsEditingDescription(true)}
+                      className="cursor-pointer"
+                    >
+                      {renameCardDescription}
+                    </Text>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <Tabs defaultActiveKey="1" items={items} />
                 </div>
               </div>
 
               {/* Right Side: Project Info */}
-              <div className="w-1/3 pl-1">
+              <div className="w-1/3 pl-4">
                 <div className="mb-4">
                   <Text strong>Project Name:</Text>
                   <Text>{projectName}</Text>
@@ -1945,35 +1978,35 @@ function KanbanBoard() {
                   <Text strong>End Date:</Text>
                   <Text>{endDate}</Text>
                 </div>
+                <div className="flex justify-between mt-6">
+
+                  <div className="w-full mt-20 ">
+                    <Text strong className="block mb-4 text-xl">
+                      Progress
+                    </Text>
+                    <div className="mb-4">
+                      <Text>Estimated Time:</Text>
+                      <Progress percent={estimatedTimePercent || 0} />
+                    </div>
+                    <div className="mb-4">
+                      <Text>Utilized Time:</Text>
+                      <Progress percent={utilizedTimePercent || 0} />
+                    </div>
+                    <div className="mb-4">
+                      <Text>Remaining Time:</Text>
+                      <Progress percent={remainingTimePercent || 0} />
+                    </div>
+                  </div>
+                </div>
               </div>
+
             </div>
 
             {/* Progress Section */}
-            <div className="flex justify-between mt-6">
-              <div className="w-1/3 pr-4">
-                {/* <Tabs defaultActiveKey="1" items={items} className="mt-0 h-96 w-96" /> */}
-              </div>
-              <div className="w-1/3 pl-1">
-                <Text strong className="block mb-4 text-xl">
-                  Progress
-                </Text>
-                <div className="mb-4">
-                  <Text>Estimated Time:</Text>
-                  <Progress percent={estimatedTimePercent || 0} />
-                </div>
-                <div className="mb-4">
-                  <Text>Utilized Time:</Text>
-                  <Progress percent={utilizedTimePercent || 0} />
-                </div>
-                <div className="mb-4">
-                  <Text>Remaining Time:</Text>
-                  <Progress percent={remainingTimePercent || 0} />
-                </div>
-              </div>
-            </div>
+
           </form>
 
-          <Tabs defaultActiveKey="1" items={items} className="mt-6" />
+          {/* <Tabs defaultActiveKey="1" items={items} className="mt-6" /> */}
         </Modal>
       </div>
       {/* <div className="flex justify-between items-center mb-4"> */}
@@ -2079,7 +2112,6 @@ function KanbanBoard() {
           </Popover> */}
 
           <>
-          <>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
@@ -2173,9 +2205,16 @@ function KanbanBoard() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+
                   marginBottom: "0.5rem",
                   padding: "0.5rem",
                   backgroundColor: "#F7FAFC",
+
+                  // marginBottom: "0.5rem",
+                  // padding: "0.5rem",
+
+                  backgroundColor: "#ededed",
+
                   // borderRadius: "20px",
                 }}
                 onDoubleClick={() => {
@@ -2519,9 +2558,8 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
-              isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
           >
             <button
               onClick={closeGitModal}

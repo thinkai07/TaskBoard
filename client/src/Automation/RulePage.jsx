@@ -1,11 +1,11 @@
+// // //rulespage.jsx with antd
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined, ToolOutlined } from "@ant-design/icons";
+import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined,ToolOutlined } from "@ant-design/icons";
 import { Button, Select, Input, Modal, Card, Steps, Typography, Space, Dropdown, Menu } from "antd";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
-import useTokenValidation from "../components/UseTockenValidation";
-
+import useTokenValidation from "./UseTockenValidation";
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -53,22 +53,22 @@ function RulesButton({ tasks }) {
   const [cardStatuses, setCardStatuses] = useState([]);
   const [createdByCondition, setCreatedByCondition] = useState("");
 
-  useEffect(() => {
-    const fetchUserEmail = async () => {
-      try {
-        const response = await axios.get(`${server}/api/user`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        setUserEmail(response.data.user.email);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
+    useEffect(() => {
+        const fetchUserEmail = async () => {
+            try {
+                const response = await axios.get(`${server}/api/user`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                setUserEmail(response.data.user.email);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
 
-    fetchUserEmail();
-  }, []);
+        fetchUserEmail();
+    }, []);
 
   useEffect(() => {
     const fetchRules = async () => {
@@ -82,10 +82,10 @@ function RulesButton({ tasks }) {
       }
     };
 
-    if (projectId) {
-      fetchRules();
-    }
-  }, [projectId]);
+        if (projectId) {
+            fetchRules();
+        }
+    }, [projectId]);
 
   useEffect(() => {
     const fetchCardStatuses = async () => {
@@ -105,18 +105,18 @@ function RulesButton({ tasks }) {
     fetchCardStatuses();
   }, []);
 
-  const openRulesUI = () => {
-    setIsOpen(false);
-    setShowRulesUI(true);
-  };
+    const openRulesUI = () => {
+        setIsOpen(false);
+        setShowRulesUI(true);
+    };
 
-  const handleAddTrigger = () => {
-    setShowTriggers(true);
-  };
+    const handleAddTrigger = () => {
+        setShowTriggers(true);
+    };
 
-  const handleTriggerSelect = (trigger) => {
-    setSelectedTrigger(trigger);
-  };
+    const handleTriggerSelect = (trigger) => {
+        setSelectedTrigger(trigger);
+    };
 
   const handleAddButtonClick = () => {
     setTriggerAdded(true);
@@ -140,18 +140,18 @@ function RulesButton({ tasks }) {
     }
   };
 
-  const handleActionSelect = (action) => {
-    setSelectedAction(action);
-  };
+    const handleActionSelect = (action) => {
+        setSelectedAction(action);
+    };
 
-  const handleSaveRule = async () => {
-    try {
-      let triggerSentence = "";
-      if (selectedTrigger === "Card Move") {
-        triggerSentence = `When card status is marked as ${triggerCondition}`;
-      } else if (selectedTrigger === "Card Changes") {
-        triggerSentence = `When card is moved to ${triggerCondition}`;
-      }
+    const handleSaveRule = async () => {
+        try {
+            let triggerSentence = "";
+            if (selectedTrigger === "Card Move") {
+                triggerSentence = `When card status is marked as ${triggerCondition}`;
+            } else if (selectedTrigger === "Card Changes") {
+                triggerSentence = `When card is moved to ${triggerCondition}`;
+            }
 
       let actionSentence = "";
       if (selectedAction === "Move to List") {
@@ -209,19 +209,19 @@ function RulesButton({ tasks }) {
     setRuleToDelete(null);
   };
 
-  const confirmDelete = async () => {
-    if (ruleToDelete) {
-      try {
-        await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        setRules(rules.filter((rule) => rule._id !== ruleToDelete));
-        closeDeleteConfirmation();
-      } catch (error) {
-        console.error("Error deleting rule:", error);
-      }
-    }
-  };
+    const confirmDelete = async () => {
+        if (ruleToDelete) {
+            try {
+                await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setRules(rules.filter((rule) => rule._id !== ruleToDelete));
+                closeDeleteConfirmation();
+            } catch (error) {
+                console.error("Error deleting rule:", error);
+            }
+        }
+    };
 
   const menu = (
     <Menu>
@@ -230,33 +230,37 @@ function RulesButton({ tasks }) {
       </Menu.Item>
     </Menu>
   );
-
   return (
     <div className="relative">
-      <Dropdown overlay={menu} trigger={['click']} className="hover:bg-gray-200">
-        <Button
-          type="default"
-
-          icon={<ToolOutlined />}
-        >
-          Automation
+      {/* <Dropdown overlay={menu} trigger={['click']}>
+        <Button type="primary" shape="round">
+          Rules<ArrowRightOutlined />
         </Button>
+      </Dropdown> */}
+      <Dropdown overlay={menu} trigger={['click']}>
+      <Button
+      type="default"
+
+      icon={<ToolOutlined />}
+    >
+      Automation
+    </Button>
       </Dropdown>
 
       <Modal
         visible={showRulesUI}
         onCancel={() => setShowRulesUI(false)}
         footer={null}
-        width="80%"
+        width="70%"
       >
         <Title level={2}>Create a Rule</Title>
-        <Steps current={currentStep} className="mb-8">
+        <Steps current={currentStep} className="mb-6">
           <Step title="Select trigger" />
           <Step title="Select action" />
           <Step title="Review and save" />
         </Steps>
 
-        <Card title="Existing Rules" className="mb-8">
+        <Card title="Existing Rules" className="mb-6" style={{ maxHeight: '200px', overflowY: 'auto' }}>
           {rules.length === 0 ? (
             <Text>No rules have been configured yet.</Text>
           ) : (
@@ -276,9 +280,8 @@ function RulesButton({ tasks }) {
             ))
           )}
         </Card>
-
         {currentStep === 0 && (
-          <>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             <Title level={3}>Select Trigger</Title>
             {!showTriggers ? (
               <Button type="primary" block onClick={handleAddTrigger}>
@@ -300,9 +303,9 @@ function RulesButton({ tasks }) {
                     onClick={() => handleTriggerSelect("Card Changes")}
                   />
                 </Space>
-                <Card>
+                <Card size="small">
                   {selectedTrigger === "Card Move" && (
-                    <Space direction="vertical">
+                    <Space direction="vertical" size="small">
                       <Space>
                         <Text>when card status mark as</Text>
                         <Select
@@ -342,9 +345,8 @@ function RulesButton({ tasks }) {
                 </Space>
               </Space>
             )}
-          </>
+          </div>
         )}
-
         {currentStep === 1 && (
           <>
             <Title level={3}>Select Action</Title>
@@ -363,11 +365,6 @@ function RulesButton({ tasks }) {
                 icon={DeleteOutlined}
                 label="Delete Task"
                 onClick={() => handleActionSelect("Delete Task")}
-              />
-              <ActionOption
-                icon={ArrowLeftOutlined}
-                label="Assign Task"
-                onClick={() => handleActionSelect("Assign Task")}
               />
             </Space>
             {selectedAction && (
@@ -401,36 +398,28 @@ function RulesButton({ tasks }) {
                     The selected task will be deleted.
                   </Text>
                 )}
-                {selectedAction === "Assign Task" && (
-                  <>
-                    <Title level={4}>Assign Task Details</Title>
-                    <Input
-                      placeholder="Enter User Email"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                    />
-                    <Text type="secondary">
-                      The selected task will be assigned to the specified user.
-                    </Text>
-                  </>
-                )}
               </Card>
             )}
-            <Space className="mt-4">
-              <Button type="primary" onClick={handleAddActionClick}>
-                Add Action
-              </Button>
-              <Button onClick={handleBack}>
-                Back
-              </Button>
-            </Space>
+            <div className="mt-4 flex justify-between items-center">
+              <div>
+                {selectedAction && (
+                  <Button type="primary" onClick={handleAddActionClick}>
+                    Add Action
+                  </Button>
+                )}
+              </div>
+              <div>
+                <Button onClick={handleBack}>
+                  Back
+                </Button>
+              </div>
+            </div>
           </>
         )}
-
         {currentStep === 2 && (
-          <>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             <Title level={3}>Review and Save</Title>
-            <Card>
+            <Card size="small">
               <Title level={4}>Trigger</Title>
               <Text>
                 {selectedTrigger === "Card Move" && (
@@ -472,7 +461,7 @@ function RulesButton({ tasks }) {
                 Back
               </Button>
             </Space>
-          </>
+          </div>
         )}
       </Modal>
 
@@ -489,3 +478,4 @@ function RulesButton({ tasks }) {
 }
 
 export default RulesButton;
+

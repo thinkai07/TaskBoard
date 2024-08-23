@@ -18,6 +18,7 @@ const UNSPLASH_API_KEY = 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY';
 const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
+const { v4: uuidv4 } = require('uuid');
 const io = socketIo(server, {
   cors: {
     origin: true,
@@ -243,10 +244,11 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    activities:[{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
-    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs"}],
+    activities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs" }],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
+    uniqueId: { type: String, unique: true, required: true }
 
 
   },
@@ -2020,10 +2022,13 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    const uniqueId = generateUniqueId(); // Generate the unique identifier
+
     const newCard = new Card({
       name,
       description,
       assignedTo,
+      createdBy,
       assignDate,
       dueDate,
       estimatedHours,
@@ -2031,6 +2036,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       project: task.project,
       createdDate: new Date(),
       createdBy,
+      uniqueId,  // Save the unique ID in the card
     });
 
     await newCard.save();
@@ -2068,6 +2074,8 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     await newNotification.save();
 
     io.emit("cardCreated", { taskId, card: newCard });
+
+
 
     res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
@@ -2417,13 +2425,30 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    const cardIds = task.card.map((card) => card._id);
+
+    // Calculate the sum of logged hours for each card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: { $in: cardIds } } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+    ]);
+
+    // Create a map of cardId to total logged hours
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
     const cards = task.card.map((card) => ({
       id: card._id,
       name: card.name,
       description: card.description,
       assignedTo: card.assignedTo,
+      assignedBy: card.createdBy,
       status: card.status,
-      estimatedHours:card.estimatedHours,
+      estimatedHours: card.estimatedHours,
+      utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
+      uniqueId: card.uniqueId,
       createdDate: moment(card.createdDate)
         .tz("Asia/Kolkata")
         .format("YYYY-MM-DD HH:mm:ss"),
@@ -2469,6 +2494,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
 
 
 
@@ -2570,6 +2596,32 @@ app.delete(
 
 
 
+//added
+let sequenceNumber = 1000; // Start from 1001
+
+function generateUniqueId() {
+  const now = new Date();
+
+  // Format: YYYYMMDDSS
+  const timestamp =
+    now.getFullYear().toString() +
+    (now.getMonth() + 1).toString().padStart(2, '0') +
+    now.getDate().toString().padStart(2, '0') +
+    now.getSeconds().toString().padStart(2, '0');
+
+  // Increment sequence number
+  sequenceNumber++;
+
+  // Format: 1001, 1002, ..., padded to 4 digits
+  const uniquePart = sequenceNumber.toString().padStart(4, '0');
+
+  // Combine timestamp and unique sequence number
+  return timestamp + uniquePart;
+}
+
+// Example usage:
+const uniqueId = generateUniqueId();
+console.log(uniqueId);
 
 
 // Log hours for a specific card
@@ -3632,75 +3684,6 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
   }
 });
 
-
-// app.get("/api/calendar/:organizationId",
-//   authenticateToken,
-//   async (req, res) => {
-//     const { organizationId } = req.params;
-//     const userEmail = req.user.email;
-//     const userRole = req.user.role;
-
-//   try {
-//     let assignedCards;
-//     if (userRole === "ADMIN") {
-//       assignedCards = await Card.find()
-//         .populate({
-//           path: "project",
-//           match: { organization: organizationId },
-//           select: "_id name projectManager",
-//         })
-//         .populate("task", "name");
-//     } else {
-//       // Find projects where the user is the project manager
-//       const managedProjects = await Project.find({
-//         organization: organizationId,
-//         projectManager: userEmail,
-//       }).select("_id");
-
-//       const managedProjectIds = managedProjects.map((project) => project._id);
-
-//       assignedCards = await Card.find({
-//         $or: [
-//           { assignedTo: userEmail },
-//           { project: { $in: managedProjectIds } },
-//         ],
-//       })
-//         .populate({
-//           path: "project",
-//           match: { organization: organizationId },
-//           select: "_id name projectManager",
-//         })
-//         .populate("task", "name");
-//     }
-
-//     const events = assignedCards
-//       .filter((card) => card.project && card.task)
-//       .flatMap((card) => [
-//         {
-//           id: `${card._id}-assign`,
-//           date: card.assignDate,
-//           projectId: card.project._id,
-//           projectName: card.project.name,
-//           taskId: card.task._id,
-//           taskName: card.task.name,
-//           cardId: card._id,
-//           cardName: card.name,
-//           assignedTo: card.assignedTo,
-//           createdDate: card.createdDate,
-//           status: card.status,
-//           type: "Assign Date",
-//           estimatedHours:card.estimatedHours,
-//         },
-//       ])
-//       .filter((event) => event.date);
-
-//     res.json(events);
-//   } catch (error) {
-//     console.error("Error retrieving calendar data:", error);
-//     res.status(500).json({ message: "Error retrieving calendar data" });
-//   }
-// }
-// );
 
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
   try {

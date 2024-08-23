@@ -81,14 +81,14 @@ const App = () => {
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
                   <Route path="/" element={<Overview />} />
                   {/* <Route path='/tasks' element={<TasksPage user={user} />} />  */}
-                  <Route path='/members' element={<AdminPanel />} /> 
+                  <Route path='/members' element={<AdminPanel />} />
                   {/* <Route path="/projects/:projectId/teams" element={<Teams/>} /> */}
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/Auditlog" element={<AuditLog/>} /> 
-                  <Route path="/Teamsorg" element={<Teamsorg/>} /> 
-                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
-                  <Route path="/Rules" element={<RulesButton/>} /> 
+                  <Route path="/Auditlog" element={<AuditLog />} />
+                  <Route path="/Teamsorg" element={<Teamsorg />} />
+                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
+                  <Route path="/Rules" element={<RulesButton />} />
                   <Route path="/calendar/:date" element={<CalendarDateDetails />} />
                 </Routes>
               </Layout>

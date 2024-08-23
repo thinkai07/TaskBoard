@@ -270,7 +270,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
             {/* <SquareChevronDown size={20} /> */}
           </button>
           <span className="invisible absolute right-full bg-gray-700 text-white text-sm rounded opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
-            Change background
+            {/* Change background */}
           </span>
         </div>
       )}

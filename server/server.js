@@ -16,6 +16,8 @@ const axios = require("axios");
 const UNSPLASH_API_KEY = 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY';
 // Initialize the Express app
 const port = process.env.PORT;
+const { v4: uuidv4 } = require('uuid');
+
 const app = express();
 const server = http.createServer(app);
 const { v4: uuidv4 } = require('uuid');
@@ -244,13 +246,11 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    activities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
-    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs" }],
+    activities:[{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs"}],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
-    uniqueId: { type: String, unique: true, required: true }
-
-
+    uniqueId: { type: String, unique: true, required: true }  // Add this field
   },
   {
     timestamps: { deletedDate: "deletedDate" },
@@ -2007,6 +2007,36 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 //   }
 // });
 
+
+let sequenceNumber = 1000;
+
+function generateUniqueId() {
+    const now = new Date();
+
+   
+    const timestamp = 
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, '0') +
+        now.getDate().toString().padStart(2, '0') +
+        now.getSeconds().toString().padStart(2, '0');
+
+    
+    sequenceNumber++;
+
+   
+    const uniquePart = sequenceNumber.toString().padStart(4, '0');
+
+   
+    return timestamp + uniquePart;
+}
+
+
+const uniqueId = generateUniqueId();
+console.log(uniqueId); 
+
+
+
+
 app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
   const { name, description, assignedTo, assignDate, dueDate, createdBy, estimatedHours } = req.body;
@@ -2076,13 +2106,19 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     io.emit("cardCreated", { taskId, card: newCard });
 
 
-
+    
     res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
     console.error("Error creating card:", error);
     res.status(500).json({ message: "Error creating card" });
   }
 });
+
+
+
+
+
+
 
 
 
@@ -2444,7 +2480,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       name: card.name,
       description: card.description,
       assignedTo: card.assignedTo,
-      assignedBy: card.createdBy,
+      createdBy: card.createdBy,
       status: card.status,
       estimatedHours: card.estimatedHours,
       utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
@@ -2494,8 +2530,6 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
-
-
 
 
 // Delete a card from a task
@@ -2596,32 +2630,6 @@ app.delete(
 
 
 
-//added
-let sequenceNumber = 1000; // Start from 1001
-
-function generateUniqueId() {
-  const now = new Date();
-
-  // Format: YYYYMMDDSS
-  const timestamp =
-    now.getFullYear().toString() +
-    (now.getMonth() + 1).toString().padStart(2, '0') +
-    now.getDate().toString().padStart(2, '0') +
-    now.getSeconds().toString().padStart(2, '0');
-
-  // Increment sequence number
-  sequenceNumber++;
-
-  // Format: 1001, 1002, ..., padded to 4 digits
-  const uniquePart = sequenceNumber.toString().padStart(4, '0');
-
-  // Combine timestamp and unique sequence number
-  return timestamp + uniquePart;
-}
-
-// Example usage:
-const uniqueId = generateUniqueId();
-console.log(uniqueId);
 
 
 // Log hours for a specific card

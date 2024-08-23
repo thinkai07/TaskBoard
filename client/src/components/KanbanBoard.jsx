@@ -40,8 +40,6 @@ const initialBoard = {
   columns: [],
 };
 
-
-
 function KanbanBoard() {
   useTokenValidation();
   const [boardData, setBoardData] = useState(initialBoard);
@@ -143,8 +141,6 @@ function KanbanBoard() {
   const onClose = () => {
     setVisible(false);
   };
-
-
 
   const isProjectRoute = location.pathname.startsWith("/projects/");
   //added
@@ -528,13 +524,16 @@ function KanbanBoard() {
 
   async function fetchTasks() {
     try {
-      const response = await fetch(`${server}/api/projects/${projectId}/tasks`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        `${server}/api/projects/${projectId}/tasks`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
@@ -575,6 +574,7 @@ function KanbanBoard() {
                 description: card.description || "",
                 columnId: task.id,
                 assignedTo: card.assignedTo,
+                createdBy: card.createdBy,
                 status: card.status,
                 assignDate: card.assignDate,
                 dueDate: card.dueDate,
@@ -584,6 +584,7 @@ function KanbanBoard() {
                 estimatedHours: estimatedHours,
                 utilizedHours: utilizedHours,
                 remainingHours: remainingHours,
+                cardId: card.uniqueId,
               };
             }),
           };
@@ -603,8 +604,6 @@ function KanbanBoard() {
   useEffect(() => {
     console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
-
-
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -666,8 +665,10 @@ function KanbanBoard() {
     currentActivities,
     currentTaskLogs,
     estimatedHours, // New parameter
-    utilizedHours,// New parameter
-    assignedTo,
+    utilizedHours, // New parameter
+    assignedTo, // New parameter
+    createdBy,
+    dueDate
   ) => {
     console.log("openRenameCardModal called with:", cardId, currentComments);
 
@@ -687,7 +688,11 @@ function KanbanBoard() {
     setEstimatedHours(estimatedHours);
     setUtilizedHours(utilizedHours);
     setRemainingHours(remainingHours);
+
+    //added
     setAssignedTo(assignedTo);
+    setcreatedBy(createdBy);
+    setDueDate(dueDate);
   };
 
 
@@ -713,7 +718,6 @@ function KanbanBoard() {
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
     const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
-
 
     if (
       !cardTitle ||
@@ -771,7 +775,7 @@ function KanbanBoard() {
             createdBy: email,
             assignDate: assignDate,
             dueDate: dueDate,
-            estimatedHours: estimatedHours,  // Include estimatedHours
+            estimatedHours: estimatedHours, // Include estimatedHours
             createdBy: createdBy,
           }),
         }
@@ -780,9 +784,6 @@ function KanbanBoard() {
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-
-
-
 
       await clearFieldsAndRefresh();
       e.target.title.value = "";
@@ -794,10 +795,7 @@ function KanbanBoard() {
 
       await fetchTasks();
       notification.success({
-
-        message: 'Task added Successfully',
-
-
+        message: "Task added Successfully",
       });
     } catch (error) {
       console.error("Error adding card:", error);
@@ -1313,8 +1311,6 @@ function KanbanBoard() {
     fetchProjectDetails();
   }, [server, projectId]); // Dependencies for useEffect
 
-
-
   async function handleChangeStatus(cardId, newStatus) {
     try {
       // Fetch the user's email (updatedBy)
@@ -1354,8 +1350,6 @@ function KanbanBoard() {
       console.error("Error updating status:", error);
     }
   }
-
-
 
   //added
   const statusMenu = (cardId) => (
@@ -1525,8 +1519,9 @@ function KanbanBoard() {
               card.taskLogs,
               card.estimatedHours,
               card.utilizedHours,
-              card.assignedTo
-
+              card.assignedTo,
+              card.createdBy,
+              card.dueDate
             )
           }
         >
@@ -1538,7 +1533,7 @@ function KanbanBoard() {
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-                <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+                <span className="group-hover:block hidden absolute top-4 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
                   {card.assignedTo}
                 </span>
                 {card.assignedTo.charAt(0).toUpperCase()}
@@ -1568,17 +1563,25 @@ function KanbanBoard() {
             justifyContent: "space-between",
           }}
         >
-          <Dropdown
-            overlay={statusMenu(card.id)}
-            trigger={["hover"]}
-            mouseEnterDelay={0.2}
-            mouseLeaveDelay={0.2}
-          >
-            <Button style={{ width: "100px", marginTop: "3%" }}>
-              {card.status.charAt(0).toUpperCase() + card.status.slice(1)}{" "}
-              <DownOutlined />
-            </Button>
-          </Dropdown>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div className="react-kanban-card__status">
+              <Select
+                value={card.status}
+                onChange={(value) => handleChangeStatus(card.id, value)}
+                style={{ width: 110, height: 25 }} // You can adjust the width as needed
+              >
+                <Option value="pending">Pending</Option>
+                <Option value="inprogress">In Progress</Option>
+                <Option value="completed">Completed</Option>
+              </Select>
+            </div>
+            <div
+              title={card.uniqueId}
+              style={{ marginLeft: "10px", font: "small-caption" }}
+            >
+              <h1>ID:{card.cardId}</h1>
+            </div>
+          </div>
 
           {canShowActions && (
             <button
@@ -1621,12 +1624,7 @@ function KanbanBoard() {
     </div >
   );
 
-
-
-
-
   //
-
 
   const fetchTasks1 = async () => {
     try {
@@ -1647,7 +1645,6 @@ function KanbanBoard() {
   useEffect(() => {
     fetchTasks1();
   }, [boardData]);
-
 
   const handleRenameCard = async (e) => {
     e.preventDefault();
@@ -1752,8 +1749,6 @@ function KanbanBoard() {
     }
   };
 
-
-
   const items = [
     {
       key: "1",
@@ -1766,8 +1761,9 @@ function KanbanBoard() {
               renderItem={(activity, idx) => (
                 <List.Item
                   key={activity.id}
-                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
-                    }`}
+                  className={`ml-2 text-gray-700 mt-2 ${
+                    idx === 0 ? "bg-gray-100" : "bg-white"
+                  }`}
                 >
                   <List.Item.Meta
                     avatar={
@@ -1798,8 +1794,9 @@ function KanbanBoard() {
               renderItem={(taskLog, idx) => (
                 <List.Item
                   key={taskLog.id}
-                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
-                    }`}
+                  className={`ml-2 text-gray-700 mt-2 ${
+                    idx === 0 ? "bg-gray-100" : "bg-white"
+                  }`}
                 >
                   <List.Item.Meta
                     avatar={
@@ -1920,7 +1917,7 @@ function KanbanBoard() {
                       ],
                       activities: [
                         ...card.activities,
-                        { commentBy: userEmail, comment: userComment.trim() }
+                        { commentBy: userEmail, comment: userComment.trim() },
                       ],
                     };
                   }
@@ -1939,8 +1936,6 @@ function KanbanBoard() {
           ...comments,
           { commentBy: userEmail, comment: userComment.trim() },
         ]);
-
-
 
         // Clear the comment input
         setUserComment("");
@@ -1962,12 +1957,11 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
-
-            backgroundImage: `url(${bgUrl.raw})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            width: "100%",
-          }
+              backgroundImage: `url(${bgUrl.raw})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              width: "100%",
+            }
           : {}
       }
     >
@@ -1980,7 +1974,7 @@ function KanbanBoard() {
           closeIcon={<CloseOutlined />}
           centered
           className="rounded-lg shadow-lg"
-          bodyStyle={{ padding: '20px', maxHeight: '80vh' }}
+          bodyStyle={{ padding: "20px", maxHeight: "80vh" }}
         >
           <form onSubmit={handleRenameCard}>
             <div className="flex justify-between">
@@ -2037,7 +2031,11 @@ function KanbanBoard() {
                         }}
                         onBlur={handleDescriptionBlur}
                         onPressEnter={handleDescriptionBlur}
-                        className={`${renameCardErrors.description ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-2 w-full`}
+                        className={`${
+                          renameCardErrors.description
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-xl px-4 py-2 w-full`}
                         placeholder="Card Description"
                         autoFocus
                       />
@@ -2073,7 +2071,7 @@ function KanbanBoard() {
               </div>
 
               {/* Right Side: Project Info */}
-              <div className="w-1/3 pl-4">
+              <div className="w-1/3 pl-4 ">
                 <div className="mb-4">
                   <Text strong>Project Name:</Text>
                   <Text>{projectName}</Text>
@@ -2084,11 +2082,20 @@ function KanbanBoard() {
                 </div>
                 <div className="mb-4">
                   <Text strong>Assigned By:</Text>
-                  {/* <Text>{assignedBy}</Text> */}
+                  <Text>{createdBy}</Text>
                 </div>
                 <div className="mb-4">
                   <Text strong>End Date:</Text>
-                  {/* <Text>{endDate}</Text> */}
+                  <Text>
+                    {new Date(dueDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      hour12: true,
+                    })}
+                  </Text>
                 </div>
                 <div className="flex justify-between mt-6">
                   <div className="w-full mt-20">
@@ -2137,12 +2144,9 @@ function KanbanBoard() {
                   </div>
                 </div>
               </div>
-
-
             </div>
 
             {/* Progress Section */}
-
           </form>
 
           {/* <Tabs defaultActiveKey="1" items={items} className="mt-6" /> */}
@@ -2157,8 +2161,6 @@ function KanbanBoard() {
           </h1>
         </div>
         <div className="flex space-x-2 ">
-
-
           <Button
             type="primary"
             icon={<Plus />}

@@ -1,5 +1,115 @@
-// BackgroundChange.js
-import React, { useState, useEffect } from "react";
+
+
+// import React, { useState, useEffect } from "react";
+// import axios from "axios";
+// import { server } from "../constant";
+// import { useLocation } from "react-router-dom";
+// import { ArrowRight } from "lucide-react";
+// import { images as staticImages } from "../assets/Images";
+// import { Button, Drawer, Row, Col, Typography, Divider } from "antd";
+
+// const { Title } = Typography;
+
+// const BackgroundChange = ({ onClose, onSelectBackground }) => {
+//   const [selectedImage, setSelectedImage] = useState(null);
+//   const [unsplashImages, setUnsplashImages] = useState([]);
+//   const location = useLocation();
+
+//   useEffect(() => {
+//     // Fetch Unsplash images when the component mounts
+//     fetchUnsplashImages();
+//   }, []);
+
+//   const fetchUnsplashImages = async () => {
+//     try {
+//       const response = await axios.get(
+//         "https://api.unsplash.com/photos/random",
+//         {
+//           params: {
+//             count: 8,
+//             client_id: "rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY", // Replace with your Unsplash API key
+//           },
+//         }
+//       );
+//       setUnsplashImages(response.data); // Store the entire image objects, not just the URLs
+//     } catch (error) {
+//       console.error("Error fetching Unsplash images:", error);
+//       setUnsplashImages(staticImages); // Adjust as necessary
+//     }
+//   };
+
+//   const handleSelectBackground = (image) => {
+//     const projectId = location.pathname.split("/")[2];
+//     setSelectedImage(image);
+
+//     const bgUrl = image
+//       ? {
+//           raw: image.urls.raw,
+//           thumb: image.urls.thumb,
+//           full: image.urls.full,
+//           regular: image.urls.regular,
+//         }
+//       : null;
+
+//     axios
+//       .put(
+//         `${server}/api/projects/${projectId}/bgImage`,
+//         { bgUrl },
+//         {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//         }
+//       )
+//       .then((response) => {
+//         onSelectBackground(response.data.project.bgUrl);
+//       })
+//       .catch((error) => {
+//         console.error("Error updating background image:", error);
+//       });
+//   };
+
+//   return (
+//     <Drawer
+//       title={<Title level={3}>Select Background</Title>}
+//       placement="right"
+//       closable={false}
+//       onClose={onClose}
+//       visible={true}
+//       width={350}
+//       extra={
+//         <Button
+//           icon={<ArrowRight size={30} />}
+//           onClick={onClose}
+//           type="text"
+//         />
+//       }
+//     >
+//       <Divider />
+
+//       <Row gutter={[16, 16]}>
+//         {unsplashImages.map((image, index) => (
+//           <Col span={12} key={index}>
+//             <img
+//               src={image.urls.thumb}
+//               alt={`Background ${index + 1}`}
+//               className={`w-full border rounded-3xl h-32 object-cover cursor-pointer ${
+//                 selectedImage === image
+//                   ? "border-2 border-black"
+//                   : "border-gray-300"
+//               }`}
+//               onClick={() => handleSelectBackground(image)}
+//             />
+//           </Col>
+//         ))}
+//       </Row>
+//     </Drawer>
+//   );
+// };
+
+// export default BackgroundChange;
+import React, { useState, useEffect, useRef } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { MdOutlineCancel } from "react-icons/md";
 import axios from "axios";
@@ -12,13 +122,25 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
   const [customImages, setCustomImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [unsplashImages, setUnsplashImages] = useState([]);
-  const [showSidebar, setShowSidebar] = useState(false);
   const location = useLocation();
+  const ref = useRef(null);
 
   useEffect(() => {
-    // Fetch Unsplash images when the component mounts
     fetchUnsplashImages();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, onClose]);
 
   const fetchUnsplashImages = async () => {
     try {
@@ -31,10 +153,10 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
           },
         }
       );
-      setUnsplashImages(response.data); // Store the entire image objects, not just the URLs
+      setUnsplashImages(response.data);
     } catch (error) {
       console.error("Error fetching Unsplash images:", error);
-      setUnsplashImages(staticImages); // Adjust as necessary
+      setUnsplashImages(staticImages);
     }
   };
 
@@ -109,6 +231,7 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
+        ref={ref}
         className="bg-white w-80 p-4 shadow-lg relative overflow-y-auto"
         style={{ maxHeight: "100vh" }}
       >

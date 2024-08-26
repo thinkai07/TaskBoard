@@ -2415,7 +2415,112 @@ app.put("/api/tasks/:taskId/cards/:cardId",
   }
 );
 
-// Get cards
+// // Get cards
+// app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
+//   const { taskId } = req.params;
+
+//   try {
+//     const task = await Task.findById(taskId).populate({
+//       path: "card",
+//       populate: [
+//         {
+//           path: "comments",
+//           model: "Comment",
+//         },
+//         {
+//           path: "activities",
+//           model: "Activity",
+//         },
+//         {
+//           path: "taskLogs", // Populate task logs for each card
+//           model: "Tasklogs",
+//           populate: {
+//             path: "loggedBy", // Optionally populate loggedBy details
+//             model: "User",
+//             select: "name email", // Fetch only the necessary fields
+//           },
+//         },
+//       ],
+//     });
+
+//     if (!task) {
+//       return res.status(404).json({ message: "Task not found" });
+//     }
+
+//     const cardIds = task.card.map((card) => card._id);
+
+//     // Calculate the sum of logged hours for each card
+//     const logs = await Tasklogs.aggregate([
+//       { $match: { cardId: { $in: cardIds } } },
+//       { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+//     ]);
+
+//     // Create a map of cardId to total logged hours
+//     const hoursMap = logs.reduce((map, log) => {
+//       map[log._id] = log.totalHours;
+//       return map;
+//     }, {});
+
+//     const cards = task.card.map((card) => ({
+//       id: card._id,
+//       name: card.name,
+//       description: card.description,
+//       assignedTo: card.assignedTo,
+//       createdBy: card.createdBy,
+//       status: card.status,
+//       estimatedHours: card.estimatedHours,
+//       utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
+//       uniqueId: card.uniqueId,
+//       createdDate: moment(card.createdDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       assignDate: moment(card.assignDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       dueDate: moment(card.dueDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       comments: card.comments.map((comment) => ({
+//         id: comment._id,
+//         comment: comment.comment,
+//         commentBy: comment.commentBy,
+//         createdAt: moment(comment.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       activities: card.activities.map((activity) => ({
+//         id: activity._id,
+//         commentBy: activity.commentBy,
+//         comment: activity.comment,
+//         createdAt: moment(activity.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       taskLogs: card.taskLogs.map((taskLog) => ({
+//         id: taskLog._id,
+//         hours: taskLog.hours,
+//         logDate: moment(taskLog.logDate)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//         loggedBy: {
+//           id: taskLog.loggedBy._id,
+//           name: taskLog.loggedBy.name,
+//           email: taskLog.loggedBy.email,
+//         },
+//       })),
+//     }));
+
+//     res.status(200).json({ cards });
+//   } catch (error) {
+//     console.error("Error fetching cards:", error);
+//     res.status(500).json({ message: "Error fetching cards" });
+//   }
+// });
+
+
+
+
+// Get cards with comments
 app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
 
@@ -2510,12 +2615,16 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       })),
     }));
 
-    res.status(200).json({ cards });
+    // Include the task name in the response
+    res.status(200).json({ taskName: task.name, cards });
   } catch (error) {
     console.error("Error fetching cards:", error);
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
+
+
 app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
 

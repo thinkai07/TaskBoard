@@ -11,7 +11,7 @@ const initialBoard = {
 const RenameCardPage = () => {
   const {columnId, cardId } = useParams();
   const { Text, Title } = Typography; // Correct import from Typography
-  const { TextArea } = Input;
+  const { TextArea } = Input;  const [bgUrl, setBgUrl] = useState("");
 
   // State for storing card details
   const [cardData, setCardData] = useState({
@@ -43,7 +43,10 @@ const RenameCardPage = () => {
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  
+  const { projectId } = useParams();
+  const [user, setUser] = useState({});
+  const [projects, setProjects] = useState([]);
+  const [projectName, setProjectName] = useState("");
   // Fetch card details on component mount
  
   const fetchCardDetails = async () => {
@@ -105,6 +108,84 @@ const RenameCardPage = () => {
     fetchUserEmail();
   }, []);
 
+  async function fetchTasks() {
+    try {
+      const response = await fetch(
+        `${server}/api/projects/${projectId}/tasks`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
+
+      const { tasks, bgUrl } = await response.json();
+
+      const columns = await Promise.all(
+        tasks.map(async (task) => {
+          const cardsResponse = await fetch(
+            `${server}/api/tasks/${task.id}/cards`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (!cardsResponse.ok) {
+            throw new Error("Failed to fetch cards for task " + task.name);
+          }
+
+          const { cards } = await cardsResponse.json();
+
+          return {
+            id: task.id,
+            title: task.name,
+            cards: cards.map((card) => {
+              const utilizedHours = card.utilizedHours || 0;
+              const estimatedHours = card.estimatedHours || 0;
+              const remainingHours = estimatedHours - utilizedHours;
+
+              return {
+                id: card.id,
+                title: card.name || "",
+                description: card.description || "",
+                columnId: task.id,
+                assignedTo: card.assignedTo,
+                createdBy: card.createdBy,
+                status: card.status,
+                assignDate: card.assignDate,
+                dueDate: card.dueDate,
+                comments: card.comments || [],
+                activities: card.activities || [],
+                taskLogs: card.taskLogs || [],
+                estimatedHours: estimatedHours,
+                utilizedHours: utilizedHours,
+                remainingHours: remainingHours,
+                cardId: card.uniqueId,
+              };
+            }),
+          };
+        })
+      );
+
+      setBgUrl(bgUrl);
+      console.log(bgUrl);
+      setBoardData({ columns });
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  }
+
+  
 
   const handleRenameCardTitle = async () => {
     const trimmedTitle = cardData.name.trim();
@@ -272,6 +353,48 @@ const RenameCardPage = () => {
     }
   };
   
+
+  useEffect(() => {
+    const fetchUserRoleAndOrganization = async () => {
+      try {
+        const response = await axios.get(`${server}/api/role`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUser({ role: response.data.role, email: response.data.email });
+        fetchProjects(response.data.organizationId);
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };  
+    fetchUserRoleAndOrganization();
+  }, []);
+  const fetchProjects = async (organizationId) => {
+    try {
+      const response = await axios.get(
+        `${server}/api/projects/${organizationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setProjects(response.data.projects);
+      const project = response.data.projects.find(
+        (project) => project._id === projectId
+      );
+      if (project) {
+        setProjectName(project.name);
+        // setProjectManager(project.projectManager);
+        // setRepoName(project.repoName); // Store repoName
+        // setRepository(project.repository); // Store repository
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
   
 
   const items = [
@@ -440,15 +563,17 @@ const RenameCardPage = () => {
         ) : (
           <Text
             onDoubleClick={() => setIsEditingTitle(true)}
-            className="cursor-pointer"
+            className="cursor-pointer text-gray-600 font-bold text-2xl" // Added dark, bold, and increased size
           >
             {cardData.name || 'No Title'}
           </Text>
         )}
         {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
       </div>
-      <div className="mb-4">
+      <div className="mt-0"> 
+      <div className="flex items-start">
   <Text className="text-gray-600">In column {cardData.taskName || 'No Task Name'}</Text>
+  </div>
 </div>
       <div className="mb-4">
         {isEditingDescription ? (
@@ -489,7 +614,7 @@ const RenameCardPage = () => {
       {/* Right Column */}
       <div className="w-1/3 pl-4">
   <div className="mb-4">
-    <Text strong>Project:</Text>
+    <Text strong>Project:{projectName}</Text>
     <Text>{cardData.projectName || 'N/A'}</Text>
   </div>
   <div className="mb-4">

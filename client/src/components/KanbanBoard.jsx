@@ -1975,123 +1975,148 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              clearFieldsAndRefresh();
+            }
+          }}
+        >
+          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Card Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Card Title"
-                required
-                onChange={(e) => (e.target.value = e.target.value.trimStart())}
-              />
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Card Description
-              </label>
-              <textarea
-                name="description"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Card Description"
-                required
-                onChange={(e) => (e.target.value = e.target.value.trimStart())}
-              />
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Assigned (Email)
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter email address"
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Title"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="assignedEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Assigned (Email)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
-              {emailSuggestions.length > 0 && (
-                <ul
-                  className="absolute bg-white border border-gray-300 rounded-3xl mt-2 w-80 z-10"
-                  ref={suggestionListRef}
-                >
-                  {emailSuggestions.map((suggestion) => (
-                    <li
-                      key={suggestion.email}
-                      onClick={() => {
-                        setEmail(suggestion.email);
-                        setEmailSuggestions([]);
-                      }}
-                      className="p-2 hover:bg-gray-200  rounded-3xl cursor-pointer"
-                    >
-                      {suggestion.email}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <label
-                htmlFor="assignDate"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Start Date
-              </label>
-              <input
-                type="datetime-local"
-                name="assignDate"
-                required
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
-              <label
-                htmlFor="dueDate"
-                className="block text-sm font-medium text-gray-700"
-              >
-                End Date
-              </label>
-              <input
-                type="datetime-local"
-                name="dueDate"
-                required
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="assignDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="assignDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="dueDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
 
-              <label
-                htmlFor="estimatedHours"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Estimated Hours
-              </label>
-              <input
-                type="number"
-                name="estimatedHours"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Estimated Hours"
-                required
-                min="0"
-                step="0.1"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="estimatedHours"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Estimated Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="estimatedHours"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Estimated Hours"
+                    required
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Description"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+              </div>
 
-              {/* Email suggestions list */}
-              <div className="flex px-4 py-2 justify-between">
+              <div className="flex justify-between">
                 <button
                   type="button"
                   onClick={clearFieldsAndRefresh}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                 >
                   Add Card
                 </button>

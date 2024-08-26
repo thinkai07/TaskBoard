@@ -20,6 +20,7 @@ import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
 import CalendarDateDetails from './Pages/CalendarDateDetails'
+import RenameCardPage from './Pages/RenameCardPage';
 
 
 
@@ -90,6 +91,7 @@ const App = () => {
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
                   <Route path="/Rules" element={<RulesButton/>} /> 
                   <Route path="/calendar/:date" element={<CalendarDateDetails />} />
+                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
                 </Routes>
               </Layout>
             ) : (

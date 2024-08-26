@@ -123,7 +123,7 @@ function KanbanBoard() {
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
 
-  const handleCardClick = (cardId,columnId) => {
+  const handleCardClick = (cardId,columnId,projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
   };
 
@@ -1265,23 +1265,7 @@ function KanbanBoard() {
           }}
           key={card.id} 
 
-          
-          // onClick={() =>
-          //   openRenameCardModal(
-          //     card.columnId,
-          //     card.id,
-          //     card.title,
-          //     card.description,
-          //     card.comments,
-          //     card.activities,
-          //     card.taskLogs,
-          //     card.estimatedHours,
-          //     card.utilizedHours,
-          //     card.assignedTo,
-          //     card.createdBy,
-          //     card.dueDate
-          //   )
-          // }
+         
         >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
@@ -1290,12 +1274,13 @@ function KanbanBoard() {
           </div>
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
-              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-                <span className="group-hover:block hidden absolute top-4 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-                  {card.assignedTo}
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
+              <Tooltip title={card.assignedTo}>
+                <span className="cursor-pointer">
+                  {card.assignedTo.charAt(0).toUpperCase()}
                 </span>
-                {card.assignedTo.charAt(0).toUpperCase()}
-              </div>
+              </Tooltip>
+            </div>
             )}
           </div>
         </div>
@@ -1405,306 +1390,8 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
-  const handleRenameCard = async (e) => {
-    e.preventDefault();
-    const trimmedTitle = renameCardTitle.trim();
-    const trimmedDescription = renameCardDescription.trim();
-    let hasErrors = false;
-    const errors = { title: "", description: "" };
-
-    if (!trimmedTitle) {
-      errors.title = "Please enter a card title";
-      hasErrors = true;
-    }
-    if (!trimmedDescription) {
-      errors.description = "Please enter a card description";
-      hasErrors = true;
-    }
-
-    if (hasErrors) {
-      setRenameCardErrors(errors);
-      return;
-    }
-
-    try {
-      const updatedBy = await fetchUserEmail();
-
-      const response = await fetch(
-        `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            name: trimmedTitle,
-            description: trimmedDescription,
-            updatedBy: updatedBy,
-            updatedDate: new Date().toISOString(),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to rename card");
-      }
-
-      // Update local state
-      setBoardData((prevState) => {
-        const updatedColumns = prevState.columns.map((column) => {
-          if (column.id === selectedColumnId) {
-            return {
-              ...column,
-              cards: column.cards.map((card) =>
-                card.id === selectedCardId
-                  ? {
-                      ...card,
-                      title: trimmedTitle,
-                      description: trimmedDescription,
-                    }
-                  : card
-              ),
-            };
-          }
-          return column;
-        });
-
-        return { ...prevState, columns: updatedColumns };
-      });
-
-      // Optionally fetch the latest data from the server
-      await fetchTasks();
-
-      setRenameCardErrors({ title: "", description: "" });
-      setShowSuccessPopup(true);
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        setRenameCardModalVisible(false); // Close the modal after showing success message
-      }, 1000);
-    } catch (error) {
-      console.error("Error renaming card:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setRenameCardModalVisible(false);
-    setRenameCardErrors({ title: "", description: "" });
-  };
-
-  // Handle saving title
-  const handleTitleBlur = () => {
-    if (renameCardTitle.trim()) {
-      // Save title logic here
-      console.log("Title saved:", renameCardTitle);
-    }
-  };
-
-  // Handle saving description
-  const handleDescriptionBlur = () => {
-    if (renameCardDescription.trim()) {
-      // Save description logic here
-      console.log("Description saved:", renameCardDescription);
-    }
-  };
-
-  const items = [
-    {
-      key: "1",
-      label: "Activities",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {activities.length > 0 ? (
-            <List
-              dataSource={activities}
-              renderItem={(activity, idx) => (
-                <List.Item
-                  key={activity.id}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {activity.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{activity.commentBy}</strong>}
-                    description={activity.comment}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No activities found.</Text>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      label: "Log-in Hours",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {taskLogs.length > 0 ? (
-            <List
-              dataSource={taskLogs}
-              renderItem={(taskLog, idx) => (
-                <List.Item
-                  key={taskLog.id}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {taskLog.loggedBy.name[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{taskLog.loggedBy.name}</strong>}
-                    description={taskLog.hours}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No log-in hours found.</Text>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "3",
-      label: "Comments",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          <div className="flex items-center mb-4 pt-6">
-            <CommentOutlined className="mr-2" />
-            <Title level={4}>Comments</Title>
-          </div>
-
-          <div className="flex items-center mb-2">
-            <Avatar style={{ backgroundColor: "#1890ff" }}>
-              {userEmail.charAt(0).toUpperCase()}
-            </Avatar>
-            <Input
-              value={userComment}
-              onChange={(e) => setUserComment(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSaveComment();
-                }
-              }}
-              placeholder="Write your comment"
-              className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-            />
-          </div>
-
-          {commentsVisible && comments.length > 0 ? (
-            <List
-              dataSource={comments.slice().reverse()}
-              renderItem={(comment, idx) => (
-                <List.Item
-                  key={idx}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {comment.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{comment.commentBy}</strong>}
-                    description={comment.comment}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No comments yet.</Text>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  // The function for handling comment submission
-  const handleSaveComment = async () => {
-    if (userComment.trim()) {
-      try {
-        const updatedBy = await fetchUserEmail();
-
-        const response = await fetch(
-          `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              updatedBy: updatedBy,
-              comment: userComment.trim(),
-              name: renameCardTitle,
-              description: renameCardDescription,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to save comment");
-        }
-
-        // Update local state immediately
-        setBoardData((prevState) => {
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === selectedColumnId) {
-              return {
-                ...column,
-                cards: column.cards.map((card) => {
-                  if (card.id === selectedCardId) {
-                    return {
-                      ...card,
-                      comments: [
-                        ...card.comments,
-                        { commentBy: userEmail, comment: userComment.trim() },
-                      ],
-                      activities: [
-                        ...card.activities,
-                        { commentBy: userEmail, comment: userComment.trim() },
-                      ],
-                    };
-                  }
-                  return card;
-                }),
-              };
-            }
-            return column;
-          });
-
-          return { ...prevState, columns: updatedColumns };
-        });
-
-        // Update the comments state
-        setComments([
-          ...comments,
-          { commentBy: userEmail, comment: userComment.trim() },
-        ]);
-
-        // Clear the comment input
-        setUserComment("");
-
-        // Optionally fetch the latest data from the server
-        await fetchTasks();
-      } catch (error) {
-        console.error("Error saving comment:", error);
-      }
-    }
-  };
+  
+ 
 
   return (
     <div

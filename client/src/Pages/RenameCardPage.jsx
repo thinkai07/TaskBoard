@@ -5,6 +5,10 @@ import axios from 'axios';
 import { server } from '../constant';
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 import useTokenValidation from '../components/UseTockenValidation'; 
+import { AppWindow } from 'lucide-react';
+import { AlignRight, Captions } from 'lucide-react';
+
+
 const initialBoard = {
   columns: [],
 };
@@ -28,7 +32,8 @@ const RenameCardPage = () => {
     remainingHours: 0,
     activities: [],
     taskLogs: [],
-    comments: []
+    comments: [],
+    uniqueId:'',
   });
   const [boardData, setBoardData] = useState(initialBoard);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -90,7 +95,8 @@ const RenameCardPage = () => {
         setCardData({
           ...cardData,
           remainingHours: (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
-          taskName, // Add taskName to the cardData state
+          taskName, 
+          projectName: cardData.project.name, 
         });
       } else {
         console.error('Card not found');
@@ -486,7 +492,8 @@ const RenameCardPage = () => {
     <div className="flex">
       {/* Left Column */}
       <div className="w-2/3 pr-4">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center">
+      <Captions className="mr-2 text-gray-600 " />
         {isEditingTitle ? (
           <Input
             value={cardData.name}
@@ -507,10 +514,18 @@ const RenameCardPage = () => {
         )}
         {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
       </div>
-      <div className="mb-4">
-  <Text className="text-gray-600">In column {cardData.taskName || 'No Task Name'}</Text>
-</div>
-      <div className="mb-4">
+      <Text className="text-gray-600 ml-8">
+                            In column{" "}
+                            <Text className="text-blue-500   underline">
+                                {cardData.taskName || 'No Task Name'}
+                            </Text>
+                        </Text>
+<div className='mb-4 flex items-center'>
+                    <AlignRight className="mr-2 text-gray-600" />
+                        <h1 className=''>Description</h1>
+                    </div>
+      <div className="mb-4  items-center ml-8 mt-4">
+
         {isEditingDescription ? (
           <>
             <TextArea
@@ -553,11 +568,15 @@ const RenameCardPage = () => {
     <Text>{cardData.projectName || 'N/A'}</Text>
   </div>
   <div className="mb-4">
+    <Text strong>CardID:</Text>
+    <Text>{cardData.uniqueId || 'N/A'}</Text>
+  </div>
+  <div className="mb-4">
     <Text strong>Assigned To:</Text>
     <Text>{cardData.assignedTo || 'N/A'}</Text>
   </div>
   <div className="mb-4">
-    <Text strong>Created By:</Text>
+    <Text strong>Assigned By:</Text>
     <Text>{cardData.createdBy || 'N/A'}</Text>
   </div>
   <div className="mb-4">

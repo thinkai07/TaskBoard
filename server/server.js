@@ -2498,6 +2498,11 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
             select: "name email", // Fetch only the necessary fields
           },
         },
+        {
+          path: "project", // Populate the project details
+          model: "Project",
+          select: "name description", // Fetch only the necessary fields
+        },
       ],
     });
 
@@ -2566,6 +2571,11 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
           email: taskLog.loggedBy.email,
         },
       })),
+      project: {
+        id: card.project._id,
+        name: card.project.name,
+        description: card.project.description,
+      }, // Include project details
     }));
 
     // Include the task name in the response
@@ -2575,6 +2585,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
 
 app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {
   const { orgId } = req.params;

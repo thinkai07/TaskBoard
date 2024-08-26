@@ -4,11 +4,12 @@ import { Input, Button, Progress, Typography, List, Avatar, Tabs,Tooltip } from 
 import axios from 'axios';
 import { server } from '../constant';
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-
+import useTokenValidation from '../components/UseTockenValidation'; 
 const initialBoard = {
   columns: [],
 };
 const RenameCardPage = () => {
+  useTokenValidation();
   const {columnId, cardId } = useParams();
   const { Text, Title } = Typography; // Correct import from Typography
   const { TextArea } = Input;
@@ -43,8 +44,33 @@ const RenameCardPage = () => {
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [userProfile, setUserProfile] = useState({ name: '', avatar: '' });
   
   // Fetch card details on component mount
+  useEffect(() => {
+    // Fetch the logged-in user's profile data
+    const fetchUserProfile = async () => {
+        try {
+            const response = await axios.get(`${server}/api/user`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            if (response.data.success) {
+                const { name, email } = response.data.user;
+                setUserProfile({ name, email, avatar: name.charAt(0).toUpperCase() });
+            } else {
+                console.error('Error fetching user profile:', response.data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+        }
+    };
+
+    fetchUserProfile();
+}, [server]);
+
  
   const fetchCardDetails = async () => {
     try {
@@ -277,55 +303,15 @@ const RenameCardPage = () => {
   const items = [
     {
       key: "1",
-  label: "Activities",
-  children: (
-    <div className="mt-4 h-96 overflow-y-auto">
-      {cardData.activities.length > 0 ? (
-        <List
-          dataSource={cardData.activities}
-          renderItem={(activity, idx) => (
-            <List.Item
-              key={activity._id} // Use _id for uniqueness
-              className={`ml-2 text-gray-700 mt-2 ${
-                idx === 0 ? "bg-gray-100" : "bg-white"
-              }`}
-            >
-              <List.Item.Meta
-                avatar={
-                  <Avatar style={{ backgroundColor: "#1890ff" }}>
-                    {activity.commentBy[0].toUpperCase()}
-                  </Avatar>
-                }
-                title={<strong>{activity.commentBy}</strong>}
-                description={
-                  <>
-                    <div>{activity.comment}</div>
-                    <div className="text-gray-500 text-sm">
-                      {new Date(activity.createdAt).toLocaleString()}
-                    </div>
-                  </>
-                }
-              />
-            </List.Item>
-          )}
-        />
-      ) : (
-        <Text>No activities found.</Text>
-      )}
-    </div>
-  ),
-    },
-    {
-      key: "2",
-      label: "Log-in Hours",
+      label: "Activities",
       children: (
         <div className="mt-4 h-96 overflow-y-auto">
-          {cardData.taskLogs.length > 0 ? (
+          {cardData.activities.length > 0 ? (
             <List
-              dataSource={cardData.taskLogs}
-              renderItem={(taskLog, idx) => (
+              dataSource={cardData.activities}
+              renderItem={(activity, idx) => (
                 <List.Item
-                  key={taskLog._id} // Use _id for uniqueness
+                  key={activity._id} // Use _id for uniqueness
                   className={`ml-2 text-gray-700 mt-2 ${
                     idx === 0 ? "bg-gray-100" : "bg-white"
                   }`}
@@ -333,15 +319,26 @@ const RenameCardPage = () => {
                   <List.Item.Meta
                     avatar={
                       <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {taskLog.loggedBy.name[0].toUpperCase()}
+                        {activity.commentBy[0].toUpperCase()}
                       </Avatar>
                     }
-                    title={<strong>{taskLog.loggedBy.name}</strong>}
+                    title={<strong>{activity.commentBy}</strong>}
                     description={
                       <>
-                        <div>{taskLog.hours}</div>
+                        <div>{activity.comment}</div>
                         <div className="text-gray-500 text-sm">
-                          {new Date(taskLog.createdAt).toLocaleString()}
+                          <Text>
+                            {activity.createdAt
+                              ? new Date(activity.createdAt).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "numeric",
+                                  hour12: true,
+                                })
+                              : "N/A"}
+                          </Text>
                         </div>
                       </>
                     }
@@ -350,10 +347,61 @@ const RenameCardPage = () => {
               )}
             />
           ) : (
-            <Text>No log-in hours found.</Text>
+            <Text>No activities found.</Text>
           )}
         </div>
       ),
+    },
+    {
+      key: "2",
+  label: "Log-in Hours",
+  children: (
+    <div className="mt-4 h-96 overflow-y-auto">
+      {cardData.taskLogs.length > 0 ? (
+        <List
+          dataSource={cardData.taskLogs}
+          renderItem={(taskLog, idx) => (
+            <List.Item
+              key={taskLog._id} // Use _id for uniqueness
+              className={`ml-2 text-gray-700 mt-2 ${
+                idx === 0 ? "bg-gray-100" : "bg-white"
+              }`}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar style={{ backgroundColor: "#1890ff" }}>
+                    {taskLog.loggedBy.name[0].toUpperCase()}
+                  </Avatar>
+                }
+                title={<strong>{taskLog.loggedBy.name}</strong>}
+                description={
+                  <>
+                    <div>{taskLog.hours} hours</div>
+                    {/* <div className="text-gray-500 text-sm">
+                      <Text>
+                        {taskLog.createdAt
+                          ? new Date(taskLog.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: true,
+                            })
+                          : "N/A"}
+                      </Text>
+                    </div> */}
+                  </>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      ) : (
+        <Text>No log-in hours found.</Text>
+      )}
+    </div>
+  ),
     },
     {
       key: "3",
@@ -364,11 +412,12 @@ const RenameCardPage = () => {
             <CommentOutlined className="mr-2" />
             <Title level={4}>Comments</Title>
           </div>
-    
+  
           <div className="flex items-center mb-2">
             <Avatar style={{ backgroundColor: "#1890ff" }}>
-              {cardData.assignedTo.charAt(0).toUpperCase()}
+              {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
             </Avatar>
+  
             <Input
               value={userComment}
               onChange={(e) => setUserComment(e.target.value)}
@@ -381,7 +430,7 @@ const RenameCardPage = () => {
               className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
             />
           </div>
-    
+  
           {cardData.comments.length > 0 ? (
             <List
               dataSource={cardData.comments.slice().reverse()} // Display latest comment first
@@ -403,7 +452,18 @@ const RenameCardPage = () => {
                       <>
                         <div>{comment.comment}</div>
                         <div className="text-gray-500 text-sm">
-                          {new Date(comment.createdAt).toLocaleString()}
+                          <Text>
+                            {comment.createdAt
+                              ? new Date(comment.createdAt).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "numeric",
+                                  hour12: true,
+                                })
+                              : "N/A"}
+                          </Text>
                         </div>
                       </>
                     }
@@ -416,9 +476,9 @@ const RenameCardPage = () => {
           )}
         </div>
       ),
-    }
-    
+    },
   ];
+
 
 
   return (

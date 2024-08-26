@@ -2576,45 +2576,62 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   }
 });
 
-
-
-app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
-  const { cardId } = req.params;
+app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {
+  const { orgId } = req.params;
 
   try {
-    const card = await Card.findById(cardId).populate({
-      path: "comments",
-      model: "Comment",
-    }).populate({
-      path: "activities",
-      model: "Activity",
-    }).populate({
-      path: "taskLogs",
-      model: "Tasklogs",
-      populate: {
-        path: "loggedBy",
-        model: "User",
-        select: "name email",
-      },
-    });
+    // Find all projects in the specified organization
+    const projects = await Project.find({ organization: orgId });
 
-    if (!card) {
-      return res.status(404).json({ message: "Card not found" });
+    if (!projects || projects.length === 0) {
+      return res.status(404).json({ message: "No projects found for the organization" });
     }
 
-    // Calculate the sum of logged hours for the card
+    // Extract all project IDs
+    const projectIds = projects.map((project) => project._id);
+
+    // Find all cards for these projects
+    const cards = await Card.find({ project: { $in: projectIds } })
+      .populate({
+        path: "task", // Assuming 'task' is the reference field in the Card schema
+        model: "Task",
+        select: "_id name", // Select task ID and name if needed
+      })
+      .populate({
+        path: "comments",
+        model: "Comment",
+      })
+      .populate({
+        path: "activities",
+        model: "Activity",
+      })
+      .populate({
+        path: "taskLogs",
+        model: "Tasklogs",
+        populate: {
+          path: "loggedBy",
+          model: "User",
+          select: "name email",
+        },
+      });
+
+    // Calculate the sum of logged hours for each card
+    const cardIds = cards.map((card) => card._id);
     const logs = await Tasklogs.aggregate([
-      { $match: { cardId: card._id } },
+      { $match: { cardId: { $in: cardIds } } },
       { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
     ]);
 
+    // Create a map of cardId to total logged hours
     const hoursMap = logs.reduce((map, log) => {
       map[log._id] = log.totalHours;
       return map;
     }, {});
 
-    const cardDetails = {
+    // Map and format the card details including taskId
+    const formattedCards = cards.map((card) => ({
       id: card._id,
+      taskId: card.task ? card.task._id : null, // Include taskId if available
       name: card.name,
       description: card.description,
       assignedTo: card.assignedTo,
@@ -2660,14 +2677,18 @@ app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
           email: taskLog.loggedBy.email,
         },
       })),
-    };
+    }));
 
-    res.status(200).json({ card: cardDetails });
+    res.status(200).json({ cards: formattedCards });
   } catch (error) {
-    console.error("Error fetching card:", error);
-    res.status(500).json({ message: "Error fetching card" });
+    console.error("Error fetching cards:", error);
+    res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
+
+
+
 
 
 // Delete a card from a task

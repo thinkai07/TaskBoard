@@ -529,6 +529,98 @@ app.post("/register", async (req, res) => {
   }
 });
 
+
+app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+
+  try {
+    const card = await Card.findById(cardId).populate({
+      path: "comments",
+      model: "Comment",
+    }).populate({
+      path: "activities",
+      model: "Activity",
+    }).populate({
+      path: "taskLogs",
+      model: "Tasklogs",
+      populate: {
+        path: "loggedBy",
+        model: "User",
+        select: "name email",
+      },
+    });
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Calculate the sum of logged hours for the card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: card._id } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+    ]);
+
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
+    const cardDetails = {
+      id: card._id,
+      name: card.name,
+      
+      description: card.description,
+      assignedTo: card.assignedTo,
+      createdBy: card.createdBy,
+      status: card.status,
+      estimatedHours: card.estimatedHours,
+      utilizedHours: hoursMap[card._id] || 0,
+      uniqueId: card.uniqueId,
+      createdDate: moment(card.createdDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      assignDate: moment(card.assignDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      dueDate: moment(card.dueDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      comments: card.comments.map((comment) => ({
+        id: comment._id,
+        comment: comment.comment,
+        commentBy: comment.commentBy,
+        createdAt: moment(comment.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      activities: card.activities.map((activity) => ({
+        id: activity._id,
+        commentBy: activity.commentBy,
+        comment: activity.comment,
+        createdAt: moment(activity.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      taskLogs: card.taskLogs.map((taskLog) => ({
+        id: taskLog._id,
+        hours: taskLog.hours,
+        logDate: moment(taskLog.logDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        loggedBy: {
+          id: taskLog.loggedBy._id,
+          name: taskLog.loggedBy.name,
+          email: taskLog.loggedBy.email,
+        },
+      })),
+    };
+
+    res.status(200).json({ card: cardDetails });
+  } catch (error) {
+    console.error("Error fetching card:", error);
+    res.status(500).json({ message: "Error fetching card" });
+  }
+});
 // Validate email token and store data permanently
 app.get("/validate-email", async (req, res) => {
   const { token } = req.query;
@@ -2302,7 +2394,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error moving card" });
   }
 });
-
+//in page to put comments
 app.put("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
@@ -2426,6 +2518,46 @@ app.put("/api/tasks/:taskId/cards/:cardId",
     }
   }
 );
+//sending the comments to through this api
+app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+  const { comment } = req.body;
+  const userEmail = req.user.email; // Assuming the token has the user's email
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the card by ID
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Create a new comment
+    const newComment = new Comment({
+      comment,
+      commentBy: user.name,
+      card: card._id,
+    });
+
+    // Save the comment
+    await newComment.save();
+
+    // Add the comment to the card's comments array
+    card.comments.push(newComment._id);
+    await card.save();
+
+    res.status(201).json({ message: "Comment added successfully", comment: newComment });
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 
 // Get cards with comments
@@ -2650,16 +2782,17 @@ app.post('/api/log-hours', async (req, res) => {
 
     // Check if the card status is 'pending' and update it to 'in progress'
     if (card.status === 'pending') {
+      const previousStatus = card.status;
       card.status = 'inprogress';
 
-      // Log status update in comments
-      const statusComment = new Comment({
-        comment: `Card status updated to inprogress by ${loggedByUser.name}`,
+      // Log status update in activity
+      const statusActivity = new Activity({
+        comment: `Card status updated from ${previousStatus} to inprogress by ${loggedByUser.name}`,
         commentBy: loggedByUser.name,
         card: card._id,
       });
-      await statusComment.save();
-      card.comments.push(statusComment._id);
+      await statusActivity.save();
+      card.activities.push(statusActivity._id);
     }
 
     // Save the updated card with the new status if it was changed

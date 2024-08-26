@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
-import { Dropdown, Menu } from "antd"; //added
+import { Dropdown, Menu,  } from "antd"; //added
+
 import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
@@ -36,6 +37,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
+import RenameCardPage from "../Pages/RenameCardPage";
 const initialBoard = {
   columns: [],
 };
@@ -120,6 +122,15 @@ function KanbanBoard() {
   const { Text, Title } = Typography;
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
+  const [selectedCard, setSelectedCard] = useState(null);
+
+  // const handleCardClick = (cardId) => {
+  //   navigate(`/rename-card/${cardId}`);
+  // };
+
+  const handleCardClick = (cardId, columnId) => {
+    navigate(`/rename-card/${columnId}/cards/${cardId}`);
+  };
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -1244,6 +1255,7 @@ function KanbanBoard() {
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
+      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
     >
       <div className="p-4">
         <div
@@ -1252,22 +1264,24 @@ function KanbanBoard() {
             alignItems: "center",
             justifyContent: "space-between",
           }}
-          onClick={() =>
-            openRenameCardModal(
-              card.columnId,
-              card.id,
-              card.title,
-              card.description,
-              card.comments,
-              card.activities,
-              card.taskLogs,
-              card.estimatedHours,
-              card.utilizedHours,
-              card.assignedTo,
-              card.createdBy,
-              card.dueDate
-            )
-          }
+          key={card.id}
+
+          // onClick={() =>
+          //   openRenameCardModal(
+          //     card.columnId,
+          //     card.id,
+          //     card.title,
+          //     card.description,
+          //     card.comments,
+          //     card.activities,
+          //     card.taskLogs,
+          //     card.estimatedHours,
+          //     card.utilizedHours,
+          //     card.assignedTo,
+          //     card.createdBy,
+          //     card.dueDate
+          //   )
+          // }
         >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
@@ -1276,12 +1290,13 @@ function KanbanBoard() {
           </div>
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
-              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-                <span className="group-hover:block hidden absolute top-4 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-                  {card.assignedTo}
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
+              <Tooltip title={card.assignedTo}>
+                <span className="cursor-pointer">
+                  {card.assignedTo.charAt(0).toUpperCase()}
                 </span>
-                {card.assignedTo.charAt(0).toUpperCase()}
-              </div>
+              </Tooltip>
+            </div>
             )}
           </div>
         </div>
@@ -1312,6 +1327,7 @@ function KanbanBoard() {
               <Select
                 value={card.status}
                 onChange={(value) => handleChangeStatus(card.id, value)}
+                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
                 style={{ width: 110, height: 25 }} // You can adjust the width as needed
               >
                 <Option value="pending">Pending</Option>
@@ -1342,7 +1358,7 @@ function KanbanBoard() {
                 marginTop: "3%",
               }}
             >
-              {/* <BsTrash /> */}
+              <BsTrash />
             </button>
           )}
           <button
@@ -1705,195 +1721,29 @@ function KanbanBoard() {
           : {}
       }
     >
-      <div>
-        <Modal
-          visible={renameCardModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-          width="60%"
-          closeIcon={<CloseOutlined />}
-          centered
-          className="rounded-lg shadow-lg"
-          bodyStyle={{ padding: "20px", maxHeight: "80vh" }}
-        >
-          <form onSubmit={handleRenameCard}>
-            <div className="flex justify-between">
-              {/* Left Side: Card Title and Description */}
-              <div className="w-2/3 pr-4">
-                <div className="mb-4">
-                  {isEditingTitle ? (
-                    <Input
-                      value={renameCardTitle}
-                      onChange={(e) => {
-                        setRenameCardTitle(e.target.value);
-                        setRenameCardErrors((prev) => ({
-                          ...prev,
-                          title: "",
-                        }));
-                      }}
-                      onBlur={handleTitleBlur}
-                      onPressEnter={handleTitleBlur}
-                      className={`${
-                        renameCardErrors.title
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 mt-5 w-full`}
-                      placeholder="Card Title"
-                      autoFocus
-                    />
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingTitle(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardTitle}
-                    </Text>
-                  )}
-                  {renameCardErrors.title && (
-                    <Text type="danger" className="text-sm mt-1">
-                      {renameCardErrors.title}
-                    </Text>
-                  )}
-                </div>
-
-                <div className="mb-4">
-                  {isEditingDescription ? (
-                    <>
-                      <TextArea
-                        value={renameCardDescription}
-                        onChange={(e) => {
-                          setRenameCardDescription(e.target.value);
-                          setRenameCardErrors((prev) => ({
-                            ...prev,
-                            description: "",
-                          }));
-                        }}
-                        onBlur={handleDescriptionBlur}
-                        onPressEnter={handleDescriptionBlur}
-                        className={`${
-                          renameCardErrors.description
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-xl px-4 py-2 w-full`}
-                        placeholder="Card Description"
-                        autoFocus
-                      />
-                      {renameCardErrors.description && (
-                        <Text type="danger" className="text-sm mt-1">
-                          {renameCardErrors.description}
-                        </Text>
-                      )}
-                      <div className="flex justify-end mt-4">
-                        <Button
-                          onClick={() => setIsEditingDescription(false)}
-                          className="mr-2"
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="primary" onClick={handleRenameCard}>
-                          Save
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingDescription(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardDescription}
-                    </Text>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <Tabs defaultActiveKey="1" items={items} />
-                </div>
-              </div>
-
-              {/* Right Side: Project Info */}
-              <div className="w-1/3 pl-4 ">
-                <div className="mb-4">
-                  <Text strong>Project Name:</Text>
-                  <Text>{projectName}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned To:</Text>
-                  <Text>{assignedTo}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned By:</Text>
-                  <Text>{createdBy}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>End Date:</Text>
-                  <Text>
-                    {new Date(dueDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                      hour12: true,
-                    })}
-                  </Text>
-                </div>
-                <div className="flex justify-between mt-6">
-                  <div className="w-full mt-20">
-                    <Text strong className="block mb-4 text-xl">
-                      Progress
-                    </Text>
-                    <div className="mb-4">
-                      <Text>Estimated Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{estimatedHours} </Text>  */}
-                        <Tooltip title={`${estimatedHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={100} // Always 100% since it's the full estimate
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <Text>Utilized Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{utilizedHours} </Text>  */}
-                        <Tooltip title={`${utilizedHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={(utilizedHours / estimatedHours) * 100} // Show utilization progress
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <Text>Remaining Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{remainingHours} hours</Text>  */}
-                        <Tooltip title={`${remainingHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={(remainingHours / estimatedHours) * 100} // Show remaining progress
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Section */}
-          </form>
-
-          {/* <Tabs defaultActiveKey="1" items={items} className="mt-6" /> */}
-        </Modal>
-      </div>
+      {selectedCard && (
+        <RenameCardPage
+          renameCardTitle={selectedCard.title}
+          setRenameCardTitle={(newTitle) =>
+            setSelectedCard({ ...selectedCard, title: newTitle })
+          }
+          renameCardDescription={selectedCard.description}
+          setRenameCardDescription={(newDescription) =>
+            setSelectedCard({ ...selectedCard, description: newDescription })
+          }
+          projectName={selectedCard.projectName}
+          assignedTo={selectedCard.assignedTo}
+          createdBy={selectedCard.createdBy}
+          dueDate={selectedCard.dueDate}
+          estimatedHours={selectedCard.estimatedHours}
+          utilizedHours={selectedCard.utilizedHours}
+          remainingHours={selectedCard.remainingHours}
+          // Include other necessary props and handlers here
+        />
+      )}
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
-        <div>
+        <div >
           <h1 className="text-xl font-semibold">Project : {projectName}</h1>
           <h1 className="text-xl font-semibold">
             Project Manager : {projectManager}
@@ -1942,31 +1792,62 @@ function KanbanBoard() {
             >
               {showBackgroundChange && (
                 <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)}
+                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+                  onImageSelect={onClose} // Close the Drawer when an image is selected
                 />
               )}
               <Space direction="vertical" style={{ width: "100%" }}>
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
+                <button
+                  type="button" // Changed to 'button' for semantic correctness
+                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  onClick={() => {
+                    openGitModal();
+                    onClose(); // Close the Drawer after opening Git Modal
+                  }}
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    paddingRight: "25px",
+                  }}
                 >
+                  <SettingOutlined
+                    style={{
+                      fontSize: 20,
+                      display: "flex",
+                      justifyItems: "left",
+                    }}
+                  />
                   Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
+                </button>
                 {isProjectRoute && (
                   <button
-                    type="default"
-                    icon={<SquareChevronDown />}
-                    className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200 "
-                    onClick={handleBackgroundChangeClick}
-                    block
+                    type="button"
+                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+                    style={{
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
                   >
-                    <SquareChevronDown size={24} />
+                    <SquareChevronDown style={{ fontSize: 20 }} />
                     Change Background
                   </button>
                 )}
+
+                <RulesButton
+                  tasks={tasks}
+                  className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                />
               </Space>
             </Drawer>
           </>
@@ -2110,123 +1991,148 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              clearFieldsAndRefresh();
+            }
+          }}
+        >
+          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Card Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Card Title"
-                required
-                onChange={(e) => (e.target.value = e.target.value.trimStart())}
-              />
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Card Description
-              </label>
-              <textarea
-                name="description"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Card Description"
-                required
-                onChange={(e) => (e.target.value = e.target.value.trimStart())}
-              />
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Assigned (Email)
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter email address"
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Title"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="assignedEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Assigned (Email)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
-              {emailSuggestions.length > 0 && (
-                <ul
-                  className="absolute bg-white border border-gray-300 rounded-3xl mt-2 w-80 z-10"
-                  ref={suggestionListRef}
-                >
-                  {emailSuggestions.map((suggestion) => (
-                    <li
-                      key={suggestion.email}
-                      onClick={() => {
-                        setEmail(suggestion.email);
-                        setEmailSuggestions([]);
-                      }}
-                      className="p-2 hover:bg-gray-200  rounded-3xl cursor-pointer"
-                    >
-                      {suggestion.email}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <label
-                htmlFor="assignDate"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Start Date
-              </label>
-              <input
-                type="datetime-local"
-                name="assignDate"
-                required
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
-              <label
-                htmlFor="dueDate"
-                className="block text-sm font-medium text-gray-700"
-              >
-                End Date
-              </label>
-              <input
-                type="datetime-local"
-                name="dueDate"
-                required
-                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="assignDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="assignDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="dueDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
 
-              <label
-                htmlFor="estimatedHours"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Estimated Hours
-              </label>
-              <input
-                type="number"
-                name="estimatedHours"
-                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
-                placeholder="Estimated Hours"
-                required
-                min="0"
-                step="0.1"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="estimatedHours"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Estimated Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="estimatedHours"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Estimated Hours"
+                    required
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Description"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+              </div>
 
-              {/* Email suggestions list */}
-              <div className="flex px-4 py-2 justify-between">
+              <div className="flex justify-between">
                 <button
                   type="button"
                   onClick={clearFieldsAndRefresh}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                 >
                   Add Card
                 </button>

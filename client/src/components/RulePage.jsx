@@ -1,8 +1,27 @@
 // // //rulespage.jsx with antd
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ArrowRightOutlined, PlusCircleOutlined, ClockCircleOutlined, CheckSquareOutlined, DeleteOutlined, ArrowLeftOutlined,ToolOutlined } from "@ant-design/icons";
-import { Button, Select, Input, Modal, Card, Steps, Typography, Space, Dropdown, Menu } from "antd";
+import {
+  ArrowRightOutlined,
+  PlusCircleOutlined,
+  ClockCircleOutlined,
+  CheckSquareOutlined,
+  DeleteOutlined,
+  ArrowLeftOutlined,
+  ToolOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Select,
+  Input,
+  Modal,
+  Card,
+  Steps,
+  Typography,
+  Space,
+  Dropdown,
+  Menu,
+} from "antd";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
 import useTokenValidation from "./UseTockenValidation";
@@ -14,7 +33,9 @@ const { Title, Text } = Typography;
 const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
   <Button
     icon={<Icon />}
-    className={`flex items-center justify-start w-full ${isSelected ? "ant-btn-primary" : ""}`}
+    className={`flex items-center justify-start w-full ${
+      isSelected ? "ant-btn-primary" : ""
+    }`}
     onClick={onClick}
   >
     {label}
@@ -53,22 +74,22 @@ function RulesButton({ tasks }) {
   const [cardStatuses, setCardStatuses] = useState([]);
   const [createdByCondition, setCreatedByCondition] = useState("");
 
-    useEffect(() => {
-        const fetchUserEmail = async () => {
-            try {
-                const response = await axios.get(`${server}/api/user`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                });
-                setUserEmail(response.data.user.email);
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-            }
-        };
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const response = await axios.get(`${server}/api/user`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUserEmail(response.data.user.email);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
 
-        fetchUserEmail();
-    }, []);
+    fetchUserEmail();
+  }, []);
 
   useEffect(() => {
     const fetchRules = async () => {
@@ -82,10 +103,10 @@ function RulesButton({ tasks }) {
       }
     };
 
-        if (projectId) {
-            fetchRules();
-        }
-    }, [projectId]);
+    if (projectId) {
+      fetchRules();
+    }
+  }, [projectId]);
 
   useEffect(() => {
     const fetchCardStatuses = async () => {
@@ -105,18 +126,18 @@ function RulesButton({ tasks }) {
     fetchCardStatuses();
   }, []);
 
-    const openRulesUI = () => {
-        setIsOpen(false);
-        setShowRulesUI(true);
-    };
+  const openRulesUI = () => {
+    setIsOpen(false);
+    setShowRulesUI(true);
+  };
 
-    const handleAddTrigger = () => {
-        setShowTriggers(true);
-    };
+  const handleAddTrigger = () => {
+    setShowTriggers(true);
+  };
 
-    const handleTriggerSelect = (trigger) => {
-        setSelectedTrigger(trigger);
-    };
+  const handleTriggerSelect = (trigger) => {
+    setSelectedTrigger(trigger);
+  };
 
   const handleAddButtonClick = () => {
     setTriggerAdded(true);
@@ -140,18 +161,18 @@ function RulesButton({ tasks }) {
     }
   };
 
-    const handleActionSelect = (action) => {
-        setSelectedAction(action);
-    };
+  const handleActionSelect = (action) => {
+    setSelectedAction(action);
+  };
 
-    const handleSaveRule = async () => {
-        try {
-            let triggerSentence = "";
-            if (selectedTrigger === "Card Move") {
-                triggerSentence = `When card status is marked as ${triggerCondition}`;
-            } else if (selectedTrigger === "Card Changes") {
-                triggerSentence = `When card is moved to ${triggerCondition}`;
-            }
+  const handleSaveRule = async () => {
+    try {
+      let triggerSentence = "";
+      if (selectedTrigger === "Card Move") {
+        triggerSentence = `When card status is marked as ${triggerCondition}`;
+      } else if (selectedTrigger === "Card Changes") {
+        triggerSentence = `When card is moved to ${triggerCondition}`;
+      }
 
       let actionSentence = "";
       if (selectedAction === "Move to List") {
@@ -209,19 +230,19 @@ function RulesButton({ tasks }) {
     setRuleToDelete(null);
   };
 
-    const confirmDelete = async () => {
-        if (ruleToDelete) {
-            try {
-                await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                });
-                setRules(rules.filter((rule) => rule._id !== ruleToDelete));
-                closeDeleteConfirmation();
-            } catch (error) {
-                console.error("Error deleting rule:", error);
-            }
-        }
-    };
+  const confirmDelete = async () => {
+    if (ruleToDelete) {
+      try {
+        await axios.delete(`${server}/api/rules/${ruleToDelete}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setRules(rules.filter((rule) => rule._id !== ruleToDelete));
+        closeDeleteConfirmation();
+      } catch (error) {
+        console.error("Error deleting rule:", error);
+      }
+    }
+  };
 
   const menu = (
     <Menu>
@@ -237,14 +258,20 @@ function RulesButton({ tasks }) {
           Rules<ArrowRightOutlined />
         </Button>
       </Dropdown> */}
-      <Dropdown overlay={menu} trigger={['click']}>
-      <Button
-      type="default"
-
-      icon={<ToolOutlined />}
-    >
-      Automation
-    </Button>
+      <Dropdown overlay={menu} trigger={["click"]}>
+        <button
+          type="button"
+          className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+          style={{
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <ToolOutlined style={{ fontSize: 20 }} />
+          Automation
+        </button>
       </Dropdown>
 
       <Modal
@@ -252,39 +279,66 @@ function RulesButton({ tasks }) {
         onCancel={() => setShowRulesUI(false)}
         footer={null}
         width="70%"
+        centered
+        className="rounded-lg shadow-lg"
       >
-        <Title level={2}>Create a Rule</Title>
+        <Title level={2} className="text-center">
+          Create a Rule
+        </Title>
         <Steps current={currentStep} className="mb-6">
           <Step title="Select trigger" />
           <Step title="Select action" />
           <Step title="Review and save" />
         </Steps>
 
-        <Card title="Existing Rules" className="mb-6" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-          {rules.length === 0 ? (
-            <Text>No rules have been configured yet.</Text>
-          ) : (
-            rules.map((rule, index) => (
-              <Card.Grid key={index} className="w-full">
-                <Space>
-                  <Text strong>{rule.triggerSentence || "No trigger sentence"} -</Text>
-                  <Text>{rule.actionSentence || "No action sentence"}</Text>
-                  <Button
-                    icon={<DeleteOutlined />}
-                    onClick={() => openDeleteConfirmation(rule._id)}
-                    type="text"
-                    danger
-                  />
-                </Space>
-              </Card.Grid>
-            ))
-          )}
+        <Card
+  title="Existing Rules"
+  className="mb-6"
+  bodyStyle={{ padding: 0 }}
+>
+  {rules.length === 0 ? (
+    <Text className="p-4 block text-center text-gray-500">
+      No rules have been configured yet.
+    </Text>
+  ) : (
+    <div className="max-h-40 overflow-y-auto">
+      {rules.map((rule, index) => (
+        <Card
+          key={index}
+          className="w-full flex items-center justify-between p-1"
+        >
+          <div className="flex flex-grow items-center overflow-hidden">
+            <Text strong className="truncate mr-2">
+              {rule.triggerSentence || "No trigger sentence"} -
+            </Text>
+            <Text className="truncate">
+              {rule.actionSentence || "No action sentence"}
+            </Text>
+          </div>
+          <Button
+            icon={<DeleteOutlined />}
+            onClick={() => openDeleteConfirmation(rule._id)}
+            type="text"
+            danger
+            className="ml-2"
+          />
         </Card>
+      ))}
+    </div>
+  )}
+</Card>
+
+
         {currentStep === 0 && (
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div className="max-h-96 overflow-y-auto">
             <Title level={3}>Select Trigger</Title>
             {!showTriggers ? (
-              <Button type="primary" block onClick={handleAddTrigger}>
+              <Button
+                type="primary"
+                block
+                onClick={handleAddTrigger}
+                className="my-4"
+              >
                 + Add Trigger
               </Button>
             ) : (
@@ -303,15 +357,16 @@ function RulesButton({ tasks }) {
                     onClick={() => handleTriggerSelect("Card Changes")}
                   />
                 </Space>
-                <Card size="small">
+                {/* <Card size="small" className="mt-4"> */}
                   {selectedTrigger === "Card Move" && (
-                    <Space direction="vertical" size="small">
-                      <Space>
+                     <Card size="small" className="mt-4"> 
+                    <Space direction="vertical" size="small" className="w-full">
+                      <Space className="w-full">
                         <Text>when card status mark as</Text>
                         <Select
                           value={triggerCondition}
                           onChange={setTriggerCondition}
-                          style={{ width: 120 }}
+                          className="w-32"
                         >
                           {cardStatuses.map((status) => (
                             <Option key={status} value={status.toLowerCase()}>
@@ -322,60 +377,70 @@ function RulesButton({ tasks }) {
                         <Select
                           value={createdByCondition}
                           onChange={setCreatedByCondition}
-                          style={{ width: 180 }}
+                          className="w-40"
                         >
                           <Option value="by me">by me</Option>
                           <Option value="by anyone">by anyone</Option>
-                          <Option value="by anyone except me">by anyone except me</Option>
+                          <Option value="by anyone except me">
+                            by anyone except me
+                          </Option>
                         </Select>
                       </Space>
-                      <Text type="secondary">
+                      <Text type="secondary" className="text-sm">
                         The rule will be triggered when a card is moved.
                       </Text>
                     </Space>
+                       </Card>
                   )}
-                </Card>
-                <Space>
+                {/* </Card> */}
+                <Space className="mt-4">
                   <Button type="primary" onClick={handleAddButtonClick}>
                     Add Trigger
                   </Button>
-                  <Button onClick={() => setShowTriggers(false)}>
-                    Back
-                  </Button>
+                  <Button onClick={() => setShowTriggers(false)}>Back</Button>
                 </Space>
               </Space>
             )}
           </div>
         )}
+
         {currentStep === 1 && (
           <>
-            <Title level={3}>Select Action</Title>
-            <Space size="large" wrap>
+            <Title level={3} className="mb-6 text-center">
+              Select Action
+            </Title>
+            <Space size="large" wrap className="flex justify-center mb-6">
               <ActionOption
                 icon={ClockCircleOutlined}
                 label="Move to List"
                 onClick={() => handleActionSelect("Move to List")}
+                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
               />
               <ActionOption
                 icon={CheckSquareOutlined}
                 label="Complete Task"
                 onClick={() => handleActionSelect("Complete Task")}
+                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
               />
               <ActionOption
                 icon={DeleteOutlined}
                 label="Delete Task"
                 onClick={() => handleActionSelect("Delete Task")}
+                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
               />
             </Space>
             {selectedAction && (
-              <Card className="mt-4">
+              <Card className="mt-6 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow">
                 {selectedAction === "Move to List" && (
                   <>
-                    <Title level={4}>Move to column</Title>
+                    <Title level={4} className="mb-4">
+                      Move to Column
+                    </Title>
                     <Select
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       value={moveToList}
                       onChange={setMoveToList}
+                      className="mb-4"
                     >
                       {tasks.map((task) => (
                         <Option key={task.id} value={task.name}>
@@ -383,42 +448,47 @@ function RulesButton({ tasks }) {
                         </Option>
                       ))}
                     </Select>
-                    <Text type="secondary">
+                    <Text type="secondary" className="text-sm">
                       The card will be moved to the specified column.
                     </Text>
                   </>
                 )}
                 {selectedAction === "Complete Task" && (
-                  <Text type="secondary">
+                  <Text type="secondary" className="text-sm">
                     The selected task will be marked as complete.
                   </Text>
                 )}
                 {selectedAction === "Delete Task" && (
-                  <Text type="secondary">
+                  <Text type="secondary" className="text-sm">
                     The selected task will be deleted.
                   </Text>
                 )}
               </Card>
             )}
-            <div className="mt-4 flex justify-between items-center">
+            <div className="mt-8 flex justify-between items-center">
               <div>
                 {selectedAction && (
-                  <Button type="primary" onClick={handleAddActionClick}>
+                  <Button
+                    type="primary"
+                    onClick={handleAddActionClick}
+                    className="mr-4"
+                  >
                     Add Action
                   </Button>
                 )}
               </div>
               <div>
-                <Button onClick={handleBack}>
-                  Back
-                </Button>
+                <Button onClick={handleBack}>Back</Button>
               </div>
             </div>
           </>
         )}
+
         {currentStep === 2 && (
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            <Title level={3}>Review and Save</Title>
+          <div className="max-h-96 overflow-y-auto">
+            <Title level={3} className="mb-4">
+              Review and Save
+            </Title>
             <Card size="small">
               <Title level={4}>Trigger</Title>
               <Text>
@@ -430,12 +500,13 @@ function RulesButton({ tasks }) {
                 )}
                 {selectedTrigger === "Card Changes" && (
                   <>
-                    When card is moved to{" "}
-                    <Text strong>{triggerCondition}</Text>
+                    When card is moved to <Text strong>{triggerCondition}</Text>
                   </>
                 )}
               </Text>
-              <Title level={4} className="mt-4">Action</Title>
+              <Title level={4} className="mt-4">
+                Action
+              </Title>
               <Text>
                 {selectedAction === "Move to List" && (
                   <>
@@ -457,9 +528,7 @@ function RulesButton({ tasks }) {
               <Button type="primary" onClick={handleSaveRule}>
                 Save Rule
               </Button>
-              <Button onClick={() => setCurrentStep(1)}>
-                Back
-              </Button>
+              <Button onClick={() => setCurrentStep(1)}>Back</Button>
             </Space>
           </div>
         )}
@@ -478,4 +547,3 @@ function RulesButton({ tasks }) {
 }
 
 export default RulesButton;
-

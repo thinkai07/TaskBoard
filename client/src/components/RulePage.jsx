@@ -237,15 +237,17 @@ function RulesButton({ tasks }) {
           Rules<ArrowRightOutlined />
         </Button>
       </Dropdown> */}
-      <Dropdown overlay={menu} trigger={['click']}>
-      <Button
-      type="default"
-
-      icon={<ToolOutlined />}
-    >
-      Automation
-    </Button>
-      </Dropdown>
+   <Dropdown overlay={menu} trigger={['click']}>
+   <button
+  type="button"
+  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+  style={{ height: '40px', display: 'flex', alignItems: 'center', width: '100%' }}
+  
+>
+  <ToolOutlined style={{ fontSize: 20,}} />
+  Automation
+</button>
+</Dropdown>
 
       <Modal
         visible={showRulesUI}
@@ -478,4 +480,3 @@ function RulesButton({ tasks }) {
 }
 
 export default RulesButton;
-

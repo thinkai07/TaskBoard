@@ -36,6 +36,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
+import RenameCardPage from "../Pages/RenameCardPage";
 const initialBoard = {
   columns: [],
 };
@@ -120,6 +121,13 @@ function KanbanBoard() {
   const { Text, Title } = Typography;
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
+  const [selectedCard, setSelectedCard] = useState(null);
+
+  const handleCardClick = (cardId,columnId) => {
+    navigate(`/rename-card/${columnId}/cards/${cardId}`)
+  };
+
+  
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -533,6 +541,7 @@ function KanbanBoard() {
     setEmail("");
     setTeam("");
   };
+  
 
   const openRenameCardModal = (
     columnId,
@@ -573,6 +582,7 @@ function KanbanBoard() {
     setDueDate(dueDate);
   };
 
+  
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
     if (document.forms[0]) {
@@ -1244,6 +1254,7 @@ function KanbanBoard() {
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
+      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
     >
       <div className="p-4">
         <div
@@ -1252,22 +1263,25 @@ function KanbanBoard() {
             alignItems: "center",
             justifyContent: "space-between",
           }}
-          onClick={() =>
-            openRenameCardModal(
-              card.columnId,
-              card.id,
-              card.title,
-              card.description,
-              card.comments,
-              card.activities,
-              card.taskLogs,
-              card.estimatedHours,
-              card.utilizedHours,
-              card.assignedTo,
-              card.createdBy,
-              card.dueDate
-            )
-          }
+          key={card.id} 
+
+          
+          // onClick={() =>
+          //   openRenameCardModal(
+          //     card.columnId,
+          //     card.id,
+          //     card.title,
+          //     card.description,
+          //     card.comments,
+          //     card.activities,
+          //     card.taskLogs,
+          //     card.estimatedHours,
+          //     card.utilizedHours,
+          //     card.assignedTo,
+          //     card.createdBy,
+          //     card.dueDate
+          //   )
+          // }
         >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
@@ -1308,24 +1322,25 @@ function KanbanBoard() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
-            <div className="react-kanban-card__status">
-              <Select
-                value={card.status}
-                onChange={(value) => handleChangeStatus(card.id, value)}
-                style={{ width: 110, height: 25 }} // You can adjust the width as needed
-              >
-                <Option value="pending">Pending</Option>
-                <Option value="inprogress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-              </Select>
-            </div>
-            <div
-              title={card.uniqueId}
-              style={{ marginLeft: "10px", font: "small-caption" }}
-            >
-              <h1>ID:{card.cardId}</h1>
-            </div>
-          </div>
+      <div className="react-kanban-card__status">
+        <Select
+          value={card.status}
+          onChange={(value) => handleChangeStatus(card.id, value)}
+          onClick={(e) => e.stopPropagation()} // Prevent modal from opening
+          style={{ width: 110, height: 25 }} // You can adjust the width as needed
+        >
+          <Option value="pending">Pending</Option>
+          <Option value="inprogress">In Progress</Option>
+          <Option value="completed">Completed</Option>
+        </Select>
+      </div>
+      <div
+        title={card.uniqueId}
+        style={{ marginLeft: "10px", font: "small-caption" }}
+      >
+        <h1>ID:{card.cardId}</h1>
+      </div>
+    </div>
 
           {canShowActions && (
             <button
@@ -1705,192 +1720,27 @@ function KanbanBoard() {
           : {}
       }
     >
-      <div>
-        <Modal
-          visible={renameCardModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-          width="60%"
-          closeIcon={<CloseOutlined />}
-          centered
-          className="rounded-lg shadow-lg"
-          bodyStyle={{ padding: "20px", maxHeight: "80vh" }}
-        >
-          <form onSubmit={handleRenameCard}>
-            <div className="flex justify-between">
-              {/* Left Side: Card Title and Description */}
-              <div className="w-2/3 pr-4">
-                <div className="mb-4">
-                  {isEditingTitle ? (
-                    <Input
-                      value={renameCardTitle}
-                      onChange={(e) => {
-                        setRenameCardTitle(e.target.value);
-                        setRenameCardErrors((prev) => ({
-                          ...prev,
-                          title: "",
-                        }));
-                      }}
-                      onBlur={handleTitleBlur}
-                      onPressEnter={handleTitleBlur}
-                      className={`${
-                        renameCardErrors.title
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-xl px-4 py-2 mt-5 w-full`}
-                      placeholder="Card Title"
-                      autoFocus
-                    />
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingTitle(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardTitle}
-                    </Text>
-                  )}
-                  {renameCardErrors.title && (
-                    <Text type="danger" className="text-sm mt-1">
-                      {renameCardErrors.title}
-                    </Text>
-                  )}
-                </div>
-
-                <div className="mb-4">
-                  {isEditingDescription ? (
-                    <>
-                      <TextArea
-                        value={renameCardDescription}
-                        onChange={(e) => {
-                          setRenameCardDescription(e.target.value);
-                          setRenameCardErrors((prev) => ({
-                            ...prev,
-                            description: "",
-                          }));
-                        }}
-                        onBlur={handleDescriptionBlur}
-                        onPressEnter={handleDescriptionBlur}
-                        className={`${
-                          renameCardErrors.description
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-xl px-4 py-2 w-full`}
-                        placeholder="Card Description"
-                        autoFocus
-                      />
-                      {renameCardErrors.description && (
-                        <Text type="danger" className="text-sm mt-1">
-                          {renameCardErrors.description}
-                        </Text>
-                      )}
-                      <div className="flex justify-end mt-4">
-                        <Button
-                          onClick={() => setIsEditingDescription(false)}
-                          className="mr-2"
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="primary" onClick={handleRenameCard}>
-                          Save
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <Text
-                      onDoubleClick={() => setIsEditingDescription(true)}
-                      className="cursor-pointer"
-                    >
-                      {renameCardDescription}
-                    </Text>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <Tabs defaultActiveKey="1" items={items} />
-                </div>
-              </div>
-
-              {/* Right Side: Project Info */}
-              <div className="w-1/3 pl-4 ">
-                <div className="mb-4">
-                  <Text strong>Project Name:</Text>
-                  <Text>{projectName}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned To:</Text>
-                  <Text>{assignedTo}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>Assigned By:</Text>
-                  <Text>{createdBy}</Text>
-                </div>
-                <div className="mb-4">
-                  <Text strong>End Date:</Text>
-                  <Text>
-                    {new Date(dueDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                      hour12: true,
-                    })}
-                  </Text>
-                </div>
-                <div className="flex justify-between mt-6">
-                  <div className="w-full mt-20">
-                    <Text strong className="block mb-4 text-xl">
-                      Progress
-                    </Text>
-                    <div className="mb-4">
-                      <Text>Estimated Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{estimatedHours} </Text>  */}
-                        <Tooltip title={`${estimatedHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={100} // Always 100% since it's the full estimate
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <Text>Utilized Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{utilizedHours} </Text>  */}
-                        <Tooltip title={`${utilizedHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={(utilizedHours / estimatedHours) * 100} // Show utilization progress
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <Text>Remaining Time:</Text>
-                      <div className="flex items-center">
-                        {/* <Text>{remainingHours} hours</Text>  */}
-                        <Tooltip title={`${remainingHours} hours`}>
-                          <Progress
-                            className="ml-2"
-                            percent={(remainingHours / estimatedHours) * 100} // Show remaining progress
-                            showInfo={false}
-                          />
-                        </Tooltip>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Section */}
-          </form>
-
-          {/* <Tabs defaultActiveKey="1" items={items} className="mt-6" /> */}
-        </Modal>
-      </div>
+     
+     {selectedCard && (
+        <RenameCardPage
+          renameCardTitle={selectedCard.title}
+          setRenameCardTitle={(newTitle) =>
+            setSelectedCard({ ...selectedCard, title: newTitle })
+          }
+          renameCardDescription={selectedCard.description}
+          setRenameCardDescription={(newDescription) =>
+            setSelectedCard({ ...selectedCard, description: newDescription })
+          }
+          projectName={selectedCard.projectName}
+          assignedTo={selectedCard.assignedTo}
+          createdBy={selectedCard.createdBy}
+          dueDate={selectedCard.dueDate}
+          estimatedHours={selectedCard.estimatedHours}
+          utilizedHours={selectedCard.utilizedHours}
+          remainingHours={selectedCard.remainingHours}
+          // Include other necessary props and handlers here
+        />
+      )}
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
@@ -1934,41 +1784,74 @@ function KanbanBoard() {
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-            >
-              {showBackgroundChange && (
-                <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)}
-                />
-              )}
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-                {isProjectRoute && (
-                  <button
-                    type="default"
-                    icon={<SquareChevronDown />}
-                    className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200 "
-                    onClick={handleBackgroundChangeClick}
-                    block
-                  >
-                    <SquareChevronDown size={24} />
-                    Change Background
-                  </button>
-                )}
-              </Space>
-            </Drawer>
+  title="Settings"
+  placement="right"
+  onClose={onClose}
+  visible={visible}
+  width={300} // Adjust width as needed
+>
+  {showBackgroundChange && (
+    <BackgroundChange
+      onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+      onImageSelect={onClose} // Close the Drawer when an image is selected
+    />
+  )}
+  <Space direction="vertical" style={{ width: "100%" }}>
+    <button
+      type="button" // Changed to 'button' for semantic correctness
+      className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={() => {
+        openGitModal();
+        onClose(); // Close the Drawer after opening Git Modal
+      }}
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        paddingRight: "25px",
+      }}
+    >
+      <SettingOutlined
+        style={{
+          fontSize: 20,
+          display: "flex",
+          justifyItems: "left",
+        }}
+      />
+      Git Configuration
+    </button>
+    {isProjectRoute && (
+      <button
+        type="button"
+        className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+        onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+        style={{
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <SquareChevronDown style={{ fontSize: 20 }} />
+        Change Background
+      </button>
+    )}
+
+    <RulesButton
+      tasks={tasks}
+      className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+      }}
+     
+    />
+    
+  </Space>
+</Drawer>
           </>
         </div>
       </div>

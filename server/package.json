@@ -20,16 +20,13 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
     "nodemon": "^3.1.1",
-
     "schedular": "^0.0.1",
-
     "schedule": "^0.5.0",
-
     "scheduler": "^0.23.2",
-
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "streamifier": "^0.1.1",
+    "unsplash-js": "^7.0.19",
     "ws": "^8.18.0"
   },
   "scripts": {

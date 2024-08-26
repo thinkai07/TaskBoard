@@ -476,5 +476,3 @@ function RulesButton({ tasks }) {
 
 export default RulesButton;
 
-
-

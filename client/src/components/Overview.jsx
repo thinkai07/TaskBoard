@@ -19,6 +19,8 @@ import { Button } from "antd";
 import { AiOutlineProject } from "react-icons/ai";
 import { FaTasks } from "react-icons/fa";
 import { IoIosPeople } from "react-icons/io";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 ChartJS.register(
   ArcElement,
@@ -425,8 +427,16 @@ const Overview = () => {
   };
 
   if (!overviewData.projects.length) {
-    return <div>Loading...</div>;
-  }
+   return( <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh'
+    }}>
+      <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+      Loading...
+    </div>
+ ) }
 
   return (
     <div

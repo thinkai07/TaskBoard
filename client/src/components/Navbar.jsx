@@ -31,13 +31,13 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const searchRef = useRef(null);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   // Debounced function to avoid API calls on every keystroke
   const debouncedSearch = (query) => {

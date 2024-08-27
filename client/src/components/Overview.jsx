@@ -456,20 +456,8 @@ const Overview = () => {
         fontFamily: "'Open Sans', sans-serif",
       }}
     >
-      <div className="flex justify-end items-center mb-2">
-
-        {/* <Search
-          placeholder="Search"
-          onSearch={handleSearch}
-          style={{
-            width: 300,
-            borderRadius: "8px",
-            border: "1px solid #e2e8f0",
-          }}
-          enterButton={<SearchOutlined />}
-        /> */}
-
-        <Dropdown overlay={menu} trigger={["click"]} className="text-sm mb-2">
+      <div className="flex justify-end">
+      <Dropdown overlay={menu} trigger={["click"]} className="text-sm mb-2">
           <a
             onClick={(e) => e.preventDefault()}
             style={{

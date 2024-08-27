@@ -36,7 +36,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-import RenameCardPage from "../pages/CalendarDateDetails";
+import RenameCardPage from "../Pages/RenameCardPage";
 const initialBoard = {
   columns: [],
 };
@@ -123,14 +123,11 @@ function KanbanBoard() {
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
 
-
-
-
-  const handleCardClick = (cardId, columnId) => {
+  const handleCardClick = (cardId,columnId,projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
   };
 
-
+  
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -544,7 +541,7 @@ function KanbanBoard() {
     setEmail("");
     setTeam("");
   };
-
+  
 
   const openRenameCardModal = (
     columnId,
@@ -585,7 +582,7 @@ function KanbanBoard() {
     setDueDate(dueDate);
   };
 
-
+  
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
     if (document.forms[0]) {
@@ -1266,25 +1263,9 @@ function KanbanBoard() {
             alignItems: "center",
             justifyContent: "space-between",
           }}
-          key={card.id}
+          key={card.id} 
 
-
-        // onClick={() =>
-        //   openRenameCardModal(
-        //     card.columnId,
-        //     card.id,
-        //     card.title,
-        //     card.description,
-        //     card.comments,
-        //     card.activities,
-        //     card.taskLogs,
-        //     card.estimatedHours,
-        //     card.utilizedHours,
-        //     card.assignedTo,
-        //     card.createdBy,
-        //     card.dueDate
-        //   )
-        // }
+         
         >
           <div className="react-kanban-card__title truncate" title={card.title}>
             {card.title && card.title.length > 20
@@ -1293,12 +1274,13 @@ function KanbanBoard() {
           </div>
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
-              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
-                <span className="group-hover:block hidden absolute top-4 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
-                  {card.assignedTo}
+              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
+              <Tooltip title={card.assignedTo}>
+                <span className="cursor-pointer">
+                  {card.assignedTo.charAt(0).toUpperCase()}
                 </span>
-                {card.assignedTo.charAt(0).toUpperCase()}
-              </div>
+              </Tooltip>
+            </div>
             )}
           </div>
         </div>
@@ -1324,63 +1306,26 @@ function KanbanBoard() {
             justifyContent: "space-between",
           }}
         >
-          {/* <div style={{ display: "flex", alignItems: "center" }}>
-            <div className="react-kanban-card__status">
-              <Select
-                value={card.status}
-                onChange={(value) => handleChangeStatus(card.id, value)}
-                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-                style={{ width: 110, height: 25 }} // You can adjust the width as needed
-              >
-                <Option value="pending">Pending</Option>
-                <Option value="inprogress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-              </Select>
-            </div>
-            <div
-              title={card.uniqueId}
-              style={{ marginLeft: "10px", font: "small-caption" }}
-            >
-              <h1>ID:{card.cardId}</h1>
-            </div>
-          </div> */}
-
           <div style={{ display: "flex", alignItems: "center" }}>
-            <div className="react-kanban-card__status">
-              <Select
-                value={card.status}
-                onChange={(value) => handleChangeStatus(card.id, value)}
-                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-                style={{ width: 110, height: 25 }} // You can adjust the width as needed
-              >
-                <Option
-                  value="pending"
-                  disabled={card.status === "inprogress"}
-                >
-                  Pending
-                </Option>
-                <Option
-                  value="inprogress"
-                  disabled={card.status === "completed"}
-                >
-                  In Progress
-                </Option>
-                <Option
-                  value="completed"
-                  disabled={card.status === "pending"}
-                >
-                  Completed
-                </Option>
-              </Select>
-            </div>
-            <div
-              title={card.uniqueId}
-              style={{ marginLeft: "10px", font: "small-caption" }}
-            >
-              <h1>ID:{card.cardId}</h1>
-            </div>
-          </div>
-
+      <div className="react-kanban-card__status">
+        <Select
+          value={card.status}
+          onChange={(value) => handleChangeStatus(card.id, value)}
+          onClick={(e) => e.stopPropagation()} // Prevent modal from opening
+          style={{ width: 110, height: 25 }} // You can adjust the width as needed
+        >
+          <Option value="pending">Pending</Option>
+          <Option value="inprogress">In Progress</Option>
+          <Option value="completed">Completed</Option>
+        </Select>
+      </div>
+      <div
+        title={card.uniqueId}
+        style={{ marginLeft: "10px", font: "small-caption" }}
+      >
+        <h1>ID:{card.cardId}</h1>
+      </div>
+    </div>
 
           {canShowActions && (
             <button
@@ -1445,303 +1390,8 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
-  const handleRenameCard = async (e) => {
-    e.preventDefault();
-    const trimmedTitle = renameCardTitle.trim();
-    const trimmedDescription = renameCardDescription.trim();
-    let hasErrors = false;
-    const errors = { title: "", description: "" };
-
-    if (!trimmedTitle) {
-      errors.title = "Please enter a card title";
-      hasErrors = true;
-    }
-    if (!trimmedDescription) {
-      errors.description = "Please enter a card description";
-      hasErrors = true;
-    }
-
-    if (hasErrors) {
-      setRenameCardErrors(errors);
-      return;
-    }
-
-    try {
-      const updatedBy = await fetchUserEmail();
-
-      const response = await fetch(
-        `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            name: trimmedTitle,
-            description: trimmedDescription,
-            updatedBy: updatedBy,
-            updatedDate: new Date().toISOString(),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to rename card");
-      }
-
-      // Update local state
-      setBoardData((prevState) => {
-        const updatedColumns = prevState.columns.map((column) => {
-          if (column.id === selectedColumnId) {
-            return {
-              ...column,
-              cards: column.cards.map((card) =>
-                card.id === selectedCardId
-                  ? {
-                    ...card,
-                    title: trimmedTitle,
-                    description: trimmedDescription,
-                  }
-                  : card
-              ),
-            };
-          }
-          return column;
-        });
-
-        return { ...prevState, columns: updatedColumns };
-      });
-
-      // Optionally fetch the latest data from the server
-      await fetchTasks();
-
-      setRenameCardErrors({ title: "", description: "" });
-      setShowSuccessPopup(true);
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        setRenameCardModalVisible(false); // Close the modal after showing success message
-      }, 1000);
-    } catch (error) {
-      console.error("Error renaming card:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setRenameCardModalVisible(false);
-    setRenameCardErrors({ title: "", description: "" });
-  };
-
-  // Handle saving title
-  const handleTitleBlur = () => {
-    if (renameCardTitle.trim()) {
-      // Save title logic here
-      console.log("Title saved:", renameCardTitle);
-    }
-  };
-
-  // Handle saving description
-  const handleDescriptionBlur = () => {
-    if (renameCardDescription.trim()) {
-      // Save description logic here
-      console.log("Description saved:", renameCardDescription);
-    }
-  };
-
-  const items = [
-    {
-      key: "1",
-      label: "Activities",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {activities.length > 0 ? (
-            <List
-              dataSource={activities}
-              renderItem={(activity, idx) => (
-                <List.Item
-                  key={activity.id}
-                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
-                    }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {activity.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{activity.commentBy}</strong>}
-                    description={activity.comment}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No activities found.</Text>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      label: "Log-in Hours",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {taskLogs.length > 0 ? (
-            <List
-              dataSource={taskLogs}
-              renderItem={(taskLog, idx) => (
-                <List.Item
-                  key={taskLog.id}
-                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
-                    }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {taskLog.loggedBy.name[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{taskLog.loggedBy.name}</strong>}
-                    description={taskLog.hours}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No log-in hours found.</Text>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "3",
-      label: "Comments",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          <div className="flex items-center mb-4 pt-6">
-            <CommentOutlined className="mr-2" />
-            <Title level={4}>Comments</Title>
-          </div>
-
-          <div className="flex items-center mb-2">
-            <Avatar style={{ backgroundColor: "#1890ff" }}>
-              {userEmail.charAt(0).toUpperCase()}
-            </Avatar>
-            <Input
-              value={userComment}
-              onChange={(e) => setUserComment(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSaveComment();
-                }
-              }}
-              placeholder="Write your comment"
-              className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-            />
-          </div>
-
-          {commentsVisible && comments.length > 0 ? (
-            <List
-              dataSource={comments.slice().reverse()}
-              renderItem={(comment, idx) => (
-                <List.Item
-                  key={idx}
-                  className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
-                    }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {comment.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{comment.commentBy}</strong>}
-                    description={comment.comment}
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No comments yet.</Text>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  // The function for handling comment submission
-  const handleSaveComment = async () => {
-    if (userComment.trim()) {
-      try {
-        const updatedBy = await fetchUserEmail();
-
-        const response = await fetch(
-          `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              updatedBy: updatedBy,
-              comment: userComment.trim(),
-              name: renameCardTitle,
-              description: renameCardDescription,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to save comment");
-        }
-
-        // Update local state immediately
-        setBoardData((prevState) => {
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === selectedColumnId) {
-              return {
-                ...column,
-                cards: column.cards.map((card) => {
-                  if (card.id === selectedCardId) {
-                    return {
-                      ...card,
-                      comments: [
-                        ...card.comments,
-                        { commentBy: userEmail, comment: userComment.trim() },
-                      ],
-                      activities: [
-                        ...card.activities,
-                        { commentBy: userEmail, comment: userComment.trim() },
-                      ],
-                    };
-                  }
-                  return card;
-                }),
-              };
-            }
-            return column;
-          });
-
-          return { ...prevState, columns: updatedColumns };
-        });
-
-        // Update the comments state
-        setComments([
-          ...comments,
-          { commentBy: userEmail, comment: userComment.trim() },
-        ]);
-
-        // Clear the comment input
-        setUserComment("");
-
-        // Optionally fetch the latest data from the server
-        await fetchTasks();
-      } catch (error) {
-        console.error("Error saving comment:", error);
-      }
-    }
-  };
+  
+ 
 
   return (
     <div
@@ -1757,27 +1407,8 @@ function KanbanBoard() {
           : {}
       }
     >
-
-      {selectedCard && (
-        <RenameCardPage
-          renameCardTitle={selectedCard.title}
-          setRenameCardTitle={(newTitle) =>
-            setSelectedCard({ ...selectedCard, title: newTitle })
-          }
-          renameCardDescription={selectedCard.description}
-          setRenameCardDescription={(newDescription) =>
-            setSelectedCard({ ...selectedCard, description: newDescription })
-          }
-          projectName={selectedCard.projectName}
-          assignedTo={selectedCard.assignedTo}
-          createdBy={selectedCard.createdBy}
-          dueDate={selectedCard.dueDate}
-          estimatedHours={selectedCard.estimatedHours}
-          utilizedHours={selectedCard.utilizedHours}
-          remainingHours={selectedCard.remainingHours}
-        // Include other necessary props and handlers here
-        />
-      )}
+     
+    
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
@@ -1821,74 +1452,74 @@ function KanbanBoard() {
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-            >
-              {showBackgroundChange && (
-                <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
-                  onImageSelect={onClose} // Close the Drawer when an image is selected
-                />
-              )}
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <button
-                  type="button" // Changed to 'button' for semantic correctness
-                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  onClick={() => {
-                    openGitModal();
-                    onClose(); // Close the Drawer after opening Git Modal
-                  }}
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                    paddingRight: "25px",
-                  }}
-                >
-                  <SettingOutlined
-                    style={{
-                      fontSize: 20,
-                      display: "flex",
-                      justifyItems: "left",
-                    }}
-                  />
-                  Git Configuration
-                </button>
-                {isProjectRoute && (
-                  <button
-                    type="button"
-                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
-                    style={{
-                      height: "40px",
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
-                  >
-                    <SquareChevronDown style={{ fontSize: 20 }} />
-                    Change Background
-                  </button>
-                )}
+  title="Settings"
+  placement="right"
+  onClose={onClose}
+  visible={visible}
+  width={300} // Adjust width as needed
+>
+  {showBackgroundChange && (
+    <BackgroundChange
+      onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+      onImageSelect={onClose} // Close the Drawer when an image is selected
+    />
+  )}
+  <Space direction="vertical" style={{ width: "100%" }}>
+    <button
+      type="button" // Changed to 'button' for semantic correctness
+      className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={() => {
+        openGitModal();
+        onClose(); // Close the Drawer after opening Git Modal
+      }}
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        paddingRight: "25px",
+      }}
+    >
+      <SettingOutlined
+        style={{
+          fontSize: 20,
+          display: "flex",
+          justifyItems: "left",
+        }}
+      />
+      Git Configuration
+    </button>
+    {isProjectRoute && (
+      <button
+        type="button"
+        className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+        onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+        style={{
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <SquareChevronDown style={{ fontSize: 20 }} />
+        Change Background
+      </button>
+    )}
 
-                <RulesButton
-                  tasks={tasks}
-                  className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-
-                />
-
-              </Space>
-            </Drawer>
+    <RulesButton
+      tasks={tasks}
+      className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+      }}
+     
+    />
+    
+  </Space>
+</Drawer>
           </>
         </div>
       </div>
@@ -2180,6 +1811,7 @@ function KanbanBoard() {
           </div>
         </div>
       )}
+
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

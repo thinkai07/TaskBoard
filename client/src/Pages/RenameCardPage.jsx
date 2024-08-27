@@ -4,6 +4,7 @@ import { Input, Button, Progress, Typography, List, Avatar, Tabs, Tooltip } from
 import axios from 'axios';
 import { server } from '../constant';
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
+import useTokenValidation from '../components/UseTockenValidation';
 import { AppWindow } from 'lucide-react';
 import { AlignRight, Captions } from 'lucide-react';
 
@@ -12,6 +13,7 @@ const initialBoard = {
     columns: [],
 };
 const RenameCardPage = () => {
+    useTokenValidation();
     const { columnId, cardId } = useParams();
     const { Text, Title } = Typography; // Correct import from Typography
     const { TextArea } = Input;
@@ -21,6 +23,7 @@ const RenameCardPage = () => {
         projectName: '',
         name: '',
         description: '',
+        projectName: '',
         assignedTo: '',
         createdBy: '',
         dueDate: null,
@@ -29,7 +32,8 @@ const RenameCardPage = () => {
         remainingHours: 0,
         activities: [],
         taskLogs: [],
-        comments: []
+        comments: [],
+        uniqueId: '',
     });
     const [boardData, setBoardData] = useState(initialBoard);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -45,11 +49,33 @@ const RenameCardPage = () => {
     const [selectedColumnId, setSelectedColumnId] = useState(null);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
     const [userEmail, setUserEmail] = useState("");
-    const [projectName, setProjectName] = useState("");
-
-
+    const [userProfile, setUserProfile] = useState({ name: '', avatar: '' });
 
     // Fetch card details on component mount
+    useEffect(() => {
+        // Fetch the logged-in user's profile data
+        const fetchUserProfile = async () => {
+            try {
+                const response = await axios.get(`${server}/api/user`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+
+                if (response.data.success) {
+                    const { name, email } = response.data.user;
+                    setUserProfile({ name, email, avatar: name.charAt(0).toUpperCase() });
+                } else {
+                    console.error('Error fetching user profile:', response.data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+            }
+        };
+
+        fetchUserProfile();
+    }, [server]);
+
 
     const fetchCardDetails = async () => {
         try {
@@ -69,8 +95,8 @@ const RenameCardPage = () => {
                 setCardData({
                     ...cardData,
                     remainingHours: (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
-                    taskName, // Add taskName to the cardData state
-                    projectName
+                    taskName,
+                    projectName: cardData.project.name,
                 });
             } else {
                 console.error('Card not found');
@@ -79,6 +105,12 @@ const RenameCardPage = () => {
             console.error('Error fetching card details:', error);
         }
     };
+
+    useEffect(() => {
+        fetchCardDetails();
+    }, [cardId]);
+
+
 
     useEffect(() => {
         fetchCardDetails();
@@ -274,15 +306,12 @@ const RenameCardPage = () => {
 
 
 
-
-
     const items = [
         {
             key: "1",
-
-            label: <span className="font-semibold">Activities</span>,
+            label: "Activities",
             children: (
-                <div className="mt-4 h-96 overflow-y-auto ">
+                <div className="mt-4 h-96 overflow-y-auto">
                     {cardData.activities.length > 0 ? (
                         <List
                             dataSource={cardData.activities}
@@ -303,7 +332,18 @@ const RenameCardPage = () => {
                                             <>
                                                 <div>{activity.comment}</div>
                                                 <div className="text-gray-500 text-sm">
-                                                    {new Date(activity.createdAt).toLocaleString()}
+                                                    <Text>
+                                                        {activity.createdAt
+                                                            ? new Date(activity.createdAt).toLocaleDateString("en-US", {
+                                                                year: "numeric",
+                                                                month: "short",
+                                                                day: "numeric",
+                                                                hour: "numeric",
+                                                                minute: "numeric",
+                                                                hour12: true,
+                                                            })
+                                                            : "N/A"}
+                                                    </Text>
                                                 </div>
                                             </>
                                         }
@@ -319,7 +359,7 @@ const RenameCardPage = () => {
         },
         {
             key: "2",
-            label: <span className="font-semibold">Log-Hours</span>,
+            label: "Log-in Hours",
             children: (
                 <div className="mt-4 h-96 overflow-y-auto">
                     {cardData.taskLogs.length > 0 ? (
@@ -340,10 +380,21 @@ const RenameCardPage = () => {
                                         title={<strong>{taskLog.loggedBy.name}</strong>}
                                         description={
                                             <>
-                                                <div>{taskLog.hours}</div>
-                                                <div className="text-gray-500 text-sm">
-                                                    {new Date(taskLog.createdAt).toLocaleString()}
-                                                </div>
+                                                <div>{taskLog.hours} hours</div>
+                                                {/* <div className="text-gray-500 text-sm">
+                      <Text>
+                        {taskLog.createdAt
+                          ? new Date(taskLog.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: true,
+                            })
+                          : "N/A"}
+                      </Text>
+                    </div> */}
                                             </>
                                         }
                                     />
@@ -358,7 +409,7 @@ const RenameCardPage = () => {
         },
         {
             key: "3",
-            label: <span className='font-semibold'>Comments</span>,
+            label: "Comments",
             children: (
                 <div className="mt-4 h-96 overflow-y-auto">
                     <div className="flex items-center mb-4 pt-6">
@@ -368,8 +419,9 @@ const RenameCardPage = () => {
 
                     <div className="flex items-center mb-2">
                         <Avatar style={{ backgroundColor: "#1890ff" }}>
-                            {cardData.assignedTo.charAt(0).toUpperCase()}
+                            {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
                         </Avatar>
+
                         <Input
                             value={userComment}
                             onChange={(e) => setUserComment(e.target.value)}
@@ -403,7 +455,18 @@ const RenameCardPage = () => {
                                             <>
                                                 <div>{comment.comment}</div>
                                                 <div className="text-gray-500 text-sm">
-                                                    {new Date(comment.createdAt).toLocaleString()}
+                                                    <Text>
+                                                        {comment.createdAt
+                                                            ? new Date(comment.createdAt).toLocaleDateString("en-US", {
+                                                                year: "numeric",
+                                                                month: "short",
+                                                                day: "numeric",
+                                                                hour: "numeric",
+                                                                minute: "numeric",
+                                                                hour12: true,
+                                                            })
+                                                            : "N/A"}
+                                                    </Text>
                                                 </div>
                                             </>
                                         }
@@ -416,29 +479,25 @@ const RenameCardPage = () => {
                     )}
                 </div>
             ),
-        }
-
+        },
     ];
 
 
+
     return (
-        <div className="container mx-auto p-4 ">
+        <div className="container mx-auto p-4">
             <div className="flex">
                 {/* Left Column */}
                 <div className="w-2/3 pr-4">
-                    <div className='flex items-center'>
+                    <div className="mb-4 flex items-center">
                         <Captions className="mr-2 text-gray-600 " />
-                        <h1 className='font-semibold'>Title</h1>
-                    </div>
-                    <div className="mb-4 ml-8 mt-4 flex items-center">
-                        {/* <Captions className="mr-2 text-gray-600 " /> */}
                         {isEditingTitle ? (
                             <Input
                                 value={cardData.name}
                                 onChange={(e) => setCardData((prev) => ({ ...prev, name: e.target.value }))}
                                 onBlur={handleTitleBlur} // Update title on blur
                                 onPressEnter={handleTitleBlur} // Update title on Enter key press
-                                className="border-gray-300 rounded-xl px-4 py-2  font-semibold  w-full"
+                                className="border-gray-300 rounded-xl px-4 py-2 mt-5 w-full"
                                 placeholder="Card Title"
                                 autoFocus
                             />
@@ -452,22 +511,17 @@ const RenameCardPage = () => {
                         )}
                         {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
                     </div>
-                    <div className="mb-4 flex items-center">
-
-                        <Text className="text-gray-600 ml-8">
-                            In column{" "}
-                            <Text className="text-blue-500   underline">
-                                {cardData.taskName || 'No Task Name'}
-                            </Text>
+                    <Text className="text-gray-600 ml-8">
+                        In column{" "}
+                        <Text className="text-blue-500   underline">
+                            {cardData.taskName || 'No Task Name'}
                         </Text>
-                    </div>
+                    </Text>
                     <div className='mb-4 flex items-center'>
                         <AlignRight className="mr-2 text-gray-600" />
-                        <h1 className='font-semibold'>Description</h1>
+                        <h1 className=''>Description</h1>
                     </div>
-
-
-                    <div className="mb-4  items-center ml-8">
+                    <div className="mb-4  items-center ml-8 mt-4">
 
                         {isEditingDescription ? (
                             <>
@@ -475,7 +529,7 @@ const RenameCardPage = () => {
                                     value={cardData.description}
                                     onChange={(e) => setCardData((prev) => ({ ...prev, description: e.target.value }))}
                                     onBlur={handleDescriptionBlur} // Update description on blur
-                                    className="border-gray-300 rounded-xl px-4 py-2 w-full  font-semibold"
+                                    className="border-gray-300 rounded-xl px-4 py-2 w-full"
                                     placeholder="Card Description"
                                     autoFocus
                                 />
@@ -511,11 +565,15 @@ const RenameCardPage = () => {
                         <Text>{cardData.projectName || 'N/A'}</Text>
                     </div>
                     <div className="mb-4">
+                        <Text strong>CardID:</Text>
+                        <Text>{cardData.uniqueId || 'N/A'}</Text>
+                    </div>
+                    <div className="mb-4">
                         <Text strong>Assigned To:</Text>
                         <Text>{cardData.assignedTo || 'N/A'}</Text>
                     </div>
                     <div className="mb-4">
-                        <Text strong>Created By:</Text>
+                        <Text strong>Assigned By:</Text>
                         <Text>{cardData.createdBy || 'N/A'}</Text>
                     </div>
                     <div className="mb-4">
@@ -583,22 +641,3 @@ const RenameCardPage = () => {
 };
 
 export default RenameCardPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

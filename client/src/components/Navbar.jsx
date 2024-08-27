@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
@@ -29,22 +28,28 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [searchResults, setSearchResults] = useState([]);
   const { Search } = Input;
   const [searchQuery, setSearchQuery] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
+  const searchRef = useRef(null);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
+  // Debounced function to avoid API calls on every keystroke
+  const debouncedSearch = (query) => {
+    clearTimeout(searchRef.current);
+    searchRef.current = setTimeout(() => {
+      handleSearch(query);
+    }, 100); // Adjust the debounce delay as needed
+  };
 
-
-  const handleSearch = async () => {
-    const trimmedSearchQuery = searchQuery.trim(); // Remove leading and trailing spaces
-
+  const handleSearch = async (trimmedSearchQuery) => {
     if (!trimmedSearchQuery) {
-      message.warning("Please enter a unique ID to search");
+      setSearchResults([]);
       return;
     }
 
@@ -55,21 +60,31 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         },
       });
 
-      const matchedCard = response.data.cards.find(
-        (card) => card.uniqueId.toLowerCase() === trimmedSearchQuery.toLowerCase()
+      const filteredCards = response.data.cards.filter(
+        (card) =>
+          card.uniqueId.toLowerCase().includes(trimmedSearchQuery.toLowerCase()) 
       );
-
-      if (matchedCard) {
-        // Navigate using taskId (columnId) and cardId
-        navigate(`/rename-card/${matchedCard.taskId}/cards/${matchedCard.id}`);
-      } else {
-        message.error("No card found with the provided unique ID");
+      if (filteredCards.length === 0) {
+        setErrorMessage('No matching card found');
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 1000); // Hide the error message after 1 second
       }
+
+      setSearchResults(filteredCards);
     } catch (error) {
       console.error("Error searching cards:", error);
-      message.error("An error occurred while searching for the card");
+      message.error("An error occurred while searching for cards");
     }
   };
+
+  const handleCardClick = (cardId, columnId) => {
+    navigate(`/rename-card/${columnId}/cards/${cardId}`);
+    setSearchResults([]);
+    setSearchQuery("");
+  };
+
+  
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -292,33 +307,45 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         </h3>
       </div>
     </div>
-
     <div className="flex items-center flex-grow justify-center space-x-20">
-      <div className="relative w-full max-w-xs">
-        <Search
-          placeholder="Search by unique ID"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onSearch={handleSearch}
-          style={{ width: '100%', padding: '8px' }}
-          className="mr-4"
-          enterButton
-        />
-        {/* {searchResults.length > 0 && (
-          <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-            {searchResults.map((card) => (
-              <div
-                key={card.id}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleCardClick(card.id, card.columnId)}
-              >
-                {card.uniqueId} - {card.name}
-              </div>
-            ))}
-          </div>
-        )} */}
+  <div className="relative w-full max-w-xs">
+    <Search
+      placeholder="Search by task ID"
+      value={searchQuery}
+      onChange={(e) => {
+        const trimmedSearchQuery = e.target.value.trim();
+        // Filter out non-numeric characters
+        const numericSearchQuery = trimmedSearchQuery.replace(/[^0-9]/g, '');
+        setSearchQuery(numericSearchQuery);
+        debouncedSearch(numericSearchQuery);
+      }}
+      onSearch={() => handleSearch(searchQuery)}
+      style={{ width: "100%", padding: "8px" }}
+      className="mr-4"
+      enterButton
+    />
+    {errorMessage && (
+      <div className="absolute z-10 mt-2 w-full bg-white text-black text-center rounded-md shadow-lg">
+        {errorMessage}
       </div>
-    </div>
+    )}
+    {searchResults.length > 0 && (
+      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        {searchResults.map((card) => (
+          <div
+            key={card.id}
+            className="p-2 hover:bg-gray-100 cursor-pointer"
+            onClick={() => handleCardClick(card.id, card.taskId)}
+          >
+            Task name: {card.name} - id: {card.uniqueId} 
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+
 
     <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
       {isProjectRoute && (

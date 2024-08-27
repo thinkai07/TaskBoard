@@ -1,24 +1,33 @@
-// BackgroundChange.js
-import React, { useState, useEffect } from "react";
-import { AiOutlinePlus } from "react-icons/ai";
-import { MdOutlineCancel } from "react-icons/md";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { server } from "../constant";
 import { useLocation } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { RightOutlined } from "@ant-design/icons"; 
 import { images as staticImages } from "../assets/Images";
 
 const BackgroundChange = ({ onClose, onSelectBackground }) => {
   const [customImages, setCustomImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [unsplashImages, setUnsplashImages] = useState([]);
-  const [showSidebar, setShowSidebar] = useState(false);
   const location = useLocation();
+  const ref = useRef(null);                                  
 
   useEffect(() => {
-    // Fetch Unsplash images when the component mounts
     fetchUnsplashImages();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, onClose]);
 
   const fetchUnsplashImages = async () => {
     try {
@@ -31,10 +40,10 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
           },
         }
       );
-      setUnsplashImages(response.data); // Store the entire image objects, not just the URLs
+      setUnsplashImages(response.data);
     } catch (error) {
       console.error("Error fetching Unsplash images:", error);
-      setUnsplashImages(staticImages); // Adjust as necessary
+      setUnsplashImages(staticImages);
     }
   };
 
@@ -109,11 +118,12 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
+        ref={ref}
         className="bg-white w-80 p-4 shadow-lg relative overflow-y-auto"
         style={{ maxHeight: "100vh" }}
       >
         <button className="absolute top-4 left-4 p-2 rounded" onClick={onClose}>
-          <ArrowRight size={30} />
+          <RightOutlined size={30} />
         </button>
 
         <div className="mt-16">

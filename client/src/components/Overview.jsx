@@ -19,6 +19,8 @@ import { Button } from "antd";
 import { AiOutlineProject } from "react-icons/ai";
 import { FaSpinner, FaTasks } from "react-icons/fa";
 import { IoIosPeople } from "react-icons/io";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 ChartJS.register(
   ArcElement,

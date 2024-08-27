@@ -3,9 +3,11 @@ import { useParams } from 'react-router-dom';
 import { Input, Button, Progress, Typography, List, Avatar, Tabs,Tooltip } from 'antd';
 import axios from 'axios';
 import { server } from '../constant';
-
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-import useTokenValidation from '../components/UseTockenValidation';
+import useTokenValidation from '../components/UseTockenValidation'; 
+import { AppWindow } from 'lucide-react';
+import { AlignRight, Captions } from 'lucide-react';
+
 
 const initialBoard = {
   columns: [],
@@ -21,7 +23,7 @@ const RenameCardPage = () => {
     projectName:'',
     name: '',
     description: '',
-    // projectName: '',
+    projectName: '',
     assignedTo: '',
     createdBy: '',
     dueDate: null,
@@ -30,7 +32,8 @@ const RenameCardPage = () => {
     remainingHours: 0,
     activities: [],
     taskLogs: [],
-    comments: []
+    comments: [],
+    uniqueId:'',
   });
   const [boardData, setBoardData] = useState(initialBoard);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -49,36 +52,6 @@ const RenameCardPage = () => {
   const [userProfile, setUserProfile] = useState({ name: '', avatar: '' });
   
   // Fetch card details on component mount
- 
-  const fetchCardDetails = async () => {
-    try {
-      const response = await axios.get(`${server}/api/tasks/${columnId}/cards`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-  
-      // Destructure taskName and cards from the response
-      const { taskName, cards } = response.data;
-  
-      // Find the specific card by `cardId` within the cards array
-      const cardData = cards.find(card => card.id === cardId);
-  
-      if (cardData) {
-        setCardData({
-          ...cardData,
-          remainingHours: (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
-          taskName, // Add taskName to the cardData state
-        });
-      } else {
-        console.error('Card not found');
-      }
-    } catch (error) {
-      console.error('Error fetching card details:', error);
-    }
-  };
-  
-
   useEffect(() => {
     // Fetch the logged-in user's profile data
     const fetchUserProfile = async () => {
@@ -102,6 +75,37 @@ const RenameCardPage = () => {
 
     fetchUserProfile();
 }, [server]);
+
+ 
+  const fetchCardDetails = async () => {
+    try {
+      const response = await axios.get(`${server}/api/tasks/${columnId}/cards`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+  
+      // Destructure taskName and cards from the response
+      const { taskName, cards } = response.data;
+  
+      // Find the specific card by `cardId` within the cards array
+      const cardData = cards.find(card => card.id === cardId);
+  
+      if (cardData) {
+        setCardData({
+          ...cardData,
+          remainingHours: (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
+          taskName, 
+          projectName: cardData.project.name, 
+        });
+      } else {
+        console.error('Card not found');
+      }
+    } catch (error) {
+      console.error('Error fetching card details:', error);
+    }
+  };
+  
   useEffect(() => {
     fetchCardDetails();
   }, [cardId]);
@@ -416,9 +420,9 @@ const RenameCardPage = () => {
           </div>
   
           <div className="flex items-center mb-2">
-          <Avatar style={{ backgroundColor: "#1890ff" }}>
-                            {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
-                        </Avatar>
+            <Avatar style={{ backgroundColor: "#1890ff" }}>
+              {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
+            </Avatar>
   
             <Input
               value={userComment}
@@ -488,7 +492,8 @@ const RenameCardPage = () => {
     <div className="flex">
       {/* Left Column */}
       <div className="w-2/3 pr-4">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center">
+      <Captions className="mr-2 text-gray-600 " />
         {isEditingTitle ? (
           <Input
             value={cardData.name}
@@ -509,10 +514,18 @@ const RenameCardPage = () => {
         )}
         {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
       </div>
-      <div className="mb-4">
-  <Text className="text-gray-600">In column {cardData.taskName || 'No Task Name'}</Text>
-</div>
-      <div className="mb-4">
+      <Text className="text-gray-600 ml-8">
+                            In column{" "}
+                            <Text className="text-blue-500   underline">
+                                {cardData.taskName || 'No Task Name'}
+                            </Text>
+                        </Text>
+<div className='mb-4 flex items-center'>
+                    <AlignRight className="mr-2 text-gray-600" />
+                        <h1 className=''>Description</h1>
+                    </div>
+      <div className="mb-4  items-center ml-8 mt-4">
+
         {isEditingDescription ? (
           <>
             <TextArea
@@ -555,11 +568,15 @@ const RenameCardPage = () => {
     <Text>{cardData.projectName || 'N/A'}</Text>
   </div>
   <div className="mb-4">
+    <Text strong>CardID:</Text>
+    <Text>{cardData.uniqueId || 'N/A'}</Text>
+  </div>
+  <div className="mb-4">
     <Text strong>Assigned To:</Text>
     <Text>{cardData.assignedTo || 'N/A'}</Text>
   </div>
   <div className="mb-4">
-    <Text strong>Created By:</Text>
+    <Text strong>Assigned By:</Text>
     <Text>{cardData.createdBy || 'N/A'}</Text>
   </div>
   <div className="mb-4">

@@ -437,7 +437,7 @@ const Overview = () => {
       }}
     >
       <div className="flex justify-end">
-        <Dropdown overlay={menu} trigger={["click"]} className="text-sm mb-2">
+      <Dropdown overlay={menu} trigger={["click"]} className="text-sm mb-2">
           <a
             onClick={(e) => e.preventDefault()}
             style={{
@@ -447,17 +447,27 @@ const Overview = () => {
               borderRadius: "8px",
               display: "flex",
               alignItems: "center",
-              width: "200px",
+              width: "230px",
               textAlign: "left",
               position: "relative",
+              overflow: "hidden",
             }}
           >
-            <span className="mr-2 w-24 text-sm">
+            <span
+              className="mr-2 text-sm"
+              style={{
+                whiteSpace: "nowrap",        // Prevents text from wrapping to the next line
+                overflow: "hidden",          // Hides any overflowing text
+                paddingRight: "24px",        // Ensures space for the dropdown icon
+                textOverflow: "ellipsis",    // Adds ellipsis if text overflows
+                maxWidth: "calc(100% - 30px)", // Takes full space except for the dropdown icon
+              }}
+            >
               {selectedUser
                 ? users.find((user) => user._id === selectedUser)?.name
-                : "Select a user"}{" "}
-              <DownOutlined style={{ position: "absolute", right: "8px" }} />
+                : "Select a user"}
             </span>
+            <DownOutlined style={{ position: "absolute", right: "8px" }} />
           </a>
         </Dropdown>
       </div>

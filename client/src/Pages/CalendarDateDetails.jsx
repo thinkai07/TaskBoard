@@ -1,5 +1,5 @@
 // CalendarDateDetails.js
-import React from "react";
+import React,{useEffect,useState} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Table, Popover, Input, message } from "antd";
 import axios from "axios";
@@ -9,12 +9,13 @@ const CalendarDateDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { events } = location.state;
-  const [activeCardId, setActiveCardId] = React.useState(null);
-  const [logHoursVisible, setLogHoursVisible] = React.useState(false);
-  const [loggedHours, setLoggedHours] = React.useState("");
-  const [userEmail, setUserEmail] = React.useState("");
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [logHoursVisible, setLogHoursVisible] = useState(false);
+  const [loggedHours, setLoggedHours] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [updatedEvents, setUpdatedEvents] = useState(events);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(`${server}/api/user`, {
@@ -43,10 +44,12 @@ const CalendarDateDetails = () => {
     setLogHoursVisible(true);
   };
 
+  
+
   const handleLogHours = async () => {
     if (activeCardId && loggedHours) {
       try {
-        const activeEvent = events.find(event => event.cardId === activeCardId);
+        const activeEvent = updatedEvents.find(event => event.cardId === activeCardId);
         const response = await axios.post(
           `${server}/api/log-hours`,
           {
@@ -62,17 +65,31 @@ const CalendarDateDetails = () => {
             },
           }
         );
-        console.log(response.data.message);
+
+        // Calculate new utilized hours
+        const newUtilizedHours = activeEvent.utilizedHours + parseFloat(loggedHours);
+
+        // Update the events array with the new utilized hours
+        const newEvents = updatedEvents.map(event =>
+          event.cardId === activeCardId
+            ? { ...event, utilizedHours: newUtilizedHours }
+            : event
+        );
+        setUpdatedEvents(newEvents);
+
         // Reset states
         setActiveCardId(null);
         setLogHoursVisible(false);
         setLoggedHours("");
-        // Optionally, refresh the events data here
+        message.success("Hours logged successfully");
+
       } catch (error) {
         console.error("Error logging hours:", error);
+        message.error("Failed to log hours");
       }
     }
   };
+
 
   const logHoursContent = (
     <div>
@@ -98,7 +115,7 @@ const CalendarDateDetails = () => {
         title: "End Date",
         dataIndex: "endDate",
         key: "endDate",
-        render: (date) => new Date(date).toLocaleDateString('en-GB')
+        render: (date) => new Date(date).toLocaleDateString('en-In')
       }
 ,      
     { title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours" },
@@ -137,11 +154,11 @@ const CalendarDateDetails = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-semibold mb-4 text-blue-600">
-  Project Details for {new Date(events[0]?.date).toLocaleDateString('en-GB')}
+  Project Details for {new Date(updatedEvents[0]?.date).toLocaleDateString('en-GB')}
 </h2>
 
       <Button onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
-      <Table columns={columns} dataSource={events} rowKey="id" />
+      <Table columns={columns} dataSource={updatedEvents} rowKey="id" />
     </div>
   );
 };

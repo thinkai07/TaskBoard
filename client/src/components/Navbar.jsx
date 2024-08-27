@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Popover, Button } from "antd";
+import { Popover, Button ,Input,message} from "antd";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { server } from "../constant";
 import { BsMenuUp } from "react-icons/bs";
@@ -17,6 +17,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
+  const navigate = useNavigate();
   const notificationCount = notifications.filter(
     (notification) => !notification.readStatus
   ).length;
@@ -25,6 +26,9 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [organizationId, setOrganizationId] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const { Search } = Input;
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -33,6 +37,39 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
     return () => clearInterval(intervalId);
   }, []);
+
+
+
+  const handleSearch = async () => {
+    const trimmedSearchQuery = searchQuery.trim(); // Remove leading and trailing spaces
+
+    if (!trimmedSearchQuery) {
+      message.warning("Please enter a unique ID to search");
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${server}/api/organizations/${organizationId}/cards`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const matchedCard = response.data.cards.find(
+        (card) => card.uniqueId.toLowerCase() === trimmedSearchQuery.toLowerCase()
+      );
+
+      if (matchedCard) {
+        // Navigate using taskId (columnId) and cardId
+        navigate(`/rename-card/${matchedCard.taskId}/cards/${matchedCard.id}`);
+      } else {
+        message.error("No card found with the provided unique ID");
+      }
+    } catch (error) {
+      console.error("Error searching cards:", error);
+      message.error("An error occurred while searching for the card");
+    }
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -247,20 +284,43 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
   return (
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
-      <div className="flex items-center">
-        <div className="ml-3">
-          <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
-          <h3 className="font-medium text-md">
-            <span className="text-gray-500">{formatDate(currentTime)}</span>
-          </h3>
-        </div>
+    <div className="flex items-center">
+      <div className="ml-3">
+        <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
+        <h3 className="font-medium text-md">
+          <span className="text-gray-500">{formatDate(currentTime)}</span>
+        </h3>
       </div>
+    </div>
 
-      <div className="flex items-center flex-grow justify-center space-x-20">
-        <div className="relative w-full max-w-xs"> </div>
+    <div className="flex items-center flex-grow justify-center space-x-20">
+      <div className="relative w-full max-w-xs">
+        <Search
+          placeholder="Search by unique ID"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onSearch={handleSearch}
+          style={{ width: '100%', padding: '8px' }}
+          className="mr-4"
+          enterButton
+        />
+        {/* {searchResults.length > 0 && (
+          <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+            {searchResults.map((card) => (
+              <div
+                key={card.id}
+                className="p-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleCardClick(card.id, card.columnId)}
+              >
+                {card.uniqueId} - {card.name}
+              </div>
+            ))}
+          </div>
+        )} */}
       </div>
-      <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
+    </div>
 
+    <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
       {isProjectRoute && (
         <div className="relative inline-block group">
           <button

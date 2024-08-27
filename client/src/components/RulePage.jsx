@@ -282,7 +282,7 @@ function RulesButton({ tasks }) {
         centered
         className="rounded-lg shadow-lg"
       >
-        <Title level={2} className="text-center">
+        <Title level={2} className="text-center  ">
           Create a Rule
         </Title>
         <Steps current={currentStep} className="mb-6">
@@ -292,42 +292,41 @@ function RulesButton({ tasks }) {
         </Steps>
 
         <Card
-  title="Existing Rules"
-  className="mb-6"
-  bodyStyle={{ padding: 0 }}
->
-  {rules.length === 0 ? (
-    <Text className="p-4 block text-center text-gray-500">
-      No rules have been configured yet.
-    </Text>
-  ) : (
-    <div className="max-h-40 overflow-y-auto">
-      {rules.map((rule, index) => (
-        <Card
-          key={index}
-          className="w-full flex items-center justify-between p-1"
+          title="Existing Rules"
+          className="mb-6"
+          bodyStyle={{ padding: 0 }}
         >
-          <div className="flex flex-grow items-center overflow-hidden">
-            <Text strong className="truncate mr-2">
-              {rule.triggerSentence || "No trigger sentence"} -
+          {rules.length === 0 ? (
+            <Text className="p-4 block text-center text-gray-500">
+              No rules have been configured yet.
             </Text>
-            <Text className="truncate">
-              {rule.actionSentence || "No action sentence"}
-            </Text>
-          </div>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => openDeleteConfirmation(rule._id)}
-            type="text"
-            danger
-            className="ml-2"
-          />
+          ) : (
+            <div className="h-40 overflow-y-auto">
+              {rules.map((rule, index) => (
+                <Card
+                  key={index}
+                  className="w-full h-12 flex items-center justify-between"
+                >
+                  <div className="flex flex-grow items-center overflow-hidden">
+                    <Text strong className="truncate mr-2">
+                      {rule.triggerSentence || "No trigger sentence"} -
+                    </Text>
+                    <Text className="truncate">
+                      {rule.actionSentence || "No action sentence"}
+                    </Text>
+                    <Button
+                      icon={<DeleteOutlined />}
+                      onClick={() => openDeleteConfirmation(rule._id)}
+                      type="text"
+                      danger
+                      className="ml-96 flex justify-end"
+                    />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </Card>
-      ))}
-    </div>
-  )}
-</Card>
-
 
         {currentStep === 0 && (
           <div className="max-h-96 overflow-y-auto">
@@ -358,8 +357,8 @@ function RulesButton({ tasks }) {
                   />
                 </Space>
                 {/* <Card size="small" className="mt-4"> */}
-                  {selectedTrigger === "Card Move" && (
-                     <Card size="small" className="mt-4"> 
+                {selectedTrigger === "Card Move" && (
+                  <Card size="small" className="mt-4">
                     <Space direction="vertical" size="small" className="w-full">
                       <Space className="w-full">
                         <Text>when card status mark as</Text>
@@ -390,10 +389,10 @@ function RulesButton({ tasks }) {
                         The rule will be triggered when a card is moved.
                       </Text>
                     </Space>
-                       </Card>
-                  )}
+                  </Card>
+                )}
                 {/* </Card> */}
-                <Space className="mt-4">
+                <Space className="mt-4 flex justify-between">
                   <Button type="primary" onClick={handleAddButtonClick}>
                     Add Trigger
                   </Button>
@@ -409,49 +408,60 @@ function RulesButton({ tasks }) {
             <Title level={3} className="mb-6 text-center">
               Select Action
             </Title>
-            <Space size="large" wrap className="flex justify-center mb-6">
-              <ActionOption
-                icon={ClockCircleOutlined}
-                label="Move to List"
-                onClick={() => handleActionSelect("Move to List")}
-                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
-              />
-              <ActionOption
-                icon={CheckSquareOutlined}
-                label="Complete Task"
-                onClick={() => handleActionSelect("Complete Task")}
-                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
-              />
-              <ActionOption
-                icon={DeleteOutlined}
-                label="Delete Task"
-                onClick={() => handleActionSelect("Delete Task")}
-                className="p-4 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
-              />
+            <Space direction="vertical" className="w-full">
+              <Space>
+                <Button
+                  className="custom-button"
+                  icon={<ClockCircleOutlined />}
+                  onClick={() => handleActionSelect("Move to List")}
+                >
+                  Move to List
+                </Button>
+                <Button
+                  className="custom-button"
+                  icon={<CheckSquareOutlined />}
+                  onClick={() => handleActionSelect("Complete Task")}
+                >
+                  Complete Task
+                </Button>
+                <Button
+                  className="custom-button"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleActionSelect("Delete Task")}
+                >
+                  Delete Task
+                </Button>
+              </Space>
             </Space>
             {selectedAction && (
-              <Card className="mt-6 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow">
+              <div>
                 {selectedAction === "Move to List" && (
-                  <>
-                    <Title level={4} className="mb-4">
-                      Move to Column
-                    </Title>
-                    <Select
-                      style={{ width: "100%" }}
-                      value={moveToList}
-                      onChange={setMoveToList}
-                      className="mb-4"
-                    >
-                      {tasks.map((task) => (
-                        <Option key={task.id} value={task.name}>
-                          {task.name}
-                        </Option>
-                      ))}
-                    </Select>
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <Title
+                        level={4}
+                        className="mb-4"
+                        style={{ marginRight: "8px" }}
+                      >
+                        Move to Column
+                      </Title>
+                      <Select
+                        style={{ width: "20%" }}
+                        value={moveToList}
+                        onChange={setMoveToList}
+                        className="mb-4 mt-2"
+                      >
+                        {tasks.map((task) => (
+                          <Option key={task.id} value={task.name}>
+                            {task.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
                     <Text type="secondary" className="text-sm">
                       The card will be moved to the specified column.
                     </Text>
-                  </>
+                  </div>
                 )}
                 {selectedAction === "Complete Task" && (
                   <Text type="secondary" className="text-sm">
@@ -463,7 +473,7 @@ function RulesButton({ tasks }) {
                     The selected task will be deleted.
                   </Text>
                 )}
-              </Card>
+              </div>
             )}
             <div className="mt-8 flex justify-between items-center">
               <div>
@@ -524,7 +534,7 @@ function RulesButton({ tasks }) {
                 )}
               </Text>
             </Card>
-            <Space className="mt-4">
+            <Space className="mt-4 flex justify-between">
               <Button type="primary" onClick={handleSaveRule}>
                 Save Rule
               </Button>

@@ -126,7 +126,7 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [unsplashImages, setUnsplashImages] = useState([]);
   const location = useLocation();
-  const ref = useRef(null);
+  const ref = useRef(null);                                  
 
   useEffect(() => {
     fetchUnsplashImages();

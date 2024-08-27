@@ -11,6 +11,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
+import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
 import { Tooltip } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
@@ -1740,28 +1741,6 @@ function KanbanBoard() {
           >
             New Column
           </Button>
-
-          {/* <Popover
-            trigger="click"
-            placement="bottomRight"
-            content={
-              <Space direction="vertical">
-
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-              </Space>
-            }
-          >
-            <Button type="text" icon={<SquareMenu />} />
-          </Popover> */}
-
           <>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 

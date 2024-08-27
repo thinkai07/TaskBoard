@@ -9,23 +9,8 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {images as staticImages} from '../assets/Images'
 import dayjs from "dayjs";
-import {
-  Card,
-  Modal,
-  Input,
-  Button,
-  DatePicker,
-  Select,
-  notification,
-  Tooltip,
-  Image
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EllipsisOutlined,
-} from "@ant-design/icons";
+import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,Image} from "antd";
+import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 const { TextArea } = Input;
 const { Option } = Select;
@@ -71,13 +56,14 @@ const Projects = () => {
     description: "",
     projectManager: "",
     startDate: null,
-    teams: [],
+    teams: "",
   });
   const dropdownRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   const [unsplashImages, setUnsplashImages] = useState([]);
 const [selectedImage, setSelectedImage] = useState(null);
+const [bgImageError, setBgImageError] = useState(false);
 
 // Add this function to fetch images from Unsplash
 const fetchUnsplashImages = async () => {
@@ -240,9 +226,19 @@ useEffect(() => {
       hasError = true;
     }
 
+    if (!selectedImage) {
+      setBgImageError(true);
+      hasError = true;
+    }
+
     if (hasError) {
       setNewCardErrors(newErrors);
       return;
+    }
+
+    if (!newProject.teams) {
+      setTeamInputError(true);
+      hasError = true;
     }
 
     const isDuplicate = await checkDuplicateProjectName(newProject.name);
@@ -296,7 +292,8 @@ useEffect(() => {
           description: newProject.description.trim(),
           projectManager: newProject.projectManager,
           startDate: newProject.startDate,
-          teams: newProject.teams,
+          // teams: newProject.teams,
+          teams: [newProject.teams],
           createdBy: createdBy,
           bgUrl: selectedImage ? {
             raw: selectedImage.urls.raw,
@@ -342,7 +339,6 @@ useEffect(() => {
       console.error("Error deleting project:", error);
     }
   };
-
   const handleDelete = (index) => {
     setDeleteIndex(index);
     setDeleteDialogVisible(true);
@@ -513,7 +509,9 @@ useEffect(() => {
       </div>
     );
   }
-
+  const filterTeams = (input, option) => {
+    return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+  };
   return (
     <div className="min-h-screen bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
@@ -554,10 +552,7 @@ useEffect(() => {
         >
          <EllipsisVertical />
         </button>
-   
     )}
-
-
       </div>
       <Tooltip >
         <p className="truncate  text-gray-500">{card.description}</p>
@@ -618,7 +613,7 @@ useEffect(() => {
         visible={addProjectModalVisible}
         onOk={handleSaveNewCard}
         onCancel={() => setAddProjectModalVisible(false)}
-        width={600}
+        width={700}
       >
         <Input
           placeholder="Project Name"
@@ -688,7 +683,7 @@ useEffect(() => {
           <p className="text-red-500">Start Date is required</p>
         )}
 
-        <Select
+        {/* <Select
           className="mt-4 w-full"
           mode="multiple"
           placeholder="Select Teams"
@@ -702,7 +697,25 @@ useEffect(() => {
               {team.name}
             </Option>
           ))}
-        </Select>
+        </Select> */}
+        <Select
+  className="mt-4 w-full"
+  placeholder="Search and select a team"
+  value={newProject.teams}
+  onChange={(value) => {
+    setNewProject((prev) => ({ ...prev, teams: value }));
+    setTeamInputError(false);
+  }}
+  showSearch
+  filterOption={filterTeams}
+  optionFilterProp="children"
+>
+  {availableTeams.map((team) => (
+    <Option key={team._id} value={team._id}>
+      {team.name}
+    </Option>
+  ))}
+</Select>
         {teamInputError && (
           <p className="text-red-500">At least one team is required</p>
         )}
@@ -725,6 +738,9 @@ useEffect(() => {
         </div>
       ))}
     </div>
+    {bgImageError && (
+      <p className="text-red-500">Background image is required</p>
+    )}
   </div>
       </Modal>
 

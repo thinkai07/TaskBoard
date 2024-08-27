@@ -20,7 +20,6 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = http.createServer(app);
-const { v4: uuidv4 } = require('uuid');
 const io = socketIo(server, {
   cors: {
     origin: true,
@@ -246,8 +245,8 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    activities:[{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
-    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs"}],
+    activities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs" }],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
     uniqueId: { type: String, unique: true, required: true }  // Add this field
@@ -2011,28 +2010,28 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 let sequenceNumber = 1000;
 
 function generateUniqueId() {
-    const now = new Date();
+  const now = new Date();
 
-   
-    const timestamp = 
-        now.getFullYear().toString() +
-        (now.getMonth() + 1).toString().padStart(2, '0') +
-        now.getDate().toString().padStart(2, '0') +
-        now.getSeconds().toString().padStart(2, '0');
 
-    
-    sequenceNumber++;
+  const timestamp =
+    now.getFullYear().toString() +
+    (now.getMonth() + 1).toString().padStart(2, '0') +
+    now.getDate().toString().padStart(2, '0') +
+    now.getSeconds().toString().padStart(2, '0');
 
-   
-    const uniquePart = sequenceNumber.toString().padStart(4, '0');
 
-   
-    return timestamp + uniquePart;
+  sequenceNumber++;
+
+
+  const uniquePart = sequenceNumber.toString().padStart(4, '0');
+
+
+  return timestamp + uniquePart;
 }
 
 
 const uniqueId = generateUniqueId();
-console.log(uniqueId); 
+console.log(uniqueId);
 
 
 
@@ -2106,7 +2105,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     io.emit("cardCreated", { taskId, card: newCard });
 
 
-    
+
     res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
     console.error("Error creating card:", error);
@@ -2323,11 +2322,16 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Card not found" });
       }
 
-      // Update card details
-      const oldName = card.name;
-      const oldDescription = card.description;
-      card.name = name;
-      card.description = description;
+      // Track changes
+      const changes = [];
+      if (name !== undefined && card.name !== name) {
+        changes.push({ field: "name", oldValue: card.name, newValue: name });
+        card.name = name;
+      }
+      if (description !== undefined && card.description !== description) {
+        changes.push({ field: "description", oldValue: card.description, newValue: description });
+        card.description = description;
+      }
 
       // Find the user who updated the card
       const updatedByUser = await User.findOne({ email: updatedBy });
@@ -2336,35 +2340,36 @@ app.put("/api/tasks/:taskId/cards/:cardId",
       }
 
       // Update updatedBy and updatedDate fields
-      if (!card.updatedBy) {
-        card.updatedBy = [];
+      if (updatedBy) {
+        if (!card.updatedBy) {
+          card.updatedBy = [];
+        }
+        card.updatedBy.push(updatedBy);
       }
-      card.updatedBy.push(updatedBy);
-      if (!card.updatedDate) {
-        card.updatedDate = [];
+      if (updatedDate) {
+        if (!card.updatedDate) {
+          card.updatedDate = [];
+        }
+        card.updatedDate.push(updatedDate);
       }
-      card.updatedDate.push(updatedDate);
 
       // Save the card
       await card.save();
 
       // Create audit log entry for card update
-      const newAuditLog = new AuditLog({
-        entityType: "Card",
-        entityId: cardId,
-        actionType: "update",
-        actionDate: updatedDate,
-        performedBy: updatedByUser.name,
-        projectId: task.project,
-        taskId: taskId,
-        changes: [
-          { field: "name", oldValue: oldName, newValue: name },
-          { field: "description", oldValue: oldDescription, newValue: description },
-          { field: "updatedBy", oldValue: null, newValue: updatedBy },
-          { field: "updatedDate", oldValue: null, newValue: updatedDate },
-        ],
-      });
-      await newAuditLog.save();
+      if (changes.length > 0) {
+        const newAuditLog = new AuditLog({
+          entityType: "Card",
+          entityId: cardId,
+          actionType: "update",
+          actionDate: updatedDate,
+          performedBy: updatedByUser.name,
+          projectId: task.project,
+          taskId: taskId,
+          changes: changes,
+        });
+        await newAuditLog.save();
+      }
 
       // Save the comment if provided
       if (comment) {
@@ -2399,7 +2404,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Assigned user not found" });
       }
 
-      const notificationMessage = ` has renamed the task "${oldName}" to "${name}" on Project "${project.name}"`;
+      const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
 
       const newNotification = new Notification({
         userId: assignedUser._id,
@@ -2428,6 +2433,45 @@ app.put("/api/tasks/:taskId/cards/:cardId",
   }
 );
 
+
+app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+  const { comment } = req.body;
+  const userEmail = req.user.email; // Assuming the token has the user's email
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the card by ID
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Create a new comment
+    const newComment = new Comment({
+      comment,
+      commentBy: user.name,
+      card: card._id,
+    });
+
+    // Save the comment
+    await newComment.save();
+
+    // Add the comment to the card's comments array
+    card.comments.push(newComment._id);
+    await card.save();
+
+    res.status(201).json({ message: "Comment added successfully", comment: newComment });
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // Get cards with comments
 app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
@@ -2524,10 +2568,104 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       })),
     }));
 
-    res.status(200).json({ cards });
+    // Include the task name in the response
+    res.status(200).json({ taskName: task.name, cards });
   } catch (error) {
     console.error("Error fetching cards:", error);
     res.status(500).json({ message: "Error fetching cards" });
+  }
+});
+
+
+
+app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+
+  try {
+    const card = await Card.findById(cardId).populate({
+      path: "comments",
+      model: "Comment",
+    }).populate({
+      path: "activities",
+      model: "Activity",
+    }).populate({
+      path: "taskLogs",
+      model: "Tasklogs",
+      populate: {
+        path: "loggedBy",
+        model: "User",
+        select: "name email",
+      },
+    });
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Calculate the sum of logged hours for the card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: card._id } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+    ]);
+
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
+    const cardDetails = {
+      id: card._id,
+      name: card.name,
+      description: card.description,
+      assignedTo: card.assignedTo,
+      createdBy: card.createdBy,
+      status: card.status,
+      estimatedHours: card.estimatedHours,
+      utilizedHours: hoursMap[card._id] || 0,
+      uniqueId: card.uniqueId,
+      createdDate: moment(card.createdDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      assignDate: moment(card.assignDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      dueDate: moment(card.dueDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      comments: card.comments.map((comment) => ({
+        id: comment._id,
+        comment: comment.comment,
+        commentBy: comment.commentBy,
+        createdAt: moment(comment.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      activities: card.activities.map((activity) => ({
+        id: activity._id,
+        commentBy: activity.commentBy,
+        comment: activity.comment,
+        createdAt: moment(activity.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      taskLogs: card.taskLogs.map((taskLog) => ({
+        id: taskLog._id,
+        hours: taskLog.hours,
+        logDate: moment(taskLog.logDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        loggedBy: {
+          id: taskLog.loggedBy._id,
+          name: taskLog.loggedBy.name,
+          email: taskLog.loggedBy.email,
+        },
+      })),
+    };
+
+    res.status(200).json({ card: cardDetails });
+  } catch (error) {
+    console.error("Error fetching card:", error);
+    res.status(500).json({ message: "Error fetching card" });
   }
 });
 
@@ -2651,16 +2789,17 @@ app.post('/api/log-hours', async (req, res) => {
 
     // Check if the card status is 'pending' and update it to 'in progress'
     if (card.status === 'pending') {
+      const previousStatus = card.status;
       card.status = 'inprogress';
 
-      // Log status update in comments
-      const statusComment = new Comment({
-        comment: `Card status updated to inprogress by ${loggedByUser.name}`,
+      // Log status update in activity
+      const statusActivity = new Activity({
+        comment: `Card status updated from ${previousStatus} to inprogress by ${loggedByUser.name}`,
         commentBy: loggedByUser.name,
         card: card._id,
       });
-      await statusComment.save();
-      card.comments.push(statusComment._id);
+      await statusActivity.save();
+      card.activities.push(statusActivity._id);
     }
 
     // Save the updated card with the new status if it was changed
@@ -2687,6 +2826,7 @@ app.post('/api/log-hours', async (req, res) => {
     res.status(500).json({ message: 'Error logging hours' });
   }
 });
+
 
 
 
@@ -3692,6 +3832,75 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
   }
 });
 
+
+// app.get("/api/calendar/:organizationId",
+//   authenticateToken,
+//   async (req, res) => {
+//     const { organizationId } = req.params;
+//     const userEmail = req.user.email;
+//     const userRole = req.user.role;
+
+//   try {
+//     let assignedCards;
+//     if (userRole === "ADMIN") {
+//       assignedCards = await Card.find()
+//         .populate({
+//           path: "project",
+//           match: { organization: organizationId },
+//           select: "_id name projectManager",
+//         })
+//         .populate("task", "name");
+//     } else {
+//       // Find projects where the user is the project manager
+//       const managedProjects = await Project.find({
+//         organization: organizationId,
+//         projectManager: userEmail,
+//       }).select("_id");
+
+//       const managedProjectIds = managedProjects.map((project) => project._id);
+
+//       assignedCards = await Card.find({
+//         $or: [
+//           { assignedTo: userEmail },
+//           { project: { $in: managedProjectIds } },
+//         ],
+//       })
+//         .populate({
+//           path: "project",
+//           match: { organization: organizationId },
+//           select: "_id name projectManager",
+//         })
+//         .populate("task", "name");
+//     }
+
+//     const events = assignedCards
+//       .filter((card) => card.project && card.task)
+//       .flatMap((card) => [
+//         {
+//           id: `${card._id}-assign`,
+//           date: card.assignDate,
+//           projectId: card.project._id,
+//           projectName: card.project.name,
+//           taskId: card.task._id,
+//           taskName: card.task.name,
+//           cardId: card._id,
+//           cardName: card.name,
+//           assignedTo: card.assignedTo,
+//           createdDate: card.createdDate,
+//           status: card.status,
+//           type: "Assign Date",
+//           estimatedHours:card.estimatedHours,
+//         },
+//       ])
+//       .filter((event) => event.date);
+
+//     res.json(events);
+//   } catch (error) {
+//     console.error("Error retrieving calendar data:", error);
+//     res.status(500).json({ message: "Error retrieving calendar data" });
+//   }
+// }
+// );
 
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
   try {

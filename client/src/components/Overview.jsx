@@ -13,8 +13,8 @@ import {
 } from "chart.js";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { DownOutlined } from "@ant-design/icons";
-import { Dropdown, Menu, Select } from "antd";
+import { DownOutlined, SearchOutlined } from "@ant-design/icons";
+import { Dropdown, Menu, Select, Input, message } from "antd";
 import { Button } from "antd";
 import { AiOutlineProject } from "react-icons/ai";
 import { FaTasks } from "react-icons/fa";
@@ -41,6 +41,7 @@ const Overview = () => {
     projects: [],
   });
   const [users, setUsers] = useState([]);
+  const [card, setCard] = useState(null);
   const [statusCounts, setStatusCounts] = useState({
     pending: 0,
     inProgress: 0,
@@ -253,10 +254,10 @@ const Overview = () => {
         label: "User Cards Overview",
         data: totalCardCount
           ? [
-              userCardCounts.pending,
-              userCardCounts.inprogress,
-              userCardCounts.completed,
-            ]
+            userCardCounts.pending,
+            userCardCounts.inprogress,
+            userCardCounts.completed,
+          ]
           : [1],
         backgroundColor: totalCardCount
           ? ["#f7665a", " #efe152", "#10b981"]
@@ -294,6 +295,8 @@ const Overview = () => {
   const pendingData = months.map((month) => groupedData[month].pending);
   const inprogressData = months.map((month) => groupedData[month].inprogress);
   const completedData = months.map((month) => groupedData[month].completed);
+
+  const { Search } = Input;
 
   // const barData = {
   //   labels: months,
@@ -428,6 +431,23 @@ const Overview = () => {
     return <div>Loading...</div>;
   }
 
+  const handleSearch = async (value) => {
+    try {
+      const response = await axios.get(`${server}/api/cards/search`, {
+
+        params: {
+          uniqueId: value,
+        },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setCard(response.data.card); // Set the card data to the state
+    } catch (error) {
+      console.error("Error searching card:", error);
+      message.error("Card not found or an error occurred.");
+    }
+  };
+
+
   return (
     <div
       style={{
@@ -436,7 +456,19 @@ const Overview = () => {
         fontFamily: "'Open Sans', sans-serif",
       }}
     >
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center mb-2">
+
+        {/* <Search
+          placeholder="Search"
+          onSearch={handleSearch}
+          style={{
+            width: 300,
+            borderRadius: "8px",
+            border: "1px solid #e2e8f0",
+          }}
+          enterButton={<SearchOutlined />}
+        /> */}
+
         <Dropdown overlay={menu} trigger={["click"]} className="text-sm mb-2">
           <a
             onClick={(e) => e.preventDefault()}
@@ -447,19 +479,30 @@ const Overview = () => {
               borderRadius: "8px",
               display: "flex",
               alignItems: "center",
-              width: "200px",
+              width: "230px",
               textAlign: "left",
               position: "relative",
+              overflow: "hidden",
             }}
           >
-            <span className="mr-2 w-24 text-sm">
+            <span
+              className="mr-2 text-sm"
+              style={{
+                whiteSpace: "nowrap",        // Prevents text from wrapping to the next line
+                overflow: "hidden",          // Hides any overflowing text
+                paddingRight: "24px",        // Ensures space for the dropdown icon
+                textOverflow: "ellipsis",    // Adds ellipsis if text overflows
+                maxWidth: "calc(100% - 30px)", // Takes full space except for the dropdown icon
+              }}
+            >
               {selectedUser
                 ? users.find((user) => user._id === selectedUser)?.name
-                : "Select a user"}{" "}
-              <DownOutlined style={{ position: "absolute", right: "8px" }} />
+                : "Select a user"}
             </span>
+            <DownOutlined style={{ position: "absolute", right: "8px" }} />
           </a>
         </Dropdown>
+
       </div>
       <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
         <div style={{ flex: 3 }}>
@@ -631,8 +674,8 @@ const Overview = () => {
                             (e.currentTarget.style.backgroundColor = "#edf2f7")
                           }
                           onMouseOut={(e) =>
-                            (e.currentTarget.style.backgroundColor =
-                              index % 2 === 0 ? "#f7fafc" : "white")
+                          (e.currentTarget.style.backgroundColor =
+                            index % 2 === 0 ? "#f7fafc" : "white")
                           }
                         >
                           <td

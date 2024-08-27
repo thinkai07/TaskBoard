@@ -118,6 +118,7 @@ const CalendarDateDetails = () => {
             <Button
               type="primary"
               onClick={() => handleStartLogging(record.cardId)}
+              style={{backgroundColor:'green'}}
             >
               Start
             </Button>
@@ -140,7 +141,7 @@ const CalendarDateDetails = () => {
         Project Details for {new Date(events[0]?.date).toLocaleDateString('en-GB')}
       </h2>
 
-      <Button onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
+      <Button type="primary" onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
       <Table columns={columns} dataSource={events} rowKey="id" pagination={{ pageSize: 6 }} />
     </div>
   );

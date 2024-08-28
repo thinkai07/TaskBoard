@@ -6,7 +6,7 @@ import { server } from '../constant';
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 import useTokenValidation from '../components/UseTockenValidation';
 import { AppWindow } from 'lucide-react';
-import { AlignRight, Captions } from 'lucide-react';
+import { AlignRight, Captions, History, Clock,SquareChartGantt } from 'lucide-react';
 
 
 const initialBoard = {
@@ -309,16 +309,20 @@ const RenameCardPage = () => {
     const items = [
         {
             key: "1",
-            label: "Activities",
+            label: <span className='font-semibold'>Activities</span>,
             children: (
                 <div className="mt-4 h-96 overflow-y-auto">
+                    <div className="flex items-center mb-4 font-semibold ">
+                        <SquareChartGantt className=" ml-4 text-3xl mr-2 font-semibold" />
+                        <h1>Activities</h1>
+                    </div>
                     {cardData.activities.length > 0 ? (
                         <List
                             dataSource={cardData.activities}
                             renderItem={(activity, idx) => (
                                 <List.Item
                                     key={activity._id} // Use _id for uniqueness
-                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
                                         }`}
                                 >
                                     <List.Item.Meta
@@ -359,16 +363,20 @@ const RenameCardPage = () => {
         },
         {
             key: "2",
-            label: "Log-in Hours",
+            label: <span className='font-semibold'>Log-in Hours</span>,
             children: (
                 <div className="mt-4 h-96 overflow-y-auto">
+                    <div className="flex items-center mb-4 font-semibold ">
+                        <Clock className=" ml-4  mr-2 " />
+                        <h1>Log-in Hours</h1>
+                    </div>
                     {cardData.taskLogs.length > 0 ? (
                         <List
                             dataSource={cardData.taskLogs}
                             renderItem={(taskLog, idx) => (
                                 <List.Item
                                     key={taskLog._id} // Use _id for uniqueness
-                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
                                         }`}
                                 >
                                     <List.Item.Meta
@@ -409,15 +417,15 @@ const RenameCardPage = () => {
         },
         {
             key: "3",
-            label: "Comments",
+            label: <label className='font-semibold'>Comments</label>,
             children: (
                 <div className="mt-4 h-96 overflow-y-auto">
-                    <div className="flex items-center mb-4 pt-6">
-                        <CommentOutlined className="mr-2" />
-                        <Title level={4}>Comments</Title>
+                    <div className="flex items-center mb-4  font-semibold">
+                        <CommentOutlined className=" ml-4 text-3xl mr-2 font-semibold" />
+                        <h1>Comments</h1>
                     </div>
 
-                    <div className="flex items-center mb-2">
+                    <div className="flex items-center mb-2 ml-2">
                         <Avatar style={{ backgroundColor: "#1890ff" }}>
                             {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
                         </Avatar>
@@ -441,7 +449,7 @@ const RenameCardPage = () => {
                             renderItem={(comment, idx) => (
                                 <List.Item
                                     key={comment._id}
-                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "bg-gray-100" : "bg-white"
+                                    className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
                                         }`}
                                 >
                                     <List.Item.Meta
@@ -485,19 +493,23 @@ const RenameCardPage = () => {
 
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-4 ">
             <div className="flex">
                 {/* Left Column */}
-                <div className="w-2/3 pr-4">
-                    <div className="mb-4 flex items-center">
+                <div className="w-2/3 pr-4 mt-2">
+                    <div className='flex items-center'>
                         <Captions className="mr-2 text-gray-600 " />
+                        <h1 className='font-semibold'>Title</h1>
+                    </div>
+                    <div className="mb-4 ml-8  flex items-center">
+
                         {isEditingTitle ? (
                             <Input
                                 value={cardData.name}
                                 onChange={(e) => setCardData((prev) => ({ ...prev, name: e.target.value }))}
                                 onBlur={handleTitleBlur} // Update title on blur
                                 onPressEnter={handleTitleBlur} // Update title on Enter key press
-                                className="border-gray-300 rounded-xl px-4 py-2 mt-5 w-full"
+                                className="border-gray-300 rounded-xl px-4 py-2  font-semibold  w-full"
                                 placeholder="Card Title"
                                 autoFocus
                             />
@@ -511,17 +523,22 @@ const RenameCardPage = () => {
                         )}
                         {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
                     </div>
-                    <Text className="text-gray-600 ml-8">
-                        In column{" "}
-                        <Text className="text-blue-500   underline">
-                            {cardData.taskName || 'No Task Name'}
+                    <div className="mb-4 flex items-center">
+
+                        <Text className="text-gray-600 ml-8">
+                            In column{" "}
+                            <Text className="text-blue-500   underline">
+                                {cardData.taskName || 'No Task Name'}
+                            </Text>
                         </Text>
-                    </Text>
+                    </div>
                     <div className='mb-4 flex items-center'>
                         <AlignRight className="mr-2 text-gray-600" />
-                        <h1 className=''>Description</h1>
+                        <h1 className='font-semibold'>Description</h1>
                     </div>
-                    <div className="mb-4  items-center ml-8 mt-4">
+
+
+                    <div className="  items-center ml-8 ">
 
                         {isEditingDescription ? (
                             <>
@@ -529,7 +546,7 @@ const RenameCardPage = () => {
                                     value={cardData.description}
                                     onChange={(e) => setCardData((prev) => ({ ...prev, description: e.target.value }))}
                                     onBlur={handleDescriptionBlur} // Update description on blur
-                                    className="border-gray-300 rounded-xl px-4 py-2 w-full"
+                                    className="border-gray-300 rounded-xl px-4 py-2 w-full  font-semibold"
                                     placeholder="Card Description"
                                     autoFocus
                                 />
@@ -559,73 +576,90 @@ const RenameCardPage = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="w-1/3 pl-4">
-                    <div className="mb-4">
-                        <Text strong>Project:</Text>
-                        <Text>{cardData.projectName || 'N/A'}</Text>
+                <div className="w-1/3 pl-4 ">
+                    <div className="mt-6  border p-2  from-gray-300 via-gray-200 to-gray-100 rounded shadow-lg shadow-gray-500/50">
+                        <div className="grid grid-cols pl-4">
+                            <div className="mb-2 ">
+                                <Text strong>Project:</Text>
+
+
+                                <Text>{cardData.projectName || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2 ">
+                                <Text strong>CardID:</Text>
+
+
+                                <Text>{cardData.uniqueId || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Assigned To:</Text>
+
+
+                                <Text>{cardData.assignedTo || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Created By:</Text>
+
+                                <Text>{cardData.createdBy || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Due Date:</Text>
+                                <Text>
+                                    {cardData.dueDate
+                                        ? new Date(cardData.dueDate).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            hour12: true,
+                                        })
+                                        : 'N/A'}
+                                </Text>
+                            </div>
+                        </div>
                     </div>
-                    <div className="mb-4">
-                        <Text strong>CardID:</Text>
-                        <Text>{cardData.uniqueId || 'N/A'}</Text>
-                    </div>
-                    <div className="mb-4">
-                        <Text strong>Assigned To:</Text>
-                        <Text>{cardData.assignedTo || 'N/A'}</Text>
-                    </div>
-                    <div className="mb-4">
-                        <Text strong>Assigned By:</Text>
-                        <Text>{cardData.createdBy || 'N/A'}</Text>
-                    </div>
-                    <div className="mb-4">
-                        <Text strong>Due Date:</Text>
-                        <Text>
-                            {cardData.dueDate
-                                ? new Date(cardData.dueDate).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    hour12: true,
-                                })
-                                : 'N/A'}
-                        </Text>
-                    </div>
-                    <div className="flex justify-between mt-6">
-                        <div className="w-full mt-20">
+
+                    <div className="flex justify-between ">
+                        <div className="w-72 mt-20">
                             <Text strong className="block mb-4 text-xl">Progress</Text>
                             <div className="mb-4">
-                                <Text>Estimated Hours:</Text>
-                                <div className="flex items-center">
+                                <Text className='font-semibold'>Estimated Hours:</Text>
+                                <div className="flex items-center ">
                                     <Tooltip title={`${cardData.estimatedHours || 0} hours`}>
                                         <Progress
                                             className="ml-2"
                                             percent={100} // Always 100% since it's the full estimate
                                             showInfo={false}
+                                            style={{ height: '16px' }}
                                         />
                                     </Tooltip>
                                 </div>
                             </div>
                             <div className="mb-4">
-                                <Text>Utilized Hours:</Text>
+                                <Text className='font-semibold'>Utilized Hours:</Text>
                                 <div className="flex items-center">
                                     <Tooltip title={`${cardData.utilizedHours || 0} hours`}>
                                         <Progress
                                             className="ml-2"
                                             percent={(cardData.utilizedHours / cardData.estimatedHours) * 100 || 0}
                                             showInfo={false}
+                                            style={{ height: '16px' }}
+                                            strokeColor="orange"
                                         />
                                     </Tooltip>
                                 </div>
                             </div>
                             <div className="mb-4">
-                                <Text>Remaining Hours:</Text>
+                                <Text className='font-semibold'>Remaining Hours:</Text>
                                 <div className="flex items-center">
                                     <Tooltip title={`${cardData.remainingHours || 0} hours`}>
                                         <Progress
                                             className="ml-2"
                                             percent={(cardData.remainingHours / cardData.estimatedHours) * 100 || 0}
                                             showInfo={false}
+                                            style={{ height: '16px' }}
+                                            strokeColor="red"
                                         />
                                     </Tooltip>
                                 </div>

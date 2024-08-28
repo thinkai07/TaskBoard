@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Input,
   Button,
@@ -9,13 +9,15 @@ import {
   Avatar,
   Tabs,
   Tooltip,
+  Modal,notification
 } from "antd";
 import axios from "axios";
 import { server } from "../constant";
-import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
+import { CloseOutlined, CommentOutlined,DeleteOutlined } from "@ant-design/icons";
 import useTokenValidation from "../components/UseTockenValidation";
 import { AppWindow } from "lucide-react";
-import { AlignRight, Captions } from "lucide-react";
+
+import { AlignRight, Captions, History, Clock,SquareChartGantt } from 'lucide-react';
 
 const initialBoard = {
   columns: [],
@@ -25,6 +27,7 @@ const RenameCardPage = () => {
   const { columnId, cardId } = useParams();
   const { Text, Title } = Typography; // Correct import from Typography
   const { TextArea } = Input;
+  const navigate = useNavigate();
 
   // State for storing card details
   const [cardData, setCardData] = useState({
@@ -61,6 +64,7 @@ const RenameCardPage = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [userProfile, setUserProfile] = useState({ name: "", avatar: "" });
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Fetch card details on component mount
   useEffect(() => {
@@ -317,361 +321,428 @@ const RenameCardPage = () => {
     }
   };
 
+  const handleDeleteCard = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleRemoveCard = async () => {
+    try {
+      const deletedBy = await fetchUserEmail();
+
+      const response = await fetch(
+        `${server}/api/tasks/${columnId}/cards/${cardId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ deletedBy: deletedBy }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to remove card");
+      }
+
+      setShowDeleteConfirmation(false);
+
+      notification.success({
+        message: "Task deleted successfully",
+      });
+
+      // Navigate back to the previous page
+      navigate(-1);
+    } catch (error) {
+      console.error("Error removing card:", error);
+      notification.error({
+        message: "Failed to delete task",
+      });
+    }
+  };
+
+
   const items = [
     {
-      key: "1",
-      label: "Activities",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {cardData.activities.length > 0 ? (
-            <List
-              dataSource={cardData.activities}
-              renderItem={(activity, idx) => (
-                <List.Item
-                  key={activity._id} // Use _id for uniqueness
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {activity.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{activity.commentBy}</strong>}
-                    description={
-                      <>
-                        <div>{activity.comment}</div>
-                        <div className="text-gray-500 text-sm">
-                          <Text>
-                            {activity.createdAt
-                              ? new Date(activity.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "numeric",
-                                    hour12: true,
-                                  }
-                                )
-                              : "N/A"}
-                          </Text>
-                        </div>
-                      </>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No activities found.</Text>
-          )}
-        </div>
-      ),
+        key: "1",
+        label: <span className='font-semibold'>Activities</span>,
+        children: (
+            <div className="mt-4 h-96 overflow-y-auto">
+                <div className="flex items-center mb-4 font-semibold ">
+                    <SquareChartGantt className=" ml-4 text-3xl mr-2 font-semibold" />
+                    <h1>Activities</h1>
+                </div>
+                {cardData.activities.length > 0 ? (
+                    <List
+                        dataSource={cardData.activities}
+                        renderItem={(activity, idx) => (
+                            <List.Item
+                                key={activity._id} // Use _id for uniqueness
+                                className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
+                                    }`}
+                            >
+                                <List.Item.Meta
+                                    avatar={
+                                        <Avatar style={{ backgroundColor: "#1890ff" }}>
+                                            {activity.commentBy[0].toUpperCase()}
+                                        </Avatar>
+                                    }
+                                    title={<strong>{activity.commentBy}</strong>}
+                                    description={
+                                        <>
+                                            <div>{activity.comment}</div>
+                                            <div className="text-gray-500 text-sm">
+                                                <Text>
+                                                    {activity.createdAt
+                                                        ? new Date(activity.createdAt).toLocaleDateString("en-US", {
+                                                            year: "numeric",
+                                                            month: "short",
+                                                            day: "numeric",
+                                                            hour: "numeric",
+                                                            minute: "numeric",
+                                                            hour12: true,
+                                                        })
+                                                        : "N/A"}
+                                                </Text>
+                                            </div>
+                                        </>
+                                    }
+                                />
+                            </List.Item>
+                        )}
+                    />
+                ) : (
+                    <Text>No activities found.</Text>
+                )}
+            </div>
+        ),
     },
     {
-      key: "2",
-      label: "Log-in Hours",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          {cardData.taskLogs.length > 0 ? (
-            <List
-              dataSource={cardData.taskLogs}
-              renderItem={(taskLog, idx) => (
-                <List.Item
-                  key={taskLog._id} // Use _id for uniqueness
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {taskLog.loggedBy.name[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{taskLog.loggedBy.name}</strong>}
-                    description={
-                      <>
-                        <div>{taskLog.hours} hours</div>
-                        {/* <div className="text-gray-500 text-sm">
-                      <Text>
-                        {taskLog.createdAt
-                          ? new Date(taskLog.createdAt).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "numeric",
-                              hour12: true,
-                            })
-                          : "N/A"}
-                      </Text>
-                    </div> */}
-                      </>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No log-in hours found.</Text>
-          )}
-        </div>
-      ),
+        key: "2",
+        label: <span className='font-semibold'>Log-in Hours</span>,
+        children: (
+            <div className="mt-4 h-96 overflow-y-auto">
+                <div className="flex items-center mb-4 font-semibold ">
+                    <Clock className=" ml-4  mr-2 " />
+                    <h1>Log-in Hours</h1>
+                </div>
+                {cardData.taskLogs.length > 0 ? (
+                    <List
+                        dataSource={cardData.taskLogs}
+                        renderItem={(taskLog, idx) => (
+                            <List.Item
+                                key={taskLog._id} // Use _id for uniqueness
+                                className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
+                                    }`}
+                            >
+                                <List.Item.Meta
+                                    avatar={
+                                        <Avatar style={{ backgroundColor: "#1890ff" }}>
+                                            {taskLog.loggedBy.name[0].toUpperCase()}
+                                        </Avatar>
+                                    }
+                                    title={<strong>{taskLog.loggedBy.name}</strong>}
+                                    description={
+                                        <>
+                                            <div>{taskLog.hours} hours</div>
+                                            {/* <div className="text-gray-500 text-sm">
+                  <Text>
+                    {taskLog.createdAt
+                      ? new Date(taskLog.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
+                        })
+                      : "N/A"}
+                  </Text>
+                </div> */}
+                                        </>
+                                    }
+                                />
+                            </List.Item>
+                        )}
+                    />
+                ) : (
+                    <Text>No log-in hours found.</Text>
+                )}
+            </div>
+        ),
     },
     {
-      key: "3",
-      label: "Comments",
-      children: (
-        <div className="mt-4 h-96 overflow-y-auto">
-          <div className="flex items-center mb-4 pt-6">
-            <CommentOutlined className="mr-2" />
-            <Title level={4}>Comments</Title>
-          </div>
+        key: "3",
+        label: <label className='font-semibold'>Comments</label>,
+        children: (
+            <div className="mt-4 h-96 overflow-y-auto">
+                <div className="flex items-center mb-4  font-semibold">
+                    <CommentOutlined className=" ml-4 text-3xl mr-2 font-semibold" />
+                    <h1>Comments</h1>
+                </div>
 
-          <div className="flex items-center mb-2">
-            <Avatar style={{ backgroundColor: "#1890ff" }}>
-              {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
-            </Avatar>
+                <div className="flex items-center mb-2 ml-2">
+                    <Avatar style={{ backgroundColor: "#1890ff" }}>
+                        {userProfile.avatar || userProfile.name.charAt(0).toUpperCase()}
+                    </Avatar>
 
-            <Input
-              value={userComment}
-              onChange={(e) => setUserComment(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSaveComment();
-                }
-              }}
-              placeholder="Write your comment"
-              className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
-            />
-          </div>
+                    <Input
+                        value={userComment}
+                        onChange={(e) => setUserComment(e.target.value)}
+                        onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                                handleSaveComment();
+                            }
+                        }}
+                        placeholder="Write your comment"
+                        className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+                    />
+                </div>
 
-          {cardData.comments.length > 0 ? (
-            <List
-              dataSource={cardData.comments.slice().reverse()} // Display latest comment first
-              renderItem={(comment, idx) => (
-                <List.Item
-                  key={comment._id}
-                  className={`ml-2 text-gray-700 mt-2 ${
-                    idx === 0 ? "bg-gray-100" : "bg-white"
-                  }`}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: "#1890ff" }}>
-                        {comment.commentBy[0].toUpperCase()}
-                      </Avatar>
-                    }
-                    title={<strong>{comment.commentBy}</strong>}
-                    description={
-                      <>
-                        <div>{comment.comment}</div>
-                        <div className="text-gray-500 text-sm">
-                          <Text>
-                            {comment.createdAt
-                              ? new Date(comment.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "numeric",
-                                    hour12: true,
-                                  }
-                                )
-                              : "N/A"}
-                          </Text>
-                        </div>
-                      </>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Text>No comments yet.</Text>
-          )}
-        </div>
-      ),
+                {cardData.comments.length > 0 ? (
+                    <List
+                        dataSource={cardData.comments.slice().reverse()} // Display latest comment first
+                        renderItem={(comment, idx) => (
+                            <List.Item
+                                key={comment._id}
+                                className={`ml-2 text-gray-700 mt-2 ${idx === 0 ? "" : "bg-white"
+                                    }`}
+                            >
+                                <List.Item.Meta
+                                    avatar={
+                                        <Avatar style={{ backgroundColor: "#1890ff" }}>
+                                            {comment.commentBy[0].toUpperCase()}
+                                        </Avatar>
+                                    }
+                                    title={<strong>{comment.commentBy}</strong>}
+                                    description={
+                                        <>
+                                            <div>{comment.comment}</div>
+                                            <div className="text-gray-500 text-sm">
+                                                <Text>
+                                                    {comment.createdAt
+                                                        ? new Date(comment.createdAt).toLocaleDateString("en-US", {
+                                                            year: "numeric",
+                                                            month: "short",
+                                                            day: "numeric",
+                                                            hour: "numeric",
+                                                            minute: "numeric",
+                                                            hour12: true,
+                                                        })
+                                                        : "N/A"}
+                                                </Text>
+                                            </div>
+                                        </>
+                                    }
+                                />
+                            </List.Item>
+                        )}
+                    />
+                ) : (
+                    <Text>No comments yet.</Text>
+                )}
+            </div>
+        ),
     },
-  ];
+];
+
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex">
         {/* Left Column */}
-        <div className="w-2/3 pr-4">
-          <div className="mb-4 flex items-center">
-            <Captions className="mr-2 text-gray-600 " />
-            {isEditingTitle ? (
-              <Input
-                value={cardData.name}
-                onChange={(e) =>
-                  setCardData((prev) => ({ ...prev, name: e.target.value }))
-                }
-                onBlur={handleTitleBlur} // Update title on blur
-                onPressEnter={handleTitleBlur} // Update title on Enter key press
-                className="border-gray-300 rounded-xl px-4 py-2 mt-5 w-full"
-                placeholder="Card Title"
-                autoFocus
-              />
-            ) : (
-              <Text
-                onDoubleClick={() => setIsEditingTitle(true)}
-                className="cursor-pointer"
-              >
-                {cardData.name || "No Title"}
-              </Text>
-            )}
-            {renameCardErrors.name && (
-              <Text type="danger">{renameCardErrors.name}</Text>
-            )}
-          </div>
-          <Text className="text-gray-600 ml-8">
-            In column{" "}
-            <Text className="text-blue-500   underline">
-              {cardData.taskName || "No Task Name"}
-            </Text>
-          </Text>
-          <div className="mb-4 flex items-center">
-            <AlignRight className="mr-2 text-gray-600" />
-            <h1 className="">Description</h1>
-          </div>
-          <div className="mb-4  items-center ml-8 mt-4">
-            {isEditingDescription ? (
-              <>
-                <TextArea
-                  value={cardData.description}
-                  onChange={(e) =>
-                    setCardData((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  onBlur={handleDescriptionBlur} // Update description on blur
-                  className="border-gray-300 rounded-xl px-4 py-2 w-full"
-                  placeholder="Card Description"
-                  autoFocus
-                />
-                <div className="flex justify-end mt-4">
-                  <Button
-                    onClick={() => setIsEditingDescription(false)}
-                    className="mr-2"
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleRenameCardDescription} type="primary">
-                    Save
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <Text
-                onDoubleClick={() => setIsEditingDescription(true)}
-                className="cursor-pointer"
-              >
-                {cardData.description || "No Description"}
-              </Text>
-            )}
-            {renameCardErrors.description && (
-              <Text type="danger">{renameCardErrors.description}</Text>
-            )}
-          </div>
+        <div className="w-2/3 pr-4 mt-2">
+                    <div className='flex items-center'>
+                        <Captions className="mr-2 text-gray-600 " />
+                        <h1 className='font-semibold'>Title</h1>
+                    </div>
+                    <div className="mb-4 ml-8  flex items-center">
 
-          <div className="mb-4">
-            <Tabs defaultActiveKey="1" items={items} />
-          </div>
-        </div>
+                        {isEditingTitle ? (
+                            <Input
+                                value={cardData.name}
+                                onChange={(e) => setCardData((prev) => ({ ...prev, name: e.target.value }))}
+                                onBlur={handleTitleBlur} // Update title on blur
+                                onPressEnter={handleTitleBlur} // Update title on Enter key press
+                                className="border-gray-300 rounded-xl px-4 py-2  font-semibold  w-full"
+                                placeholder="Card Title"
+                                autoFocus
+                            />
+                        ) : (
+                            <Text
+                                onDoubleClick={() => setIsEditingTitle(true)}
+                                className="cursor-pointer"
+                            >
+                                {cardData.name || 'No Title'}
+                            </Text>
+                        )}
+                        {renameCardErrors.name && <Text type="danger">{renameCardErrors.name}</Text>}
+                    </div>
+                    <div className="mb-4 flex items-center">
+
+                        <Text className="text-gray-600 ml-8">
+                            In column{" "}
+                            <Text className="text-blue-500   underline">
+                                {cardData.taskName || 'No Task Name'}
+                            </Text>
+                        </Text>
+                    </div>
+                    <div className='mb-4 flex items-center'>
+                        <AlignRight className="mr-2 text-gray-600" />
+                        <h1 className='font-semibold'>Description</h1>
+                    </div>
+
+
+                    <div className="  items-center ml-8 ">
+
+                        {isEditingDescription ? (
+                            <>
+                                <TextArea
+                                    value={cardData.description}
+                                    onChange={(e) => setCardData((prev) => ({ ...prev, description: e.target.value }))}
+                                    onBlur={handleDescriptionBlur} // Update description on blur
+                                    className="border-gray-300 rounded-xl px-4 py-2 w-full  font-semibold"
+                                    placeholder="Card Description"
+                                    autoFocus
+                                />
+                                <div className="flex justify-end mt-4">
+                                    <Button onClick={() => setIsEditingDescription(false)} className="mr-2">
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleRenameCardDescription} type="primary">
+                                        Save
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <Text
+                                onDoubleClick={() => setIsEditingDescription(true)}
+                                className="cursor-pointer"
+                            >
+                                {cardData.description || 'No Description'}
+                            </Text>
+                        )}
+                        {renameCardErrors.description && <Text type="danger">{renameCardErrors.description}</Text>}
+                    </div>
+
+                    <div className="mb-4">
+                        <Tabs defaultActiveKey="1" items={items} />
+                    </div>
+                </div>
 
         {/* Right Column */}
-        <div className="w-1/3 pl-4">
-          <div className="mb-4">
-            <Text strong>Project:</Text>
-            <Text>{cardData.projectName || "N/A"}</Text>
+        <div className="w-1/3 pl-4 ">
+                    <div className="mt-6  border p-2  from-gray-300 via-gray-200 to-gray-100 rounded shadow-s shadow-gray-500/50">
+                        <div className="grid grid-cols pl-4">
+                            <div className="mb-2 ">
+                                <Text strong>Project:</Text>
+
+
+                                <Text>{cardData.projectName || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2 ">
+                                <Text strong>CardID:</Text>
+
+
+                                <Text>{cardData.uniqueId || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Assigned To:</Text>
+
+
+                                <Text>{cardData.assignedTo || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Created By:</Text>
+
+                                <Text>{cardData.createdBy || 'N/A'}</Text>
+                            </div>
+                            <div className="mb-2">
+                                <Text strong>Due Date:</Text>
+                                <Text>
+                                    {cardData.dueDate
+                                        ? new Date(cardData.dueDate).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            hour12: true,
+                                        })
+                                        : 'N/A'}
+                                </Text>
+                            </div>
+                            <div className="mb-4"> 
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleDeleteCard}
+          >
+            Delete Card
+          </Button>
           </div>
-          <div className="mb-4">
-            <Text strong>CardID:</Text>
-            <Text>{cardData.uniqueId || "N/A"}</Text>
-          </div>
-          <div className="mb-4">
-            <Text strong>Assigned To:</Text>
-            <Text>{cardData.assignedTo || "N/A"}</Text>
-          </div>
-          <div className="mb-4">
-            <Text strong>Assigned By:</Text>
-            <Text>{cardData.createdBy || "N/A"}</Text>
-          </div>
-          <div className="mb-4">
-            <Text strong>Due Date:</Text>
-            <Text>
-              {cardData.dueDate
-                ? new Date(cardData.dueDate).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    hour12: true,
-                  })
-                : "N/A"}
-            </Text>
-          </div>
-          <div className="flex justify-between mt-6">
-            <div className="w-full mt-20">
-              <Text strong className="block mb-4 text-xl">
-                Progress
-              </Text>
-              <div className="mb-4">
-                <Text>Estimated Hours:</Text>
-                <div className="flex items-center">
-                  <Tooltip title={`${cardData.estimatedHours || 0} hours`}>
-                    <Progress
-                      className="ml-2"
-                      percent={100} // Always 100% since it's the full estimate
-                      showInfo={false}
-                    />
-                  </Tooltip>
+          <Modal
+        title="Confirm Delete"
+        visible={showDeleteConfirmation}
+        onOk={handleRemoveCard}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        okText="Delete"
+        cancelText="Cancel"
+      >
+        <p>Are you sure you want to delete this card?</p>
+      </Modal>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between ">
+                        <div className="w-72 mt-20">
+                            <Text strong className="block mb-4 text-xl">Progress</Text>
+                            <div className="mb-4">
+                                <Text className='font-semibold'>Estimated Hours:</Text>
+                                <div className="flex items-center ">
+                                    <Tooltip title={`${cardData.estimatedHours || 0} hours`}>
+                                        <Progress
+                                            className="ml-2"
+                                            percent={100} // Always 100% since it's the full estimate
+                                            showInfo={false}
+                                            style={{ height: '16px' }}
+                                        />
+                                    </Tooltip>
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <Text className='font-semibold'>Utilized Hours:</Text>
+                                <div className="flex items-center">
+                                    <Tooltip title={`${cardData.utilizedHours || 0} hours`}>
+                                        <Progress
+                                            className="ml-2"
+                                            percent={(cardData.utilizedHours / cardData.estimatedHours) * 100 || 0}
+                                            showInfo={false}
+                                            style={{ height: '16px' }}
+                                            strokeColor="orange"
+                                        />
+                                    </Tooltip>
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <Text className='font-semibold'>Remaining Hours:</Text>
+                                <div className="flex items-center">
+                                    <Tooltip title={`${cardData.remainingHours || 0} hours`}>
+                                        <Progress
+                                            className="ml-2"
+                                            percent={(cardData.remainingHours / cardData.estimatedHours) * 100 || 0}
+                                            showInfo={false}
+                                            style={{ height: '16px' }}
+                                            strokeColor="red"
+                                        />
+                                    </Tooltip>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              <div className="mb-4">
-                <Text>Utilized Hours:</Text>
-                <div className="flex items-center">
-                  <Tooltip title={`${cardData.utilizedHours || 0} hours`}>
-                    <Progress
-                      className="ml-2"
-                      percent={
-                        (cardData.utilizedHours / cardData.estimatedHours) *
-                          100 || 0
-                      }
-                      showInfo={false}
-                    />
-                  </Tooltip>
-                </div>
-              </div>
-              <div className="mb-4">
-                <Text>Remaining Hours:</Text>
-                <div className="flex items-center">
-                  <Tooltip title={`${cardData.remainingHours || 0} hours`}>
-                    <Progress
-                      className="ml-2"
-                      percent={
-                        (cardData.remainingHours / cardData.estimatedHours) *
-                          100 || 0
-                      }
-                      showInfo={false}
-                    />
-                  </Tooltip>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

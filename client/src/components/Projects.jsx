@@ -722,7 +722,12 @@ const Projects = () => {
               startDate: date ? date.toDate() : null,
             }))
           }
+          disabledDate={(current) => {
+            // Disable past dates
+            return current && current < dayjs().startOf("day");
+          }}
         />
+
         {newCardErrors.startDate && (
           <p className="text-red-500">Start Date is required</p>
         )}

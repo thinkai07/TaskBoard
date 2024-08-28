@@ -2102,29 +2102,18 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 let sequenceNumber = 1000;
 
 function generateUniqueId() {
-    const now = new Date();
-
-   
+    const now = new Date(); 
     const timestamp = 
         now.getFullYear().toString() +
         (now.getMonth() + 1).toString().padStart(2, '0') +
         now.getDate().toString().padStart(2, '0') +
         now.getSeconds().toString().padStart(2, '0');
-
-    
     sequenceNumber++;
-
-   
     const uniquePart = sequenceNumber.toString().padStart(4, '0');
-
-   
     return timestamp + uniquePart;
 }
-
-
 const uniqueId = generateUniqueId();
 console.log(uniqueId); 
-
 
 
 
@@ -2204,14 +2193,6 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error creating card" });
   }
 });
-
-
-
-
-
-
-
-
 
 
 app.post("/api/notifications", authenticateToken, async (req, res) => {
@@ -2424,6 +2405,16 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         changes.push({ field: "description", oldValue: card.description, newValue: description });
         card.description = description;
       }
+      // Track changes
+      const changes = [];
+      if (name !== undefined && card.name !== name) {
+        changes.push({ field: "name", oldValue: card.name, newValue: name });
+        card.name = name;
+      }
+      if (description !== undefined && card.description !== description) {
+        changes.push({ field: "description", oldValue: card.description, newValue: description });
+        card.description = description;
+      }
 
       // Find the user who updated the card
       const updatedByUser = await User.findOne({ email: updatedBy });
@@ -2444,11 +2435,36 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         }
         card.updatedDate.push(updatedDate);
       }
+      if (updatedBy) {
+        if (!card.updatedBy) {
+          card.updatedBy = [];
+        }
+        card.updatedBy.push(updatedBy);
+      }
+      if (updatedDate) {
+        if (!card.updatedDate) {
+          card.updatedDate = [];
+        }
+        card.updatedDate.push(updatedDate);
+      }
 
       // Save the card
       await card.save();
 
       // Create audit log entry for card update
+      if (changes.length > 0) {
+        const newAuditLog = new AuditLog({
+          entityType: "Card",
+          entityId: cardId,
+          actionType: "update",
+          actionDate: updatedDate,
+          performedBy: updatedByUser.name,
+          projectId: task.project,
+          taskId: taskId,
+          changes: changes,
+        });
+        await newAuditLog.save();
+      }
       if (changes.length > 0) {
         const newAuditLog = new AuditLog({
           entityType: "Card",
@@ -2496,6 +2512,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Assigned user not found" });
       }
 
+      const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
       const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
 
       const newNotification = new Notification({
@@ -2710,6 +2727,8 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       }, // Include project details
     }));
 
+    // Include the task name in the response
+    res.status(200).json({ taskName: task.name, cards });
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
   } catch (error) {
@@ -2930,10 +2949,6 @@ app.delete(
   }
 );
 
-
-
-
-
 // Log hours for a specific card
 app.post('/api/log-hours', async (req, res) => {
   try {
@@ -3071,11 +3086,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 
 
 // //teams related apis
-
-
-app.post("/api/projects/:projectId/teams/addUser",
-  authenticateToken,
-  async (req, res) => {
+app.post("/api/projects/:projectId/teams/addUser",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
     const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
 
@@ -3140,11 +3151,8 @@ app.post("/api/projects/:projectId/teams/addUser",
   }
 );
 // Endpoint to get all users under all teams based on project ID
-app.get("/api/projects/:projectId/teams/users",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/teams/users",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
-
     try {
       const project = await Project.findById(projectId).populate({
         path: "teams",
@@ -3178,9 +3186,7 @@ app.get("/api/projects/:projectId/teams/users",
   }
 );
 // Endpoint to get users under a specific team based on project ID and team name
-app.get("/api/projects/:projectId/teams/:teamName/users",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
     const { projectId, teamName } = req.params;
     try {
       const project = await Project.findById(projectId).populate({

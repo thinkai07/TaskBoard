@@ -12,6 +12,7 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
+import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
 import { Tooltip } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
@@ -37,6 +38,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
+import RenameCardPage from "../Pages/RenameCardPage";
 import RenameCardPage from "../Pages/RenameCardPage";
 const initialBoard = {
   columns: [],
@@ -543,6 +545,7 @@ function KanbanBoard() {
     setTeam("");
   };
   
+  
 
   const openRenameCardModal = (
     columnId,
@@ -582,6 +585,8 @@ function KanbanBoard() {
     setcreatedBy(createdBy);
     setDueDate(dueDate);
   };
+
+  
 
   
   const clearFieldsAndRefresh = async () => {
@@ -1256,6 +1261,7 @@ function KanbanBoard() {
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
       style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
       onClick={() => handleCardClick(card.id, card.columnId, projectId)}
+      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
     >
       <div className="p-4">
         <div
@@ -1308,6 +1314,25 @@ function KanbanBoard() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
+      <div className="react-kanban-card__status">
+        <Select
+          value={card.status}
+          onChange={(value) => handleChangeStatus(card.id, value)}
+          onClick={(e) => e.stopPropagation()} // Prevent modal from opening
+          style={{ width: 110, height: 25 }} // You can adjust the width as needed
+        >
+          <Option value="pending">Pending</Option>
+          <Option value="inprogress">In Progress</Option>
+          <Option value="completed">Completed</Option>
+        </Select>
+      </div>
+      <div
+        title={card.uniqueId}
+        style={{ marginLeft: "10px", font: "small-caption" }}
+      >
+        <h1>ID:{card.cardId}</h1>
+      </div>
+    </div>
       <div className="react-kanban-card__status">
         <Select
           value={card.status}
@@ -1427,32 +1452,78 @@ function KanbanBoard() {
           >
             New Column
           </Button>
-
-          {/* <Popover
-            trigger="click"
-            placement="bottomRight"
-            content={
-              <Space direction="vertical">
-
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-              </Space>
-            }
-          >
-            <Button type="text" icon={<SquareMenu />} />
-          </Popover> */}
-
           <>
             <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
 
             <Drawer
+  title="Settings"
+  placement="right"
+  onClose={onClose}
+  visible={visible}
+  width={300} // Adjust width as needed
+>
+  {showBackgroundChange && (
+    <BackgroundChange
+      onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+      onImageSelect={onClose} // Close the Drawer when an image is selected
+    />
+  )}
+  <Space direction="vertical" style={{ width: "100%" }}>
+    <button
+      type="button" // Changed to 'button' for semantic correctness
+      className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={() => {
+        openGitModal();
+        onClose(); // Close the Drawer after opening Git Modal
+      }}
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        paddingRight: "25px",
+      }}
+    >
+      <SettingOutlined
+        style={{
+          fontSize: 20,
+          display: "flex",
+          justifyItems: "left",
+        }}
+      />
+      Git Configuration
+    </button>
+    {isProjectRoute && (
+      <button
+        type="button"
+        className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+        onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+        style={{
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <SquareChevronDown style={{ fontSize: 20 }} />
+        Change Background
+      </button>
+    )}
+
+    <RulesButton
+      tasks={tasks}
+      className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+      }}
+     
+    />
+    
+  </Space>
+</Drawer>
   title="Settings"
   placement="right"
   onClose={onClose}
@@ -1672,7 +1743,99 @@ function KanbanBoard() {
         >
           <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              clearFieldsAndRefresh();
+            }
+          }}
+        >
+          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
             <form onSubmit={handleAddCard}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Title"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="assignedEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Assigned (Email)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="assignDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="assignDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="dueDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label
@@ -1794,15 +1957,55 @@ function KanbanBoard() {
               </div>
 
               <div className="flex justify-between">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="estimatedHours"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Estimated Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="estimatedHours"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Estimated Hours"
+                    required
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Description"
+                    required
+                    onChange={(e) =>
+                      (e.target.value = e.target.value.trimStart())
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between">
                 <button
                   type="button"
                   onClick={clearFieldsAndRefresh}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                   className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                 >
                   Add Card

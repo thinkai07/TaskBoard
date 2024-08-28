@@ -29,6 +29,9 @@
 // const { Option } = Select;
 // const { Step } = Steps;
 // const { Title, Text } = Typography;
+// const { Option } = Select;
+// const { Step } = Steps;
+// const { Title, Text } = Typography;
 
 // const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
 //   <Button
@@ -51,7 +54,37 @@
 //     <Text className="mt-2">{label}</Text>
 //   </Button>
 // );
+// const ActionOption = ({ icon: Icon, label, onClick }) => (
+//   <Button
+//     icon={<Icon />}
+//     onClick={onClick}
+//     className="flex flex-col items-center justify-center h-24 w-24"
+//   >
+//     <Text className="mt-2">{label}</Text>
+//   </Button>
+// );
 
+// function RulesButton({ tasks }) {
+//   useTokenValidation();
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [showRulesUI, setShowRulesUI] = useState(false);
+//   const [showTriggers, setShowTriggers] = useState(false);
+//   const [selectedTrigger, setSelectedTrigger] = useState("");
+//   const [triggerCondition, setTriggerCondition] = useState("");
+//   const [listName, setListName] = useState("");
+//   const [triggerAdded, setTriggerAdded] = useState(false);
+//   const [actionStep, setActionStep] = useState(false);
+//   const [actionAdded, setActionAdded] = useState(false);
+//   const [currentStep, setCurrentStep] = useState(0);
+//   const [selectedAction, setSelectedAction] = useState(null);
+//   const [moveToList, setMoveToList] = useState("");
+//   const [userEmail, setUserEmail] = useState("");
+//   const [rules, setRules] = useState([]);
+//   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+//   const [ruleToDelete, setRuleToDelete] = useState(null);
+//   const { projectId } = useParams();
+//   const [cardStatuses, setCardStatuses] = useState([]);
+//   const [createdByCondition, setCreatedByCondition] = useState("");
 // function RulesButton({ tasks }) {
 //   useTokenValidation();
 //   const [isOpen, setIsOpen] = useState(false);
@@ -102,6 +135,17 @@
 //         console.error("Error fetching rules:", error);
 //       }
 //     };
+//   useEffect(() => {
+//     const fetchRules = async () => {
+//       try {
+//         const response = await axios.get(`${server}/api/rules/${projectId}`, {
+//           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+//         });
+//         setRules(response.data);
+//       } catch (error) {
+//         console.error("Error fetching rules:", error);
+//       }
+//     };
 
 //     if (projectId) {
 //       fetchRules();
@@ -122,7 +166,23 @@
 //         setCardStatuses(["Completed", "Pending", "Inprogress"]);
 //       }
 //     };
+//   useEffect(() => {
+//     const fetchCardStatuses = async () => {
+//       try {
+//         const response = await axios.get(`${server}/api/card-statuses`, {
+//           headers: {
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//         });
+//         setCardStatuses(response.data.statuses);
+//       } catch (error) {
+//         console.error("Error fetching card statuses:", error);
+//         setCardStatuses(["Completed", "Pending", "Inprogress"]);
+//       }
+//     };
 
+//     fetchCardStatuses();
+//   }, []);
 //     fetchCardStatuses();
 //   }, []);
 
@@ -144,12 +204,31 @@
 //     setActionStep(true);
 //     setCurrentStep(1);
 //   };
+//   const handleAddButtonClick = () => {
+//     setTriggerAdded(true);
+//     setActionStep(true);
+//     setCurrentStep(1);
+//   };
 
 //   const handleAddActionClick = () => {
 //     setActionAdded(true);
 //     setCurrentStep(2);
 //   };
+//   const handleAddActionClick = () => {
+//     setActionAdded(true);
+//     setCurrentStep(2);
+//   };
 
+//   const handleBack = () => {
+//     if (currentStep === 1) {
+//       setActionStep(false);
+//       setTriggerAdded(false);
+//       setCurrentStep(0);
+//     } else if (currentStep === 2) {
+//       setActionAdded(false);
+//       setCurrentStep(1);
+//     }
+//   };
 //   const handleBack = () => {
 //     if (currentStep === 1) {
 //       setActionStep(false);
@@ -184,7 +263,30 @@
 //       } else if (selectedAction === "Assign Task") {
 //         actionSentence = `Assign task to ${userEmail}`;
 //       }
+//       let actionSentence = "";
+//       if (selectedAction === "Move to List") {
+//         actionSentence = `Move to column ${moveToList}`;
+//       } else if (selectedAction === "Complete Task") {
+//         actionSentence = `Mark the task as completed`;
+//       } else if (selectedAction === "Delete Task") {
+//         actionSentence = `Delete the task`;
+//       } else if (selectedAction === "Assign Task") {
+//         actionSentence = `Assign task to ${userEmail}`;
+//       }
 
+//       const newRule = {
+//         name: `${selectedTrigger} Rule`,
+//         trigger: selectedTrigger,
+//         triggerCondition,
+//         listName,
+//         action: selectedAction,
+//         actionDetails: { moveToList },
+//         createdBy: userEmail,
+//         projectId,
+//         createdByCondition,
+//         triggerSentence,
+//         actionSentence,
+//       };
 //       const newRule = {
 //         name: `${selectedTrigger} Rule`,
 //         trigger: selectedTrigger,
@@ -202,10 +304,28 @@
 //       const response = await axios.post(`${server}/api/rules`, newRule, {
 //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
 //       });
+//       const response = await axios.post(`${server}/api/rules`, newRule, {
+//         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+//       });
 
 //       const savedRule = response.data;
 //       setRules((prevRules) => [...prevRules, savedRule]);
+//       const savedRule = response.data;
+//       setRules((prevRules) => [...prevRules, savedRule]);
 
+//       setCurrentStep(0);
+//       setSelectedTrigger("");
+//       setTriggerCondition("");
+//       setCreatedByCondition("");
+//       setShowTriggers(false);
+//       setSelectedAction("");
+//       setMoveToList("");
+//       setUserEmail("");
+//       setShowRulesUI(false);
+//     } catch (error) {
+//       console.error("Error saving rule:", error);
+//     }
+//   };
 //       setCurrentStep(0);
 //       setSelectedTrigger("");
 //       setTriggerCondition("");
@@ -224,7 +344,15 @@
 //     setRuleToDelete(ruleId);
 //     setShowDeleteConfirmation(true);
 //   };
+//   const openDeleteConfirmation = (ruleId) => {
+//     setRuleToDelete(ruleId);
+//     setShowDeleteConfirmation(true);
+//   };
 
+//   const closeDeleteConfirmation = () => {
+//     setShowDeleteConfirmation(false);
+//     setRuleToDelete(null);
+//   };
 //   const closeDeleteConfirmation = () => {
 //     setShowDeleteConfirmation(false);
 //     setRuleToDelete(null);
@@ -492,6 +620,17 @@
 //         )}
 //       </Modal>
 
+//       <Modal
+//         title="Confirm Deletion"
+//         visible={showDeleteConfirmation}
+//         onOk={confirmDelete}
+//         onCancel={closeDeleteConfirmation}
+//       >
+//         <p>Are you sure you want to delete this rule?</p>
+//       </Modal>
+//     </div>
+//   );
+// }
 //       <Modal
 //         title="Confirm Deletion"
 //         visible={showDeleteConfirmation}

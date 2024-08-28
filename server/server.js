@@ -2395,16 +2395,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Card not found" });
       }
 
-      // Track changes
-      const changes = [];
-      if (name !== undefined && card.name !== name) {
-        changes.push({ field: "name", oldValue: card.name, newValue: name });
-        card.name = name;
-      }
-      if (description !== undefined && card.description !== description) {
-        changes.push({ field: "description", oldValue: card.description, newValue: description });
-        card.description = description;
-      }
+      
       // Track changes
       const changes = [];
       if (name !== undefined && card.name !== name) {
@@ -2512,7 +2503,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Assigned user not found" });
       }
 
-      const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
+     
       const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
 
       const newNotification = new Notification({

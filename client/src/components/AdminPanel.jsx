@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { server } from "../constant";
-import {Table,Button,Input,Modal,Select,message,
-  Spin,
-} from "antd";
+import { Table, Button, Input, Modal, Select, message, Spin } from "antd";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import useTokenValidation from "./UseTockenValidation";
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IoIosSearch, IoMdPersonAdd } from "react-icons/io";
 
 const AdminPanel = () => {
   useTokenValidation();
@@ -169,41 +167,51 @@ const AdminPanel = () => {
     {
       title: "Actions",
       key: "actions",
-      render: (text, record) => (
+      render: (text, record) =>
         userRole === "ADMIN" && (
-          <Button type="primary" danger onClick={() => confirmDeleteUser(record._id)}>
+          <Button
+            type="primary"
+            danger
+            onClick={() => confirmDeleteUser(record._id)}
+          >
             Delete
           </Button>
-        )
-      ),
+        ),
     },
   ];
   if (loading) {
     return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'center', // Center horizontally
-            alignItems: 'center', // Center vertically
-            height: '100vh' // Full height of the viewport
-        }}>
-            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
-            Loading...
-        </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center", // Center horizontally
+          alignItems: "center", // Center vertically
+          height: "100vh", // Full height of the viewport
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          style={{ marginRight: "10px" }}
+        />
+        Loading...
+      </div>
     );
-}
+  }
 
   return (
-    <div className="p-4 m-4 bg-gray-100 rounded-lg shadow-md">
-      <div className="flex justify-between mb-4">
+    <div className="p-4 m-4  rounded-lg shadow-md">
+      <div className="flex justify-end gap-10 mb-4">
         <Input
           placeholder="Search by name or email"
           value={searchTerm}
           onChange={handleSearch}
           className="w-1/3"
+          prefix={<IoIosSearch />}
         />
         {userRole === "ADMIN" && (
           <Button type="primary" onClick={() => setIsModalOpen(true)}>
-            Add User
+            Add User <IoMdPersonAdd size={18} />
           </Button>
         )}
       </div>
@@ -213,6 +221,7 @@ const AdminPanel = () => {
         dataSource={filteredData}
         rowKey={(record) => record._id}
         loading={loading}
+        className="p-2"
       />
 
       <Modal
@@ -222,9 +231,7 @@ const AdminPanel = () => {
         onCancel={() => setIsModalOpen(false)}
         confirmLoading={loading}
       >
-        {error && (
-          <div className="mb-4 text-red-600">{error}</div>
-        )}
+        {error && <div className="mb-4 text-red-600">{error}</div>}
         <Input
           placeholder="Name"
           value={name}
@@ -237,7 +244,6 @@ const AdminPanel = () => {
           onChange={(e) => setEmail(e.target.value)}
           className="mb-4"
         />
-      
       </Modal>
 
       <Modal
@@ -247,20 +253,13 @@ const AdminPanel = () => {
         onCancel={() => setIsConfirmModalOpen(false)}
         confirmLoading={loading}
       >
-        <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+        <p>
+          Are you sure you want to delete this user? This action cannot be
+          undone.
+        </p>
       </Modal>
     </div>
   );
 };
 
 export default AdminPanel;
-
-
-
-
-
-
-
-
-
-

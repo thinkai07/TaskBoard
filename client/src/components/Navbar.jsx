@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Popover, Button ,Input,message} from "antd";
+import { Popover, Button, Input, message } from "antd";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { server } from "../constant";
 import { BsMenuUp } from "react-icons/bs";
@@ -29,46 +28,62 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [searchResults, setSearchResults] = useState([]);
   const { Search } = Input;
   const [searchQuery, setSearchQuery] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const searchRef = useRef(null);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
+  // Debounced function to avoid API calls on every keystroke
+  const debouncedSearch = (query) => {
+    clearTimeout(searchRef.current);
+    searchRef.current = setTimeout(() => {
+      handleSearch(query);
+    }, 100); // Adjust the debounce delay as needed
+  };
 
-
-  const handleSearch = async () => {
-    const trimmedSearchQuery = searchQuery.trim(); // Remove leading and trailing spaces
-
+  const handleSearch = async (trimmedSearchQuery) => {
     if (!trimmedSearchQuery) {
-      message.warning("Please enter a unique ID to search");
+      setSearchResults([]);
       return;
     }
 
     try {
-      const response = await axios.get(`${server}/api/organizations/${organizationId}/cards`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      const matchedCard = response.data.cards.find(
-        (card) => card.uniqueId.toLowerCase() === trimmedSearchQuery.toLowerCase()
+      const response = await axios.get(
+        `${server}/api/organizations/${organizationId}/cards`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
 
-      if (matchedCard) {
-        // Navigate using taskId (columnId) and cardId
-        navigate(`/rename-card/${matchedCard.taskId}/cards/${matchedCard.id}`);
-      } else {
-        message.error("No card found with the provided unique ID");
+      const filteredCards = response.data.cards.filter((card) =>
+        card.uniqueId.toLowerCase().includes(trimmedSearchQuery.toLowerCase())
+      );
+      if (filteredCards.length === 0) {
+        setErrorMessage("No matching card found");
+        setTimeout(() => {
+          setErrorMessage("");
+        }, 1000); // Hide the error message after 1 second
       }
+
+      setSearchResults(filteredCards);
     } catch (error) {
       console.error("Error searching cards:", error);
-      message.error("An error occurred while searching for the card");
+      message.error("An error occurred while searching for cards");
     }
+  };
+
+  const handleCardClick = (cardId, columnId) => {
+    navigate(`/rename-card/${columnId}/cards/${cardId}`);
+    setSearchResults([]);
+    setSearchQuery("");
   };
 
   useEffect(() => {
@@ -284,43 +299,61 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
   return (
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
-    <div className="flex items-center">
-      <div className="ml-3">
-        <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
-        <h3 className="font-medium text-md">
-          <span className="text-gray-500">{formatDate(currentTime)}</span>
-        </h3>
+      <div className="flex items-center">
+        <div className="ml-3">
+          <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
+          <h3 className="font-medium text-md">
+            <span className="text-gray-500">{formatDate(currentTime)}</span>
+          </h3>
+        </div>
       </div>
-    </div>
-
-    <div className="flex items-center flex-grow justify-center space-x-20">
-      <div className="relative w-full max-w-xs">
-        <Search
-          placeholder="Search by unique ID"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onSearch={handleSearch}
-          style={{ width: '100%', padding: '8px' }}
-          className="mr-4"
-          enterButton
-        />
-        {/* {searchResults.length > 0 && (
-          <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-            {searchResults.map((card) => (
-              <div
-                key={card.id}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleCardClick(card.id, card.columnId)}
-              >
-                {card.uniqueId} - {card.name}
-              </div>
-            ))}
-          </div>
-        )} */}
+      <div className="flex items-center flex-grow justify-center space-x-20">
+        <div className="relative w-full max-w-xs">
+          <Search
+            placeholder="Search by task ID"
+            value={searchQuery}
+            onChange={(e) => {
+              const trimmedSearchQuery = e.target.value.trim();
+              // Filter out non-numeric characters
+              const numericSearchQuery = trimmedSearchQuery.replace(
+                /[^0-9]/g,
+                ""
+              );
+              setSearchQuery(numericSearchQuery);
+              debouncedSearch(numericSearchQuery);
+            }}
+            onSearch={() => handleSearch(searchQuery)}
+            style={{ width: "100%", padding: "8px" }}
+            className="mr-4"
+            enterButton
+          />
+          {errorMessage && (
+            <div className="absolute z-10 mt-2 w-full bg-white text-black text-center rounded-md shadow-lg border border-red-500">
+              {errorMessage}
+            </div>
+          )}
+          {searchResults.length > 0 && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {searchResults.map((card) => (
+                <div
+                  key={card.id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleCardClick(card.id, card.taskId)}
+                >
+                  <div className="text-gray-800 font-medium">
+                    Task: {card.name}
+                  </div>
+                  <div className="text-gray-500 text-sm">
+                    ID: {card.uniqueId}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
 
-    <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
+      <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
       {isProjectRoute && (
         <div className="relative inline-block group">
           <button
@@ -392,11 +425,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         </div>
       </Popover>
 
-      <Popover
-        placement="bottomRight"
-        content={profileContent}
-        trigger="click"
-      >
+      <Popover placement="bottomRight" content={profileContent} trigger="click">
         <div className="w-8 h-8 bg-[#8AAAE5] text-white flex items-center justify-center rounded-full font-semibold text-xl cursor-pointer">
           {getFirstLetter()}
         </div>
@@ -425,15 +454,16 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
                     key={index}
                     src={image}
                     alt={`Background ${index + 1}`}
-                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${selectedImage === image
-                      ? "border-2 border-black"
-                      : "border-gray-300"
-                      }`}
+                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${
+                      selectedImage === image
+                        ? "border-2 border-black"
+                        : "border-gray-300"
+                    }`}
                     onClick={() => handleSelectBackground(image)}
                   />
                 ))}
               </div>
-              <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover mb-4 justify-center mb-4">
+              <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover  justify-center mb-4">
                 <label htmlFor="file-upload" className="cursor-pointer">
                   <AiOutlinePlus size={30} />
                 </label>

@@ -4,10 +4,10 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {images as staticImages} from '../assets/Images'
+import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { images as staticImages } from "../assets/Images";
 import dayjs from "dayjs";
 import {
   Card,
@@ -18,7 +18,7 @@ import {
   Select,
   notification,
   Tooltip,
-  Image
+  Image,
 } from "antd";
 import {
   PlusOutlined,
@@ -27,6 +27,7 @@ import {
   EllipsisOutlined,
 } from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
+import { FastAverageColor } from "fast-average-color";
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -71,39 +72,55 @@ const Projects = () => {
     description: "",
     projectManager: "",
     startDate: null,
-    teams: [],
+    teams: "",
   });
   const dropdownRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  //added
+
+  const fac = new FastAverageColor();
+
+  const getTextColorBasedOnBg = async (imageUrl) => {
+    try {
+      const color = await fac.getColorAsync(imageUrl);
+      // Determine if the color is dark or light
+      const isDarkColor = color.isDark;
+      return isDarkColor ? "white" : "black"; // Return white text for dark background and black text for light background
+    } catch (e) {
+      console.error(e);
+      return "black"; // Fallback color
+    }
+  };
 
   const [unsplashImages, setUnsplashImages] = useState([]);
-const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [bgImageError, setBgImageError] = useState(false);
 
-// Add this function to fetch images from Unsplash
-const fetchUnsplashImages = async () => {
-  try {
-    const response = await axios.get('https://api.unsplash.com/photos/random', {
-      params: {
-        count: 8,
-        client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
-      }
-    });
-    setUnsplashImages(response.data);
-  } catch (error) {
-    console.error('Error fetching Unsplash images:', error);
-    setUnsplashImages(staticImages);
-  }
-};
+  // Add this function to fetch images from Unsplash
+  const fetchUnsplashImages = async () => {
+    try {
+      const response = await axios.get(
+        "https://api.unsplash.com/photos/random",
+        {
+          params: {
+            count: 6,
+            client_id: "rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY", // Replace with your Unsplash API key
+          },
+        }
+      );
+      setUnsplashImages(response.data);
+    } catch (error) {
+      console.error("Error fetching Unsplash images:", error);
+      setUnsplashImages(staticImages);
+    }
+  };
 
-// Call this function when the modal opens
-useEffect(() => {
-  if (addProjectModalVisible) {
-    fetchUnsplashImages();
-  }
-}, [addProjectModalVisible]);
-
-
-  
+  // Call this function when the modal opens
+  useEffect(() => {
+    if (addProjectModalVisible) {
+      fetchUnsplashImages();
+    }
+  }, [addProjectModalVisible]);
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -138,8 +155,6 @@ useEffect(() => {
       console.error("Error fetching projects:", error);
     }
   };
-
-  
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -202,7 +217,7 @@ useEffect(() => {
       projectManager: "",
       startDate: null,
       teams: [],
-      bgUrl:""
+      bgUrl: "",
     });
     setNewCardErrors({
       name: false,
@@ -240,9 +255,19 @@ useEffect(() => {
       hasError = true;
     }
 
+    if (!selectedImage) {
+      setBgImageError(true);
+      hasError = true;
+    }
+
     if (hasError) {
       setNewCardErrors(newErrors);
       return;
+    }
+
+    if (!newProject.teams) {
+      setTeamInputError(true);
+      hasError = true;
     }
 
     const isDuplicate = await checkDuplicateProjectName(newProject.name);
@@ -296,15 +321,17 @@ useEffect(() => {
           description: newProject.description.trim(),
           projectManager: newProject.projectManager,
           startDate: newProject.startDate,
-          teams: newProject.teams,
+          // teams: newProject.teams,
+          teams: [newProject.teams],
           createdBy: createdBy,
-          bgUrl: selectedImage ? {
-            raw: selectedImage.urls.raw,
-            thumb: selectedImage.urls.thumb,
-            full: selectedImage.urls.full,
-            regular: selectedImage.urls.regular
-          } : null,
-        
+          bgUrl: selectedImage
+            ? {
+                raw: selectedImage.urls.raw,
+                thumb: selectedImage.urls.thumb,
+                full: selectedImage.urls.full,
+                regular: selectedImage.urls.regular,
+              }
+            : null,
         },
         {
           headers: {
@@ -312,8 +339,8 @@ useEffect(() => {
           },
         }
       );
-      console.log(projectResponse.data)
-     
+      console.log(projectResponse.data);
+
       const newProjectData = projectResponse.data.project;
       setCards((prevCards) => [
         ...prevCards,
@@ -342,7 +369,6 @@ useEffect(() => {
       console.error("Error deleting project:", error);
     }
   };
-
   const handleDelete = (index) => {
     setDeleteIndex(index);
     setDeleteDialogVisible(true);
@@ -502,18 +528,26 @@ useEffect(() => {
   };
   if (!cards.length) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh'
-      }}>
-        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          style={{ marginRight: "10px" }}
+        />
         Loading...
       </div>
     );
   }
-
+  const filterTeams = (input, option) => {
+    return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+  };
   return (
     <div className="min-h-screen bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
@@ -530,95 +564,102 @@ useEffect(() => {
       </div>
 
       <div className="flex flex-wrap justify-start">
-  {cards.map((card, index) => (
-    <Card
-      key={card._id}
-      className="m-4 w-64 cursor-pointer relative" // Adjust width
-      hoverable
-      onClick={() => handleCardClick(card._id)}
-      
-      style={{ backgroundImage: card.bgUrl.thumb ? `url(${card.bgUrl.thumb})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
-    >
-      <div className="flex justify-between items-center">
-        <Tooltip >
-          <h3 className="font-bold text-black truncate">{card.name}</h3>
-        </Tooltip>
-        {userRole !== "USER" && (
-      
-        <button
-          className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowTooltipIndex(showTooltipIndex === index ? null : index);
-          }}
-        >
-         <EllipsisVertical />
-        </button>
-   
-    )}
-
-
-      </div>
-      <Tooltip >
-        <p className="truncate  text-gray-500">{card.description}</p>
-      </Tooltip>
-      <div className="mt-2 flex justify-between items-center">
-        <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
-          Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
-        </p>
-        <Tooltip title={card.projectManager}>
-          <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
-            {card.projectManager.charAt(0).toUpperCase()}
-          </div>
-        </Tooltip>
-      </div>
-      {card.projectManagerStatus === "unverify" && (
-        <span className="text-yellow-500">(Unverified)</span>
-      )}
-      {showTooltipIndex === index && (
-        <div
-          ref={dropdownRef}
-          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
-          onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
-        >
-          <Button
-            type="text"
-            block
-            icon={<BsFillPencilFill />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRenameCard(index);
-              setShowTooltipIndex(null); // Close menu after action
-            }}
+        {cards.map((card, index) => (
+          <Card
+            key={card._id}
+            className="m-4 w-64 cursor-pointer relative" // Adjust width
+            hoverable
+            onClick={() => handleCardClick(card._id)}
+            style={{
+              backgroundImage: card.bgUrl.thumb
+                ? `url(${card.bgUrl.thumb})`
+                : "none",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              objectFit: "co",
+            }} // Set background image
           >
-            Rename
-          </Button>
-          <Button
-            type="text"
-            block
-            icon={<DeleteOutlined />}
-            danger
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(index);
-              setShowTooltipIndex(null); // Close menu after action
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      )}
-    </Card>
-  ))}
-</div>
-
+            <div className="flex justify-between items-center">
+              <Tooltip>
+                <h3 className="font-bold text-black truncate">{card.name}</h3>
+              </Tooltip>
+              {userRole !== "USER" && (
+                <button
+                  className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTooltipIndex(
+                      showTooltipIndex === index ? null : index
+                    );
+                  }}
+                >
+                  <EllipsisVertical />
+                </button>
+              )}
+            </div>
+            <Tooltip>
+              <p className="truncate  text-gray-500">{card.description}</p>
+            </Tooltip>
+            <div className="mt-2 flex justify-between items-center">
+              <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
+                Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
+              </p>
+              <Tooltip title={card.projectManager}>
+                <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
+                  {card.projectManager.charAt(0).toUpperCase()}
+                </div>
+              </Tooltip>
+            </div>
+            {card.projectManagerStatus === "unverify" && (
+              <span className="text-yellow-500">(Unverified)</span>
+            )}
+            {showTooltipIndex === index && (
+              <div
+                ref={dropdownRef}
+                className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+                onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
+              >
+                <Button
+                  type="text"
+                  block
+                  icon={<BsFillPencilFill />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRenameCard(index);
+                    setShowTooltipIndex(null); // Close menu after action
+                  }}
+                >
+                  Rename
+                </Button>
+                <Button
+                  type="text"
+                  block
+                  icon={<DeleteOutlined />}
+                  danger
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(index);
+                    setShowTooltipIndex(null); // Close menu after action
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
 
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
         onOk={handleSaveNewCard}
         onCancel={() => setAddProjectModalVisible(false)}
-        width={600}
+        width={700}
+        bodyStyle={{
+          maxHeight: "70vh", // Limit the modal body height to 70% of the viewport height
+          overflowY: "auto", // Enable vertical scrolling within the modal body
+        }}
       >
         <Input
           placeholder="Project Name"
@@ -658,7 +699,6 @@ useEffect(() => {
           onSearch={handleProjectManagerChange}
           filterOption={false}
           showSearch
-          
         >
           {emailSuggestions.map((user) => (
             <Option key={user._id} value={user.email}>
@@ -666,7 +706,6 @@ useEffect(() => {
             </Option>
           ))}
         </Select>
-
         {newCardErrors.email && (
           <p className="text-red-500">
             Valid Project Manager email is required
@@ -690,12 +729,15 @@ useEffect(() => {
 
         <Select
           className="mt-4 w-full"
-          mode="multiple"
-          placeholder="Select Teams"
+          placeholder="Search and select a team"
           value={newProject.teams}
-          onChange={(values) =>
-            setNewProject((prev) => ({ ...prev, teams: values }))
-          }
+          onChange={(value) => {
+            setNewProject((prev) => ({ ...prev, teams: value }));
+            setTeamInputError(false);
+          }}
+          showSearch
+          filterOption={filterTeams}
+          optionFilterProp="children"
         >
           {availableTeams.map((team) => (
             <Option key={team._id} value={team._id}>
@@ -706,26 +748,32 @@ useEffect(() => {
         {teamInputError && (
           <p className="text-red-500">At least one team is required</p>
         )}
+
         <div className="mt-4">
-    <h4>Select Background Image</h4>
-    <div className="flex flex-wrap">
-      {unsplashImages.map((image) => (
-        <div 
-          key={image.id} 
-          className={`m-2 cursor-pointer ${selectedImage === image ? 'border-4 border-blue-500' : ''}`}
-          onClick={() => setSelectedImage(image)}
-        >
-          <Image
-            src={image.urls.thumb}
-            alt={image.alt_description}
-            width={100}
-            height={100}
-            preview={false}
-          />
+          <h4>Select Background Image</h4>
+          <div className="flex flex-wrap justify-center items-center overflow-y-auto max-h-40">
+            {unsplashImages.map((image) => (
+              <div
+                key={image.id}
+                className={`m-2 cursor-pointer ${
+                  selectedImage === image ? "border-4 border-blue-500" : ""
+                }`}
+                onClick={() => setSelectedImage(image)}
+              >
+                <Image
+                  src={image.urls.thumb}
+                  alt={image.alt_description}
+                  width={80}
+                  height={80}
+                  preview={false}
+                />
+              </div>
+            ))}
+          </div>
+          {bgImageError && (
+            <p className="text-red-500">Background image is required</p>
+          )}
         </div>
-      ))}
-    </div>
-  </div>
       </Modal>
 
       <Modal
@@ -784,28 +832,8 @@ useEffect(() => {
       >
         <p>Are you sure you want to delete this project?</p>
       </Modal>
-
-
     </div>
   );
 };
 
 export default Projects;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

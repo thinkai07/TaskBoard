@@ -93,8 +93,8 @@ const App = () => {
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
                   <Route path="/Rules" element={<RulesButton />} />
                   <Route path="/calendar/:date" element={<CalendarDateDetails />} />
-                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage/>} />
-                  
+                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
+
                 </Routes>
               </Layout>
             ) : (

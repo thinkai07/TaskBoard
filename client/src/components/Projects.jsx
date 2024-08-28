@@ -7,10 +7,10 @@ import useTokenValidation from "./UseTockenValidation";
 import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {images as staticImages} from '../assets/Images'
+import { images as staticImages } from '../assets/Images'
 import dayjs from "dayjs";
-import {Card,Modal,Input,Button,DatePicker,Select,notification,Tooltip,Image} from "antd";
-import {PlusOutlined,EditOutlined,DeleteOutlined,EllipsisOutlined,} from "@ant-design/icons";
+import { Card, Modal, Input, Button, DatePicker, Select, notification, Tooltip, Image } from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined, } from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 const { TextArea } = Input;
 const { Option } = Select;
@@ -62,34 +62,34 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
 
   const [unsplashImages, setUnsplashImages] = useState([]);
-const [selectedImage, setSelectedImage] = useState(null);
-const [bgImageError, setBgImageError] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [bgImageError, setBgImageError] = useState(false);
 
-// Add this function to fetch images from Unsplash
-const fetchUnsplashImages = async () => {
-  try {
-    const response = await axios.get('https://api.unsplash.com/photos/random', {
-      params: {
-        count: 8,
-        client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
-      }
-    });
-    setUnsplashImages(response.data);
-  } catch (error) {
-    console.error('Error fetching Unsplash images:', error);
-    setUnsplashImages(staticImages);
-  }
-};
+  // Add this function to fetch images from Unsplash
+  const fetchUnsplashImages = async () => {
+    try {
+      const response = await axios.get('https://api.unsplash.com/photos/random', {
+        params: {
+          count: 8,
+          client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
+        }
+      });
+      setUnsplashImages(response.data);
+    } catch (error) {
+      console.error('Error fetching Unsplash images:', error);
+      setUnsplashImages(staticImages);
+    }
+  };
 
-// Call this function when the modal opens
-useEffect(() => {
-  if (addProjectModalVisible) {
-    fetchUnsplashImages();
-  }
-}, [addProjectModalVisible]);
+  // Call this function when the modal opens
+  useEffect(() => {
+    if (addProjectModalVisible) {
+      fetchUnsplashImages();
+    }
+  }, [addProjectModalVisible]);
 
 
-  
+
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -125,7 +125,7 @@ useEffect(() => {
     }
   };
 
-  
+
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -171,7 +171,7 @@ useEffect(() => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-            name.toLowerCase().replace(/\s+/g, "") &&
+          name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -188,7 +188,7 @@ useEffect(() => {
       projectManager: "",
       startDate: null,
       teams: [],
-      bgUrl:""
+      bgUrl: ""
     });
     setNewCardErrors({
       name: false,
@@ -301,7 +301,7 @@ useEffect(() => {
             full: selectedImage.urls.full,
             regular: selectedImage.urls.regular
           } : null,
-        
+
         },
         {
           headers: {
@@ -310,7 +310,7 @@ useEffect(() => {
         }
       );
       console.log(projectResponse.data)
-     
+
       const newProjectData = projectResponse.data.project;
       setCards((prevCards) => [
         ...prevCards,
@@ -528,84 +528,84 @@ useEffect(() => {
       </div>
 
       <div className="flex flex-wrap justify-start">
-  {cards.map((card, index) => (
-    <Card
-      key={card._id}
-      className="m-4 w-64 cursor-pointer relative" // Adjust width
-      hoverable
-      onClick={() => handleCardClick(card._id)}
-      
-      style={{ backgroundImage: card.bgUrl.thumb ? `url(${card.bgUrl.thumb})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' ,objectFit:"co"}} // Set background image
-    >
-      <div className="flex justify-between items-center">
-        <Tooltip >
-          <h3 className="font-bold text-black truncate">{card.name}</h3>
-        </Tooltip>
-        {userRole !== "USER" && (
-      
-        <button
-          className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowTooltipIndex(showTooltipIndex === index ? null : index);
-          }}
-        >
-         <EllipsisVertical />
-        </button>
-    )}
-      </div>
-      <Tooltip >
-        <p className="truncate  text-gray-500">{card.description}</p>
-      </Tooltip>
-      <div className="mt-2 flex justify-between items-center">
-        <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
-          Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
-        </p>
-        <Tooltip title={card.projectManager}>
-          <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
-            {card.projectManager.charAt(0).toUpperCase()}
-          </div>
-        </Tooltip>
-      </div>
-      {card.projectManagerStatus === "unverify" && (
-        <span className="text-yellow-500">(Unverified)</span>
-      )}
-      {showTooltipIndex === index && (
-        <div
-          ref={dropdownRef}
-          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
-          onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
-        >
-          <Button
-            type="text"
-            block
-            icon={<BsFillPencilFill />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRenameCard(index);
-              setShowTooltipIndex(null); // Close menu after action
-            }}
+        {cards.map((card, index) => (
+          <Card
+            key={card._id}
+            className="m-4 w-64 cursor-pointer relative" // Adjust width
+            hoverable
+            onClick={() => handleCardClick(card._id)}
+
+            style={{ backgroundImage: card.bgUrl.thumb ? `url(${card.bgUrl.thumb})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', objectFit: "co" }} // Set background image
           >
-            Rename
-          </Button>
-          <Button
-            type="text"
-            block
-            icon={<DeleteOutlined />}
-            danger
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(index);
-              setShowTooltipIndex(null); // Close menu after action
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      )}
-    </Card>
-  ))}
-</div>
+            <div className="flex justify-between items-center">
+              <Tooltip >
+                <h3 className="font-bold text-black truncate">{card.name}</h3>
+              </Tooltip>
+              {userRole !== "USER" && (
+
+                <button
+                  className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTooltipIndex(showTooltipIndex === index ? null : index);
+                  }}
+                >
+                  <EllipsisVertical />
+                </button>
+              )}
+            </div>
+            <Tooltip >
+              <p className="truncate  text-gray-500">{card.description}</p>
+            </Tooltip>
+            <div className="mt-2 flex justify-between items-center">
+              <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
+                Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
+              </p>
+              <Tooltip title={card.projectManager}>
+                <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
+                  {card.projectManager.charAt(0).toUpperCase()}
+                </div>
+              </Tooltip>
+            </div>
+            {card.projectManagerStatus === "unverify" && (
+              <span className="text-yellow-500">(Unverified)</span>
+            )}
+            {showTooltipIndex === index && (
+              <div
+                ref={dropdownRef}
+                className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
+                onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
+              >
+                <Button
+                  type="text"
+                  block
+                  icon={<BsFillPencilFill />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRenameCard(index);
+                    setShowTooltipIndex(null); // Close menu after action
+                  }}
+                >
+                  Rename
+                </Button>
+                <Button
+                  type="text"
+                  block
+                  icon={<DeleteOutlined />}
+                  danger
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(index);
+                    setShowTooltipIndex(null); // Close menu after action
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
 
 
       <Modal
@@ -633,9 +633,8 @@ useEffect(() => {
           onChange={(e) =>
             setNewProject((prev) => ({ ...prev, description: e.target.value }))
           }
-          className={`mt-4 ${
-            newCardErrors.description ? "border-red-500" : ""
-          }`}
+          className={`mt-4 ${newCardErrors.description ? "border-red-500" : ""
+            }`}
         />
         {newCardErrors.description && (
           <p className="text-red-500">Project Description is required</p>
@@ -653,7 +652,7 @@ useEffect(() => {
           onSearch={handleProjectManagerChange}
           filterOption={false}
           showSearch
-          
+
         >
           {emailSuggestions.map((user) => (
             <Option key={user._id} value={user.email}>
@@ -682,68 +681,52 @@ useEffect(() => {
         {newCardErrors.startDate && (
           <p className="text-red-500">Start Date is required</p>
         )}
-
-        {/* <Select
+        <Select
           className="mt-4 w-full"
-          mode="multiple"
-          placeholder="Select Teams"
+          placeholder="Search and select a team"
           value={newProject.teams}
-          onChange={(values) =>
-            setNewProject((prev) => ({ ...prev, teams: values }))
-          }
+          onChange={(value) => {
+            setNewProject((prev) => ({ ...prev, teams: value }));
+            setTeamInputError(false);
+          }}
+          showSearch
+          filterOption={filterTeams}
+          optionFilterProp="children"
         >
           {availableTeams.map((team) => (
             <Option key={team._id} value={team._id}>
               {team.name}
             </Option>
           ))}
-        </Select> */}
-        <Select
-  className="mt-4 w-full"
-  placeholder="Search and select a team"
-  value={newProject.teams}
-  onChange={(value) => {
-    setNewProject((prev) => ({ ...prev, teams: value }));
-    setTeamInputError(false);
-  }}
-  showSearch
-  filterOption={filterTeams}
-  optionFilterProp="children"
->
-  {availableTeams.map((team) => (
-    <Option key={team._id} value={team._id}>
-      {team.name}
-    </Option>
-  ))}
-</Select>
+        </Select>
         {teamInputError && (
           <p className="text-red-500">At least one team is required</p>
         )}
         <div className="mt-4">
-    <h4>Select Background Image</h4>
-    <div className="flex flex-wrap">
-      {unsplashImages.map((image) => (
-        <div 
-          key={image.id} 
-          className={`m-2 cursor-pointer ${selectedImage === image ? 'border-4 border-blue-500' : ''}`}
-          onClick={() => setSelectedImage(image)}
-        >
-          <Image
-            src={image.urls.thumb}
-            alt={image.alt_description}
-            width={100}
-            height={100}
-            preview={false}
-          />
+          <h4>Select Background Image</h4>
+          <div className="flex flex-wrap">
+            {unsplashImages.map((image) => (
+              <div
+                key={image.id}
+                className={`m-2 cursor-pointer ${selectedImage === image ? 'border-4 border-blue-500' : ''}`}
+                onClick={() => setSelectedImage(image)}
+              >
+                <Image
+                  src={image.urls.thumb}
+                  alt={image.alt_description}
+                  width={100}
+                  height={100}
+                  preview={false}
+                />
+              </div>
+            ))}
+          </div>
+          {bgImageError && (
+            <p className="text-red-500">Background image is required</p>
+          )}
         </div>
-      ))}
-    </div>
-    {bgImageError && (
-      <p className="text-red-500">Background image is required</p>
-    )}
-  </div>
       </Modal>
-
+      
       <Modal
         title="Rename Project"
         visible={renameDialogVisible}
@@ -774,21 +757,6 @@ useEffect(() => {
         />
         {descriptionInputError && (
           <p className="text-red-500">Project Description is required</p>
-        )}
-
-        <Input
-          placeholder="Project Manager Email"
-          value={projectManager}
-          onChange={(e) => {
-            setProjectManager(e.target.value);
-            setProjectManagerError(false);
-          }}
-          className={`mt-4 ${projectManagerError ? "border-red-500" : ""}`}
-        />
-        {projectManagerError && (
-          <p className="text-red-500">
-            Valid Project Manager email is required
-          </p>
         )}
       </Modal>
 

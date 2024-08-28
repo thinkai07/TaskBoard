@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { AiOutlinePlus } from "react-icons/ai";
-import { MdOutlineCancel } from "react-icons/md";
 import axios from "axios";
 import { server } from "../constant";
 import { useLocation } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { RightOutlined } from "@ant-design/icons"; 
 import { images as staticImages } from "../assets/Images";
 
 const BackgroundChange = ({ onClose, onSelectBackground }) => {
@@ -12,7 +10,7 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [unsplashImages, setUnsplashImages] = useState([]);
   const location = useLocation();
-  const ref = useRef(null);
+  const ref = useRef(null);                                  
 
   useEffect(() => {
     fetchUnsplashImages();
@@ -125,7 +123,7 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
         style={{ maxHeight: "100vh" }}
       >
         <button className="absolute top-4 left-4 p-2 rounded" onClick={onClose}>
-          <ArrowRight size={30} />
+          <RightOutlined size={30} />
         </button>
 
         <div className="mt-16">

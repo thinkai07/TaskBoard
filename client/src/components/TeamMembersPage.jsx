@@ -5,7 +5,7 @@ import { server } from "../constant";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 // import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 const TeamMembersPage = () => {
   const location = useLocation();
@@ -39,14 +39,14 @@ const TeamMembersPage = () => {
     };
 
     fetchMembers();
-  }, [organizationId, teamId,members]);
+  }, [organizationId, teamId, members]);
 
   const handleEmailChange = async (event) => {
     setNewMemberEmail(event.target.value);
     if (event.target.value.length > 0) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
-          params: { email: event.target.value, fields: 'email status name' },
+          params: { email: event.target.value, fields: "email status name" },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -81,7 +81,7 @@ const TeamMembersPage = () => {
       setEmailSuggestions([]);
       setAddMemberError(false);
       notification.success({
-        message: 'Team member added Successfully',
+        message: "Team member added Successfully",
       });
     } catch (error) {
       console.error("Error adding member:", error);
@@ -110,10 +110,12 @@ const TeamMembersPage = () => {
           data: { removedBy: localStorage.getItem("userId") }, // Add removedBy info
         }
       );
-      setMembers((prevMembers) => prevMembers.filter((member) => member.id !== selectedUserId));
+      setMembers((prevMembers) =>
+        prevMembers.filter((member) => member.id !== selectedUserId)
+      );
       closeModal();
       notification.success({
-        message: 'Team member deleted Successfully',
+        message: "Team member deleted Successfully",
       });
     } catch (error) {
       console.error("Error deleting member:", error);
@@ -122,32 +124,34 @@ const TeamMembersPage = () => {
 
   if (loading) {
     return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'center', // Center horizontally
-            alignItems: 'center', // Center vertically
-            height: '100vh' // Full height of the viewport
-        }}>
-            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
-            Loading...
-        </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center", // Center horizontally
+          alignItems: "center", // Center vertically
+          height: "100vh", // Full height of the viewport
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          style={{ marginRight: "10px" }}
+        />
+        Loading...
+      </div>
     );
-}
+  }
   const columns = [
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: 'Action',
-      key: 'action',
+      title: "Action",
+      key: "action",
       render: (_, record) => (
-        <Button
-          onClick={() => openModal(record.id)}
-          type="text"
-          danger
-        >
+        <Button onClick={() => openModal(record.id)} type="text" danger>
           <FontAwesomeIcon icon={faTrash} />
         </Button>
       ),
@@ -168,10 +172,7 @@ const TeamMembersPage = () => {
           onChange={handleEmailChange}
           className={`w-96 ${addMemberError ? "border-red-500" : ""}`}
         />
-        <Button
-          onClick={handleAddMember}
-          type="primary"
-        >
+        <Button onClick={handleAddMember} type="primary">
           Add
         </Button>
       </div>
@@ -180,7 +181,7 @@ const TeamMembersPage = () => {
         <div className="relative">
           <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
             {emailSuggestions
-              .filter((user) => user.status === 'VERIFIED') // Filter out users with 'UNVERIFY' status
+              .filter((user) => user.status === "VERIFIED") // Filter out users with 'UNVERIFY' status
               .map((user) => (
                 <li
                   key={user.id}
@@ -212,9 +213,14 @@ const TeamMembersPage = () => {
           <Button key="cancel" onClick={closeModal}>
             Cancel
           </Button>,
-          <Button key="delete" onClick={handleDeleteMember} type="primary" danger>
+          <Button
+            key="delete"
+            onClick={handleDeleteMember}
+            type="primary"
+            danger
+          >
             Delete
-          </Button>
+          </Button>,
         ]}
         title="Delete Confirmation"
       >

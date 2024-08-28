@@ -37,6 +37,8 @@ import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 import RenameCardPage from "../Pages/RenameCardPage";
+import { FastAverageColor } from 'fast-average-color';
+
 const initialBoard = {
   columns: [],
 };
@@ -75,7 +77,7 @@ function KanbanBoard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-
+  const [textColor, setTextColor] = useState('black'); //added
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -526,6 +528,18 @@ function KanbanBoard() {
       setBgUrl(bgUrl);
       console.log(bgUrl);
       setBoardData({ columns });
+
+      if (bgUrl && bgUrl.raw) {
+        const fac = new FastAverageColor();
+        fac.getColorAsync(bgUrl.raw)
+          .then((color) => {
+            const isLight = (color.value[0] * 0.299 + color.value[1] * 0.587 + color.value[2] * 0.114) > 186;
+            setTextColor(isLight ? 'black' : 'white');
+          })
+          .catch((error) => {
+            console.error('Error extracting color:', error);
+          });
+      }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
@@ -1411,10 +1425,12 @@ function KanbanBoard() {
     
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
-        <div>
-          <h1 className="text-xl font-semibold">Project : {projectName}</h1>
-          <h1 className="text-xl font-semibold">
-            Project Manager : {projectManager}
+      <div>
+          <h1 className="text-xl font-semibold" style={{ color: textColor }}>
+            Project : <span className="font-normal">{projectName}</span>
+          </h1>
+          <h1 className="text-xl font-semibold" style={{ color: textColor }}>
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
         <div className="flex space-x-2 ">
@@ -1449,7 +1465,7 @@ function KanbanBoard() {
           </Popover> */}
 
           <>
-            <Button type="text" icon={<SquareMenu />} onClick={showDrawer} />
+            <Button type="text" icon={<SquareMenu style={{color:textColor}} />}  onClick={showDrawer} />
 
             <Drawer
   title="Settings"

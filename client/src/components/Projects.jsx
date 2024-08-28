@@ -8,6 +8,7 @@ import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { images as staticImages } from "../assets/Images";
+
 import dayjs from "dayjs";
 import {
   Card,
@@ -80,17 +81,7 @@ const Projects = () => {
 
   const fac = new FastAverageColor();
 
-  const getTextColorBasedOnBg = async (imageUrl) => {
-    try {
-      const color = await fac.getColorAsync(imageUrl);
-      // Determine if the color is dark or light
-      const isDarkColor = color.isDark;
-      return isDarkColor ? "white" : "black"; // Return white text for dark background and black text for light background
-    } catch (e) {
-      console.error(e);
-      return "black"; // Fallback color
-    }
-  };
+  
 
   const [unsplashImages, setUnsplashImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -150,7 +141,32 @@ const Projects = () => {
           },
         }
       );
-      setCards(response.data.projects);
+      
+      const projectsWithColors = await Promise.all(
+        response.data.projects.map(async (project) => {
+          if (project.bgUrl && project.bgUrl.thumb) {
+            try {
+              const color = await fac.getColorAsync(project.bgUrl.thumb);
+              return {
+                ...project,
+                textColor: color.isDark ? 'white' : 'black',
+              };
+            } catch (error) {
+              console.error("Error calculating color:", error);
+              return {
+                ...project,
+                textColor: 'black', // default color if there's an error
+              };
+            }
+          }
+          return {
+            ...project,
+            textColor: 'black', // default color if there's no background image
+          };
+        })
+      );
+  
+      setCards(projectsWithColors);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
@@ -549,7 +565,7 @@ const Projects = () => {
     return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
   };
   return (
-    <div className="min-h-screen bg-light-white rounded-3xl p-8">
+    <div className="min-h-full bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
         {userRole === "ADMIN" && (
           <Button
@@ -564,91 +580,101 @@ const Projects = () => {
       </div>
 
       <div className="flex flex-wrap justify-start">
-        {cards.map((card, index) => (
-          <Card
-            key={card._id}
-            className="m-4 w-64 cursor-pointer relative" // Adjust width
-            hoverable
-            onClick={() => handleCardClick(card._id)}
-            style={{
-              backgroundImage: card.bgUrl.thumb
-                ? `url(${card.bgUrl.thumb})`
-                : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              objectFit: "co",
-            }} // Set background image
+  {cards.map((card, index) => (
+    <Card
+      key={card._id}
+      className="m-4 w-64 cursor-pointer relative"
+      hoverable
+      onClick={() => handleCardClick(card._id)}
+      style={{
+        backgroundImage: card.bgUrl.thumb
+          ? `url(${card.bgUrl.thumb})`
+          : "none",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="flex justify-between items-center">
+        <Tooltip>
+          <h3 className="font-bold truncate" style={{ color: card.textColor }}>
+            {card.name}
+          </h3>
+        </Tooltip>
+        {userRole !== "USER" && (
+          <button
+            className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTooltipIndex(
+                showTooltipIndex === index ? null : index
+              );
+            }}
           >
-            <div className="flex justify-between items-center">
-              <Tooltip>
-                <h3 className="font-bold text-black truncate">{card.name}</h3>
-              </Tooltip>
-              {userRole !== "USER" && (
-                <button
-                  className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTooltipIndex(
-                      showTooltipIndex === index ? null : index
-                    );
-                  }}
-                >
-                  <EllipsisVertical />
-                </button>
-              )}
-            </div>
-            <Tooltip>
-              <p className="truncate  text-gray-500">{card.description}</p>
-            </Tooltip>
-            <div className="mt-2 flex justify-between items-center">
-              <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
-                Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
-              </p>
-              <Tooltip title={card.projectManager}>
-                <div className="w-5 h-5 bg-blue-600 text-white flex items-center justify-center rounded-full text-xs">
-                  {card.projectManager.charAt(0).toUpperCase()}
-                </div>
-              </Tooltip>
-            </div>
-            {card.projectManagerStatus === "unverify" && (
-              <span className="text-yellow-500">(Unverified)</span>
-            )}
-            {showTooltipIndex === index && (
-              <div
-                ref={dropdownRef}
-                className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10" // Position to the right of the card
-                onClick={(e) => e.stopPropagation()} // Stop click event from closing the menu
-              >
-                <Button
-                  type="text"
-                  block
-                  icon={<BsFillPencilFill />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRenameCard(index);
-                    setShowTooltipIndex(null); // Close menu after action
-                  }}
-                >
-                  Rename
-                </Button>
-                <Button
-                  type="text"
-                  block
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(index);
-                    setShowTooltipIndex(null); // Close menu after action
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            )}
-          </Card>
-        ))}
+            <EllipsisVertical style={{ color: card.textColor }} />
+          </button>
+        )}
       </div>
+      <Tooltip>
+        <p className="truncate" style={{ color: card.textColor }}>
+          {card.description}
+        </p>
+      </Tooltip>
+      <div className="mt-2 flex justify-between items-center">
+        <p
+          className=" rounded-md text-sm inline-block"
+          style={{ color: card.textColor }}
+        >
+          Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
+        </p>
+        <Tooltip title={card.projectManager}>
+          <div
+            className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-full text-xs"
+            style={{ color: card.textColor }}
+          >
+            {card.projectManager.charAt(0).toUpperCase()}
+          </div>
+        </Tooltip>
+      </div>
+      {card.projectManagerStatus === "unverify" && (
+        <span className="text-yellow-500">(Unverified)</span>
+      )}
+      {showTooltipIndex === index && (
+        <div
+          ref={dropdownRef}
+          className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button
+            type="text"
+            block
+            icon={<BsFillPencilFill />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRenameCard(index);
+              setShowTooltipIndex(null);
+            }}
+          >
+            Rename
+          </Button>
+          <Button
+            type="text"
+            block
+            icon={<DeleteOutlined />}
+            danger
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(index);
+              setShowTooltipIndex(null);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      )}
+    </Card>
+  ))}
+</div>
+
 
       <Modal
         title="Add New Project"

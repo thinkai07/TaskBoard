@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { Select, Table, Typography, Card } from "antd";
+import { Select, Table, Typography, Card, Tooltip } from "antd";
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -121,26 +121,50 @@ const AuditLog = () => {
       render: () =>
         projects.find((p) => p._id === selectedProject)?.name || "-",
     },
+    
     {
       title: "Column Name",
       dataIndex: "columnName",
       key: "columnName",
-      render: (_, log) =>
-        log.entityType === "Task"
-          ? tasks.find((t) => t.id === log.entityId)?.name ||
-            `#${log.entityId.slice(-6)}`
-          : "-",
+      render: (_, log) => {
+        const columnName = log.entityType === "Task"
+          ? tasks.find((t) => t.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
+          : "-";
+
+        const truncatedColumnName = columnName && columnName.length > 14
+          ? `${columnName.slice(0, 14)}...`
+          : columnName;
+
+        return (
+          <Tooltip title={columnName}>
+            <span>{truncatedColumnName}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: "Task Name",
       dataIndex: "taskName",
       key: "taskName",
-      render: (_, log) =>
-        log.entityType === "Card"
-          ? cards.find((c) => c.id === log.entityId)?.name ||
-            `#${log.entityId.slice(-6)}`
-          : "-",
+      render: (_, log) => {
+        const taskName = log.entityType === "Card"
+          ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
+          : "-";
+
+        const truncatedTaskName = taskName && taskName.length > 14
+          ? `${taskName.slice(0, 14)}...`
+          : taskName;
+
+        return (
+          <Tooltip title={taskName}>
+            <span>{truncatedTaskName}</span>
+          </Tooltip>
+        );
+      },
     },
+
+
+
     {
       title: "Action By",
       dataIndex: "performedBy",
@@ -159,20 +183,59 @@ const AuditLog = () => {
       key: "actionType",
       render: (text) => text || "-",
     },
+    // {
+    //   title: "Old Value",
+    //   dataIndex: "oldValue",
+    //   key: "oldValue",
+    //   render: (_, log) =>
+    //     log.changes.length > 0 ? JSON.stringify(log.changes[0].oldValue) : "-",
+    // },
     {
       title: "Old Value",
       dataIndex: "oldValue",
       key: "oldValue",
-      render: (_, log) =>
-        log.changes.length > 0 ? JSON.stringify(log.changes[0].oldValue) : "-",
+      render: (_, log) => {
+        const oldValue = log.entityType === "Card"
+          ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
+          : "-";
+
+        const truncatedOldName = oldValue && oldValue.length > 14
+          ? `${oldValue.slice(0, 14)}...`
+          :
+          oldValue;
+        return (
+          <Tooltip title={oldValue}>
+            <span>{truncatedOldName}</span>
+          </Tooltip>
+        )
+      }
     },
+    // {
+    //   title: "New Value",
+    //   dataIndex: "newValue",
+    //   key: "newValue",
+    //   render: (_, log) =>
+    //     log.changes.length > 0 ? JSON.stringify(log.changes[0].newValue) : "-",
+    // },
     {
       title: "New Value",
       dataIndex: "newValue",
       key: "newValue",
-      render: (_, log) =>
-        log.changes.length > 0 ? JSON.stringify(log.changes[0].newValue) : "-",
-    },
+     render: (_, log) => {
+      const newValue = log.entityType === "Card"
+      ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`:"-";
+
+      const truncatednewValue = newValue && newValue.length > 14 
+      ? `${newValue.slice(0,14)}...`
+      :newValue;
+
+      return(
+        <Tooltip title={newValue}>
+          <span>{truncatednewValue}</span>
+        </Tooltip>
+      )
+     },
+    }, 
   ];
 
   return (

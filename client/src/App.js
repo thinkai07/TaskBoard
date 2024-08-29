@@ -20,11 +20,7 @@ import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
 import CalendarDateDetails from './pages/CalendarDateDetails';
-import RenameCardPage from './pages/RenameCardPage'
-
-
-
-
+import RenameCardPage from './pages/RenameCardPage';
 
 
 

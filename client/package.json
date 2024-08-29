@@ -39,6 +39,7 @@
     "recharts": "^2.12.7",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
+    "vibrant": "^0.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

@@ -19,12 +19,8 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
-import CalendarDateDetails from './Pages/CalendarDateDetails'
-import RenameCardPage from './Pages/RenameCardPage';
-
-
-
-
+import CalendarDateDetails from './pages/CalendarDateDetails';
+import RenameCardPage from './pages/RenameCardPage';
 
 
 
@@ -84,17 +80,17 @@ const App = () => {
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
                   <Route path="/" element={<Overview />} />
                   {/* <Route path='/tasks' element={<TasksPage user={user} />} />  */}
-                  <Route path='/members' element={<AdminPanel />} /> 
+                  <Route path='/members' element={<AdminPanel />} />
                   {/* <Route path="/projects/:projectId/teams" element={<Teams/>} /> */}
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/Auditlog" element={<AuditLog/>} /> 
-                  <Route path="/Teamsorg" element={<Teamsorg/>} /> 
-                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
-                  <Route path="/Rules" element={<RulesButton/>} /> 
+                  <Route path="/Auditlog" element={<AuditLog />} />
+                  <Route path="/Teamsorg" element={<Teamsorg />} />
+                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
+                  <Route path="/Rules" element={<RulesButton />} />
                   <Route path="/calendar/:date" element={<CalendarDateDetails />} />
-                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage/>} />
-                  
+                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
+
                 </Routes>
               </Layout>
             ) : (

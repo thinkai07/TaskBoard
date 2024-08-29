@@ -286,9 +286,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -463,7 +463,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -563,6 +563,7 @@ function KanbanBoard() {
   useEffect(() => {
     console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
+
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -942,9 +943,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -1422,6 +1423,12 @@ function KanbanBoard() {
                   </span>
                 </Tooltip>
               </div>
+                <Tooltip title={card.assignedTo}>
+                  <span className="cursor-pointer">
+                    {card.assignedTo.charAt(0).toUpperCase()}
+                  </span>
+                </Tooltip>
+              </div>
             )}
           </div>
         </div>
@@ -1549,6 +1556,7 @@ function KanbanBoard() {
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
+        <div>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
             Project : <span className="font-normal">{projectName}</span>
           </h1>
@@ -1596,6 +1604,59 @@ function KanbanBoard() {
             />
 
             <Drawer
+              title="Settings"
+              placement="right"
+              onClose={onClose}
+              visible={visible}
+              width={300} // Adjust width as needed
+            >
+              {showBackgroundChange && (
+                <BackgroundChange
+                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+                  onImageSelect={onClose} // Close the Drawer when an image is selected
+                />
+              )}
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <button
+                  type="button" // Changed to 'button' for semantic correctness
+                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  onClick={() => {
+                    openGitModal();
+                    onClose(); // Close the Drawer after opening Git Modal
+                  }}
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    paddingRight: "25px",
+                  }}
+                >
+                  <SettingOutlined
+                    style={{
+                      fontSize: 20,
+                      display: "flex",
+                      justifyItems: "left",
+                    }}
+                  />
+                  Git Configuration
+                </button>
+                {isProjectRoute && (
+                  <button
+                    type="button"
+                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+                    style={{
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <SquareChevronDown style={{ fontSize: 20 }} />
+                    Change Background
+                  </button>
+                )}
               title="Settings"
               placement="right"
               onClose={onClose}
@@ -1789,6 +1850,7 @@ function KanbanBoard() {
                     color: "#5f5e5e",
                     textAlign: "center",
                     paddingLeft: "50%",
+
                   }}
                 >
                   <FaPlus />
@@ -2199,3 +2261,13 @@ git push -u origin main`}
 }
 
 export default KanbanBoard;
+
+
+
+
+
+
+
+
+
+

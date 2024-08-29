@@ -245,8 +245,8 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    activities:[{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
-    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs"}],
+    activities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs" }],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
     uniqueId: { type: String, unique: true, required: true }  // Add this field
@@ -2186,7 +2186,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     io.emit("cardCreated", { taskId, card: newCard });
 
 
-    
+
     res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
     console.error("Error creating card:", error);

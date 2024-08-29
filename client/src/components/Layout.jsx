@@ -17,8 +17,8 @@ const Layout = ({ children, user, onLogout }) => {
           style={{
             backgroundSize: "cover",
             backgroundPosition: "center center",
-            overflow:"auto",
-            scrollbarWidth: "none" 
+            overflow: "auto",
+            scrollbarWidth: "none"
           }}
         >
           {children}

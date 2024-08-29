@@ -17,6 +17,7 @@ const AuditLog = () => {
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const { Title, Text } = Typography;
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -121,28 +122,63 @@ const AuditLog = () => {
   };
 
   const columns = [
+    // {
+    //   title: "Project Name",
+    //   dataIndex: "projectName",
+    //   key: "projectName",
+    //   render: () => projects.find((p) => p._id === selectedProject)?.name,
+    // },
     {
       title: "Project Name",
       dataIndex: "projectName",
       key: "projectName",
-      render: () => projects.find((p) => p._id === selectedProject)?.name,
+      render: () => (
+        <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+          {projects.find((p) => p._id === selectedProject)?.name}
+        </div>
+      ),
     },
+    // {
+    //   title: "Task Name",
+    //   dataIndex: "taskName",
+    //   key: "taskName",
+    //   render: (_, record) => 
+    //     (record.entityType === "Task" || record.entityType === "Card") &&
+    //     (record.taskName || record.cardName || `#${record.entityId.slice(-6)}`),
+    // },
     {
       title: "Task Name",
       dataIndex: "taskName",
       key: "taskName",
-      render: (_, record) =>
-        (record.entityType === "Task" || record.entityType === "Card") &&
-        (record.taskName || record.cardName || `#${record.entityId.slice(-6)}`),
+      render: (_, record) => (
+        (record.entityType === "Task" || record.entityType === "Card") && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.taskName || record.cardName || `#${record.entityId.slice(-6)}`}
+          </div>
+        )
+      ),
     },
+    // {
+    //   title: "Card Name",
+    //   dataIndex: "cardName",
+    //   key: "cardName",
+    //   render: (_, record) =>
+    //     record.entityType === "Card" &&
+    //     (record.cardName || `#${record.entityId.slice(-6)}`),
+    // },
     {
       title: "Card Name",
       dataIndex: "cardName",
       key: "cardName",
-      render: (_, record) =>
-        record.entityType === "Card" &&
-        (record.cardName || `#${record.entityId.slice(-6)}`),
+      render: (_, record) => (
+        record.entityType === "Card" && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.cardName || `#${record.entityId.slice(-6)}`}
+          </div>
+        )
+      ),
     },
+
     {
       title: "Action By",
       dataIndex: "performedBy",
@@ -159,13 +195,24 @@ const AuditLog = () => {
       dataIndex: "actionType",
       key: "actionType",
     },
+    // {
+    //   title: "Old Value",
+    //   dataIndex: "oldValue",
+    //   key: "oldValue",
+    //   render: (_, record) =>
+    //     record.changes.length > 0 && (
+    //       <div>
+    //         {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
+    //       </div>
+    //     ),
+    // },
     {
       title: "Old Value",
       dataIndex: "oldValue",
       key: "oldValue",
       render: (_, record) =>
         record.changes.length > 0 && (
-          <div>
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
             {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
           </div>
         ),
@@ -176,7 +223,7 @@ const AuditLog = () => {
       key: "newValue",
       render: (_, record) =>
         record.changes.length > 0 && (
-          <div>
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
             {record.changes[0].field}: {JSON.stringify(record.changes[0].newValue)}
           </div>
         ),
@@ -185,7 +232,7 @@ const AuditLog = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: "24px" }}>
+      <Content style={{ padding: "24px", backgroundColor: "white" }}>
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Title level={4}>Audit Logs</Title>
@@ -213,9 +260,9 @@ const AuditLog = () => {
             />
           ) : (
             <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <Typography.Text strong style={{ fontSize: 18 }}>
+              <Text strong style={{ fontSize: 18 }}>
                 No project selected. Please select a project.
-              </Typography.Text>
+              </Text>
             </div>
           )}
         </Space>

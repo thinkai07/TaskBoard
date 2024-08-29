@@ -1290,13 +1290,13 @@ function KanbanBoard() {
           }}
           key={card.id}
         >
-          <Tooltip title={card.title}>
+          {/* <Tooltip title={card.title}> */}
             <div className="react-kanban-card__title truncate">
               {card.title && card.title.length > 20
                 ? card.title.slice(0, 20) + "..."
                 : card.title}
             </div>
-          </Tooltip>
+         
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <Tooltip title={card.assignedTo}>

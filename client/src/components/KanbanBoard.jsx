@@ -1417,7 +1417,7 @@ function KanbanBoard() {
 
   return (
     <div
-      className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="min-h-full  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
       style={
         bgUrl
           ? {
@@ -1425,6 +1425,7 @@ function KanbanBoard() {
               backgroundSize: "cover",
               backgroundPosition: "center",
               width: "100%",
+              
             }
           : {}
       }

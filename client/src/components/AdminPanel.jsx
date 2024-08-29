@@ -164,20 +164,23 @@ const AdminPanel = () => {
       dataIndex: "status",
       key: "status",
     },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (text, record) =>
-        userRole === "ADMIN" && (
-          <Button
-            type="primary"
-            danger
-            onClick={() => confirmDeleteUser(record._id)}
-          >
-            Delete
-          </Button>
-        ),
-    },
+    ...(userRole === "ADMIN"
+      ? [
+          {
+            title: "Actions",
+            key: "actions",
+            render: (text, record) => (
+              <Button
+                type="primary"
+                danger
+                onClick={() => confirmDeleteUser(record._id)}
+              >
+                Delete
+              </Button>
+            ),
+          },
+        ]
+      : []),
   ];
   if (loading) {
     return (

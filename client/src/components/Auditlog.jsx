@@ -87,25 +87,25 @@ const AuditLog = () => {
           },
         }
       );
-
+  
       // Map over the logs to extract task and card names if available
       const logsWithNames = response.data.map((log) => ({
         ...log,
         taskName: log.taskId ? log.taskId.name : null,
         cardName: log.cardId ? log.cardId.name : null,
       }));
-
+  
       // Sort logs by actionDate in descending order
       const sortedLogs = logsWithNames.sort(
         (a, b) => new Date(b.actionDate) - new Date(a.actionDate)
       );
-
+  
       setAuditLogs(sortedLogs);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
     }
   };
-
+  
 
   const handleProjectChange = (e) => {
     const projectId = e.target.value;
@@ -147,7 +147,7 @@ const AuditLog = () => {
                   Project Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Task Name
+                Task Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Card Name
@@ -176,21 +176,21 @@ const AuditLog = () => {
                     {projects.find((p) => p._id === selectedProject)?.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Task" ? (
-                      log.taskName || `#${log.entityId.slice(-6)}`
-                    ) : (
-                      ""
-                    )}
-                  </td>
+        {log.entityType === "Task" ? (
+          log.taskName || `#${log.entityId.slice(-6)}`
+        ) : (
+          ""
+        )}
+      </td>
 
-                  {/* Card Name or ID */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.entityType === "Card" ? (
-                      log.cardName || `#${log.entityId.slice(-6)}`
-                    ) : (
-                      ""
-                    )}
-                  </td>
+      {/* Card Name or ID */}
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {log.entityType === "Card" ? (
+          log.cardName || `#${log.entityId.slice(-6)}`
+        ) : (
+          ""
+        )}
+      </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {log.performedBy}
                   </td>

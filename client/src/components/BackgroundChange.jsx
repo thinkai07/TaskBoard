@@ -145,17 +145,6 @@ const BackgroundChange = ({ onClose, onSelectBackground }) => {
               />
             ))}
           </div>
-          {/* <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover mb-4 justify-center mb-4">
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <AiOutlinePlus size={30} />
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div> */}
         </div>
       </div>
     </div>

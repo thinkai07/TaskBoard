@@ -1,3 +1,4 @@
+//projectspage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -575,12 +576,6 @@ const Projects = () => {
             }}
           >
             <div className="flex justify-between items-center">
-              {/* <Tooltip>
-          <h3 className="font-bold truncate" style={{ color: card.textColor }}>
-            {card.name}
-          </h3>
-        </Tooltip> */}
-              <Tooltip title={card.name.length > 20 ? card.name : ""}>
                 <h3
                   className="font-bold truncate"
                   style={{
@@ -590,7 +585,7 @@ const Projects = () => {
                 >
                   {card.name}
                 </h3>
-              </Tooltip>
+              
               {userRole !== "USER" && (
                 <button
                   className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
@@ -605,12 +600,6 @@ const Projects = () => {
                 </button>
               )}
             </div>
-            {/* <Tooltip>
-        <p className="truncate" style={{ color: card.textColor }}>
-          {card.description}
-        </p>
-      </Tooltip> */}
-            <Tooltip title={card.description.length > 20 ? card.description : ""}>
               <p
                 className="truncate"
                 style={{
@@ -620,7 +609,6 @@ const Projects = () => {
               >
                 {card.description}
               </p>
-            </Tooltip>
             <div className="mt-2 flex justify-between items-center">
               <p
                 className=" rounded-md text-sm inline-block"
@@ -676,8 +664,6 @@ const Projects = () => {
           </Card>
         ))}
       </div>
-
-
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
@@ -685,8 +671,8 @@ const Projects = () => {
         onCancel={() => setAddProjectModalVisible(false)}
         width={700}
         bodyStyle={{
-          maxHeight: "70vh", // Limit the modal body height to 70% of the viewport height
-          overflowY: "auto", // Enable vertical scrolling within the modal body
+          maxHeight: "70vh", 
+          overflowY: "auto", 
         }}
       >
         <Input
@@ -738,7 +724,6 @@ const Projects = () => {
             Valid Project Manager email is required
           </p>
         )}
-
         <DatePicker
           className="mt-4 w-full"
           placeholder="Start Date"
@@ -749,6 +734,10 @@ const Projects = () => {
               startDate: date ? date.toDate() : null,
             }))
           }
+          disabledDate={(current) => {
+            // Disable past dates
+            return current && current < dayjs().startOf("day");
+          }}
         />
         {newCardErrors.startDate && (
           <p className="text-red-500">Start Date is required</p>
@@ -765,9 +754,9 @@ const Projects = () => {
           showSearch
           filterOption={filterTeams}
           optionFilterProp="children"
-          listHeight={120} // This sets the height of the dropdown list
-          maxTagCount={4} // This limits the number of visible selected tags
-          maxTagTextLength={20} // This truncates long team names in the tags
+          listHeight={120} 
+          maxTagCount={4} 
+          maxTagTextLength={20} 
         >
           {availableTeams.map((team) => (
             <Option key={team._id} value={team._id}>
@@ -804,7 +793,6 @@ const Projects = () => {
           )}
         </div>
       </Modal>
-
       <Modal
         title="Rename Project"
         visible={renameDialogVisible}

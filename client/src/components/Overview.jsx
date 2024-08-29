@@ -108,49 +108,6 @@ const Overview = () => {
     }
   }, [organizationId]);
 
-  //added
-
-  // const handleUserChange = async (event) => {
-  //   const userId = event.target.value;
-  //   setSelectedUser(userId);
-
-  //   if (userId) {
-  //     try {
-  //       const response = await axios.get(`${server}/api/cards/user/${userId}`);
-  //       const userCards = response.data;
-  //       setCards(userCards);
-
-  //       // Calculate card counts for the selected user
-  //       const counts = userCards.reduce((acc, card) => {
-  //         acc[card.status] = (acc[card.status] || 0) + 1;
-  //         return acc;
-  //       }, {});
-
-  //       setTotalCardCount(userCards.length); // Total cards for the selected user
-  //       setUserCardCounts({
-  //         pending: counts['pending'] || 0,
-  //         inprogress: counts['inprogress'] || 0,
-  //         completed: counts['completed'] || 0,
-  //       });
-
-  //       // Render the bar chart when cards data changes
-  //       setGroupedData(groupByMonthAndStatus(userCards));
-
-  //     } catch (error) {
-  //       console.error('Error fetching cards:', error);
-  //     }
-  //   } else {
-  //     setCards([]);
-  //     setUserCardCounts({
-  //       pending: 0,
-  //       inprogress: 0,
-  //       completed: 0,
-  //     });
-  //     setTotalCardCount(0);
-  //     setGroupedData({});
-  //   }
-  // };
-
   const handleMenuClick = async (e) => {
     const userId = e.key;
     setSelectedUser(userId);
@@ -296,31 +253,6 @@ const Overview = () => {
   const pendingData = months.map((month) => groupedData[month].pending);
   const inprogressData = months.map((month) => groupedData[month].inprogress);
   const completedData = months.map((month) => groupedData[month].completed);
-
-  // const barData = {
-  //   labels: months,
-  //   datasets: [
-  //     {
-  //       label: 'Pending',
-  //       data: pendingData,
-  //       backgroundColor: '#f7665a',
-
-  //     },
-  //     {
-  //       label: 'In-Progress',
-  //       data: inprogressData,
-  //       backgroundColor: '#efe152',
-
-  //     },
-  //     {
-  //       label: 'Completed',
-  //       data: completedData,
-  //       backgroundColor: '#10b981',
-
-  //     },
-  //   ],
-  // };
-
   const barData = {
     labels: months,
     datasets: [
@@ -368,21 +300,6 @@ const Overview = () => {
       },
     ],
   };
-
-  // const barOptions = {
-  //   responsive: true,
-  //   plugins: {
-  //     legend: {
-  //       position: 'bottom',
-
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: 'User Card Status by Month',
-  //     },
-  //   },
-  // };
-
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -728,10 +645,6 @@ const Overview = () => {
           </div>
         </div>
       </div>
-      {/* <div style={{ marginTop: '16px' }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568', paddingTop: '40px' }}>Bar plot</h3>
-            <Bar data={selectedUser ? barData : defaultBarData} options={barOptions} />
-          </div> */}
     </div>
   );
 };

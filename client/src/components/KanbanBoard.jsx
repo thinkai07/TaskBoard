@@ -1335,7 +1335,7 @@ function KanbanBoard() {
           </div>
           <Tooltip title={`Card ID: ${card.cardId}`}>
             <div style={{ marginLeft: "10px", font: "small-caption" }}>
-              <h1>ID: {card.cardId}</h1>
+              <h1>ID:{card.cardId}</h1>
             </div>
           </Tooltip>
         </div>

@@ -303,7 +303,7 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
       <div className="flex items-center flex-grow justify-center space-x-20">
         <div className="relative w-full max-w-xs">
           <Search
-            placeholder="Search by task ID"
+            placeholder="Search by Card ID"
             value={searchQuery}
             onChange={(e) => {
               const trimmedSearchQuery = e.target.value.trim();

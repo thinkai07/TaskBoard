@@ -125,6 +125,12 @@ function KanbanBoard() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
+
+  const [startDate, setStartDate] = useState('');
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
   const showAboutModal = () => {
     setAboutModalVisible(true);
   };

@@ -3,7 +3,7 @@ import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Popover, Button, Input, message } from "antd";
+import { Popover, Button, Input, message, Search } from "antd";
 import { Bell } from "lucide-react";
 import { server } from "../constant";
 
@@ -30,6 +30,27 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const searchRef = useRef(null);
 
+
+  //added
+  const dropdownRef = useRef(null);
+
+  //added
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        // Close the dropdown if clicked outside
+        setSearchResults([]);
+      }
+    };
+
+    // Add the event listener for clicks outside
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
 
   // Debounced function to avoid API calls on every keystroke
@@ -303,7 +324,8 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
       <div className="flex items-center flex-grow justify-center space-x-20">
         <div className="relative w-full max-w-xs">
           <Search
-            placeholder="Search by Card ID"
+            placeholder="Search by task ID"
+
             value={searchQuery}
             onChange={(e) => {
               const trimmedSearchQuery = e.target.value.trim();
@@ -326,7 +348,7 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
             </div>
           )}
           {searchResults.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto" ref={dropdownRef} style={{ scrollbarWidth: 'none' }}>
               {searchResults.map((card) => (
                 <div
                   key={card.id}
@@ -476,3 +498,18 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
 };
 
 export default Navbar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

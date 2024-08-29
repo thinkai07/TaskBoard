@@ -180,6 +180,7 @@ const RenameCardPage = () => {
                     }),
                 }
             );
+            fetchCardDetails();
 
             if (!response.ok) {
                 throw new Error("Failed to rename card title");
@@ -242,6 +243,7 @@ const RenameCardPage = () => {
                     }),
                 }
             );
+            fetchCardDetails();
 
             if (!response.ok) {
                 throw new Error("Failed to rename card description");
@@ -279,6 +281,7 @@ const RenameCardPage = () => {
     const handleTitleBlur = () => {
         handleRenameCardTitle(); // Call your handler for renaming title
         setIsEditingTitle(false); // Exit title editing mode
+
     };
 
     const handleDescriptionBlur = () => {

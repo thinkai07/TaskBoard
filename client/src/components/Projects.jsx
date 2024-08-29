@@ -1,3 +1,4 @@
+//projectspage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -610,7 +611,6 @@ const Projects = () => {
               >
                 {card.description}
               </p>
-            </Tooltip>
             <div className="mt-2 flex justify-between items-center">
               <p
                 className=" rounded-md text-sm inline-block"
@@ -666,8 +666,6 @@ const Projects = () => {
           </Card>
         ))}
       </div>
-
-
       <Modal
   title="Add New Project"
   visible={addProjectModalVisible}

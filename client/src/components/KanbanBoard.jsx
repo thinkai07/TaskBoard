@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
 import { Dropdown, Menu } from "antd"; //added
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
@@ -57,12 +58,12 @@ function KanbanBoard() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [projectManager, setProjectManager] = useState("");
   const [newColumnModalVisible, setNewColumnModalVisible] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -107,12 +108,10 @@ function KanbanBoard() {
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
-  // const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userComment, setUserComment] = useState("");
   const [comments, setComments] = useState([]);
   const [assignedTo, setAssignedTo] = useState([]);
-  // const [projectName, setProjectName] = useState("");
   const [createdBy, setcreatedBy] = useState([]);
   const [dueDate, setDueDate] = useState("");
   const [estimatedHours, setEstimatedHours] = useState(0);
@@ -120,21 +119,27 @@ function KanbanBoard() {
   const [remainingHours, setRemainingHours] = useState(0);
 
   const { TextArea } = Input;
-  const { Text, Title } = Typography;
+  const { Text, Title, Paragraph } = Typography;
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
-  const [startDate, setStartDate] = useState('');
 
-  const handleStartDateChange = (e) => {
-    setStartDate(e.target.value);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const showAboutModal = () => {
+    setAboutModalVisible(true);
   };
 
-  const handleCardClick = (cardId,columnId,projectId) => {
+  const handleAboutModalClose = () => {
+    setAboutModalVisible(false);
+  };
+
+
+
+  const handleCardClick = (cardId, columnId, projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
   };
 
-  
+
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -281,9 +286,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -436,6 +441,7 @@ function KanbanBoard() {
         setProjectManager(project.projectManager);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
+        setProjectDescription(project.description);
       }
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -458,7 +464,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-        projects.find((project) => project._id === projectId)?.projectManager);
+      projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -560,7 +566,7 @@ function KanbanBoard() {
     setEmail("");
     setTeam("");
   };
-  
+
 
   const openRenameCardModal = (
     columnId,
@@ -601,7 +607,7 @@ function KanbanBoard() {
     setDueDate(dueDate);
   };
 
-  
+
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
     if (document.forms[0]) {
@@ -934,9 +940,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== cardId),
-                }
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              }
               : column
           ),
         }));
@@ -1270,121 +1276,121 @@ function KanbanBoard() {
   );
 
   const renderCard = (card, { dragging }) => (
-  <div
-    className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-    style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
-    onClick={() => handleCardClick(card.id, card.columnId, projectId)}
-  >
-    <div className="p-4">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-        key={card.id}
-      >
-        <Tooltip title={card.title}>
-          <div className="react-kanban-card__title truncate">
-            {card.title && card.title.length > 20
-              ? card.title.slice(0, 20) + "..."
-              : card.title}
+    <div
+      className={`react-kanban-card ${dragging ? "dragging" : ""}`}
+      style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
+      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
+    >
+      <div className="p-4">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+          key={card.id}
+        >
+          {/* <Tooltip title={card.title}> */}
+            <div className="react-kanban-card__title truncate">
+              {card.title && card.title.length > 20
+                ? card.title.slice(0, 20) + "..."
+                : card.title}
+            </div>
+         
+          <div className="react-kanban-card__assignedTo flex items-center">
+            {card.assignedTo && (
+              <Tooltip title={card.assignedTo}>
+                <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
+                  <span className="cursor-pointer">
+                    {card.assignedTo.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </Tooltip>
+            )}
           </div>
-        </Tooltip>
-        <div className="react-kanban-card__assignedTo flex items-center">
-          {card.assignedTo && (
-            <Tooltip title={card.assignedTo}>
-              <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
-                <span className="cursor-pointer">
-                  {card.assignedTo.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            </Tooltip>
+        </div>
+        <div className="react-kanban-card__dueDate">
+          {card.dueDate && (
+            <div className="text-sm text-gray-500">
+              Due Date:{" "}
+              {new Date(card.dueDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </div>
           )}
         </div>
-      </div>
-      <div className="react-kanban-card__dueDate">
-        {card.dueDate && (
-          <div className="text-sm text-gray-500">
-            Due Date:{" "}
-            {new Date(card.dueDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
-          </div>
-        )}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div className="react-kanban-card__status">
-            <Select
-              value={card.status}
-              onChange={(value) => handleChangeStatus(card.id, value)}
-              onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-              style={{ width: 110, height: 25 }} // Adjust width as needed
-            >
-              <Option value="pending">Pending</Option>
-              <Option value="inprogress">In Progress</Option>
-              <Option value="completed">Completed</Option>
-            </Select>
-          </div>
-          <Tooltip title={`Card ID: ${card.cardId}`}>
-            <div style={{ marginLeft: "10px", font: "small-caption" }}>
-              <h1>ID:{card.cardId}</h1>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div className="react-kanban-card__status">
+              <Select
+                value={card.status}
+                onChange={(value) => handleChangeStatus(card.id, value)}
+                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
+                style={{ width: 110, height: 25 }} // Adjust width as needed
+              >
+                <Option value="pending">Pending</Option>
+                <Option value="inprogress">In Progress</Option>
+                <Option value="completed">Completed</Option>
+              </Select>
             </div>
-          </Tooltip>
-        </div>
+            <Tooltip title={`Card ID: ${card.cardId}`}>
+              <div style={{ marginLeft: "10px", font: "small-caption" }}>
+                <h1>ID:{card.cardId}</h1>
+              </div>
+            </Tooltip>
+          </div>
 
-        {canShowActions && (
+          {canShowActions && (
+            <button
+              className="delete-card-button"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent click event from bubbling up
+                confirmRemoveCard(card.columnId, card.id);
+              }}
+              style={{
+                marginRight: "10px",
+                color: "red",
+                paddingTop: "5px",
+                marginLeft: "30%",
+                marginTop: "3%",
+              }}
+            >
+              {/* <BsTrash /> */}
+            </button>
+          )}
           <button
             className="delete-card-button"
             onClick={(e) => {
               e.stopPropagation(); // Prevent click event from bubbling up
-              confirmRemoveCard(card.columnId, card.id);
+              openRenameCardModal(
+                card.columnId,
+                card.id,
+                card.title,
+                card.description,
+                card.comments,
+                card.activities,
+                card.taskLogs
+              );
             }}
-            style={{
-              marginRight: "10px",
-              color: "red",
-              paddingTop: "5px",
-              marginLeft: "30%",
-              marginTop: "3%",
-            }}
+            style={{ color: "black", marginTop: "4%" }}
           >
-            {/* <BsTrash /> */}
+            {/* <BsFillPencilFill /> */}
           </button>
-        )}
-        <button
-          className="delete-card-button"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent click event from bubbling up
-            openRenameCardModal(
-              card.columnId,
-              card.id,
-              card.title,
-              card.description,
-              card.comments,
-              card.activities,
-              card.taskLogs
-            );
-          }}
-          style={{ color: "black", marginTop: "4%" }}
-        >
-          {/* <BsFillPencilFill /> */}
-        </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
   //
 
@@ -1408,8 +1414,8 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
-  
- 
+
+
 
   return (
     <div
@@ -1417,21 +1423,16 @@ function KanbanBoard() {
       style={
         bgUrl
           ? {
-              backgroundImage: `url(${bgUrl.raw})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              width: "100%",
-          overflow: "hidden",
-            scrollbarWidth: "none"
-            }
+            backgroundImage: `url(${bgUrl.raw})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            width: "100%",
+          }
           : {}
       }
     >
-     
-    
-      {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
-      <div>
+        <div>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
             Project : <span className="font-normal">{projectName}</span>
           </h1>
@@ -1449,99 +1450,115 @@ function KanbanBoard() {
             New Column
           </Button>
 
-          {/* <Popover
-            trigger="click"
-            placement="bottomRight"
-            content={
-              <Space direction="vertical">
-
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-              </Space>
-            }
-          >
-            <Button type="text" icon={<SquareMenu />} />
-          </Popover> */}
-
           <>
-            <Button type="text" icon={<SquareMenu style={{color:textColor}} />}  onClick={showDrawer} />
+            <Button type="text" icon={<SquareMenu style={{ color: textColor }} />} onClick={showDrawer} />
 
             <Drawer
-  title="Settings"
-  placement="right"
-  onClose={onClose}
-  visible={visible}
-  width={300} // Adjust width as needed
->
-  {showBackgroundChange && (
-    <BackgroundChange
-      onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
-      onImageSelect={onClose} // Close the Drawer when an image is selected
-    />
-  )}
-  <Space direction="vertical" style={{ width: "100%" }}>
-    <button
-      type="button" // Changed to 'button' for semantic correctness
-      className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-      onClick={() => {
-        openGitModal();
-        onClose(); // Close the Drawer after opening Git Modal
-      }}
+              title="Settings"
+              placement="right"
+              onClose={onClose}
+              visible={visible}
+              width={300} // Adjust width as needed
+            >
+              {showBackgroundChange && (
+                <BackgroundChange
+                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+                  onImageSelect={onClose} // Close the Drawer when an image is selected
+                />
+              )}
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <button
+                  type="button" // Changed to 'button' for semantic correctness
+                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  onClick={() => {
+                    openGitModal();
+                    onClose(); // Close the Drawer after opening Git Modal
+                  }}
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    paddingRight: "25px",
+                  }}
+                >
+                  <SettingOutlined
+                    style={{
+                      fontSize: 20,
+                      display: "flex",
+                      justifyItems: "left",
+                    }}
+                  />
+                  Git Configuration
+                </button>
+                {isProjectRoute && (
+                  <button
+                    type="button"
+                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+                    style={{
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <SquareChevronDown style={{ fontSize: 20 }} />
+                    Change Background
+                  </button>
+                )}
+
+                <RulesButton
+                  tasks={tasks}
+                  className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+
+                />
+                {/* <Button
+                  type="text"
+                  icon={<InfoCircleOutlined />}
+                  onClick={showAboutModal}
+                  style={{
+                    display: "flex",
+                    fontSize: 15,
+                    justifyItems: "left",
+                  }}
+                >
+                  About
+                </Button> */}
+                <button
+      type="button"
+      className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={showAboutModal}
       style={{
         height: "40px",
         display: "flex",
         alignItems: "center",
         width: "100%",
-        paddingRight: "25px",
+        fontSize: 15,
       }}
     >
-      <SettingOutlined
-        style={{
-          fontSize: 20,
-          display: "flex",
-          justifyItems: "left",
-        }}
-      />
-      Git Configuration
+      <InfoCircleOutlined style={{ fontSize: 20 }} />
+      About
     </button>
-    {isProjectRoute && (
-      <button
-        type="button"
-        className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-        onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
-        style={{
-          height: "40px",
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        <SquareChevronDown style={{ fontSize: 20 }} />
-        Change Background
-      </button>
-    )}
 
-    <RulesButton
-      tasks={tasks}
-      className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-      style={{
-        height: "40px",
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-      }}
-     
-    />
-    
-  </Space>
-</Drawer>
+              </Space>
+            </Drawer>
+
+            <Modal
+              title="About Project"
+              visible={aboutModalVisible}
+              onCancel={handleAboutModalClose}
+              footer={null}
+            >
+              <Title level={4}>Project: {projectName}</Title>
+              <Paragraph>Project description: {projectDescription}</Paragraph>
+            </Modal>
           </>
         </div>
       </div>
@@ -1983,9 +2000,8 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
-              isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
           >
             <button
               onClick={closeGitModal}

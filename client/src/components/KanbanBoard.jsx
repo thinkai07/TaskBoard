@@ -124,6 +124,11 @@ function KanbanBoard() {
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
+  const [startDate, setStartDate] = useState('');
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
 
   const handleCardClick = (cardId,columnId,projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
@@ -1335,7 +1340,7 @@ function KanbanBoard() {
           </div>
           <Tooltip title={`Card ID: ${card.cardId}`}>
             <div style={{ marginLeft: "10px", font: "small-caption" }}>
-              <h1>ID: {card.cardId}</h1>
+              <h1>ID:{card.cardId}</h1>
             </div>
           </Tooltip>
         </div>
@@ -1740,35 +1745,40 @@ function KanbanBoard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="assignDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Start Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="assignDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="dueDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    End Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="dueDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+      <div>
+        <label
+          htmlFor="assignDate"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Start Date
+        </label>
+        <input
+          type="datetime-local"
+          name="assignDate"
+          required
+          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min={new Date().toISOString().slice(0, 16)} // Disable past dates
+          value={startDate}
+          onChange={handleStartDateChange}
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="dueDate"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          End Date
+        </label>
+        <input
+          type="datetime-local"
+          name="dueDate"
+          required
+          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+        />
+      </div>
+    </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>

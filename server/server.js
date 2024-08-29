@@ -529,6 +529,98 @@ app.post("/register", async (req, res) => {
   }
 });
 
+
+app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+
+  try {
+    const card = await Card.findById(cardId).populate({
+      path: "comments",
+      model: "Comment",
+    }).populate({
+      path: "activities",
+      model: "Activity",
+    }).populate({
+      path: "taskLogs",
+      model: "Tasklogs",
+      populate: {
+        path: "loggedBy",
+        model: "User",
+        select: "name email",
+      },
+    });
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Calculate the sum of logged hours for the card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: card._id } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+    ]);
+
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
+    const cardDetails = {
+      id: card._id,
+      name: card.name,
+      
+      description: card.description,
+      assignedTo: card.assignedTo,
+      createdBy: card.createdBy,
+      status: card.status,
+      estimatedHours: card.estimatedHours,
+      utilizedHours: hoursMap[card._id] || 0,
+      uniqueId: card.uniqueId,
+      createdDate: moment(card.createdDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      assignDate: moment(card.assignDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      dueDate: moment(card.dueDate)
+        .tz("Asia/Kolkata")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      comments: card.comments.map((comment) => ({
+        id: comment._id,
+        comment: comment.comment,
+        commentBy: comment.commentBy,
+        createdAt: moment(comment.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      activities: card.activities.map((activity) => ({
+        id: activity._id,
+        commentBy: activity.commentBy,
+        comment: activity.comment,
+        createdAt: moment(activity.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      taskLogs: card.taskLogs.map((taskLog) => ({
+        id: taskLog._id,
+        hours: taskLog.hours,
+        logDate: moment(taskLog.logDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        loggedBy: {
+          id: taskLog.loggedBy._id,
+          name: taskLog.loggedBy.name,
+          email: taskLog.loggedBy.email,
+        },
+      })),
+    };
+
+    res.status(200).json({ card: cardDetails });
+  } catch (error) {
+    console.error("Error fetching card:", error);
+    res.status(500).json({ message: "Error fetching card" });
+  }
+});
 // Validate email token and store data permanently
 app.get("/validate-email", async (req, res) => {
   const { token } = req.query;
@@ -2010,30 +2102,18 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 let sequenceNumber = 1000;
 
 function generateUniqueId() {
-  const now = new Date();
-
-
-  const timestamp =
-    now.getFullYear().toString() +
-    (now.getMonth() + 1).toString().padStart(2, '0') +
-    now.getDate().toString().padStart(2, '0') +
-    now.getSeconds().toString().padStart(2, '0');
-
-
-  sequenceNumber++;
-
-
-  const uniquePart = sequenceNumber.toString().padStart(4, '0');
-
-
-  return timestamp + uniquePart;
+    const now = new Date(); 
+    const timestamp = 
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, '0') +
+        now.getDate().toString().padStart(2, '0') +
+        now.getSeconds().toString().padStart(2, '0');
+    sequenceNumber++;
+    const uniquePart = sequenceNumber.toString().padStart(4, '0');
+    return timestamp + uniquePart;
 }
-
-
 const uniqueId = generateUniqueId();
-console.log(uniqueId);
-
-
+console.log(uniqueId); 
 
 
 
@@ -2113,14 +2193,6 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error creating card" });
   }
 });
-
-
-
-
-
-
-
-
 
 
 app.post("/api/notifications", authenticateToken, async (req, res) => {
@@ -2303,7 +2375,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error moving card" });
   }
 });
-
+//in page to put comments
 app.put("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
@@ -2323,6 +2395,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Card not found" });
       }
 
+      
       // Track changes
       const changes = [];
       if (name !== undefined && card.name !== name) {
@@ -2353,11 +2426,36 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         }
         card.updatedDate.push(updatedDate);
       }
+      if (updatedBy) {
+        if (!card.updatedBy) {
+          card.updatedBy = [];
+        }
+        card.updatedBy.push(updatedBy);
+      }
+      if (updatedDate) {
+        if (!card.updatedDate) {
+          card.updatedDate = [];
+        }
+        card.updatedDate.push(updatedDate);
+      }
 
       // Save the card
       await card.save();
 
       // Create audit log entry for card update
+      if (changes.length > 0) {
+        const newAuditLog = new AuditLog({
+          entityType: "Card",
+          entityId: cardId,
+          actionType: "update",
+          actionDate: updatedDate,
+          performedBy: updatedByUser.name,
+          projectId: task.project,
+          taskId: taskId,
+          changes: changes,
+        });
+        await newAuditLog.save();
+      }
       if (changes.length > 0) {
         const newAuditLog = new AuditLog({
           entityType: "Card",
@@ -2405,6 +2503,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Assigned user not found" });
       }
 
+     
       const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
 
       const newNotification = new Notification({
@@ -2433,6 +2532,46 @@ app.put("/api/tasks/:taskId/cards/:cardId",
     }
   }
 );
+//sending the comments to through this api
+app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
+  const { cardId } = req.params;
+  const { comment } = req.body;
+  const userEmail = req.user.email; // Assuming the token has the user's email
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the card by ID
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Create a new comment
+    const newComment = new Comment({
+      comment,
+      commentBy: user.name,
+      card: card._id,
+    });
+
+    // Save the comment
+    await newComment.save();
+
+    // Add the comment to the card's comments array
+    card.comments.push(newComment._id);
+    await card.save();
+
+    res.status(201).json({ message: "Comment added successfully", comment: newComment });
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 
 app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
@@ -2581,6 +2720,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
+    
   } catch (error) {
     console.error("Error fetching cards:", error);
     res.status(500).json({ message: "Error fetching cards" });
@@ -2799,10 +2939,6 @@ app.delete(
   }
 );
 
-
-
-
-
 // Log hours for a specific card
 app.post('/api/log-hours', async (req, res) => {
   try {
@@ -2940,11 +3076,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 
 
 // //teams related apis
-
-
-app.post("/api/projects/:projectId/teams/addUser",
-  authenticateToken,
-  async (req, res) => {
+app.post("/api/projects/:projectId/teams/addUser",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
     const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
 
@@ -3009,11 +3141,8 @@ app.post("/api/projects/:projectId/teams/addUser",
   }
 );
 // Endpoint to get all users under all teams based on project ID
-app.get("/api/projects/:projectId/teams/users",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/teams/users",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
-
     try {
       const project = await Project.findById(projectId).populate({
         path: "teams",
@@ -3047,9 +3176,7 @@ app.get("/api/projects/:projectId/teams/users",
   }
 );
 // Endpoint to get users under a specific team based on project ID and team name
-app.get("/api/projects/:projectId/teams/:teamName/users",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
     const { projectId, teamName } = req.params;
     try {
       const project = await Project.findById(projectId).populate({

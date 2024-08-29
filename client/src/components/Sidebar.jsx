@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SquareKanban, PanelsTopLeft, CalendarDays, Users, FileText, Shield, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  SquareKanban,
+  PanelsTopLeft,
+  CalendarDays,
+  Users,
+  FileText,
+  ChevronsLeft,
+  ChevronsRight,
+  ShieldHalf,
+} from "lucide-react";
 import task from "../assets/task.png";
 
 const Sidebar = () => {
@@ -59,16 +68,18 @@ const Sidebar = () => {
       </div>
       <ul className="flex-1 pt-8 p-4 pl-3">
         {[
-          { path: '/', icon: SquareKanban, label: 'Overview' },
-          { path: '/projects', icon: PanelsTopLeft, label: 'Projects' },
-          { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
-          { path: '/members', icon: Users, label: 'Members' },
-          { path: '/Auditlog', icon: FileText, label: 'Auditlog' },
-          { path: '/Teamsorg', icon: Shield, label: 'Teams' },
+          { path: "/", icon: SquareKanban, label: "Overview" },
+          { path: "/projects", icon: PanelsTopLeft, label: "Projects" },
+          { path: "/calendar", icon: CalendarDays, label: "Calendar" },
+          { path: "/members", icon: Users, label: "Members" },
+          { path: "/Auditlog", icon: FileText, label: "Auditlog" },
+          { path: "/Teamsorg", icon: ShieldHalf, label: "Teams" },
         ].map(({ path, icon: Icon, label }) => (
           <li
             key={path}
-            className={`p-4 pl-12 flex items-center cursor-pointer text-base ${getNavLinkClass(path)}`}
+            className={`p-4 pl-12 flex items-center cursor-pointer text-base ${getNavLinkClass(
+              path
+            )}`}
             onClick={() => handleNavigation(path)}
           >
             <Icon className={`mr-3 ${getIconClass(path)}`} size={18} />
@@ -81,13 +92,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-
-
-
-
-
-
-
-
-
-

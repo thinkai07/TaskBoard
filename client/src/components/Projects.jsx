@@ -4,13 +4,28 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { BsThreeDotsVertical as EllipsisVertical } from 'react-icons/bs';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { images as staticImages } from '../assets/Images'
+import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { images as staticImages } from "../assets/Images";
 import dayjs from "dayjs";
-import { Card, Modal, Input, Button, DatePicker, Select, notification, Tooltip, Image } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined, } from "@ant-design/icons";
+import {
+  Card,
+  Modal,
+  Input,
+  Button,
+  DatePicker,
+  Select,
+  notification,
+  Tooltip,
+  Image,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 import { FastAverageColor } from "fast-average-color";
 const { TextArea } = Input;
@@ -61,55 +76,41 @@ const Projects = () => {
   });
   const dropdownRef = useRef(null);
   const [loading, setLoading] = useState(true);
-
   //added
+
   const fac = new FastAverageColor();
-  const [textColor, setTextColor] = useState('black');
-  const [currentBgUrl, setCurrentBgUrl] = useState(null);
+
+  const getTextColorBasedOnBg = async (imageUrl) => {
+    try {
+      const color = await fac.getColorAsync(imageUrl);
+      // Determine if the color is dark or light
+      const isDarkColor = color.isDark;
+      return isDarkColor ? "white" : "black"; // Return white text for dark background and black text for light background
+    } catch (e) {
+      console.error(e);
+      return "black"; // Fallback color
+    }
+  };
 
   const [unsplashImages, setUnsplashImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [bgImageError, setBgImageError] = useState(false);
 
-
-
-  //added
-  useEffect(() => {
-    const updateTextColor = async () => {
-      if (currentBgUrl && currentBgUrl.thumb) {
-        try {
-          const color = await fac.getColorAsync(currentBgUrl.thumb);
-
-          if (color && color.value) {
-            // Calculate brightness to determine the text color
-            const brightness = (color.value[0] * 299 + color.value[1] * 587 + color.value[2] * 114) / 1000;
-            const newTextColor = brightness > 128 ? 'black' : 'white';
-            setTextColor(newTextColor);
-          } else {
-            console.warn("Could not retrieve color value from FastAverageColor.");
-          }
-        } catch (error) {
-          console.error("Error calculating average color:", error);
-          setTextColor('black'); // Fallback to black text color on error
-        }
-      }
-    };
-
-    updateTextColor();
-  }, [currentBgUrl]);
-
   // Add this function to fetch images from Unsplash
   const fetchUnsplashImages = async () => {
     try {
-      const response = await axios.get('https://api.unsplash.com/photos/random', {
-        params: {
-          count: 8,
-          client_id: 'rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY' // Replace with your Unsplash API key
+      const response = await axios.get(
+        "https://api.unsplash.com/photos/random",
+        {
+          params: {
+            count: 6,
+            client_id: "rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY", // Replace with your Unsplash API key
+          },
         }
-      });
+      );
       setUnsplashImages(response.data);
     } catch (error) {
-      console.error('Error fetching Unsplash images:', error);
+      console.error("Error fetching Unsplash images:", error);
       setUnsplashImages(staticImages);
     }
   };
@@ -120,9 +121,6 @@ const Projects = () => {
       fetchUnsplashImages();
     }
   }, [addProjectModalVisible]);
-
-
-
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -157,8 +155,6 @@ const Projects = () => {
       console.error("Error fetching projects:", error);
     }
   };
-
-
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -230,7 +226,7 @@ const Projects = () => {
       projectManager: "",
       startDate: null,
       teams: [],
-      bgUrl: ""
+      bgUrl: "",
     });
     setNewCardErrors({
       name: false,
@@ -342,13 +338,14 @@ const Projects = () => {
           // teams: newProject.teams,
           teams: [newProject.teams],
           createdBy: createdBy,
-          bgUrl: selectedImage ? {
-            raw: selectedImage.urls.raw,
-            thumb: selectedImage.urls.thumb,
-            full: selectedImage.urls.full,
-            regular: selectedImage.urls.regular
-          } : null,
-
+          bgUrl: selectedImage
+            ? {
+                raw: selectedImage.urls.raw,
+                thumb: selectedImage.urls.thumb,
+                full: selectedImage.urls.full,
+                regular: selectedImage.urls.regular,
+              }
+            : null,
         },
         {
           headers: {
@@ -356,7 +353,7 @@ const Projects = () => {
           },
         }
       );
-      console.log(projectResponse.data)
+      console.log(projectResponse.data);
 
       const newProjectData = projectResponse.data.project;
       setCards((prevCards) => [
@@ -543,19 +540,25 @@ const Projects = () => {
       throw error;
     }
   };
-  // if (!cards.length) {
-  //   return (
-  //     <div style={{
-  //       display: 'flex',
-  //       justifyContent: 'center',
-  //       alignItems: 'center',
-  //       height: '100vh'
-  //     }}>
-  //       {/* <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} /> */}
-  //       No Projects
-  //     </div>
-  //   );
-  // }
+  if (!cards.length) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          style={{ marginRight: "10px" }}
+        />
+        Loading...
+      </div>
+    );
+  }
   const filterTeams = (input, option) => {
     return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
   };
@@ -581,28 +584,35 @@ const Projects = () => {
             className="m-4 w-64 cursor-pointer relative" // Adjust width
             hoverable
             onClick={() => handleCardClick(card._id)}
-
-            style={{ backgroundImage: card.bgUrl.thumb ? `url(${card.bgUrl.thumb})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', objectFit: "co" }} // Set background image
+            style={{
+              backgroundImage: card.bgUrl.thumb
+                ? `url(${card.bgUrl.thumb})`
+                : "none",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              objectFit: "co",
+            }} // Set background image
           >
             <div className="flex justify-between items-center">
-              <Tooltip >
-                <h3 className="font-bold text-black truncate" style={{ color: textColor }} >{card.name}</h3>
+              <Tooltip>
+                <h3 className="font-bold text-black truncate">{card.name}</h3>
               </Tooltip>
               {userRole !== "USER" && (
-
                 <button
                   className=" border-none rounded-md cursor-pointer p-2 flex items-center text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowTooltipIndex(showTooltipIndex === index ? null : index);
+                    setShowTooltipIndex(
+                      showTooltipIndex === index ? null : index
+                    );
                   }}
                 >
                   <EllipsisVertical />
                 </button>
               )}
             </div>
-            <Tooltip >
-              <p className="truncate  text-gray-500" style={{ color: textColor }}>{card.description}</p>
+            <Tooltip>
+              <p className="truncate  text-gray-500">{card.description}</p>
             </Tooltip>
             <div className="mt-2 flex justify-between items-center">
               <p className="bg-green-100 text-black  rounded-md text-sm inline-block">
@@ -654,18 +664,16 @@ const Projects = () => {
         ))}
       </div>
 
-
-
-
-
-
-
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
         onOk={handleSaveNewCard}
         onCancel={() => setAddProjectModalVisible(false)}
         width={700}
+        bodyStyle={{
+          maxHeight: "70vh", // Limit the modal body height to 70% of the viewport height
+          overflowY: "auto", // Enable vertical scrolling within the modal body
+        }}
       >
         <Input
           placeholder="Project Name"
@@ -704,7 +712,6 @@ const Projects = () => {
           onSearch={handleProjectManagerChange}
           filterOption={false}
           showSearch
-
         >
           {emailSuggestions.map((user) => (
             <Option key={user._id} value={user.email}>
@@ -712,7 +719,6 @@ const Projects = () => {
             </Option>
           ))}
         </Select>
-
         {newCardErrors.email && (
           <p className="text-red-500">
             Valid Project Manager email is required
@@ -736,21 +742,6 @@ const Projects = () => {
 
         {/* <Select
           className="mt-4 w-full"
-          mode="multiple"
-          placeholder="Select Teams"
-          value={newProject.teams}
-          onChange={(values) =>
-            setNewProject((prev) => ({ ...prev, teams: values }))
-          }
-        >
-          {availableTeams.map((team) => (
-            <Option key={team._id} value={team._id}>
-              {team.name}
-            </Option>
-          ))}
-        </Select> */}
-        <Select
-          className="mt-4 w-full"
           placeholder="Search and select a team"
           value={newProject.teams}
           onChange={(value) => {
@@ -770,20 +761,23 @@ const Projects = () => {
         {teamInputError && (
           <p className="text-red-500">At least one team is required</p>
         )}
+
         <div className="mt-4">
           <h4>Select Background Image</h4>
-          <div className="flex flex-wrap">
+          <div className="flex flex-wrap justify-center items-center overflow-y-auto max-h-40">
             {unsplashImages.map((image) => (
               <div
                 key={image.id}
-                className={`m-2 cursor-pointer ${selectedImage === image ? 'border-4 border-blue-500' : ''}`}
+                className={`m-2 cursor-pointer ${
+                  selectedImage === image ? "border-4 border-blue-500" : ""
+                }`}
                 onClick={() => setSelectedImage(image)}
               >
                 <Image
                   src={image.urls.thumb}
                   alt={image.alt_description}
-                  width={100}
-                  height={100}
+                  width={80}
+                  height={80}
                   preview={false}
                 />
               </div>
@@ -856,18 +850,3 @@ const Projects = () => {
 };
 
 export default Projects;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

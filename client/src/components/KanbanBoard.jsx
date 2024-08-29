@@ -36,9 +36,8 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-// import RenameCardPage from "../pages/RenameCardPage";
+import RenameCardPage from "../Pages/RenameCardPage";
 import { FastAverageColor } from 'fast-average-color';
-
 
 const initialBoard = {
   columns: [],
@@ -78,7 +77,7 @@ function KanbanBoard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-
+  const [textColor, setTextColor] = useState('black'); //added
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -125,7 +124,7 @@ function KanbanBoard() {
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
-  const [textColor, setTextColor] = useState('black'); //added
+ 
 
   const handleCardClick = (cardId, columnId, projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
@@ -1428,9 +1427,7 @@ function KanbanBoard() {
 
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
-
-
-        <div>
+      <div>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
             Project : <span className="font-normal">{projectName}</span>
           </h1>
@@ -1470,11 +1467,7 @@ function KanbanBoard() {
           </Popover> */}
 
           <>
-            <Button
-              type="text"
-              icon={<SquareMenu style={{ color: textColor }} />} // Apply the dynamic color here
-              onClick={showDrawer}
-            />
+            <Button type="text" icon={<SquareMenu style={{color:textColor}} />}  onClick={showDrawer} />
 
             <Drawer
               title="Settings"

@@ -6,7 +6,7 @@ import axios from "axios";
 import { server } from "../constant";
 
 const CalendarDateDetails = () => {
-    const location = useLocation();
+    const location = useLocation();  
     const navigate = useNavigate();
     const { events } = location.state;
     const [activeCardId, setActiveCardId] = useState(null);

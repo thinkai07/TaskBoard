@@ -8,13 +8,11 @@ import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { images as staticImages } from "../assets/Images";
-
 import dayjs from "dayjs";
 import { Card, Modal, Input, Button, DatePicker, Select, notification, Tooltip, Image, } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined, } from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 import { FastAverageColor } from "fast-average-color";
-
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -149,32 +147,6 @@ const Projects = () => {
       );
 
       setCards(projectsWithColors);
-
-      const projectsWithColors = await Promise.all(
-        response.data.projects.map(async (project) => {
-          if (project.bgUrl && project.bgUrl.thumb) {
-            try {
-              const color = await fac.getColorAsync(project.bgUrl.thumb);
-              return {
-                ...project,
-                textColor: color.isDark ? 'white' : 'black',
-              };
-            } catch (error) {
-              console.error("Error calculating color:", error);
-              return {
-                ...project,
-                textColor: 'black', // default color if there's an error
-              };
-            }
-          }
-          return {
-            ...project,
-            textColor: 'black', // default color if there's no background image
-          };
-        })
-      );
-
-      setCards(projectsWithColors);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
@@ -224,7 +196,6 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-          name.toLowerCase().replace(/\s+/g, "") &&
           name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
@@ -351,11 +322,6 @@ const Projects = () => {
           createdBy: createdBy,
           bgUrl: selectedImage
             ? {
-              raw: selectedImage.urls.raw,
-              thumb: selectedImage.urls.thumb,
-              full: selectedImage.urls.full,
-              regular: selectedImage.urls.regular,
-            }
               raw: selectedImage.urls.raw,
               thumb: selectedImage.urls.thumb,
               full: selectedImage.urls.full,
@@ -580,7 +546,6 @@ const Projects = () => {
   };
   return (
     <div className="min-h-full bg-light-white rounded-3xl p-8">
-    <div className="min-h-full bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
         {userRole === "ADMIN" && (
           <Button
@@ -599,7 +564,6 @@ const Projects = () => {
           <Card
             key={card._id}
             className="m-4 w-64 cursor-pointer relative"
-            className="m-4 w-64 cursor-pointer relative"
             hoverable
             onClick={() => handleCardClick(card._id)}
             style={{
@@ -608,7 +572,6 @@ const Projects = () => {
                 : "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
-            }}
             }}
           >
             <div className="flex justify-between items-center">
@@ -626,7 +589,6 @@ const Projects = () => {
               {userRole !== "USER" && (
                 <button
                   className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
-                  className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowTooltipIndex(
@@ -634,7 +596,6 @@ const Projects = () => {
                     );
                   }}
                 >
-                  <EllipsisVertical style={{ color: card.textColor }} />
                   <EllipsisVertical style={{ color: card.textColor }} />
                 </button>
               )}
@@ -655,17 +616,9 @@ const Projects = () => {
                 className=" rounded-md text-sm inline-block"
                 style={{ color: card.textColor }}
               >
-              <p
-                className=" rounded-md text-sm inline-block"
-                style={{ color: card.textColor }}
-              >
                 Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
               </p>
               <Tooltip title={card.projectManager}>
-                <div
-                  className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-full text-xs"
-                  style={{ color: card.textColor }}
-                >
                 <div
                   className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-full text-xs"
                   style={{ color: card.textColor }}
@@ -682,8 +635,6 @@ const Projects = () => {
                 ref={dropdownRef}
                 className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10"
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10"
-                onClick={(e) => e.stopPropagation()}
               >
                 <Button
                   type="text"
@@ -692,7 +643,6 @@ const Projects = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRenameCard(index);
-                    setShowTooltipIndex(null);
                     setShowTooltipIndex(null);
                   }}
                 >
@@ -707,7 +657,6 @@ const Projects = () => {
                     e.stopPropagation();
                     handleDelete(index);
                     setShowTooltipIndex(null);
-                    setShowTooltipIndex(null);
                   }}
                 >
                   Delete
@@ -717,7 +666,6 @@ const Projects = () => {
           </Card>
         ))}
       </div>
-
 
 
       <Modal
@@ -749,8 +697,6 @@ const Projects = () => {
           onChange={(e) =>
             setNewProject((prev) => ({ ...prev, description: e.target.value }))
           }
-          className={`mt-4 ${newCardErrors.description ? "border-red-500" : ""
-            }`}
           className={`mt-4 ${newCardErrors.description ? "border-red-500" : ""
             }`}
         />
@@ -844,8 +790,6 @@ const Projects = () => {
             {unsplashImages.map((image) => (
               <div
                 key={image.id}
-                className={`m-2 cursor-pointer ${selectedImage === image ? "border-4 border-blue-500" : ""
-                  }`}
                 className={`m-2 cursor-pointer ${selectedImage === image ? "border-4 border-blue-500" : ""
                   }`}
                 onClick={() => setSelectedImage(image)}

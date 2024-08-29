@@ -37,7 +37,7 @@ import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 import RenameCardPage from "../Pages/RenameCardPage";
-import { FastAverageColor } from "fast-average-color";
+import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
   columns: [],
@@ -62,7 +62,6 @@ function KanbanBoard() {
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [minDateTime, setMinDateTime] = useState("");
   // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
@@ -78,7 +77,7 @@ function KanbanBoard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [textColor, setTextColor] = useState("black"); //added
+  const [textColor, setTextColor] = useState('black'); //added
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,9 +125,11 @@ function KanbanBoard() {
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
 
-  const handleCardClick = (cardId, columnId, projectId) => {
-    navigate(`/rename-card/${columnId}/cards/${cardId}`);
+  const handleCardClick = (cardId,columnId,projectId) => {
+    navigate(`/rename-card/${columnId}/cards/${cardId}`)
   };
+
+  
 
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
@@ -156,17 +157,6 @@ function KanbanBoard() {
   const handleBackgroundChangeClick = () => {
     setShowBackgroundChange(true);
   };
-
-  useEffect(() => {
-    // Set minDateTime to current date and time in the format required by datetime-local
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    setMinDateTime(`${year}-${month}-${day}T${hours}:${minutes}`);
-  }, []);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -286,9 +276,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -463,7 +453,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-      projects.find((project) => project._id === projectId)?.projectManager);
+        projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -541,18 +531,13 @@ function KanbanBoard() {
 
       if (bgUrl && bgUrl.raw) {
         const fac = new FastAverageColor();
-        fac
-          .getColorAsync(bgUrl.raw)
+        fac.getColorAsync(bgUrl.raw)
           .then((color) => {
-            const isLight =
-              color.value[0] * 0.299 +
-                color.value[1] * 0.587 +
-                color.value[2] * 0.114 >
-              186;
-            setTextColor(isLight ? "black" : "white");
+            const isLight = (color.value[0] * 0.299 + color.value[1] * 0.587 + color.value[2] * 0.114) > 186;
+            setTextColor(isLight ? 'black' : 'white');
           })
           .catch((error) => {
-            console.error("Error extracting color:", error);
+            console.error('Error extracting color:', error);
           });
       }
     } catch (error) {
@@ -564,13 +549,13 @@ function KanbanBoard() {
     console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
 
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setMemberAdded(false); // Reset the state
     setEmail("");
     setTeam("");
   };
+  
 
   const openRenameCardModal = (
     columnId,
@@ -611,6 +596,7 @@ function KanbanBoard() {
     setDueDate(dueDate);
   };
 
+  
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
     if (document.forms[0]) {
@@ -943,9 +929,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -1278,202 +1264,81 @@ function KanbanBoard() {
     />
   );
 
-  // const renderCard = (card, { dragging }) => (
-  //   <div
-  //     className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-  //     style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
-  //     onClick={() => handleCardClick(card.id, card.columnId, projectId)}
-  //   >
-  //     <div className="p-4">
-  //       <div
-  //         style={{
-  //           display: "flex",
-  //           alignItems: "center",
-  //           justifyContent: "space-between",
-  //         }}
-  //         key={card.id} 
-  //       >
-  //         <div className="react-kanban-card__title truncate" title={card.title}>
-  //           {card.title && card.title.length > 20
-  //             ? card.title.slice(0, 20) + "..."
-  //             : card.title}
-  //         </div>
-  //         <div className="react-kanban-card__assignedTo flex items-center">
-  //           {card.assignedTo && (
-  //             <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
-  //             <Tooltip title={card.assignedTo}>
-  //               <span className="cursor-pointer">
-  //                 {card.assignedTo.charAt(0).toUpperCase()}
-  //               </span>
-  //             </Tooltip>
-  //           </div>
-  //           )}
-  //         </div>
-  //       </div>
-  //       <div className="react-kanban-card__dueDate">
-  //         {card.dueDate && (
-  //           <div className="text-sm text-gray-500">
-  //             Due Date:{" "}
-  //             {new Date(card.dueDate).toLocaleDateString("en-US", {
-  //               year: "numeric",
-  //               month: "short",
-  //               day: "numeric",
-  //               hour: "numeric",
-  //               minute: "numeric",
-  //               hour12: true,
-  //             })}
-  //           </div>
-  //         )}
-  //       </div>
-  //       <div
-  //         style={{
-  //           display: "flex",
-  //           alignItems: "flex-start",
-  //           justifyContent: "space-between",
-  //         }}
-  //       >
-  //         <div style={{ display: "flex", alignItems: "center" }}>
-  //     <div className="react-kanban-card__status">
-  //       <Select
-  //         value={card.status}
-  //         onChange={(value) => handleChangeStatus(card.id, value)}
-  //         onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-  //         style={{ width: 110, height: 25 }} // You can adjust the width as needed
-  //       >
-  //         <Option value="pending">Pending</Option>
-  //         <Option value="inprogress">In Progress</Option>
-  //         <Option value="completed">Completed</Option>
-  //       </Select>
-  //     </div>
-  //     <div
-  //       title={card.uniqueId}
-  //       style={{ marginLeft: "10px", font: "small-caption" }}
-  //     >
-  //       <h1>ID:{card.cardId}</h1>
-  //     </div>
-  //   </div>
-
-  //         {canShowActions && (
-  //           <button
-  //             className="delete-card-button"
-  //             onClick={(e) => {
-  //               e.stopPropagation(); // Prevent click event from bubbling up
-  //               confirmRemoveCard(card.columnId, card.id);
-  //             }}
-  //             style={{
-  //               marginRight: "10px",
-  //               color: "red",
-  //               paddingTop: "5px",
-  //               marginLeft: "30%",
-  //               marginTop: "3%",
-  //             }}
-  //           >
-  //             {/* <BsTrash /> */}
-  //           </button>
-  //         )}
-  //         <button
-  //           className="delete-card-button"
-  //           onClick={(e) => {
-  //             e.stopPropagation(); // Prevent click event from bubbling up
-  //             openRenameCardModal(
-  //               card.columnId,
-  //               card.id,
-  //               card.title,
-  //               card.description,
-  //               card.comments,
-  //               card.activities,
-  //               card.taskLogs
-  //             );
-  //           }}
-  //           style={{ color: "black", marginTop: "4%" }}
-  //         >
-  //           {/* <BsFillPencilFill /> */}
-  //         </button>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
   const renderCard = (card, { dragging }) => (
-    <div
-      className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
-      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
-    >
-      <div className="p-4">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-          key={card.id}
-        >
-          <div className="react-kanban-card__title truncate" title={card.title}>
+  <div
+    className={`react-kanban-card ${dragging ? "dragging" : ""}`}
+    style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
+    onClick={() => handleCardClick(card.id, card.columnId, projectId)}
+  >
+    <div className="p-4">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+        key={card.id}
+      >
+        <Tooltip title={card.title}>
+          <div className="react-kanban-card__title truncate">
             {card.title && card.title.length > 20
               ? card.title.slice(0, 20) + "..."
               : card.title}
           </div>
-          <div className="react-kanban-card__assignedTo flex items-center">
-            {card.assignedTo && (
+        </Tooltip>
+        <div className="react-kanban-card__assignedTo flex items-center">
+          {card.assignedTo && (
+            <Tooltip title={card.assignedTo}>
               <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
-                <Tooltip title={card.assignedTo}>
-                  <span className="cursor-pointer">
-                    {card.assignedTo.charAt(0).toUpperCase()}
-                  </span>
-                </Tooltip>
+                <span className="cursor-pointer">
+                  {card.assignedTo.charAt(0).toUpperCase()}
+                </span>
               </div>
-                <Tooltip title={card.assignedTo}>
-                  <span className="cursor-pointer">
-                    {card.assignedTo.charAt(0).toUpperCase()}
-                  </span>
-                </Tooltip>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="react-kanban-card__dueDate">
-          {card.dueDate && (
-            <div className="text-sm text-gray-500">
-              Due Date:{" "}
-              {new Date(card.dueDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-              })}
-            </div>
+            </Tooltip>
           )}
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div className="react-kanban-card__status">
-              <Select
-                value={card.status}
-                onChange={(value) => handleChangeStatus(card.id, value)}
-                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-                style={{ width: 110, height: 25 }} // You can adjust the width as needed
-              >
-                <Option value="pending">Pending</Option>
-                <Option value="inprogress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-              </Select>
-            </div>
-            <div
-              title={card.uniqueId}
-              style={{ marginLeft: "10px", font: "small-caption" }}
-            >
-              <h1>ID:{card.cardId}</h1>
-            </div>
+      </div>
+      <div className="react-kanban-card__dueDate">
+        {card.dueDate && (
+          <div className="text-sm text-gray-500">
+            Due Date:{" "}
+            {new Date(card.dueDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            })}
           </div>
+        )}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div className="react-kanban-card__status">
+            <Select
+              value={card.status}
+              onChange={(value) => handleChangeStatus(card.id, value)}
+              onClick={(e) => e.stopPropagation()} // Prevent modal from opening
+              style={{ width: 110, height: 25 }} // Adjust width as needed
+            >
+              <Option value="pending">Pending</Option>
+              <Option value="inprogress">In Progress</Option>
+              <Option value="completed">Completed</Option>
+            </Select>
+          </div>
+          <Tooltip title={`Card ID: ${card.cardId}`}>
+            <div style={{ marginLeft: "10px", font: "small-caption" }}>
+              <h1>ID: {card.cardId}</h1>
+            </div>
+          </Tooltip>
+        </div>
 
         {canShowActions && (
           <button
@@ -1538,9 +1403,12 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
+  
+ 
+
   return (
     <div
-      className="min-h-full  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="overflow-x-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl min-h-screen"
       style={
         bgUrl
           ? {
@@ -1548,21 +1416,20 @@ function KanbanBoard() {
               backgroundSize: "cover",
               backgroundPosition: "center",
               width: "100%",
-              
             }
           : {}
       }
     >
+     
+    
       {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
-        <div>
-        <div>
+      <div>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
             Project : <span className="font-normal">{projectName}</span>
           </h1>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
-            Project Manager :{" "}
-            <span className="font-normal">{projectManager}</span>
+            Project Manager : <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
         <div className="flex space-x-2 ">
@@ -1597,132 +1464,77 @@ function KanbanBoard() {
           </Popover> */}
 
           <>
-            <Button
-              type="text"
-              icon={<SquareMenu style={{ color: textColor }} />}
-              onClick={showDrawer}
-            />
+            <Button type="text" icon={<SquareMenu style={{color:textColor}} />}  onClick={showDrawer} />
 
             <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-            >
-              {showBackgroundChange && (
-                <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
-                  onImageSelect={onClose} // Close the Drawer when an image is selected
-                />
-              )}
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <button
-                  type="button" // Changed to 'button' for semantic correctness
-                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  onClick={() => {
-                    openGitModal();
-                    onClose(); // Close the Drawer after opening Git Modal
-                  }}
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                    paddingRight: "25px",
-                  }}
-                >
-                  <SettingOutlined
-                    style={{
-                      fontSize: 20,
-                      display: "flex",
-                      justifyItems: "left",
-                    }}
-                  />
-                  Git Configuration
-                </button>
-                {isProjectRoute && (
-                  <button
-                    type="button"
-                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
-                    style={{
-                      height: "40px",
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
-                  >
-                    <SquareChevronDown style={{ fontSize: 20 }} />
-                    Change Background
-                  </button>
-                )}
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
-            >
-              {showBackgroundChange && (
-                <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
-                  onImageSelect={onClose} // Close the Drawer when an image is selected
-                />
-              )}
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <button
-                  type="button" // Changed to 'button' for semantic correctness
-                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  onClick={() => {
-                    openGitModal();
-                    onClose(); // Close the Drawer after opening Git Modal
-                  }}
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                    paddingRight: "25px",
-                  }}
-                >
-                  <SettingOutlined
-                    style={{
-                      fontSize: 20,
-                      display: "flex",
-                      justifyItems: "left",
-                    }}
-                  />
-                  Git Configuration
-                </button>
-                {isProjectRoute && (
-                  <button
-                    type="button"
-                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
-                    style={{
-                      height: "40px",
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
-                  >
-                    <SquareChevronDown style={{ fontSize: 20 }} />
-                    Change Background
-                  </button>
-                )}
+  title="Settings"
+  placement="right"
+  onClose={onClose}
+  visible={visible}
+  width={300} // Adjust width as needed
+>
+  {showBackgroundChange && (
+    <BackgroundChange
+      onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
+      onImageSelect={onClose} // Close the Drawer when an image is selected
+    />
+  )}
+  <Space direction="vertical" style={{ width: "100%" }}>
+    <button
+      type="button" // Changed to 'button' for semantic correctness
+      className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={() => {
+        openGitModal();
+        onClose(); // Close the Drawer after opening Git Modal
+      }}
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        paddingRight: "25px",
+      }}
+    >
+      <SettingOutlined
+        style={{
+          fontSize: 20,
+          display: "flex",
+          justifyItems: "left",
+        }}
+      />
+      Git Configuration
+    </button>
+    {isProjectRoute && (
+      <button
+        type="button"
+        className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+        onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
+        style={{
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <SquareChevronDown style={{ fontSize: 20 }} />
+        Change Background
+      </button>
+    )}
 
-                <RulesButton
-                  tasks={tasks}
-                  className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-                />
-              </Space>
-            </Drawer>
+    <RulesButton
+      tasks={tasks}
+      className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+      }}
+     
+    />
+    
+  </Space>
+</Drawer>
           </>
         </div>
       </div>
@@ -1850,7 +1662,6 @@ function KanbanBoard() {
                     color: "#5f5e5e",
                     textAlign: "center",
                     paddingLeft: "50%",
-
                   }}
                 >
                   <FaPlus />
@@ -1940,7 +1751,6 @@ function KanbanBoard() {
                     type="datetime-local"
                     name="assignDate"
                     required
-                    min={minDateTime}
                     className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -1955,11 +1765,11 @@ function KanbanBoard() {
                     type="datetime-local"
                     name="dueDate"
                     required
-                    min={minDateTime}
                     className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label
@@ -2016,6 +1826,7 @@ function KanbanBoard() {
           </div>
         </div>
       )}
+
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -2158,15 +1969,11 @@ function KanbanBoard() {
         </div>
       )}
       {isGitModalOpen && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-          onClick={closeGitModal} // Close modal on overlay click
-        >
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
             className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
               isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
             }`}
-            onClick={(e) => e.stopPropagation()} // Prevent click event from bubbling up to the overlay
           >
             <button
               onClick={closeGitModal}
@@ -2261,13 +2068,3 @@ git push -u origin main`}
 }
 
 export default KanbanBoard;
-
-
-
-
-
-
-
-
-
-

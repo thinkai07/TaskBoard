@@ -109,30 +109,34 @@ const CalendarDateDetails = () => {
         {
             title: "Project Name", dataIndex: "projectName", key: "projectName",
             render: (text) => (
-                <Tooltip title={text}>
-                    <span>{text.length > 14 ? `${text.slice(0, 14)}...` : text}</span>
-                </Tooltip>
+                <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                    {text}
+                </div>
             ),
         },
         {
             title: "Task Name", dataIndex: "taskName", key: "taskName",
             render: (text) => (
-                <Tooltip title={text}>
-                    <span>{text.length > 14 ? `${text.slice(0, 14)}...` : text}</span>
-                </Tooltip>
+                <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                    {text}
+                </div>
             ),
         },
         {
             title: "Column Name", dataIndex: "cardName", key: "cardName",
             render: (text) => (
-                <Tooltip title={text}>
-                    <span>{text.length > 14 ? `${text.slice(0, 14)}...` : text}</span>
-                </Tooltip>
+                <div style={{ maxWidth: '150px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                    <span className="truncate">{text}</span>
+                </div>
             ),
         },
         {
             title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo",
-
+            render: (text) => (
+                <div style={{ maxWidth: '150px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                    <span className="truncate">{text}</span>
+                </div>
+            ),
         },
         { title: "Status", dataIndex: "status", key: "status" },
         {
@@ -183,7 +187,13 @@ const CalendarDateDetails = () => {
             </h2>
 
             <Button onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
-            <Table columns={columns} dataSource={updatedEvents} rowKey="id" />
+            <div className="overflow-x-auto">
+                <Table
+                    columns={columns}
+                    dataSource={updatedEvents}
+                    rowKey="id"
+                />
+            </div>
         </div>
     );
 };

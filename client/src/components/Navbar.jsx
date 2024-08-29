@@ -3,17 +3,16 @@ import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Popover, Button, Input, message } from "antd";
-import { Bell, SquareChevronDown } from "lucide-react";
+import { Popover, Button, Input, message, Search } from "antd";
+import { Bell } from "lucide-react";
 import { server } from "../constant";
-import { BsMenuUp } from "react-icons/bs";
-import { TbMenuOrder } from "react-icons/tb";
 
-const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
+
+const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,13 +30,28 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const searchRef = useRef(null);
 
-  // useEffect(() => {
-  //   const intervalId = setInterval(() => {
-  //     setCurrentTime(new Date());
-  //   }, 1000);
 
-  //   return () => clearInterval(intervalId);
-  // }, []);
+  //added
+  const dropdownRef = useRef(null);
+
+  //added
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        // Close the dropdown if clicked outside
+        setSearchResults([]);
+      }
+    };
+
+    // Add the event listener for clicks outside
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
 
   // Debounced function to avoid API calls on every keystroke
   const debouncedSearch = (query) => {
@@ -183,61 +197,61 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
     setShowSidebar(false);
   };
 
-  const handleSelectBackground = (image) => {
-    const projectId = location.pathname.split("/")[2];
-    setSelectedImage(image);
-    axios
-      .put(
-        `${server}/api/projects/${projectId}/bgImage`,
-        { bgUrl: image },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      )
-      .then((response) => {
-        onSelectBackground(response.data.project.bgUrl);
-      })
-      .catch((error) => {
-        console.error("Error updating background image:", error);
-      });
-  };
+  // const handleSelectBackground = (image) => {
+  //   const projectId = location.pathname.split("/")[2];
+  //   setSelectedImage(image);
+  //   axios
+  //     .put(
+  //       `${server}/api/projects/${projectId}/bgImage`,
+  //       { bgUrl: image },
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       }
+  //     )
+  //     .then((response) => {
+  //       onSelectBackground(response.data.project.bgUrl);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error updating background image:", error);
+  //     });
+  // };
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  // const handleFileChange = async (event) => {
+  //   const file = event.target.files[0];
+  //   if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "g3smdj2n");
+  //   const formData = new FormData();
+  //   formData.append("file", file);
+  //   formData.append("upload_preset", "g3smdj2n");
 
-    try {
-      const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/dygueetvc/image/upload",
-        formData
-      );
+  //   try {
+  //     const response = await axios.post(
+  //       "https://api.cloudinary.com/v1_1/dygueetvc/image/upload",
+  //       formData
+  //     );
 
-      const imageUrl = response.data.secure_url;
-      const projectId = location.pathname.split("/")[2];
+  //     const imageUrl = response.data.secure_url;
+  //     const projectId = location.pathname.split("/")[2];
 
-      const updateResponse = await axios.put(
-        `${server}/api/projects/${projectId}/customImages`,
-        { imageUrl },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+  //     const updateResponse = await axios.put(
+  //       `${server}/api/projects/${projectId}/customImages`,
+  //       { imageUrl },
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       }
+  //     );
 
-      setCustomImages((prevImages) => [...prevImages, imageUrl]);
-    } catch (error) {
-      console.error("Error uploading image:", error);
-    }
-  };
+  //     setCustomImages((prevImages) => [...prevImages, imageUrl]);
+  //   } catch (error) {
+  //     console.error("Error uploading image:", error);
+  //   }
+  // };
 
   const getFirstLetter = () => {
     return user?.email ? user.email.charAt(0).toUpperCase() : "";
@@ -245,22 +259,22 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 
   const isProjectRoute = location.pathname.startsWith("/projects/");
 
-  const images = [
-    "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
-    "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-    "https://img.lovepik.com/element/40156/3639.png_1200.png",
-    "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-    "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-    "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
-    "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
-    "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
-    "https://images8.alphacoders.com/568/568490.jpg",
-    "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
-    ...customImages,
-  ];
+  // const images = [
+  //   "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
+  //   "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
+  //   "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
+  //   "https://img.lovepik.com/element/40156/3639.png_1200.png",
+  //   "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
+  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
+  //   "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
+  //   "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
+  //   "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
+  //   "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
+  //   "https://images8.alphacoders.com/568/568490.jpg",
+  //   "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
+  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
+  //   ...customImages,
+  // ];
 
   const profileContent = (
     <div className="w-60  ">
@@ -311,6 +325,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
         <div className="relative w-full max-w-xs">
           <Search
             placeholder="Search by task ID"
+
             value={searchQuery}
             onChange={(e) => {
               const trimmedSearchQuery = e.target.value.trim();
@@ -333,7 +348,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
             </div>
           )}
           {searchResults.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto" ref={dropdownRef} style={{ scrollbarWidth: 'none' }}>
               {searchResults.map((card) => (
                 <div
                   key={card.id}
@@ -444,7 +459,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
               <MdOutlineCancel size={30} />
             </button>
 
-            <div className="mt-16">
+            {/* <div className="mt-16">
               <h3 className="text-xl font-semibold mb-4">Select Background</h3>
               <hr className="border-gray-300 my-2" />
 
@@ -474,7 +489,7 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
                   onChange={handleFileChange}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       )}
@@ -483,3 +498,18 @@ const Navbar = ({ user, onLogout, onSelectBackground, onSelectColor }) => {
 };
 
 export default Navbar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

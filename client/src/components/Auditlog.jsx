@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { Select, Table, Typography, Card, Tooltip } from "antd";
-
-const { Option } = Select;
-const { Title } = Typography;
 
 const AuditLog = () => {
   useTokenValidation();
@@ -91,21 +87,32 @@ const AuditLog = () => {
           },
         }
       );
+
+      // Map over the logs to extract task and card names if available
+      const logsWithNames = response.data.map((log) => ({
+        ...log,
+        taskName: log.taskId ? log.taskId.name : null,
+        cardName: log.cardId ? log.cardId.name : null,
+      }));
+
       // Sort logs by actionDate in descending order
-      const sortedLogs = response.data.sort(
+      const sortedLogs = logsWithNames.sort(
         (a, b) => new Date(b.actionDate) - new Date(a.actionDate)
       );
+
       setAuditLogs(sortedLogs);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
     }
   };
 
-  const handleProjectChange = (value) => {
-    setSelectedProject(value);
-    if (value) {
-      fetchTasksAndCards(value);
-      fetchAuditLogs(value);
+
+  const handleProjectChange = (e) => {
+    const projectId = e.target.value;
+    setSelectedProject(projectId);
+    if (projectId) {
+      fetchTasksAndCards(projectId);
+      fetchAuditLogs(projectId);
     } else {
       setTasks([]);
       setCards([]);
@@ -113,179 +120,112 @@ const AuditLog = () => {
     }
   };
 
-  const columns = [
-    {
-      title: "Project Name",
-      dataIndex: "projectName",
-      key: "projectName",
-      render: () =>
-        projects.find((p) => p._id === selectedProject)?.name || "-",
-    },
-    
-    {
-      title: "Column Name",
-      dataIndex: "columnName",
-      key: "columnName",
-      render: (_, log) => {
-        const columnName = log.entityType === "Task"
-          ? tasks.find((t) => t.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
-          : "-";
-
-        const truncatedColumnName = columnName && columnName.length > 14
-          ? `${columnName.slice(0, 14)}...`
-          : columnName;
-
-        return (
-          <Tooltip title={columnName}>
-            <span>{truncatedColumnName}</span>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      title: "Task Name",
-      dataIndex: "taskName",
-      key: "taskName",
-      render: (_, log) => {
-        const taskName = log.entityType === "Card"
-          ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
-          : "-";
-
-        const truncatedTaskName = taskName && taskName.length > 14
-          ? `${taskName.slice(0, 14)}...`
-          : taskName;
-
-        return (
-          <Tooltip title={taskName}>
-            <span>{truncatedTaskName}</span>
-          </Tooltip>
-        );
-      },
-    },
-
-
-
-    {
-      title: "Action By",
-      dataIndex: "performedBy",
-      key: "performedBy",
-      render: (text) => text || "-",
-    },
-    {
-      title: "Activity Date",
-      dataIndex: "actionDate",
-      key: "actionDate",
-      render: (text) => (text ? new Date(text).toLocaleDateString() : "-"),
-    },
-    {
-      title: "Activity",
-      dataIndex: "actionType",
-      key: "actionType",
-      render: (text) => text || "-",
-    },
-    // {
-    //   title: "Old Value",
-    //   dataIndex: "oldValue",
-    //   key: "oldValue",
-    //   render: (_, log) =>
-    //     log.changes.length > 0 ? JSON.stringify(log.changes[0].oldValue) : "-",
-    // },
-    {
-      title: "Old Value",
-      dataIndex: "oldValue",
-      key: "oldValue",
-      render: (_, log) => {
-        const oldValue = log.entityType === "Card"
-          ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`
-          : "-";
-
-        const truncatedOldName = oldValue && oldValue.length > 14
-          ? `${oldValue.slice(0, 14)}...`
-          :
-          oldValue;
-        return (
-          <Tooltip title={oldValue}>
-            <span>{truncatedOldName}</span>
-          </Tooltip>
-        )
-      }
-    },
-    // {
-    //   title: "New Value",
-    //   dataIndex: "newValue",
-    //   key: "newValue",
-    //   render: (_, log) =>
-    //     log.changes.length > 0 ? JSON.stringify(log.changes[0].newValue) : "-",
-    // },
-    {
-      title: "New Value",
-      dataIndex: "newValue",
-      key: "newValue",
-     render: (_, log) => {
-      const newValue = log.entityType === "Card"
-      ? cards.find((c) => c.id === log.entityId)?.name || `#${log.entityId.slice(-6)}`:"-";
-
-      const truncatednewValue = newValue && newValue.length > 14 
-      ? `${newValue.slice(0,14)}...`
-      :newValue;
-
-      return(
-        <Tooltip title={newValue}>
-          <span>{truncatednewValue}</span>
-        </Tooltip>
-      )
-     },
-    }, 
-  ];
-
   return (
-    <div className="mx-10 mt-4">
-      <Card bordered={false} style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <Title level={4} style={{ fontWeight: 600 }}>
-            {" "}
-            {/* Semi-bold font */}
-            Audit Logs
-          </Title>
-          <Select
-            value={selectedProject}
-            onChange={handleProjectChange}
-            style={{ width: 200, fontWeight: 600 }}
-            placeholder="Select a Project"
-          >
-            <Option value="" disabled>
-              Select a Project
-            </Option>
-            {projects.map((project) => (
-              <Option key={project._id} value={project._id}>
-                {project.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      </Card>
+    <div className="h-auto  p-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-4">
+        <h1 className="text-2xl font-semibold">Audit Logs</h1>
+        <select
+          value={selectedProject}
+          onChange={handleProjectChange}
+          className="border border-gray-300 rounded-md p-2"
+        >
+          <option value="">Select a Project</option>
+          {projects.map((project) => (
+            <option key={project._id} value={project._id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {selectedProject ? (
-        <Card bordered={false}>
-          <Table
-            columns={columns}
-            dataSource={auditLogs.map((log) => ({
-              ...log,
-              key: log._id,
-            }))}
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Project Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Task Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Card Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action By
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Old Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  New Value
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {auditLogs.map((log) => (
+                <tr key={log._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {projects.find((p) => p._id === selectedProject)?.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === "Task" ? (
+                      log.taskName || `#${log.entityId.slice(-6)}`
+                    ) : (
+                      ""
+                    )}
+                  </td>
+
+                  {/* Card Name or ID */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === "Card" ? (
+                      log.cardName || `#${log.entityId.slice(-6)}`
+                    ) : (
+                      ""
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.performedBy}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(log.actionDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.actionType}
+                  </td>
+                  <td className="px-6 py-4  text-sm text-gray-500">
+                    {log.changes.length > 0 && (
+                      <div>
+                        {log.changes[0].field}:{" "}
+                        {JSON.stringify(log.changes[0].oldValue)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4  text-sm text-gray-500">
+                    {log.changes.length > 0 && (
+                      <div>
+                        {log.changes[0].field}:{" "}
+                        {JSON.stringify(log.changes[0].newValue)}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
-          <Title
-            level={5}
-            style={{ color: "#888", fontWeight: 600, fontSize: 25 }}
-          >
-            {" "}
-            {/* Semi-bold font */}
+        <div className="flex items-center justify-center h-40">
+          <p className="text-lg text-gray-600 font-bold animate-bounce">
             No project selected. Please select a project.
-          </Title>
+          </p>
         </div>
       )}
     </div>

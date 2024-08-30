@@ -1688,6 +1688,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
+        taskId:newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -1818,6 +1819,7 @@ app.put("/api/projects/:projectId/tasks/:taskId/move",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "move",
         actionDate: movedDate,
         performedBy: movedByUser.name, // Save the email of the user
@@ -1898,6 +1900,7 @@ app.delete("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "delete",
         actionDate: deletedDate,
         performedBy: deletedByUser.name, // Save the email of the user
@@ -1964,6 +1967,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "update",
         actionDate: updatedDate,
         performedBy: updatedByUser.name, // Save the email of the user
@@ -2807,8 +2811,7 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
 
 // Delete a card from a task
 
-app.delete(
-  "/api/tasks/:taskId/cards/:cardId",
+app.delete("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
     const { taskId, cardId } = req.params;
@@ -2850,6 +2853,7 @@ app.delete(
         performedBy: deletedByUser.name,
         projectId: task.project,
         taskId,
+        cardId,
         changes: [
           { field: "deletedBy", oldValue: null, newValue: deletedByUser.name },
           { field: "deletedDate", oldValue: null, newValue: deletedDate },

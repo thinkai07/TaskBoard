@@ -644,7 +644,7 @@ const RenameCardPage = () => {
                                 <Text>{cardData.projectName || 'N/A'}</Text>
                             </div>
                             <div className="mb-2 ">
-                                <Text strong>CardID:</Text>
+                                <Text strong>TaskID:</Text>
 
 
                                 <Text>{cardData.uniqueId || 'N/A'}</Text>

@@ -96,6 +96,11 @@ function KanbanBoard() {
     description: "",
     email: "",
   });
+  const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [emailError,setemailError] = useState('');
+  const [startDateError,setstartDateError] = useState('');
+  // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
   const [repository, setRepository] = useState("");
@@ -117,6 +122,12 @@ function KanbanBoard() {
   const [estimatedHours, setEstimatedHours] = useState(0);
   const [utilizedHours, setUtilizedHours] = useState(0);
   const [remainingHours, setRemainingHours] = useState(0);
+  const [endDate, setEndDate] = useState('');
+  const [endDateError, setEndDateerror] = useState('');
+  const [estimatedHoursError, setestimatedHoursError] = useState('');
+  const [description, setDescription] = useState(''); 
+  const [descriptionError, setdescriptionerror] = useState('');
+
 
   const { TextArea } = Input;
   const { Text, Title, Paragraph } = Typography;
@@ -146,7 +157,9 @@ function KanbanBoard() {
   };
 
 
-
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
+  };
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
@@ -1706,161 +1719,182 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              clearFieldsAndRefresh();
-            }
-          }}
-        >
-          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
-            <form onSubmit={handleAddCard}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+  <div
+    className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        clearFieldsAndRefresh();
+      }
+    }}
+  >
+    <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+      <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+      <form onSubmit={handleAddCard}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Card Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Card Title"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value.trimStart())}
+            />
+            {titleError && (
+              <p className="text-red-500 text-sm mt-1">{titleError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="assignedEmail"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Assigned (Email)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={handleEmailChange}
+              placeholder="Enter email address"
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            )}
+            {emailSuggestions.length > 0 && (
+              <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                {emailSuggestions.map((suggestion) => (
+                  <li
+                    key={suggestion.email}
+                    onClick={() => {
+                      setEmail(suggestion.email);
+                      setEmailSuggestions([]);
+                    }}
+                    className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
                   >
-                    Card Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Card Title"
-                    required
-                    onChange={(e) =>
-                      (e.target.value = e.target.value.trimStart())
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="assignedEmail"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Assigned (Email)
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    placeholder="Enter email address"
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {emailSuggestions.length > 0 && (
-                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                      {emailSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.email}
-                          onClick={() => {
-                            setEmail(suggestion.email);
-                            setEmailSuggestions([]);
-                          }}
-                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
-                        >
-                          {suggestion.email}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <label
-          htmlFor="assignDate"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          Start Date
-        </label>
-        <input
-          type="datetime-local"
-          name="assignDate"
-          required
-          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          min={new Date().toISOString().slice(0, 16)} // Disable past dates
-          value={startDate}
-          onChange={handleStartDateChange}
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="dueDate"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          End Date
-        </label>
-        <input
-          type="datetime-local"
-          name="dueDate"
-          required
-          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
-        />
-      </div>
-    </div>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="estimatedHours"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Estimated Hours
-                  </label>
-                  <input
-                    type="number"
-                    name="estimatedHours"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Estimated Hours"
-                    required
-                    min="0"
-                    step="0.1"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Card Description
-                  </label>
-                  <textarea
-                    name="description"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Card Description"
-                    required
-                    onChange={(e) =>
-                      (e.target.value = e.target.value.trimStart())
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={clearFieldsAndRefresh}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                >
-                  Add Card
-                </button>
-              </div>
-            </form>
+                    {suggestion.email}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="assignDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Start Date
+            </label>
+            <input
+              type="datetime-local"
+              name="assignDate"
+              required
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={new Date().toISOString().slice(0, 16)} // Disable past dates
+              value={startDate}
+              onChange={handleStartDateChange}
+            />
+            {startDateError && (
+              <p className="text-red-500 text-sm mt-1">{startDateError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="dueDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              End Date
+            </label>
+            <input
+              type="datetime-local"
+              name="dueDate"
+              required
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+              value={endDate}
+              onChange={handleEndDateChange}
+            />
+            {endDateError && (
+              <p className="text-red-500 text-sm mt-1">{endDateError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="estimatedHours"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Estimated Hours
+            </label>
+            <input
+              type="number"
+              name="estimatedHours"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Estimated Hours"
+              required
+              min="0"
+              step="0.1"
+              value={estimatedHours}
+              onChange={(e) => setEstimatedHours(e.target.value)}
+            />
+            {estimatedHoursError && (
+              <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Card Description
+            </label>
+            <textarea
+              name="description"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Card Description"
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value.trimStart())}
+            />
+            {descriptionError && (
+              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={clearFieldsAndRefresh}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+          >
+            Add Card
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
 
       {showDeleteConfirmation && (

@@ -1,4 +1,3 @@
-//projectspage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -10,8 +9,23 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { images as staticImages } from "../assets/Images";
 import dayjs from "dayjs";
-import { Card, Modal, Input, Button, DatePicker, Select, notification, Tooltip, Image, } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined, } from "@ant-design/icons";
+import {
+  Card,
+  Modal,
+  Input,
+  Button,
+  DatePicker,
+  Select,
+  notification,
+  Tooltip,
+  Image,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 import { FastAverageColor } from "fast-average-color";
 const { TextArea } = Input;
@@ -130,19 +144,19 @@ const Projects = () => {
               const color = await fac.getColorAsync(project.bgUrl.thumb);
               return {
                 ...project,
-                textColor: color.isDark ? 'white' : 'black',
+                textColor: color.isDark ? "white" : "black",
               };
             } catch (error) {
               console.error("Error calculating color:", error);
               return {
                 ...project,
-                textColor: 'black', // default color if there's an error
+                textColor: "black", // default color if there's an error
               };
             }
           }
           return {
             ...project,
-            textColor: 'black', // default color if there's no background image
+            textColor: "black", // default color if there's no background image
           };
         })
       );
@@ -197,7 +211,7 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-          name.toLowerCase().replace(/\s+/g, "") &&
+            name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -323,11 +337,11 @@ const Projects = () => {
           createdBy: createdBy,
           bgUrl: selectedImage
             ? {
-              raw: selectedImage.urls.raw,
-              thumb: selectedImage.urls.thumb,
-              full: selectedImage.urls.full,
-              regular: selectedImage.urls.regular,
-            }
+                raw: selectedImage.urls.raw,
+                thumb: selectedImage.urls.thumb,
+                full: selectedImage.urls.full,
+                regular: selectedImage.urls.regular,
+              }
             : null,
         },
         {
@@ -576,16 +590,17 @@ const Projects = () => {
             }}
           >
             <div className="flex justify-between items-center">
+             
                 <h3
                   className="font-bold truncate"
                   style={{
                     color: card.textColor,
-                    maxWidth: '80%'  // Limit width to allow space for ellipsis button
+                    maxWidth: "80%", // Limit width to allow space for ellipsis button
                   }}
                 >
                   {card.name}
                 </h3>
-              
+             
               {userRole !== "USER" && (
                 <button
                   className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
@@ -600,15 +615,17 @@ const Projects = () => {
                 </button>
               )}
             </div>
+        
               <p
                 className="truncate"
                 style={{
                   color: card.textColor,
-                  maxWidth: '100%'
+                  maxWidth: "100%",
                 }}
               >
                 {card.description}
               </p>
+         
             <div className="mt-2 flex justify-between items-center">
               <p
                 className=" rounded-md text-sm inline-block"
@@ -664,6 +681,7 @@ const Projects = () => {
           </Card>
         ))}
       </div>
+
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
@@ -671,160 +689,179 @@ const Projects = () => {
         onCancel={() => setAddProjectModalVisible(false)}
         width={700}
         bodyStyle={{
-          maxHeight: "70vh", 
-          overflowY: "auto", 
+          maxHeight: "70vh", // Limit the modal body height to 70% of the viewport height
+          overflowY: "auto", // Enable vertical scrolling within the modal body
         }}
       >
-        <Input
-          placeholder="Project Name"
-          value={newProject.name}
-          onChange={(e) =>
-            setNewProject((prev) => ({ ...prev, name: e.target.value }))
-          }
-          className={newCardErrors.name ? "border-red-500" : ""}
-        />
-        {newCardErrors.name && (
-          <p className="text-red-500">Project Name is required</p>
-        )}
-
-        <TextArea
-          placeholder="Project Description"
-          value={newProject.description}
-          onChange={(e) =>
-            setNewProject((prev) => ({ ...prev, description: e.target.value }))
-          }
-          className={`mt-4 ${newCardErrors.description ? "border-red-500" : ""
-            }`}
-        />
-        {newCardErrors.description && (
-          <p className="text-red-500">Project Description is required</p>
-        )}
-
-        <Select
-          className="mt-4 w-full"
-          placeholder="Select a Project Manager"
-          value={
-            newProject.projectManager.length > 0
-              ? newProject.projectManager
-              : null
-          }
-          onChange={handleProjectManagerChange}
-          onSearch={handleProjectManagerChange}
-          filterOption={false}
-          showSearch
-        >
-          {emailSuggestions.map((user) => (
-            <Option key={user._id} value={user.email}>
-              {user.email}
-            </Option>
-          ))}
-        </Select>
-        {newCardErrors.email && (
-          <p className="text-red-500">
-            Valid Project Manager email is required
-          </p>
-        )}
-        <DatePicker
-          className="mt-4 w-full"
-          placeholder="Start Date"
-          value={newProject.startDate ? dayjs(newProject.startDate) : null}
-          onChange={(date) =>
-            setNewProject((prev) => ({
-              ...prev,
-              startDate: date ? date.toDate() : null,
-            }))
-          }
-          disabledDate={(current) => {
-            // Disable past dates
-            return current && current < dayjs().startOf("day");
-          }}
-        />
-        {newCardErrors.startDate && (
-          <p className="text-red-500">Start Date is required</p>
-        )}
-
-        <Select
-          className="mt-4 w-full"
-          placeholder="Search and select a team"
-          value={newProject.teams}
-          onChange={(value) => {
-            setNewProject((prev) => ({ ...prev, teams: value }));
-            setTeamInputError(false);
-          }}
-          showSearch
-          filterOption={filterTeams}
-          optionFilterProp="children"
-          listHeight={120} 
-          maxTagCount={4} 
-          maxTagTextLength={20} 
-        >
-          {availableTeams.map((team) => (
-            <Option key={team._id} value={team._id}>
-              {team.name}
-            </Option>
-          ))}
-        </Select>
-        {teamInputError && (
-          <p className="text-red-500">At least one team is required</p>
-        )}
-
-        <div className="mt-4">
-          <h4>Select Background Image</h4>
-          <div className="flex flex-wrap justify-center items-center overflow-y-auto max-h-40">
-            {unsplashImages.map((image) => (
-              <div
-                key={image.id}
-                className={`m-2 cursor-pointer ${selectedImage === image ? "border-4 border-blue-500" : ""
-                  }`}
-                onClick={() => setSelectedImage(image)}
-              >
-                <Image
-                  src={image.urls.thumb}
-                  alt={image.alt_description}
-                  width={80}
-                  height={80}
-                  preview={false}
-                />
-              </div>
-            ))}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Input
+              placeholder="Project Name"
+              value={newProject.name}
+              onChange={(e) =>
+                setNewProject((prev) => ({ ...prev, name: e.target.value }))
+              }
+              className={newCardErrors.name ? "border-red-500" : ""}
+            />
+            {newCardErrors.name && (
+              <p className="text-red-500">Project Name is required</p>
+            )}
           </div>
-          {bgImageError && (
-            <p className="text-red-500">Background image is required</p>
-          )}
+
+          <div>
+            <TextArea
+              placeholder="Project Description"
+              value={newProject.description}
+              onChange={(e) =>
+                setNewProject((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              className={` ${
+                newCardErrors.description ? "border-red-500" : ""
+              }`}
+            />
+            {newCardErrors.description && (
+              <p className="text-red-500">Project Description is required</p>
+            )}
+          </div>
+
+          <div>
+            <Select
+              className="w-full"
+              placeholder="Select a Project Manager"
+              value={
+                newProject.projectManager.length > 0
+                  ? newProject.projectManager
+                  : null
+              }
+              onChange={handleProjectManagerChange}
+              onSearch={handleProjectManagerChange}
+              filterOption={false}
+              showSearch
+            >
+              {emailSuggestions.map((user) => (
+                <Option key={user._id} value={user.email}>
+                  {user.email}
+                </Option>
+              ))}
+            </Select>
+            {newCardErrors.email && (
+              <p className="text-red-500">
+                Valid Project Manager email is required
+              </p>
+            )}
+          </div>
+
+          <div>
+            <DatePicker
+              className="w-full"
+              placeholder="Start Date"
+              value={newProject.startDate ? dayjs(newProject.startDate) : null}
+              onChange={(date) =>
+                setNewProject((prev) => ({
+                  ...prev,
+                  startDate: date ? date.toDate() : null,
+                }))
+              }
+              disabledDate={(current) => {
+                // Disable past dates
+                return current && current < dayjs().startOf("day");
+              }}
+            />
+            {newCardErrors.startDate && (
+              <p className="text-red-500">Start Date is required</p>
+            )}
+          </div>
+
+          <div className="col-span-2">
+            <Select
+              className="w-full"
+              placeholder="Search and select a team"
+              value={newProject.teams}
+              onChange={(value) => {
+                setNewProject((prev) => ({ ...prev, teams: value }));
+                setTeamInputError(false);
+              }}
+              showSearch
+              filterOption={filterTeams}
+              optionFilterProp="children"
+              listHeight={120} // This sets the height of the dropdown list
+              maxTagCount={4} // This limits the number of visible selected tags
+              maxTagTextLength={20} // This truncates long team names in the tags
+            >
+              {availableTeams.map((team) => (
+                <Option key={team._id} value={team._id}>
+                  {team.name}
+                </Option>
+              ))}
+            </Select>
+            {teamInputError && (
+              <p className="text-red-500">At least one team is required</p>
+            )}
+          </div>
+
+          <div className="col-span-2 mt-4">
+            <h4>Select Background Image</h4>
+            <div className="flex flex-wrap justify-center items-center overflow-y-auto max-h-40">
+              {unsplashImages.map((image) => (
+                <div
+                  key={image.id}
+                  className={`m-2 cursor-pointer ${
+                    selectedImage === image ? "border-4 border-blue-500" : ""
+                  }`}
+                  onClick={() => setSelectedImage(image)}
+                >
+                  <Image
+                    src={image.urls.thumb}
+                    alt={image.alt_description}
+                    width={80}
+                    height={80}
+                    preview={false}
+                  />
+                </div>
+              ))}
+            </div>
+            {bgImageError && (
+              <p className="text-red-500">Background image is required</p>
+            )}
+          </div>
         </div>
       </Modal>
-      <Modal
-        title="Rename Project"
-        visible={renameDialogVisible}
-        onOk={handleSaveRename}
-        onCancel={() => setRenameDialogVisible(false)}
-      >
-        <Input
-          placeholder="Project Name"
-          value={renameInputValue}
-          onChange={(e) => {
-            setRenameInputValue(e.target.value);
-            setRenameInputError(false);
-          }}
-          className={renameInputError ? "border-red-500" : ""}
-        />
-        {renameInputError && (
-          <p className="text-red-500">Project Name is required</p>
-        )}
 
-        <TextArea
-          placeholder="Project Description"
-          value={descriptionInputValue}
-          onChange={(e) => {
-            setDescriptionInputValue(e.target.value);
-            setDescriptionInputError(false);
-          }}
-          className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
-        />
-        {descriptionInputError && (
-          <p className="text-red-500">Project Description is required</p>
-        )}
-      </Modal>
+      <Modal
+title="Rename Project"
+visible={renameDialogVisible}
+onOk={handleSaveRename}
+onCancel={() => setRenameDialogVisible(false)}
+>
+<Input
+  placeholder="Project Name"
+  value={renameInputValue}
+  onChange={(e) => {
+    setRenameInputValue(e.target.value.trimStart());
+    setRenameInputError(false);
+  }}
+  className={renameInputError ? "border-red-500" : ""}
+/>
+{renameInputError && (
+  <p className="text-red-500">Project Name is required</p>
+)}
+
+<TextArea
+  placeholder="Project Description"
+  value={descriptionInputValue}
+  onChange={(e) => {
+    setDescriptionInputValue(e.target.value.trimStart());
+    setDescriptionInputError(false);
+  }}
+  className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
+/>
+{descriptionInputError && (
+  <p className="text-red-500">Project Description is required</p>
+)}
+</Modal>
 
       <Modal
         title="Confirm Project Deletion"

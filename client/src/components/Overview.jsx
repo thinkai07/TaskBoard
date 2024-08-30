@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-
+import {Card} from 'antd'
 import { server } from '../constant';
 import useTokenValidation from './UseTockenValidation';
 
@@ -290,7 +290,7 @@ const defaultBarData = {
     <div style={{ padding: '24px', backgroundColor: '#f7fafc', fontWeight: '600' }}>
     <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
       {/* First Column - 4 Cards */}
-      <div style={{ flex: 0.45 }}>
+      <div style={{ flex: 0.65 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
             <div
@@ -300,7 +300,7 @@ const defaultBarData = {
                 borderRadius: '24px',
                 padding: '10px',
                 textAlign: 'center',
-                width: '50%',
+                width: '60%',
                 height: '140px',
               }}
             >
@@ -318,7 +318,7 @@ const defaultBarData = {
                 borderRadius: '24px',
                 padding: '10px',
                 textAlign: 'center',
-                width: '50%',
+                width: '60%',
                 height: '140px',
               }}
             >
@@ -338,7 +338,7 @@ const defaultBarData = {
                 borderRadius: '24px',
                 padding: '10px',
                 textAlign: 'center',
-                width: '50%',
+                width: '60%',
                 height: '140px',
               }}
             >
@@ -356,7 +356,7 @@ const defaultBarData = {
                 borderRadius: '24px',
                 padding: '10px',
                 textAlign: 'center',
-                width: '50%',
+                width: '60%',
                 height: '140px',
               }}
             >
@@ -367,31 +367,31 @@ const defaultBarData = {
       </div>
 
       {/* Second Column - User Details, Doughnut Chart, Bar Plot */}
-      <div style={{ flex: 0.55 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568' }}>User Details</h3>
-          <select
-            onChange={handleUserChange}
-            value={selectedUser || ''}
-            style={{ padding: '8px', fontSize: '16px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-          >
-            <option value="">Select a user</option>
-            {users.map((user) => (
-              <option key={user._id} value={user._id}>
-                {user.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ width: '100%' }}>
-            <Doughnut data={selectedUser ? data1 : defaultDoughnutData} options={options} />
-          </div>
-          <div style={{ width: '100%' }}>
-            <Bar data={selectedUser ? barData : defaultBarData} options={barOptions} />
-          </div>
-        </div>
-      </div>
+      <div style={{ flex: 0.35 }}>
+  <Card
+    style={{ width: '100%', padding: '16px',height:'300px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',borderRadius: '24px', }}
+    bodyStyle={{ padding: '0' }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568' }}>User Details</h3>
+      <select
+        onChange={handleUserChange}
+        value={selectedUser || ''}
+        style={{ padding: '8px', fontSize: '16px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+      >
+        <option value="">Select a user</option>
+        {users.map((user) => (
+          <option key={user._id} value={user._id}>
+            {user.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div style={{ width: '100%' }}>
+      <Doughnut data={selectedUser ? data1 : defaultDoughnutData} options={options} />
+    </div>
+  </Card>
+</div>
     </div>
 
     {/* Table Section */}

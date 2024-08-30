@@ -2208,6 +2208,12 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     });
     await newNotification.save();
 
+     // Send an email to the assigned user
+     const emailSubject = `You have been assigned a new task: "${name}"`;
+     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+     sendEmail(assignedTo, emailSubject, emailText);
+ 
+
     io.emit("cardCreated", { taskId, card: newCard });
 
 

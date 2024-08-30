@@ -245,8 +245,8 @@ const cardSchema = new Schema(
     movedDate: [{ type: Date }],
     deletedBy: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    activities:[{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
-    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs"}],
+    activities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
+    taskLogs: [{ type: Schema.Types.ObjectId, ref: "Tasklogs" }],
     estimatedHours: { type: Number, default: 0 },
     utilizedTime: [{ type: Number, default: 0 }],
     uniqueId: { type: String, unique: true, required: true }  // Add this field
@@ -1688,6 +1688,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
+        taskId:newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -1818,6 +1819,7 @@ app.put("/api/projects/:projectId/tasks/:taskId/move",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "move",
         actionDate: movedDate,
         performedBy: movedByUser.name, // Save the email of the user
@@ -1898,6 +1900,7 @@ app.delete("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "delete",
         actionDate: deletedDate,
         performedBy: deletedByUser.name, // Save the email of the user
@@ -1964,6 +1967,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "update",
         actionDate: updatedDate,
         performedBy: updatedByUser.name, // Save the email of the user
@@ -2143,6 +2147,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       dueDate,
       estimatedHours,
       task: taskId,
+    
       project: task.project,
       createdDate: new Date(),
       createdBy,
@@ -2157,6 +2162,26 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     if (!createdByUser) {
       return res.status(404).json({ message: "User not found for createdBy" });
     }
+
+    const newAuditLog = new AuditLog({
+            entityType: "Card",
+            entityId: newCard._id,
+            actionType: "create",
+            actionDate: new Date(),
+            performedBy: createdByUser.name,
+            projectId: task.project,
+            taskId: task._id,
+            cardId:newCard._id,
+            changes: [
+              { field: "name", oldValue: null, newValue: name },
+              { field: "estimatedHours", oldValue: null, newValue: estimatedHours }, // Log estimatedTime change
+              // Add other relevant changes if needed
+            ],
+          });
+      
+          await newAuditLog.save();
+      
+      
 
     const newActivity = new Activity({
       commentBy: createdByUser.name,
@@ -2186,7 +2211,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     io.emit("cardCreated", { taskId, card: newCard });
 
 
-    
+
     res.status(201).json({ message: "Card created successfully", card: newCard });
   } catch (error) {
     console.error("Error creating card:", error);
@@ -2329,7 +2354,8 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       actionDate: movedDate,
       performedBy: movedByUser.name,
       projectId: sourceTask.project, // Include projectId from source task
-      sourceTaskId,
+      taskId:sourceTaskId,
+      cardId,
       destinationTaskId,
       changes: [
         {
@@ -2395,7 +2421,6 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Card not found" });
       }
 
-      
       // Track changes
       const changes = [];
       if (name !== undefined && card.name !== name) {
@@ -2418,31 +2443,23 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         if (!card.updatedBy) {
           card.updatedBy = [];
         }
-        card.updatedBy.push(updatedBy);
+        if (!card.updatedBy.includes(updatedBy)) {
+          card.updatedBy.push(updatedBy);
+        }
       }
       if (updatedDate) {
         if (!card.updatedDate) {
           card.updatedDate = [];
         }
-        card.updatedDate.push(updatedDate);
-      }
-      if (updatedBy) {
-        if (!card.updatedBy) {
-          card.updatedBy = [];
+        if (!card.updatedDate.includes(updatedDate)) {
+          card.updatedDate.push(updatedDate);
         }
-        card.updatedBy.push(updatedBy);
-      }
-      if (updatedDate) {
-        if (!card.updatedDate) {
-          card.updatedDate = [];
-        }
-        card.updatedDate.push(updatedDate);
       }
 
       // Save the card
       await card.save();
 
-      // Create audit log entry for card update
+      // Create audit log entry for card update if there are changes
       if (changes.length > 0) {
         const newAuditLog = new AuditLog({
           entityType: "Card",
@@ -2452,19 +2469,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
           performedBy: updatedByUser.name,
           projectId: task.project,
           taskId: taskId,
-          changes: changes,
-        });
-        await newAuditLog.save();
-      }
-      if (changes.length > 0) {
-        const newAuditLog = new AuditLog({
-          entityType: "Card",
-          entityId: cardId,
-          actionType: "update",
-          actionDate: updatedDate,
-          performedBy: updatedByUser.name,
-          projectId: task.project,
-          taskId: taskId,
+          cardId:cardId,
           changes: changes,
         });
         await newAuditLog.save();
@@ -2503,7 +2508,6 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         return res.status(404).json({ message: "Assigned user not found" });
       }
 
-     
       const notificationMessage = ` has renamed the task "${card.name}" to "${name}" on Project "${project.name}"`;
 
       const newNotification = new Notification({
@@ -2532,6 +2536,9 @@ app.put("/api/tasks/:taskId/cards/:cardId",
     }
   }
 );
+
+
+
 //sending the comments to through this api
 app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
@@ -2573,47 +2580,6 @@ app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
 });
 
 
-
-app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
-  const { cardId } = req.params;
-  const { comment } = req.body;
-  const userEmail = req.user.email; // Assuming the token has the user's email
-
-  try {
-    // Find the user by email
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Find the card by ID
-    const card = await Card.findById(cardId);
-    if (!card) {
-      return res.status(404).json({ message: "Card not found" });
-    }
-
-    // Create a new comment
-    const newComment = new Comment({
-      comment,
-      commentBy: user.name,
-      card: card._id,
-    });
-
-    // Save the comment
-    await newComment.save();
-
-    // Add the comment to the card's comments array
-    card.comments.push(newComment._id);
-    await card.save();
-
-    res.status(201).json({ message: "Comment added successfully", comment: newComment });
-  } catch (error) {
-    console.error("Error saving comment:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// Get cards with comments
 app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
 
@@ -2845,8 +2811,7 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
 
 // Delete a card from a task
 
-app.delete(
-  "/api/tasks/:taskId/cards/:cardId",
+app.delete("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
     const { taskId, cardId } = req.params;
@@ -2888,6 +2853,7 @@ app.delete(
         performedBy: deletedByUser.name,
         projectId: task.project,
         taskId,
+        cardId,
         changes: [
           { field: "deletedBy", oldValue: null, newValue: deletedByUser.name },
           { field: "deletedDate", oldValue: null, newValue: deletedDate },
@@ -3042,6 +3008,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
       performedBy: updatedByUser.name,
       projectId: card.project, // Include projectId in the audit log
       taskId: card.task, // Include taskId in the audit log
+      cardId,
       changes: [{ field: "status", oldValue: oldStatus, newValue: status }],
     });
 
@@ -3993,75 +3960,6 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
 });
 
 
-// app.get("/api/calendar/:organizationId",
-//   authenticateToken,
-//   async (req, res) => {
-//     const { organizationId } = req.params;
-//     const userEmail = req.user.email;
-//     const userRole = req.user.role;
-
-//   try {
-//     let assignedCards;
-//     if (userRole === "ADMIN") {
-//       assignedCards = await Card.find()
-//         .populate({
-//           path: "project",
-//           match: { organization: organizationId },
-//           select: "_id name projectManager",
-//         })
-//         .populate("task", "name");
-//     } else {
-//       // Find projects where the user is the project manager
-//       const managedProjects = await Project.find({
-//         organization: organizationId,
-//         projectManager: userEmail,
-//       }).select("_id");
-
-//       const managedProjectIds = managedProjects.map((project) => project._id);
-
-//       assignedCards = await Card.find({
-//         $or: [
-//           { assignedTo: userEmail },
-//           { project: { $in: managedProjectIds } },
-//         ],
-//       })
-//         .populate({
-//           path: "project",
-//           match: { organization: organizationId },
-//           select: "_id name projectManager",
-//         })
-//         .populate("task", "name");
-//     }
-
-//     const events = assignedCards
-//       .filter((card) => card.project && card.task)
-//       .flatMap((card) => [
-//         {
-//           id: `${card._id}-assign`,
-//           date: card.assignDate,
-//           projectId: card.project._id,
-//           projectName: card.project.name,
-//           taskId: card.task._id,
-//           taskName: card.task.name,
-//           cardId: card._id,
-//           cardName: card.name,
-//           assignedTo: card.assignedTo,
-//           createdDate: card.createdDate,
-//           status: card.status,
-//           type: "Assign Date",
-//           estimatedHours:card.estimatedHours,
-//         },
-//       ])
-//       .filter((event) => event.date);
-
-//     res.json(events);
-//   } catch (error) {
-//     console.error("Error retrieving calendar data:", error);
-//     res.status(500).json({ message: "Error retrieving calendar data" });
-//   }
-// }
-// );
-
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -4070,7 +3968,10 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
         { projectId }, // Project-related actions
         { entityId: projectId, entityType: "Project" }, // Specific project actions
       ],
-    }).populate("performedBy", "name email");
+    })
+      .populate("performedBy", "name email")
+      .populate("taskId", "name") // Populate the task name
+      .populate("cardId", "name"); // Populate the card name
 
     if (!auditLogs || auditLogs.length === 0) {
       return res
@@ -4079,11 +3980,37 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
     }
 
     res.status(200).json(auditLogs);
+    console.log(auditLogs)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
+
+// app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
+//   try {
+//     const { projectId } = req.params;
+//     const auditLogs = await AuditLog.find({
+//       $or: [
+//         { projectId }, // Project-related actions
+//         { entityId: projectId, entityType: "Project" }, // Specific project actions
+//       ],
+//     }).populate("performedBy", "name email");
+
+//     if (!auditLogs || auditLogs.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "No audit logs found for this project" });
+//     }
+
+//     res.status(200).json(auditLogs);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
 app.get("/api/protected", authenticateToken, (req, res) => {
   res.json({ message: "This is a protected endpoint!", user: req.user });

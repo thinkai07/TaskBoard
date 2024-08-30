@@ -37,7 +37,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-import RenameCardPage from "../Pages/RenameCardPage";
+  
 import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
@@ -125,6 +125,12 @@ function KanbanBoard() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
+
+  const [startDate, setStartDate] = useState('');
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
   const showAboutModal = () => {
     setAboutModalVisible(true);
   };
@@ -1419,7 +1425,7 @@ function KanbanBoard() {
 
   return (
     <div
-      className="overflow-y-auto  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl"
+      className="  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl "
       style={
         bgUrl
           ? {
@@ -1764,35 +1770,40 @@ function KanbanBoard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="assignDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Start Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="assignDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="dueDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    End Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="dueDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+      <div>
+        <label
+          htmlFor="assignDate"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Start Date
+        </label>
+        <input
+          type="datetime-local"
+          name="assignDate"
+          required
+          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min={new Date().toISOString().slice(0, 16)} // Disable past dates
+          value={startDate}
+          onChange={handleStartDateChange}
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="dueDate"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          End Date
+        </label>
+        <input
+          type="datetime-local"
+          name="dueDate"
+          required
+          className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+        />
+      </div>
+    </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>

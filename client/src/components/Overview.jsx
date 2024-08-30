@@ -13,8 +13,8 @@ import {
 } from "chart.js";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { DownOutlined } from "@ant-design/icons";
-import { Dropdown, Menu, Select } from "antd";
+import { DownOutlined, SearchOutlined } from "@ant-design/icons";
+import { Dropdown, Menu, Select, Input, message } from "antd";
 import { Button } from "antd";
 import { AiOutlineProject } from "react-icons/ai";
 import { FaSpinner, FaTasks } from "react-icons/fa";
@@ -43,6 +43,7 @@ const Overview = () => {
     projects: [],
   });
   const [users, setUsers] = useState([]);
+  const [card, setCard] = useState(null);
   const [statusCounts, setStatusCounts] = useState({
     pending: 0,
     inProgress: 0,
@@ -212,10 +213,10 @@ const Overview = () => {
         label: "User Cards Overview",
         data: totalCardCount
           ? [
-              userCardCounts.pending,
-              userCardCounts.inprogress,
-              userCardCounts.completed,
-            ]
+            userCardCounts.pending,
+            userCardCounts.inprogress,
+            userCardCounts.completed,
+          ]
           : [1],
         backgroundColor: totalCardCount
           ? ["#f7665a", " #efe152", "#10b981"]
@@ -253,6 +254,33 @@ const Overview = () => {
   const pendingData = months.map((month) => groupedData[month].pending);
   const inprogressData = months.map((month) => groupedData[month].inprogress);
   const completedData = months.map((month) => groupedData[month].completed);
+
+  const { Search } = Input;
+
+  // const barData = {
+  //   labels: months,
+  //   datasets: [
+  //     {
+  //       label: 'Pending',
+  //       data: pendingData,
+  //       backgroundColor: '#f7665a',
+
+  //     },
+  //     {
+  //       label: 'In-Progress',
+  //       data: inprogressData,
+  //       backgroundColor: '#efe152',
+
+  //     },
+  //     {
+  //       label: 'Completed',
+  //       data: completedData,
+  //       backgroundColor: '#10b981',
+
+  //     },
+  //   ],
+  // };
+
   const barData = {
     labels: months,
     datasets: [
@@ -353,6 +381,23 @@ const Overview = () => {
     );
   }
 
+  const handleSearch = async (value) => {
+    try {
+      const response = await axios.get(`${server}/api/cards/search`, {
+
+        params: {
+          uniqueId: value,
+        },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setCard(response.data.card); // Set the card data to the state
+    } catch (error) {
+      console.error("Error searching card:", error);
+      message.error("Card not found or an error occurred.");
+    }
+  };
+
+
   return (
     <div
       style={{
@@ -395,6 +440,7 @@ const Overview = () => {
             <DownOutlined style={{ position: "absolute", right: "8px" }} />
           </a>
         </Dropdown>
+
       </div>
       <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
         <div style={{ flex: 3 }}>
@@ -566,8 +612,8 @@ const Overview = () => {
                             (e.currentTarget.style.backgroundColor = "#edf2f7")
                           }
                           onMouseOut={(e) =>
-                            (e.currentTarget.style.backgroundColor =
-                              index % 2 === 0 ? "#f7fafc" : "white")
+                          (e.currentTarget.style.backgroundColor =
+                            index % 2 === 0 ? "#f7fafc" : "white")
                           }
                         >
                           <td

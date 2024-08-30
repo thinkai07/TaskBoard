@@ -64,7 +64,7 @@ const Calendar = () => {
           }
         );
         setEvents(response.data);
-        console.log("projectid",response.data)
+        console.log("projectid", response.data)
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -230,21 +230,19 @@ const Calendar = () => {
             (event) => dayjs(event.date).format("YYYY-MM-DD") === formattedDate
           );
           const hasEvents = eventsForDay.length > 0;
-          
+
 
           return (
             <div
               key={formattedDate}
-              className={`border p-2 rounded-lg ${
-                isToday ? "bg-blue-100" : "bg-white"
-              } shadow-md hover:bg-blue-200 cursor-pointer`}
+              className={`border p-2 rounded-lg ${isToday ? "bg-blue-100" : "bg-white"
+                } shadow-md hover:bg-blue-200 cursor-pointer`}
               onClick={() => handleDateClick(formattedDate)}
               title={hasEvents ? "" : "No tasks on this date"}
             >
               <div
-                className={`font-medium ${
-                  isToday ? "text-blue-600" : "text-gray-800"
-                }`}
+                className={`font-medium ${isToday ? "text-blue-600" : "text-gray-800"
+                  }`}
               >
                 {dayjs(date).format("D")}
               </div>
@@ -258,3 +256,15 @@ const Calendar = () => {
 };
 
 export default Calendar;
+
+
+
+
+
+
+
+
+
+
+
+

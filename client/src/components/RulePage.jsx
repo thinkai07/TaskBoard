@@ -21,6 +21,7 @@ import {
   Space,
   Dropdown,
   Menu,
+  message,
 } from "antd";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
@@ -28,6 +29,7 @@ import useTokenValidation from "./UseTockenValidation";
 
 const { Option } = Select;
 const { Step } = Steps;
+
 const { Title, Text } = Typography;
 
 const TriggerOption = ({ icon: Icon, label, isSelected, onClick }) => (
@@ -139,16 +141,57 @@ function RulesButton({ tasks }) {
     setSelectedTrigger(trigger);
   };
 
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
   const handleAddButtonClick = () => {
+    if (isButtonDisabled) return; // Prevent multiple clicks
+
+    if (
+      selectedTrigger === "Card Move" &&
+      (!triggerCondition || !createdByCondition)
+    ) {
+      setIsButtonDisabled(true);
+      message.warning(
+        "Please select all required fields before adding the trigger."
+      );
+      setTimeout(() => setIsButtonDisabled(false), 3000); // Re-enable after 2 seconds
+      return;
+    }
+
+    // Proceed with adding the trigger if validation passes
     setTriggerAdded(true);
     setActionStep(true);
     setCurrentStep(1);
   };
 
+  const [isActionButtonDisabled, setIsActionButtonDisabled] = useState(false);
+
   const handleAddActionClick = () => {
+    if (isActionButtonDisabled) return; // Prevent multiple clicks
+
+    if (selectedAction === "Move to List" && !moveToList) {
+      setIsActionButtonDisabled(true);
+      message.warning("Please select a column to move the task.");
+      setTimeout(() => setIsActionButtonDisabled(false), 3000); // Re-enable after 2 seconds
+      return;
+    }
+
+    // Proceed with adding the action if validation passes
     setActionAdded(true);
     setCurrentStep(2);
   };
+  // const handleAddButtonClick = () => {
+  //   if (
+  //     selectedTrigger === "Card Move" &&
+  //     (!triggerCondition || !createdByCondition)
+  //   ) {
+  //     message.warning("Please select all required fields before adding the trigger.");
+  //     return;
+  //   }
+
+  //   // Proceed with adding the trigger
+  //   // Your existing code for handling the trigger addition
+  // };
 
   const handleBack = () => {
     if (currentStep === 1) {
@@ -305,7 +348,7 @@ function RulesButton({ tasks }) {
               {rules.map((rule, index) => (
                 <Card
                   key={index}
-                  className="w-full h-12 flex items-center justify-between"
+                  className="w-full h-12 relative flex items-center justify-between"
                 >
                   <div className="flex flex-grow items-center overflow-hidden">
                     <Text strong className="truncate mr-2">
@@ -314,12 +357,13 @@ function RulesButton({ tasks }) {
                     <Text className="truncate">
                       {rule.actionSentence || "No action sentence"}
                     </Text>
+                  </div>
+                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
                     <Button
                       icon={<DeleteOutlined />}
                       onClick={() => openDeleteConfirmation(rule._id)}
                       type="text"
                       danger
-                      className="ml-96 flex justify-end"
                     />
                   </div>
                 </Card>
@@ -356,7 +400,6 @@ function RulesButton({ tasks }) {
                     onClick={() => handleTriggerSelect("Card Changes")}
                   />
                 </Space>
-                {/* <Card size="small" className="mt-4"> */}
                 {selectedTrigger === "Card Move" && (
                   <Card size="small" className="mt-4">
                     <Space direction="vertical" size="small" className="w-full">
@@ -366,6 +409,7 @@ function RulesButton({ tasks }) {
                           value={triggerCondition}
                           onChange={setTriggerCondition}
                           className="w-32"
+                          placeholder="Select status"
                         >
                           {cardStatuses.map((status) => (
                             <Option key={status} value={status.toLowerCase()}>
@@ -377,6 +421,7 @@ function RulesButton({ tasks }) {
                           value={createdByCondition}
                           onChange={setCreatedByCondition}
                           className="w-40"
+                          placeholder="Select creator"
                         >
                           <Option value="by me">by me</Option>
                           <Option value="by anyone">by anyone</Option>
@@ -391,13 +436,18 @@ function RulesButton({ tasks }) {
                     </Space>
                   </Card>
                 )}
-                {/* </Card> */}
-                <Space className="mt-4 flex justify-between">
-                  <Button type="primary" onClick={handleAddButtonClick}>
-                    Add Trigger
-                  </Button>
-                  <Button onClick={() => setShowTriggers(false)}>Back</Button>
-                </Space>
+                {selectedTrigger && (
+                  <Space className="mt-4 flex justify-between">
+                    <Button
+                      type="primary"
+                      onClick={handleAddButtonClick}
+                      disabled={isButtonDisabled}
+                    >
+                      Add Trigger
+                    </Button>
+                    <Button onClick={() => setShowTriggers(false)}>Back</Button>
+                  </Space>
+                )}
               </Space>
             )}
           </div>
@@ -433,6 +483,7 @@ function RulesButton({ tasks }) {
                 </Button>
               </Space>
             </Space>
+
             {selectedAction && (
               <div>
                 {selectedAction === "Move to List" && (
@@ -450,6 +501,7 @@ function RulesButton({ tasks }) {
                         value={moveToList}
                         onChange={setMoveToList}
                         className="mb-4 mt-2"
+                        placeholder="Select a column"
                       >
                         {tasks.map((task) => (
                           <Option key={task.id} value={task.name}>
@@ -475,13 +527,14 @@ function RulesButton({ tasks }) {
                 )}
               </div>
             )}
+
             <div className="mt-8 flex justify-between items-center">
               <div>
                 {selectedAction && (
                   <Button
                     type="primary"
                     onClick={handleAddActionClick}
-                    className="mr-4"
+                    disabled={isActionButtonDisabled}
                   >
                     Add Action
                   </Button>

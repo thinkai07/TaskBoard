@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Layout, Select, Table, Typography, Space } from "antd";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { Select, Table, Typography, Card } from "antd";
 
-const { Option } = Select;
+const { Content } = Layout;
 const { Title } = Typography;
+const { Option } = Select;
 
 const AuditLog = () => {
   useTokenValidation();
@@ -16,6 +17,7 @@ const AuditLog = () => {
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const { Title, Text } = Typography;
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -63,7 +65,6 @@ const AuditLog = () => {
       );
       setTasks(tasksResponse.data.tasks);
 
-      // Fetch cards for all tasks
       const cardsPromises = tasksResponse.data.tasks.map((task) =>
         axios.get(`${server}/api/tasks/${task.id}/cards`, {
           headers: {
@@ -91,21 +92,28 @@ const AuditLog = () => {
           },
         }
       );
-      // Sort logs by actionDate in descending order
-      const sortedLogs = response.data.sort(
+
+      const logsWithNames = response.data.map((log) => ({
+        ...log,
+        taskName: log.taskId ? log.taskId.name : null,
+        cardName: log.cardId ? log.cardId.name : null,
+      }));
+
+      const sortedLogs = logsWithNames.sort(
         (a, b) => new Date(b.actionDate) - new Date(a.actionDate)
       );
+
       setAuditLogs(sortedLogs);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
     }
   };
 
-  const handleProjectChange = (value) => {
-    setSelectedProject(value);
-    if (value) {
-      fetchTasksAndCards(value);
-      fetchAuditLogs(value);
+  const handleProjectChange = (projectId) => {
+    setSelectedProject(projectId);
+    if (projectId) {
+      fetchTasksAndCards(projectId);
+      fetchAuditLogs(projectId);
     } else {
       setTasks([]);
       setCards([]);
@@ -114,118 +122,152 @@ const AuditLog = () => {
   };
 
   const columns = [
+    // {
+    //   title: "Project Name",
+    //   dataIndex: "projectName",
+    //   key: "projectName",
+    //   render: () => projects.find((p) => p._id === selectedProject)?.name,
+    // },
     {
       title: "Project Name",
       dataIndex: "projectName",
       key: "projectName",
-      render: () =>
-        projects.find((p) => p._id === selectedProject)?.name || "-",
+      render: () => (
+        <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+          {projects.find((p) => p._id === selectedProject)?.name}
+        </div>
+      ),
     },
-    {
-      title: "Column Name",
-      dataIndex: "columnName",
-      key: "columnName",
-      render: (_, log) =>
-        log.entityType === "Task"
-          ? tasks.find((t) => t.id === log.entityId)?.name ||
-            `#${log.entityId.slice(-6)}`
-          : "-",
-    },
+    // {
+    //   title: "Task Name",
+    //   dataIndex: "taskName",
+    //   key: "taskName",
+    //   render: (_, record) => 
+    //     (record.entityType === "Task" || record.entityType === "Card") &&
+    //     (record.taskName || record.cardName || `#${record.entityId.slice(-6)}`),
+    // },
     {
       title: "Task Name",
       dataIndex: "taskName",
       key: "taskName",
-      render: (_, log) =>
-        log.entityType === "Card"
-          ? cards.find((c) => c.id === log.entityId)?.name ||
-            `#${log.entityId.slice(-6)}`
-          : "-",
+      render: (_, record) => (
+        (record.entityType === "Task" || record.entityType === "Card") && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.taskName || record.cardName || `#${record.entityId.slice(-6)}`}
+          </div>
+        )
+      ),
     },
+    // {
+    //   title: "Card Name",
+    //   dataIndex: "cardName",
+    //   key: "cardName",
+    //   render: (_, record) =>
+    //     record.entityType === "Card" &&
+    //     (record.cardName || `#${record.entityId.slice(-6)}`),
+    // },
+    {
+      title: "Card Name",
+      dataIndex: "cardName",
+      key: "cardName",
+      render: (_, record) => (
+        record.entityType === "Card" && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.cardName || `#${record.entityId.slice(-6)}`}
+          </div>
+        )
+      ),
+    },
+
     {
       title: "Action By",
       dataIndex: "performedBy",
       key: "performedBy",
-      render: (text) => text || "-",
     },
     {
       title: "Activity Date",
       dataIndex: "actionDate",
       key: "actionDate",
-      render: (text) => (text ? new Date(text).toLocaleDateString() : "-"),
+      render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Activity",
       dataIndex: "actionType",
       key: "actionType",
-      render: (text) => text || "-",
     },
+    // {
+    //   title: "Old Value",
+    //   dataIndex: "oldValue",
+    //   key: "oldValue",
+    //   render: (_, record) =>
+    //     record.changes.length > 0 && (
+    //       <div>
+    //         {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
+    //       </div>
+    //     ),
+    // },
     {
       title: "Old Value",
       dataIndex: "oldValue",
       key: "oldValue",
-      render: (_, log) =>
-        log.changes.length > 0 ? JSON.stringify(log.changes[0].oldValue) : "-",
+      render: (_, record) =>
+        record.changes.length > 0 && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
+          </div>
+        ),
     },
     {
       title: "New Value",
       dataIndex: "newValue",
       key: "newValue",
-      render: (_, log) =>
-        log.changes.length > 0 ? JSON.stringify(log.changes[0].newValue) : "-",
+      render: (_, record) =>
+        record.changes.length > 0 && (
+          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            {record.changes[0].field}: {JSON.stringify(record.changes[0].newValue)}
+          </div>
+        ),
     },
   ];
 
   return (
-    <div className="mx-10 mt-4">
-      <Card bordered={false} style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <Title level={4} style={{ fontWeight: 600 }}>
-            {" "}
-            {/* Semi-bold font */}
-            Audit Logs
-          </Title>
-          <Select
-            value={selectedProject}
-            onChange={handleProjectChange}
-            style={{ width: 200, fontWeight: 600 }}
-            placeholder="Select a Project"
-          >
-            <Option value="" disabled>
-              Select a Project
-            </Option>
-            {projects.map((project) => (
-              <Option key={project._id} value={project._id}>
-                {project.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      </Card>
+    <Layout>
+      <Content style={{ padding: "24px", backgroundColor: "white" }}>
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Title level={4}>Audit Logs</Title>
+            <Select
+              style={{ width: 200 }}
+              placeholder="Select a Project"
+              onChange={handleProjectChange}
+              value={selectedProject}
+            >
+              <Option value="">Select a Project</Option>
+              {projects.map((project) => (
+                <Option key={project._id} value={project._id}>
+                  {project.name}
+                </Option>
+              ))}
+            </Select>
+          </div>
 
-      {selectedProject ? (
-        <Card bordered={false}>
-          <Table
-            columns={columns}
-            dataSource={auditLogs.map((log) => ({
-              ...log,
-              key: log._id,
-            }))}
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
-      ) : (
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
-          <Title
-            level={5}
-            style={{ color: "#888", fontWeight: 600, fontSize: 25 }}
-          >
-            {" "}
-            {/* Semi-bold font */}
-            No project selected. Please select a project.
-          </Title>
-        </div>
-      )}
-    </div>
+          {selectedProject ? (
+            <Table
+              columns={columns}
+              dataSource={auditLogs}
+              rowKey="_id"
+              pagination={{ pageSize: 8 }}
+            />
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <Text strong style={{ fontSize: 18 }}>
+                No project selected. Please select a project.
+              </Text>
+            </div>
+          )}
+        </Space>
+      </Content>
+    </Layout>
   );
 };
 

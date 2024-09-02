@@ -887,7 +887,7 @@ app.post("/api/login", async (req, res) => {
             organizationId: user.organization._id,
           },
           secretKey,
-          { expiresIn: "1h" } // Token expires in 1 hour
+          { expiresIn: "5h" } // Token expires in 1 hour
         );
         res.json({ success: true, token });
       } else {

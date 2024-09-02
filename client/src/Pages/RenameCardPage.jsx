@@ -65,10 +65,10 @@ const RenameCardPage = () => {
     const [userEmail, setUserEmail] = useState("");
     const [userProfile, setUserProfile] = useState({ name: "", avatar: "" });
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [userRole, setUserRole] = useState("");
+ 
 
-    // Fetch card details on component mount
     useEffect(() => {
-        // Fetch the logged-in user's profile data
         const fetchUserProfile = async () => {
             try {
                 const response = await axios.get(`${server}/api/user`, {
@@ -78,8 +78,10 @@ const RenameCardPage = () => {
                 });
 
                 if (response.data.success) {
-                    const { name, email } = response.data.user;
+                    const { name, email, role } = response.data.user;
                     setUserProfile({ name, email, avatar: name.charAt(0).toUpperCase() });
+                    setUserEmail(email);
+                    setUserRole(role);
                 } else {
                     console.error("Error fetching user profile:", response.data.message);
                 }
@@ -89,7 +91,9 @@ const RenameCardPage = () => {
         };
 
         fetchUserProfile();
-    }, [server]);
+        fetchCardDetails();
+    }, [cardId]);
+
 
     const fetchCardDetails = async () => {
         try {
@@ -115,6 +119,9 @@ const RenameCardPage = () => {
                         (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
                     taskName,
                     projectName: cardData.project.name,
+                    projectManager: cardData.project.projectManager, // Include projectManager
+                    organization: cardData.project.organization, // Include organizationId
+               
                 });
             } else {
                 console.error("Card not found");
@@ -123,6 +130,8 @@ const RenameCardPage = () => {
             console.error("Error fetching card details:", error);
         }
     };
+     
+   
 
     useEffect(() => {
         fetchCardDetails();
@@ -364,7 +373,7 @@ const RenameCardPage = () => {
         }
     };
 
-
+    const canDeleteCard = userRole === "admin" || userEmail === cardData.projectManager;
     const items = [
         {
             key: "1",
@@ -676,14 +685,16 @@ const RenameCardPage = () => {
                                 </Text>
                             </div>
                             <div className="mb-4">
-                                <Button
-                                    type="primary"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    onClick={handleDeleteCard}
-                                >
-                                    Delete Card
-                                </Button>
+                            {canDeleteCard && (
+    <Button
+        type="primary"
+        danger
+        icon={<DeleteOutlined />}
+        onClick={handleDeleteCard}
+    >
+        Delete Card
+    </Button>
+)}
                             </div>
                             <Modal
                                 title="Confirm Delete"

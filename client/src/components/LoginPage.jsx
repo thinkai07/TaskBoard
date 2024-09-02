@@ -197,24 +197,34 @@ const LoginPage = ({ onLogin }) => {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 w-24 h-10 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105"
-                type="submit"
-                disabled={loading} // Disable button when loading
-              >
-                {loading ? (
-                  <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                ) : (
-                  "Login"
-                )}
-              </button>
-              <a
-                className="inline-block align-baseline font-semibold text-sm text-blue-500 hover:text-blue-800"
-                href="/Organization"
-              >
-                Register ?
-              </a>
-            </div>
+  <button
+    className="bg-blue-500 hover:bg-blue-700 w-24 h-10 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105"
+    type="submit"
+    disabled={loading} // Disable button when loading
+  >
+    {loading ? (
+      <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+    ) : (
+      "Login"
+    )}
+  </button>
+  <a
+    className="inline-block align-baseline font-semibold text-sm text-blue-500 hover:text-blue-800"
+    href="/Organization"
+  >
+    Register ?
+  </a>
+</div>
+<div className="mt-4 text-center">
+  <a
+    href="#"
+    className="text-sm text-blue-500 hover:text-blue-800"
+    onClick={() => navigate("/forgot-password")}
+  >
+    Forgot Password?
+  </a>
+</div>
+
           </form>
         </div>
         <div

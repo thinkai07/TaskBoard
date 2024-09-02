@@ -32,6 +32,7 @@ const RenameCardPage = () => {
     // State for storing card details
     const [cardData, setCardData] = useState({
         projectName: "",
+        projectManager:"",
         name: "",
         description: "",
         projectName: "",
@@ -105,24 +106,30 @@ const RenameCardPage = () => {
                     },
                 }
             );
-
+    
             // Destructure taskName and cards from the response
             const { taskName, cards } = response.data;
-
+    
             // Find the specific card by `cardId` within the cards array
             const cardData = cards.find((card) => card.id === cardId);
-
+    
             if (cardData) {
+                // Extract projectManager from cardData
+                const projectManager = cardData.project.projectManager;
+    
+                // Set the card data state with the necessary details
                 setCardData({
                     ...cardData,
                     remainingHours:
                         (cardData.estimatedHours || 0) - (cardData.utilizedHours || 0),
                     taskName,
                     projectName: cardData.project.name,
-                    projectManager: cardData.project.projectManager, // Include projectManager
+                    projectManager, // Include projectManager
                     organization: cardData.project.organization, // Include organizationId
-               
                 });
+    
+                // Log or use the projectManager variable if needed
+                console.log("Project Manager:", projectManager);
             } else {
                 console.error("Card not found");
             }
@@ -130,6 +137,7 @@ const RenameCardPage = () => {
             console.error("Error fetching card details:", error);
         }
     };
+    
      
    
 
@@ -373,7 +381,8 @@ const RenameCardPage = () => {
         }
     };
 
-    const canDeleteCard = userRole === "admin" || userEmail === cardData.projectManager;
+    const canDeleteCard = userRole === "ADMIN" || userEmail === cardData.projectManager;
+    
     const items = [
         {
             key: "1",

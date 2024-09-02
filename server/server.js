@@ -1094,6 +1094,90 @@ app.post("/resetPassword", async (req, res) => {
   }
 });
 
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
+    }
+
+    // Generate a JWT token for password reset (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { email: user.email, userId: user._id },
+      secretKey,
+      { expiresIn: "1h" }
+    );
+
+    // Save the token in the user document (optional, for reference)
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+    await user.save();
+
+    // Create the reset link using the JWT token
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+    // Set up email options
+    const mailOptions = {
+      to: user.email,
+      from: 'thinkailabs111@gmail.com',
+      subject: "Password Reset",
+      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+      Please click on the following link, or paste this into your browser to complete the process:\n\n
+      ${resetLink}\n\n
+      If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+    };
+
+    // Send the email with the reset link
+    transporter.sendMail(mailOptions, (err) => {
+      if (err) {
+        console.error("Error sending email:", err);
+        return res.status(500).json({ message: "Error sending email." });
+      }
+      res.json({ message: "Reset password link sent successfully." });
+    });
+  } catch (error) {
+    console.error("Error during forgot password process:", error);
+    res.status(500).json({ message: "Error processing request." });
+  }
+});
+
+// Update password 
+app.post('/api/users/:id/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify the current password (Assuming you are using bcrypt)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  } 
+}); 
+
+
 //projects
 // Function to send emails
 const sendEmail = (email, subject, text) => {

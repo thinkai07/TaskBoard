@@ -6,7 +6,7 @@ import { server } from '../constant';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
-const ResetPage = () => {
+const ResetForgotPassword= () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,11 +44,12 @@ const ResetPage = () => {
     try {
       await axios.post(`${server}/resetPassword`, { token, newPassword: password });
       setSuccess('Password reset successfully');
-
+      setError(''); // Clear previous errors
       window.location.href = '/login';
     } catch (err) {
-      setError(error);
+      setError(err.response?.data?.message || 'An error occurred. Please try again.');
     }
+    
   };
 
 
@@ -57,18 +58,18 @@ const ResetPage = () => {
       <div className="flex flex-col w-full md:w-3/5 items-center h-4/5 bg-white shadow-md rounded-3xl p-8 md:flex-row">
         <div className="md:w-1/2 md:pr-8">
           <div className="flex justify-left items-left">
-            <h1 className="text-4xl font-semibold mb-6 text-gray-700 text-center">Create Your Password</h1>
+            <h1 className="text-4xl font-semibold mb-6 text-gray-700 text-center">Reset Your Password</h1>
           </div>
           {error && (
-            <div className=" text-red-500 px-4 py-3 rounded mb-6">
-              <p>{error}</p>
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-              <p>{success}</p>
-            </div>
-          )}
+  <div className="text-red-500 px-4 py-3 rounded mb-6">
+    <p>{error}</p>
+  </div>
+)}
+{success && (
+  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+    <p>{success}</p>
+  </div>
+)}
           <h1 className="text-3xl mb-2">Hello,</h1>
           <h1 className="text-3xl font-semibold mb-6 text-blue-500">Welcome!</h1>
           <form onSubmit={handleReset}>
@@ -133,7 +134,7 @@ const ResetPage = () => {
                 className="px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:bg-blue-700"
                 type="submit"
               >
-                Create
+                Reset
               </button>
             </div>
           </form>
@@ -153,4 +154,4 @@ const ResetPage = () => {
   );
 };
 
-export default ResetPage;
+export default ResetForgotPassword;

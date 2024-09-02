@@ -1068,17 +1068,22 @@ app.post("/resetPassword", async (req, res) => {
 
     const decoded = jwt.verify(token, secretKey);
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      { password: hashedPassword, status: "VERIFIED" },
-      { new: true }
-    ); // Update status to 'Verified'
-
+    const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Compare new password with the current hashed password
+    const isMatch = await bcrypt.compare(newPassword, user.password);
+    if (isMatch) {
+      return res.status(400).json({ message: "New password must be different from the old password" });
+    }
+
+    // Hash the new password and update the user
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.status = "VERIFIED"; // Update status to 'Verified'
+    await user.save();
 
     const newUsedToken = new UsedToken({ token });
     await newUsedToken.save();
@@ -1093,6 +1098,7 @@ app.post("/resetPassword", async (req, res) => {
     }
   }
 });
+
 
 app.post("/api/forgot-password", async (req, res) => {
   const { email } = req.body;
@@ -1118,7 +1124,7 @@ app.post("/api/forgot-password", async (req, res) => {
     await user.save();
 
     // Create the reset link using the JWT token
-    const resetLink = `http://13.235.16.113/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/forgot-password?token=${resetToken}`;
 
     // Set up email options
     const mailOptions = {

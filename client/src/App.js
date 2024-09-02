@@ -21,6 +21,7 @@ import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
 import RenameCardPage from './Pages/RenameCardPage';
 import CalendarDateDetails from './Pages/CalendarDateDetails'
+import ForgotPasswordPage from './Pages/ForgotPasswordPage';
 
 
 
@@ -72,6 +73,7 @@ const App = () => {
         <Route path='/Organization' element={<Organization />} />
         <Route path='/reset-password' element={<ResetPassword />} />
         <Route path='/success' element={<SuccessPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route
           path="/*"

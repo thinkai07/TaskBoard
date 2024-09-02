@@ -1124,7 +1124,7 @@ app.post("/api/forgot-password", async (req, res) => {
     await user.save();
 
     // Create the reset link using the JWT token
-    const resetLink = `http://localhost:3000/forgot-password?token=${resetToken}`;
+    const resetLink = `http://13.235.16.113/forgot-password?token=${resetToken}`;
 
     // Set up email options
     const mailOptions = {

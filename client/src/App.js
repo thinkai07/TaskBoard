@@ -22,6 +22,7 @@ import RulesButton from './components/RulePage';
 import RenameCardPage from './Pages/RenameCardPage';
 import CalendarDateDetails from './Pages/CalendarDateDetails'
 import ForgotPasswordPage from './Pages/ForgotPasswordPage';
+import ResetForgotPassword from './Pages/ResetForgotPassword';
 
 
 
@@ -73,8 +74,8 @@ const App = () => {
         <Route path='/Organization' element={<Organization />} />
         <Route path='/reset-password' element={<ResetPassword />} />
         <Route path='/success' element={<SuccessPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
+        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
+        <Route path="/forgot-password" element={<ResetForgotPassword />} />
         <Route
           path="/*"
           element={

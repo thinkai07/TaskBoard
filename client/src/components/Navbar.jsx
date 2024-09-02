@@ -4,7 +4,7 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Popover, Button, Input, message, Search, Modal } from "antd";
-import { Bell } from "lucide-react";
+import { Bell, Eye, EyeOff } from "lucide-react";
 import { server } from "../constant";
 
 
@@ -34,44 +34,54 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const searchRef = useRef(null);
-
-  // Handle password update
-  const handlePasswordUpdate = async () => {
-    if (newPassword !== confirmNewPassword) {
-      message.error("New passwords do not match");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `${server}/api/users/${user._id}/update-password`,
-        { currentPassword, newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      message.success('Password updated successfully');
-      setShowPasswordModal(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
-    } catch (error) {
-      console.error('Error updating password:', error);
-      if (error.response && error.response.data) {
-        message.error(error.response.data.message);
-      } else {
-        message.error('Error updating password');
-      }
-    }
-  };
-
   //added
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+ // Handle password update
+const handlePasswordUpdate = async () => {
+  if (newPassword === currentPassword) {
+    message.error("New password cannot be the same as the current password");
+    return;
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    message.error("New passwords do not match");
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      `${server}/api/users/${user._id}/update-password`,
+      { currentPassword, newPassword },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      }
+    );
+
+    message.success('Password updated successfully');
+    setShowPasswordModal(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+  } catch (error) {
+    console.error('Error updating password:', error);
+    if (error.response && error.response.data) {
+      message.error(error.response.data.message);
+    } else {
+      message.error('Error updating password');
+    }
+  }
+};
+
+
+
   const dropdownRef = useRef(null);
 
-  //added
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -264,18 +274,6 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
           </div>
         </div>
       ) : (
-
-
-
-        //       <Button
-        //         onClick={() => setShowLogoutConfirmation(true)}
-        //         className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
-        //       >
-        //         Logout
-        //       </Button>
-        //     )}
-        //   </div>
-        // );
         <>
           <Button
             onClick={() => setShowPasswordModal(true)}
@@ -293,8 +291,6 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
       )}
     </div>
   );
-
-
 
   return (
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
@@ -357,28 +353,52 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
             onCancel={() => setShowPasswordModal(false)}
             footer={null}
           >
-            <Input
-              placeholder="Current Password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="mb-4"
-            />
-            <Input
-              placeholder="New Password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="mb-4"
-            />
-            <Input
-              placeholder="Confirm New Password"
-              type="password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="mb-4"
-            />
-            <div className="flex justify-end gap-2">
+            <div className="relative mb-4">
+              <Input
+                placeholder="Current Password"
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <EyeOff /> : <Eye />}
+              </div>
+            </div>
+
+            <div className="relative mb-4">
+              <Input
+                placeholder="New Password"
+                type={showNewPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff /> : <Eye />}
+              </div>
+            </div>
+
+            <div className="relative mb-4">
+              <Input
+                placeholder="Confirm New Password"
+                type={showConfirmNewPassword ? 'text' : 'password'}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+              >
+                {showConfirmNewPassword ? <EyeOff /> : <Eye />}
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-2">
               <Button
                 type="primary"
                 onClick={handlePasswordUpdate}

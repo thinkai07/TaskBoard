@@ -219,7 +219,7 @@ const LoginPage = ({ onLogin }) => {
   <a
     href="#"
     className="text-sm text-blue-500 hover:text-blue-800"
-    onClick={() => navigate("/forgot-password")}
+    onClick={() => navigate("/forgotPassword")}
   >
     Forgot Password?
   </a>

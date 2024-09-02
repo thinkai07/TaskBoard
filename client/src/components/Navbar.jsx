@@ -13,6 +13,11 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,6 +35,38 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const searchRef = useRef(null);
 
+   // Handle password update
+   const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmNewPassword) {
+      message.error("New passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${server}/api/users/${user._id}/update-password`,
+        { currentPassword, newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      message.success('Password updated successfully');
+      setShowPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      if (error.response && error.response.data) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Error updating password');
+      }
+    }
+  };
 
   //added
   const dropdownRef = useRef(null);
@@ -196,85 +233,11 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const handleCloseSidebar = () => {
     setShowSidebar(false);
   };
-
-  // const handleSelectBackground = (image) => {
-  //   const projectId = location.pathname.split("/")[2];
-  //   setSelectedImage(image);
-  //   axios
-  //     .put(
-  //       `${server}/api/projects/${projectId}/bgImage`,
-  //       { bgUrl: image },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     )
-  //     .then((response) => {
-  //       onSelectBackground(response.data.project.bgUrl);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error updating background image:", error);
-  //     });
-  // };
-
-  // const handleFileChange = async (event) => {
-  //   const file = event.target.files[0];
-  //   if (!file) return;
-
-  //   const formData = new FormData();
-  //   formData.append("file", file);
-  //   formData.append("upload_preset", "g3smdj2n");
-
-  //   try {
-  //     const response = await axios.post(
-  //       "https://api.cloudinary.com/v1_1/dygueetvc/image/upload",
-  //       formData
-  //     );
-
-  //     const imageUrl = response.data.secure_url;
-  //     const projectId = location.pathname.split("/")[2];
-
-  //     const updateResponse = await axios.put(
-  //       `${server}/api/projects/${projectId}/customImages`,
-  //       { imageUrl },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     setCustomImages((prevImages) => [...prevImages, imageUrl]);
-  //   } catch (error) {
-  //     console.error("Error uploading image:", error);
-  //   }
-  // };
-
   const getFirstLetter = () => {
     return user?.email ? user.email.charAt(0).toUpperCase() : "";
   };
 
   const isProjectRoute = location.pathname.startsWith("/projects/");
-
-  // const images = [
-  //   "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
-  //   "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
-  //   "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-  //   "https://img.lovepik.com/element/40156/3639.png_1200.png",
-  //   "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
-  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-  //   "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-  //   "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
-  //   "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
-  //   "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
-  //   "https://images8.alphacoders.com/568/568490.jpg",
-  //   "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
-  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
-  //   ...customImages,
-  // ];
 
   const profileContent = (
     <div className="w-60  ">
@@ -301,15 +264,37 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
           </div>
         </div>
       ) : (
-        <Button
-          onClick={() => setShowLogoutConfirmation(true)}
-          className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
-        >
-          Logout
-        </Button>
-      )}
-    </div>
-  );
+
+
+
+  //       <Button
+  //         onClick={() => setShowLogoutConfirmation(true)}
+  //         className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
+  //       >
+  //         Logout
+  //       </Button>
+  //     )}
+  //   </div>
+  // );
+  <>
+  <Button
+    onClick={() => setShowPasswordModal(true)}
+    className="w-full text-left px-4 py-2 text-sm text-gray-700"
+  >
+    Update Password
+  </Button>
+  <Button
+    onClick={() => setShowLogoutConfirmation(true)}
+    className="w-full text-left px-4 py-2 text-sm text-gray-700"
+  >
+    Logout
+  </Button>
+</>
+)}
+</div>
+   );
+  
+
 
   return (
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
@@ -365,6 +350,50 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
               ))}
             </div>
           )}
+
+{showPasswordModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+      <h2 className="text-lg font-semibold mb-4">Update Password</h2>
+      <Input
+        placeholder="Current Password"
+        type="password"
+        value={currentPassword}
+        onChange={(e) => setCurrentPassword(e.target.value)}
+        className="mb-4"
+      />
+      <Input
+        placeholder="New Password"
+        type="password"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+        className="mb-4"
+      />
+      <Input
+        placeholder="Confirm New Password"
+        type="password"
+        value={confirmNewPassword}
+        onChange={(e) => setConfirmNewPassword(e.target.value)}
+        className="mb-4"
+      />
+      <div className="flex justify-end gap-2">
+        <Button
+          onClick={handlePasswordUpdate}
+          className="bg-blue-500 text-white hover:bg-blue-600 transition-colors px-4 py-2 rounded"
+        >
+          Update
+        </Button>
+        <Button
+          onClick={() => setShowPasswordModal(false)}
+          className="bg-gray-500 text-white hover:bg-gray-600 transition-colors px-4 py-2 rounded"
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+  
         </div>
       </div>
 
@@ -458,48 +487,267 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
             >
               <MdOutlineCancel size={30} />
             </button>
-
-            {/* <div className="mt-16">
-              <h3 className="text-xl font-semibold mb-4">Select Background</h3>
-              <hr className="border-gray-300 my-2" />
-
-              <div className="grid grid-cols-2 gap-4">
-                {images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`Background ${index + 1}`}
-                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${
-                      selectedImage === image
-                        ? "border-2 border-black"
-                        : "border-gray-300"
-                    }`}
-                    onClick={() => handleSelectBackground(image)}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover  justify-center mb-4">
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <AiOutlinePlus size={30} />
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-            </div> */}
           </div>
         </div>
       )}
     </div>
   );
 };
-
 export default Navbar;
 
 
+// import React, { useState, useEffect, useRef } from "react";
+// import { MdOutlineCancel } from "react-icons/md";
+// import { useLocation, useNavigate } from "react-router-dom";
+// import axios from "axios";
+// import { Popover, Button, Input, message } from "antd";
+// import { Bell } from "lucide-react";
+// import { server } from "../constant";
+
+// const Navbar = ({ user, onLogout }) => {
+//   const [notifications, setNotifications] = useState([]);
+//   const [organizationName, setOrganizationName] = useState("");
+//   const [organizationId, setOrganizationId] = useState("");
+  // const [showPasswordModal, setShowPasswordModal] = useState(false);
+  // const [currentPassword, setCurrentPassword] = useState('');
+  // const [newPassword, setNewPassword] = useState('');
+  // const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const notificationCount = notifications.filter(
+//     (notification) => !notification.readStatus
+//   ).length;
+
+  // // Handle password update
+  // const handlePasswordUpdate = async () => {
+  //   if (newPassword !== confirmNewPassword) {
+  //     message.error("New passwords do not match");
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await axios.post(
+  //       `${server}/api/users/${user._id}/update-password`,
+  //       { currentPassword, newPassword },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem('token')}`,
+  //         },
+  //       }
+  //     );
+
+  //     message.success('Password updated successfully');
+  //     setShowPasswordModal(false);
+  //     setCurrentPassword('');
+  //     setNewPassword('');
+  //     setConfirmNewPassword('');
+  //   } catch (error) {
+  //     console.error('Error updating password:', error);
+  //     if (error.response && error.response.data) {
+  //       message.error(error.response.data.message);
+  //     } else {
+  //       message.error('Error updating password');
+  //     }
+  //   }
+  // };
+
+//   // Fetch organization name and notifications (similar to your original useEffect)
+//   useEffect(() => {
+//     const fetchUserRoleAndOrganization = async () => {
+//       try {
+//         const response = await axios.get(`${server}/api/role`, {
+//           headers: {
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//         });
+//         setOrganizationName(response.data.organizationName);
+//         setOrganizationId(response.data.organizationId);
+//       } catch (error) {
+//         console.error("Error fetching user role:", error);
+//       }
+//     };
+
+//     const fetchNotifications = async () => {
+//       try {
+//         const userId = user?._id;
+//         if (!userId) return;
+
+//         const response = await axios.post(
+//           `${server}/api/notifications/unread`,
+//           { userId },
+//           {
+//             headers: {
+//               Authorization: `Bearer ${localStorage.getItem("token")}`,
+//             },
+//           }
+//         );
+
+//         if (response.data.notifications) {
+//           setNotifications(response.data.notifications);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching notifications:", error);
+//       }
+//     };
+
+//     fetchUserRoleAndOrganization();
+//     fetchNotifications();
+//   }, [user, server]);
+
+//   // Confirm logout logic
+//   const confirmLogout = () => {
+//     onLogout();
+//   };
+
+//   // Get first letter of user's email
+//   const getFirstLetter = () => {
+//     return user?.email ? user.email.charAt(0).toUpperCase() : "";
+//   };
+
+//   // Profile popover content
+//   const profileContent = (
+//     <div className="w-60">
+//       <div className="px-4 py-2 text-sm text-gray-700">{user?.email}</div>
+//       <div className="border-t"></div>
+//       <Button
+//         onClick={() => setShowPasswordModal(true)}
+//         className="w-full text-left px-4 py-2 text-sm text-gray-700"
+//       >
+//         Update Password
+//       </Button>
+//       <Button
+//         onClick={confirmLogout}
+//         className="w-full text-left px-4 py-2 text-sm text-gray-700"
+//       >
+//         Logout
+//       </Button>
+//     </div>
+//   );
+
+//   return (
+//     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
+//       <div className="flex items-center">
+//         <div className="ml-3">
+//           <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
+//           <h3 className="font-medium text-md">
+//             <span className="text-gray-500">{new Date().toLocaleDateString()}</span>
+//           </h3>
+//         </div>
+//       </div>
+
+//       <h1 className="font-semibold text-1xl m-4">{organizationName}</h1>
+
+//       <Popover
+//         placement="bottomRight"
+//         title="Notifications"
+//         content={
+//           <div style={{ maxHeight: "350px", overflowY: "auto", width: "400px" }}>
+//             {notifications.length === 0 ? (
+//               <p className="text-gray-500">No notifications</p>
+//             ) : (
+//               notifications.map((notification) => (
+//                 <div
+//                   key={notification._id}
+//                   className="flex items-start mb-4 cursor-pointer hover:bg-gray-100 transition-colors border rounded-xl py-2 px-2"
+//                   onClick={() => navigate(notification.link)}
+//                 >
+//                   <div className="w-10 h-10 bg-blue-500 text-white flex items-center justify-center rounded-full mr-4 flex-shrink-0">
+//                     {notification.assignedByEmail.charAt(0).toUpperCase()}
+//                   </div>
+//                   <div className="text-gray-700">
+//                     <p>
+//                       <strong>{notification.assignedByEmail}</strong> {notification.message}
+//                     </p>
+//                     <div className="text-sm text-gray-500">
+//                       {new Date(notification.createdAt).toLocaleDateString("en-US", {
+//                         year: "numeric",
+//                         month: "short",
+//                         day: "numeric",
+//                         hour: "numeric",
+//                         minute: "numeric",
+//                         hour12: true,
+//                       })}
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))
+//             )}
+//           </div>
+//         }
+//         trigger="click"
+//       >
+//         <div className="relative hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-1 rounded-full mr-4">
+//           <Bell size={20} className="cursor-pointer text-gray-700" />
+//           {notificationCount > 0 && (
+//             <span className="absolute top-0 left-4 bg-red-500 text-white text-xs font-semibold rounded-full w-4 mr-0 mb-6 h-4 flex items-center justify-center">
+//               {notificationCount}
+//             </span>
+//           )}
+//         </div>
+//       </Popover>
+
+//       <Popover placement="bottomRight" content={profileContent} trigger="click">
+//         <div className="w-8 h-8 bg-[#8AAAE5] text-white flex items-center justify-center rounded-full font-semibold text-xl cursor-pointer">
+//           {getFirstLetter()}
+//         </div>
+//       </Popover>
+
+//       {/* Password Update Modal */}
+  
+
+
+
+// {showPasswordModal && (
+//   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+//     <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+//       <h2 className="text-lg font-semibold mb-4">Update Password</h2>
+//       <Input
+//         placeholder="Current Password"
+//         type="password"
+//         value={currentPassword}
+//         onChange={(e) => setCurrentPassword(e.target.value)}
+//         className="mb-4"
+//       />
+//       <Input
+//         placeholder="New Password"
+//         type="password"
+//         value={newPassword}
+//         onChange={(e) => setNewPassword(e.target.value)}
+//         className="mb-4"
+//       />
+//       <Input
+//         placeholder="Confirm New Password"
+//         type="password"
+//         value={confirmNewPassword}
+//         onChange={(e) => setConfirmNewPassword(e.target.value)}
+//         className="mb-4"
+//       />
+//       <div className="flex justify-end gap-2">
+//         <Button
+//           onClick={handlePasswordUpdate}
+//           className="bg-blue-500 text-white hover:bg-blue-600 transition-colors px-4 py-2 rounded"
+//         >
+//           Update
+//         </Button>
+//         <Button
+//           onClick={() => setShowPasswordModal(false)}
+//           className="bg-gray-500 text-white hover:bg-gray-600 transition-colors px-4 py-2 rounded"
+//         >
+//           Cancel
+//         </Button>
+//       </div>
+//     </div>
+//   </div>
+// )}
+
+
+
+//     </div>
+//   );
+// };
+
+// export default Navbar;
 
 
 

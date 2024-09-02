@@ -164,7 +164,7 @@ const NotificationSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  // userEmail: { type: String },
+
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Project",
@@ -174,11 +174,6 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // type: {
-  //   type: String,
-  //   enum: ['TASK_ASSIGNED', 'TASK_RENAMED'],
-  //   required: true
-  // },
   type: { type: String, required: true },
   assignedByEmail: {
     type: String,
@@ -807,104 +802,11 @@ app.delete("/api/deleteUser/:id",
   }
 );
 
-// Function to delete user from both database and GitHub
-// const deleteUser = async (userId) => {
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       console.log(`User not found: ${userId}`);
-//       return;
-//     }
 
-//     const organization = await Organization.findById(user.organization);
-//     if (!organization) {
-//       console.log(`Organization not found for user: ${userId}`);
-//       return;
-//     }
 
-//     try {
-//       const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
 
-//       const githubResponse = await axios.delete(
-//         `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         }
-//       );
 
-//       console.log("GitHub membership deletion response:", githubResponse.data);
-//     } catch (error) {
-//       console.error(
-//         "Error removing user from GitHub organization:",
-//         error.response ? error.response.data : error.message
-//       );
-//       // Proceeding with database deletion even if GitHub deletion fails
-//     }
 
-//     await User.findByIdAndDelete(userId);
-//     console.log(`User ${userId} deleted successfully from both database and GitHub`);
-//   } catch (error) {
-//     console.error("Error deleting user:", error);
-//   }
-// };
-
-// // Schedule the job to run every minute
-// cron.schedule("* * * * *", async () => {
-//   console.log("Running scheduled job to delete unverified users...");
-
-//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-//   try {
-//     const usersToDelete = await User.find({
-//       status: "UNVERIFY",
-//       createdAt: { $lt: fiveMinutesAgo },
-//     });
-
-//     for (const user of usersToDelete) {
-//       await deleteUser(user._id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching users for deletion:", error);
-//   }
-// });
-
-// Login route
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email }).populate("organization");
-    if (user) {
-      const match = await bcrypt.compare(password, user.password);
-      if (match) {
-        const token = jwt.sign(
-          {
-            email: user.email,
-            role: user.role,
-            organizationId: user.organization._id,
-          },
-          secretKey,
-          { expiresIn: "1h" } // Token expires in 1 hour
-        );
-        res.json({ success: true, token });
-      } else {
-        res
-          .status(401)
-          .json({ success: false, message: "Invalid email or password" });
-      }
-    } else {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
 
 // Secret Key for JWT
 const secretKey = crypto.randomBytes(32).toString("hex");
@@ -965,8 +867,8 @@ app.get("/api/role", authenticateToken, async (req, res) => {
   }
 });
 
-// Add user
 
+// Add user
 app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
@@ -1038,23 +940,41 @@ app.post("/api/addUser",
   }
 );
 
-const sendResetEmail = (email, link) => {
-  const mailOptions = {
-    from: "thinkailabs111@gmail.com",
-    to: email,
-    subject: "Create password",
-    text: `Please click on the following link to create your password: ${link}`,
-  };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email:", error);
+// Login route
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email }).populate("organization");
+    if (user) {
+      const match = await bcrypt.compare(password, user.password);
+      if (match) {
+        const token = jwt.sign(
+          {
+            email: user.email,
+            role: user.role,
+            organizationId: user.organization._id,
+          },
+          secretKey,
+          { expiresIn: "1h" } // Token expires in 1 hour
+        );
+        res.json({ success: true, token });
+      } else {
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password" });
+      }
     } else {
-      console.log("Email sent:", info.response);
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
     }
-  });
-};
-// //reset password
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+// Reset password or update password
 app.post("/resetPassword", async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -1068,31 +988,78 @@ app.post("/resetPassword", async (req, res) => {
 
     const decoded = jwt.verify(token, secretKey);
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      { password: hashedPassword, status: "VERIFIED" },
-      { new: true }
-    ); // Update status to 'Verified'
-
+    // Check if the request is for password reset or password update
+    const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    // Update user status to 'VERIFIED' if this is a password reset
+    if (user.status === "UNVERIFY") {
+      user.status = "VERIFIED";
+    }
+
+    await user.save();
+
     const newUsedToken = new UsedToken({ token });
     await newUsedToken.save();
 
-    res.status(200).json({ message: "Password reset successfully", user });
+    res.status(200).json({ message: "Password updated successfully", user });
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       res.status(401).json({ message: "Token has expired" });
     } else {
       console.error(error);
-      res.status(500).json({ message: "Error resetting password" });
+      res.status(500).json({ message: "Error updating password" });
     }
   }
 });
+
+
+// Update password 
+app.post('/api/users/:id/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify the current password (Assuming you are using bcrypt)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
+
+
+
+
 
 //projects
 // Function to send emails

@@ -728,7 +728,7 @@ app.get("/api/cards/user/:userId", async (req, res) => {
 app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
-      "name email"
+      "name email role"
     );
     if (!user) {
       return res
@@ -887,7 +887,7 @@ app.post("/api/login", async (req, res) => {
             organizationId: user.organization._id,
           },
           secretKey,
-          { expiresIn: "1h" } // Token expires in 1 hour
+          { expiresIn: "5h" } // Token expires in 1 hour
         );
         res.json({ success: true, token });
       } else {
@@ -2613,7 +2613,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "project", // Populate the project details
           model: "Project",
-          select: "name description", // Fetch only the necessary fields
+          select: "name description projectManager projectManagerName organization", // Fetch only the necessary fields
         },
       ],
     });
@@ -2687,8 +2687,14 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         id: card.project._id,
         name: card.project.name,
         description: card.project.description,
+        projectManager: card.project.projectManager,
+        projectManagerName: card.project.projectManagerName,
+        organization: card.project.organization,
+        
       }, // Include project details
     }));
+
+    console.log(cards)
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -2809,10 +2815,6 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
-
-
-
-
 
 
 // Delete a card from a task

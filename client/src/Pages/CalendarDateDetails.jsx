@@ -6,7 +6,7 @@ import axios from "axios";
 import { server } from "../constant";
 
 const CalendarDateDetails = () => {
-    const location = useLocation();  
+    const location = useLocation();
     const navigate = useNavigate();
     const { events } = location.state;
     const [activeCardId, setActiveCardId] = useState(null);
@@ -14,6 +14,7 @@ const CalendarDateDetails = () => {
     const [loggedHours, setLoggedHours] = useState("");
     const [userEmail, setUserEmail] = useState("");
     const [updatedEvents, setUpdatedEvents] = useState(events);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -39,14 +40,24 @@ const CalendarDateDetails = () => {
         navigate(`/projects/${projectId}/view`);
     };
 
+
+
     const handleStartLogging = (cardId) => {
         setActiveCardId(cardId);
         setLogHoursVisible(true);
+        setError(false); //added
     };
 
 
 
     const handleLogHours = async () => {
+
+        //added
+        if (loggedHours.trim() === "") {
+            setError(true);
+            return;
+        }
+
         if (activeCardId && loggedHours) {
             try {
                 const activeEvent = updatedEvents.find(event => event.cardId === activeCardId);
@@ -96,9 +107,17 @@ const CalendarDateDetails = () => {
             <Input
                 placeholder="Enter hours"
                 value={loggedHours}
-                onChange={(e) => setLoggedHours(e.target.value)}
+                onChange={(e) => {
+                    setLoggedHours(e.target.value);
+                    setError(false);
+                }}
                 style={{ marginBottom: '10px' }}
             />
+            {error && (
+                <div style={{ color: 'red', marginBottom: '10px' }}>
+                    Please enter the log hours               .
+                </div>
+            )}
             <Button type="primary" onClick={handleLogHours}>
                 Submit
             </Button>
@@ -130,6 +149,7 @@ const CalendarDateDetails = () => {
                 </div>
             ),
         },
+
         {
             title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo",
             render: (text) => (
@@ -154,7 +174,7 @@ const CalendarDateDetails = () => {
             render: (_, record) => (
                 <>
                     <Popover
-                        content={logHoursContent}
+                        content={<div style={{ width: '250px' }}>{logHoursContent}</div>} // Set fixed width here
                         title="Log Hours"
                         trigger="click"
                         visible={logHoursVisible && activeCardId === record.cardId}
@@ -168,6 +188,7 @@ const CalendarDateDetails = () => {
                             Start
                         </Button>
                     </Popover>
+
                     <Button
                         type="primary"
                         onClick={() => handleViewProjectTasks(record.projectId)}

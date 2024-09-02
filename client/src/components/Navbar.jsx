@@ -3,7 +3,7 @@ import { MdOutlineCancel } from "react-icons/md";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Popover, Button, Input, message, Search } from "antd";
+import { Popover, Button, Input, message, Search, Modal } from "antd";
 import { Bell } from "lucide-react";
 import { server } from "../constant";
 
@@ -12,6 +12,11 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
@@ -30,6 +35,38 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const searchRef = useRef(null);
 
+  // Handle password update
+  const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmNewPassword) {
+      message.error("New passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${server}/api/users/${user._id}/update-password`,
+        { currentPassword, newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      message.success('Password updated successfully');
+      setShowPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      if (error.response && error.response.data) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Error updating password');
+      }
+    }
+  };
 
   //added
   const dropdownRef = useRef(null);
@@ -196,85 +233,11 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const handleCloseSidebar = () => {
     setShowSidebar(false);
   };
-
-  // const handleSelectBackground = (image) => {
-  //   const projectId = location.pathname.split("/")[2];
-  //   setSelectedImage(image);
-  //   axios
-  //     .put(
-  //       `${server}/api/projects/${projectId}/bgImage`,
-  //       { bgUrl: image },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     )
-  //     .then((response) => {
-  //       onSelectBackground(response.data.project.bgUrl);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error updating background image:", error);
-  //     });
-  // };
-
-  // const handleFileChange = async (event) => {
-  //   const file = event.target.files[0];
-  //   if (!file) return;
-
-  //   const formData = new FormData();
-  //   formData.append("file", file);
-  //   formData.append("upload_preset", "g3smdj2n");
-
-  //   try {
-  //     const response = await axios.post(
-  //       "https://api.cloudinary.com/v1_1/dygueetvc/image/upload",
-  //       formData
-  //     );
-
-  //     const imageUrl = response.data.secure_url;
-  //     const projectId = location.pathname.split("/")[2];
-
-  //     const updateResponse = await axios.put(
-  //       `${server}/api/projects/${projectId}/customImages`,
-  //       { imageUrl },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     setCustomImages((prevImages) => [...prevImages, imageUrl]);
-  //   } catch (error) {
-  //     console.error("Error uploading image:", error);
-  //   }
-  // };
-
   const getFirstLetter = () => {
     return user?.email ? user.email.charAt(0).toUpperCase() : "";
   };
 
   const isProjectRoute = location.pathname.startsWith("/projects/");
-
-  // const images = [
-  //   "https://cdn.wallpapersafari.com/22/64/hJ8vj7.jpg",
-  //   "https://img1.wallspic.com/previews/2/4/8/1/21842/21842-world-globe-grasses-grass-energy-550x310.jpg",
-  //   "https://images.all-free-download.com/images/graphiclarge/blue_sky_green_05_hd_picture_166201.jpg",
-  //   "https://img.lovepik.com/element/40156/3639.png_1200.png",
-  //   "https://img.lovepik.com/free-png/20211130/lovepik-tibetan-plateau-scenery-png-image_401215587_wh1200.png",
-  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKUTxEMdd_dVPGsBPr9XddmYZzGNPT7GpoTA&s",
-  //   "https://png.pngtree.com/background/20230425/original/pngtree-pine-forest-with-green-trees-and-blue-sky-photo-picture-image_2473099.jpg",
-  //   "https://s1.travix.com/blog/eu/europe-portugal-azores-sete-cidades-path-medium.jpg",
-  //   "https://www.10wallpaper.com/wallpaper/medium/1301/The_Winter_Bridge_through_a_Lake-beautiful_natural_landscape_Wallpaper_medium.jpg",
-  //   "https://static.vecteezy.com/system/resources/thumbnails/030/460/090/small_2x/generative-ai-winter-landscapes-embrace-the-stark-beauty-of-winter-landscapes-photo.jpg",
-  //   "https://images8.alphacoders.com/568/568490.jpg",
-  //   "https://images.pexels.com/photos/3422964/pexels-photo-3422964.jpeg?cs=srgb&dl=pexels-a2pro-3422964.jpg&fm=jpg",
-  //   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIZTftfC5HedL495NJ2lpN99tig_Wv9oLVcA&s",
-  //   ...customImages,
-  // ];
 
   const profileContent = (
     <div className="w-60  ">
@@ -301,15 +264,37 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
           </div>
         </div>
       ) : (
-        <Button
-          onClick={() => setShowLogoutConfirmation(true)}
-          className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
-        >
-          Logout
-        </Button>
+
+
+
+        //       <Button
+        //         onClick={() => setShowLogoutConfirmation(true)}
+        //         className=" w-full text-left px-4 py-2 text-sm text-gray-700 "
+        //       >
+        //         Logout
+        //       </Button>
+        //     )}
+        //   </div>
+        // );
+        <>
+          <Button
+            onClick={() => setShowPasswordModal(true)}
+            className="w-full text-left px-4 py-2 text-sm text-white bg-blue-400 mb-2"
+          >
+            Update Password
+          </Button>
+          <Button
+            onClick={() => setShowLogoutConfirmation(true)}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700"
+          >
+            Logout
+          </Button>
+        </>
       )}
     </div>
   );
+
+
 
   return (
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
@@ -365,6 +350,51 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
               ))}
             </div>
           )}
+
+          <Modal
+            title="Update Password"
+            visible={showPasswordModal}
+            onCancel={() => setShowPasswordModal(false)}
+            footer={null}
+          >
+            <Input
+              placeholder="Current Password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="mb-4"
+            />
+            <Input
+              placeholder="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mb-4"
+            />
+            <Input
+              placeholder="Confirm New Password"
+              type="password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="primary"
+                onClick={handlePasswordUpdate}
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors px-4 py-2 rounded"
+              >
+                Update
+              </Button>
+              <Button
+                onClick={() => setShowPasswordModal(false)}
+                className="bg-gray-500 text-white hover:bg-gray-600 transition-colors px-4 py-2 rounded"
+              >
+                Cancel
+              </Button>
+            </div>
+          </Modal>
+
         </div>
       </div>
 
@@ -458,46 +488,28 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
             >
               <MdOutlineCancel size={30} />
             </button>
-
-            {/* <div className="mt-16">
-              <h3 className="text-xl font-semibold mb-4">Select Background</h3>
-              <hr className="border-gray-300 my-2" />
-
-              <div className="grid grid-cols-2 gap-4">
-                {images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`Background ${index + 1}`}
-                    className={`w-full border rounded-3xl h-32 object-cover mb-4 cursor-pointer ${
-                      selectedImage === image
-                        ? "border-2 border-black"
-                        : "border-gray-300"
-                    }`}
-                    onClick={() => handleSelectBackground(image)}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center bg-gray-300 w-32 border rounded-3xl h-32 object-cover  justify-center mb-4">
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <AiOutlinePlus size={30} />
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-            </div> */}
           </div>
         </div>
       )}
     </div>
   );
 };
-
 export default Navbar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

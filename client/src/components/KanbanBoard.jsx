@@ -36,7 +36,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-import RenameCardPage from "../Pages/RenameCardPage";
+
 import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {

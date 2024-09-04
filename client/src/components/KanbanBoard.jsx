@@ -650,6 +650,14 @@ function KanbanBoard() {
     const dueDate = e.target.dueDate.value;
     const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
 
+    // After successfully adding the card, reset all fields
+    setTitle('');
+    setEmail('');
+    setStartDate('');
+    setEndDate('');
+    setEstimatedHours('');
+    setDescription('');
+
     if (
       !cardTitle ||
       !cardDescription ||

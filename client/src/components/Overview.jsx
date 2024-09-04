@@ -497,25 +497,14 @@ const defaultBarData = {
                   >
                     {project.totalCompletedCards}
                   </td>
-                  <td
-                    style={{
-                      padding: '12px 16px',
-                      borderBottom: '1px solid #e2e8f0',
-                    }}
-                  >
-                    <button
-                      style={{
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                      }}
-                      onClick={() => handleViewProjectTasks(project._id)}
-                    >
-                      View
-                    </button>
-                  </td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+          <button
+            style={{ backgroundColor: '#3b82f6', color: 'white', padding: '4px 12px', borderRadius: '8px' }}
+            onClick={() => handleViewProjectTasks(project.id)}
+          >
+            View
+          </button>
+        </td>
                 </tr>
               ))}
             </tbody>
@@ -524,8 +513,6 @@ const defaultBarData = {
       </div>
     </div>
   </div>
-
-  
   );
 };
 

@@ -39,43 +39,109 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
- // Handle password update
-const handlePasswordUpdate = async () => {
-  if (newPassword === currentPassword) {
-    message.error("New password cannot be the same as the current password");
-    return;
-  }
+  const [errors, setErrors] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
 
-  if (newPassword !== confirmNewPassword) {
-    message.error("New passwords do not match");
-    return;
-  }
+  const validateForm = () => {
+    let valid = true;
+    const newErrors = {
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    };
 
-  try {
-    const response = await axios.post(
-      `${server}/api/users/${user._id}/update-password`,
-      { currentPassword, newPassword },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      }
-    );
+    if (!currentPassword) {
+      newErrors.currentPassword = 'Current password is required';
+      valid = false;
+    }
 
-    message.success('Password updated successfully');
-    setShowPasswordModal(false);
+    if (!newPassword) {
+      newErrors.newPassword = 'New password is required';
+      valid = false;
+    } else if (newPassword.length < 8) {
+      newErrors.newPassword = 'New password must be at least 8 characters';
+      valid = false;
+    }
+
+    if (!confirmNewPassword) {
+      newErrors.confirmNewPassword = 'Please confirm your new password';
+      valid = false;
+    } else if (confirmNewPassword !== newPassword) {
+      newErrors.confirmNewPassword = 'Password do not match with new password';
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
+
+  //added
+  // const handleModalClose = () => {
+  //   // Reset all fields and visibility states when closing the modal
+  //   setCurrentPassword('');
+  //   setNewPassword('');
+  //   setConfirmNewPassword('');
+  //   setShowCurrentPassword(false);
+  //   setShowNewPassword(false);
+  //   setShowConfirmNewPassword(false);
+  //   setShowPasswordModal(false);
+  // };
+
+  const handleModalClose = () => {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmNewPassword('');
-  } catch (error) {
-    console.error('Error updating password:', error);
-    if (error.response && error.response.data) {
-      message.error(error.response.data.message);
-    } else {
-      message.error('Error updating password');
+    setErrors({});  // Assuming errors is an object, reset it as well
+    setShowPasswordModal(false);
+  };
+
+
+
+
+  // Handle password update
+  const handlePasswordUpdate = async () => {
+
+    if (validateForm()) {
+      if (newPassword === currentPassword) {
+        message.error("New password cannot be the same as the current password");
+        return;
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        message.error("New passwords do not match with the new Password");
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          `${server}/api/users/${user._id}/update-password`,
+          { currentPassword, newPassword },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
+        );
+
+        message.success('Password updated successfully');
+        setShowPasswordModal(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } catch (error) {
+        console.error('Error updating password:', error);
+        if (error.response && error.response.data) {
+          message.error(error.response.data.message);
+        } else {
+          message.error('Error updating password');
+        }
+      }
     }
-  }
-};
+  };
 
 
 
@@ -347,10 +413,10 @@ const handlePasswordUpdate = async () => {
             </div>
           )}
 
-          <Modal
+          {/* <Modal
             title="Update Password"
             visible={showPasswordModal}
-            onCancel={() => setShowPasswordModal(false)}
+            onCancel={handleModalClose}
             footer={null}
           >
             <div className="relative mb-4">
@@ -366,6 +432,9 @@ const handlePasswordUpdate = async () => {
               >
                 {showCurrentPassword ? <EyeOff /> : <Eye />}
               </div>
+              {errors.currentPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.currentPassword}</p>
+              )}
             </div>
 
             <div className="relative mb-4">
@@ -381,6 +450,9 @@ const handlePasswordUpdate = async () => {
               >
                 {showNewPassword ? <EyeOff /> : <Eye />}
               </div>
+              {errors.newPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+              )}
             </div>
 
             <div className="relative mb-4">
@@ -396,9 +468,12 @@ const handlePasswordUpdate = async () => {
               >
                 {showConfirmNewPassword ? <EyeOff /> : <Eye />}
               </div>
+              {errors.confirmNewPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.confirmNewPassword}</p>
+              )}
             </div>
 
-            <div className="flex justify-between gap-2">
+            <div className="flex justify-end gap-2">
               <Button
                 type="primary"
                 onClick={handlePasswordUpdate}
@@ -407,7 +482,84 @@ const handlePasswordUpdate = async () => {
                 Update
               </Button>
               <Button
-                onClick={() => setShowPasswordModal(false)}
+                onClick={handleModalClose}
+                className="bg-gray-500 text-white hover:bg-gray-600 transition-colors px-4 py-2 rounded"
+              >
+                Cancel
+              </Button>
+            </div>
+          </Modal> */}
+
+          <Modal
+            title="Update Password"
+            visible={showPasswordModal}
+            onCancel={handleModalClose}
+            footer={null}
+          >
+            <div className="relative mb-4">
+              <Input
+                placeholder="Current Password"
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <EyeOff /> : <Eye />}
+              </div>
+              {errors.currentPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.currentPassword}</p>
+              )}
+            </div>
+
+            <div className="relative mb-4">
+              <Input
+                placeholder="New Password"
+                type={showNewPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff /> : <Eye />}
+              </div>
+              {errors.newPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+              )}
+            </div>
+
+            <div className="relative mb-4">
+              <Input
+                placeholder="Confirm New Password"
+                type={showConfirmNewPassword ? 'text' : 'password'}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+              <div
+                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+              >
+                {showConfirmNewPassword ? <EyeOff /> : <Eye />}
+              </div>
+              {errors.confirmNewPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.confirmNewPassword}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="primary"
+                onClick={handlePasswordUpdate}
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors px-4 py-2 rounded"
+              >
+                Update
+              </Button>
+              <Button
+                onClick={handleModalClose}
                 className="bg-gray-500 text-white hover:bg-gray-600 transition-colors px-4 py-2 rounded"
               >
                 Cancel

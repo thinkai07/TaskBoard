@@ -94,7 +94,7 @@ const App = () => {
                   <Route path="/Teamsorg" element={<Teamsorg />} />
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
                   <Route path="/Rules" element={<RulesButton />} />
-                  <Route path="/calendar/:date" element={<CalendarDateDetails/>} />
+                  <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails/>} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
 
                 </Routes>

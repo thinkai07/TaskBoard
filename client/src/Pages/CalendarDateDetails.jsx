@@ -86,9 +86,18 @@ const CalendarDateDetails = () => {
         }
     
         if (activeCardId && loggedHours) {
-            try {
-                const activeEvent = filteredEvents.find(event => event.cardId === activeCardId);
+            const activeEvent = filteredEvents.find(event => event.cardId === activeCardId);
     
+            // Calculate the total hours after logging the new hours
+            const totalHours = activeEvent.utilizedHours + parseFloat(loggedHours);
+    
+            // Check if total utilized hours exceed estimated hours
+            if (totalHours > activeEvent.estimatedHours) {
+                message.error("Logged hours exceed the estimated hours.");
+                return;
+            }
+    
+            try {
                 // Log the hours and update the status if necessary
                 const response = await axios.post(
                     `${server}/api/log-hours`,
@@ -97,7 +106,7 @@ const CalendarDateDetails = () => {
                         taskId: activeEvent.taskId,
                         cardId: activeCardId,
                         hours: parseFloat(loggedHours),
-                        loggedBy: userEmail
+                        loggedBy: userEmail,
                     },
                     {
                         headers: {
@@ -109,10 +118,10 @@ const CalendarDateDetails = () => {
                 // Update the local state to reflect the new status and utilized hours
                 const updatedEvents = filteredEvents.map(event =>
                     event.cardId === activeCardId
-                        ? { 
-                            ...event, 
-                            utilizedHours: activeEvent.utilizedHours + parseFloat(loggedHours), 
-                            status: response.data.cardStatus 
+                        ? {
+                            ...event,
+                            utilizedHours: totalHours,
+                            status: response.data.cardStatus,
                         }
                         : event
                 );
@@ -130,6 +139,7 @@ const CalendarDateDetails = () => {
             }
         }
     };
+    
     
 
     const logHoursContent = (

@@ -831,37 +831,38 @@ const Projects = () => {
       </Modal>
 
       <Modal
-title="Rename Project"
-visible={renameDialogVisible}
-onOk={handleSaveRename}
-onCancel={() => setRenameDialogVisible(false)}
+  title="Rename Project"
+  visible={renameDialogVisible}
+  onOk={handleSaveRename}
+  onCancel={() => setRenameDialogVisible(false)}
 >
-<Input
-  placeholder="Project Name"
-  value={renameInputValue}
-  onChange={(e) => {
-    setRenameInputValue(e.target.value.trimStart());
-    setRenameInputError(false);
-  }}
-  className={renameInputError ? "border-red-500" : ""}
-/>
-{renameInputError && (
-  <p className="text-red-500">Project Name is required</p>
-)}
+  <Input
+    placeholder="Project Name"
+    value={renameInputValue}
+    onChange={(e) => {
+      setRenameInputValue(e.target.value.trimStart());
+      setRenameInputError(false);
+    }}
+    className={renameInputError ? "border-red-500" : ""}
+  />
+  {renameInputError && (
+    <p className="text-red-500">Project Name is required</p>
+  )}
 
-<TextArea
-  placeholder="Project Description"
-  value={descriptionInputValue}
-  onChange={(e) => {
-    setDescriptionInputValue(e.target.value.trimStart());
-    setDescriptionInputError(false);
-  }}
-  className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
-/>
-{descriptionInputError && (
-  <p className="text-red-500">Project Description is required</p>
-)}
+  <TextArea
+    placeholder="Project Description"
+    value={descriptionInputValue}
+    onChange={(e) => {
+      setDescriptionInputValue(e.target.value.trimStart());
+      setDescriptionInputError(false);
+    }}
+    className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
+  />
+  {descriptionInputError && (
+    <p className="text-red-500">Project Description is required</p>
+  )}
 </Modal>
+
 
       <Modal
         title="Confirm Project Deletion"

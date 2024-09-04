@@ -529,6 +529,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Popover, Button, Input, message, Search, Modal } from "antd";
 import { Bell, Eye, EyeOff } from "lucide-react";
+import { Popover, Button, Input, message, Search, Modal } from "antd";
+import { Bell, Eye, EyeOff } from "lucide-react";
 import { server } from "../constant";
 
 
@@ -536,6 +538,11 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSidebar, setShowSidebar] = useState(false);
   const [customImages, setCustomImages] = useState([]);
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -603,7 +610,52 @@ const handlePasswordUpdate = async () => {
 
 
 
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+ // Handle password update
+const handlePasswordUpdate = async () => {
+  if (newPassword === currentPassword) {
+    message.error("New password cannot be the same as the current password");
+    return;
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    message.error("New passwords do not match");
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      `${server}/api/users/${user._id}/update-password`,
+      { currentPassword, newPassword },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      }
+    );
+
+    message.success('Password updated successfully');
+    setShowPasswordModal(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+  } catch (error) {
+    console.error('Error updating password:', error);
+    if (error.response && error.response.data) {
+      message.error(error.response.data.message);
+    } else {
+      message.error('Error updating password');
+    }
+  }
+};
+
+
+
   const dropdownRef = useRef(null);
+
 
 
   useEffect(() => {
@@ -798,6 +850,20 @@ const handlePasswordUpdate = async () => {
           </div>
         </div>
       ) : (
+        <>
+          <Button
+            onClick={() => setShowPasswordModal(true)}
+            className="w-full text-left px-4 py-2 text-sm text-white bg-blue-400 mb-2"
+          >
+            Update Password
+          </Button>
+          <Button
+            onClick={() => setShowLogoutConfirmation(true)}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700"
+          >
+            Logout
+          </Button>
+        </>
         <>
           <Button
             onClick={() => setShowPasswordModal(true)}

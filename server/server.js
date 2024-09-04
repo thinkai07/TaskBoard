@@ -723,7 +723,7 @@ app.get("/api/cards/user/:userId", async (req, res) => {
 app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
-      "name email"
+      "name email role"
     );
     if (!user) {
       return res
@@ -802,11 +802,104 @@ app.delete("/api/deleteUser/:id",
   }
 );
 
+// Function to delete user from both database and GitHub
+// const deleteUser = async (userId) => {
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       console.log(`User not found: ${userId}`);
+//       return;
+//     }
 
+//     const organization = await Organization.findById(user.organization);
+//     if (!organization) {
+//       console.log(`Organization not found for user: ${userId}`);
+//       return;
+//     }
 
+//     try {
+//       const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
 
+//       const githubResponse = await axios.delete(
+//         `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+//         {
+//           headers: {
+//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//             "Content-Type": "application/json",
+//             Accept: "application/vnd.github.v3+json",
+//           },
+//         }
+//       );
 
+//       console.log("GitHub membership deletion response:", githubResponse.data);
+//     } catch (error) {
+//       console.error(
+//         "Error removing user from GitHub organization:",
+//         error.response ? error.response.data : error.message
+//       );
+//       // Proceeding with database deletion even if GitHub deletion fails
+//     }
 
+//     await User.findByIdAndDelete(userId);
+//     console.log(`User ${userId} deleted successfully from both database and GitHub`);
+//   } catch (error) {
+//     console.error("Error deleting user:", error);
+//   }
+// };
+
+// // Schedule the job to run every minute
+// cron.schedule("* * * * *", async () => {
+//   console.log("Running scheduled job to delete unverified users...");
+
+//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+//   try {
+//     const usersToDelete = await User.find({
+//       status: "UNVERIFY",
+//       createdAt: { $lt: fiveMinutesAgo },
+//     });
+
+//     for (const user of usersToDelete) {
+//       await deleteUser(user._id);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching users for deletion:", error);
+//   }
+// });
+
+// Login route
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email }).populate("organization");
+    if (user) {
+      const match = await bcrypt.compare(password, user.password);
+      if (match) {
+        const token = jwt.sign(
+          {
+            email: user.email,
+            role: user.role,
+            organizationId: user.organization._id,
+          },
+          secretKey,
+          { expiresIn: "5h" } // Token expires in 1 hour
+        );
+        res.json({ success: true, token });
+      } else {
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password" });
+      }
+    } else {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 // Secret Key for JWT
 const secretKey = crypto.randomBytes(32).toString("hex");
@@ -988,21 +1081,21 @@ app.post("/resetPassword", async (req, res) => {
 
     const decoded = jwt.verify(token, secretKey);
 
-    // Check if the request is for password reset or password update
     const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-
-    // Update user status to 'VERIFIED' if this is a password reset
-    if (user.status === "UNVERIFY") {
-      user.status = "VERIFIED";
+    // Compare new password with the current hashed password
+    const isMatch = await bcrypt.compare(newPassword, user.password);
+    if (isMatch) {
+      return res.status(400).json({ message: "New password must be different from the old password" });
     }
 
+    // Hash the new password and update the user
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.status = "VERIFIED"; // Update status to 'Verified'
     await user.save();
 
     const newUsedToken = new UsedToken({ token });
@@ -1019,6 +1112,57 @@ app.post("/resetPassword", async (req, res) => {
   }
 });
 
+
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
+    }
+
+    // Generate a JWT token for password reset (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { email: user.email, userId: user._id },
+      secretKey,
+      { expiresIn: "1h" }
+    );
+
+    // Save the token in the user document (optional, for reference)
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+    await user.save();
+
+    // Create the reset link using the JWT token
+    const resetLink = `http://13.235.16.113/forgot-password?token=${resetToken}`;
+
+    // Set up email options
+    const mailOptions = {
+      to: user.email,
+      from: 'thinkailabs111@gmail.com',
+      subject: "Password Reset",
+      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+      Please click on the following link, or paste this into your browser to complete the process:\n\n
+      ${resetLink}\n\n
+      If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+    };
+
+    // Send the email with the reset link
+    transporter.sendMail(mailOptions, (err) => {
+      if (err) {
+        console.error("Error sending email:", err);
+        return res.status(500).json({ message: "Error sending email." });
+      }
+      res.json({ message: "Reset password link sent successfully." });
+    });
+  } catch (error) {
+    console.error("Error during forgot password process:", error);
+    res.status(500).json({ message: "Error processing request." });
+  }
+});
 
 // Update password 
 app.post('/api/users/:id/update-password', authenticateToken, async (req, res) => {
@@ -1049,16 +1193,8 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-
-
-
-
-
-
+  } 
+}); 
 
 
 //projects
@@ -2175,6 +2311,12 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     });
     await newNotification.save();
 
+     // Send an email to the assigned user
+     const emailSubject = `You have been assigned a new task: "${name}"`;
+     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+     sendEmail(assignedTo, emailSubject, emailText);
+ 
+
     io.emit("cardCreated", { taskId, card: newCard });
 
 
@@ -2574,7 +2716,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "project", // Populate the project details
           model: "Project",
-          select: "name description", // Fetch only the necessary fields
+          select: "name description projectManager projectManagerName organization", // Fetch only the necessary fields
         },
       ],
     });
@@ -2648,8 +2790,14 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         id: card.project._id,
         name: card.project.name,
         description: card.project.description,
+        projectManager: card.project.projectManager,
+        projectManagerName: card.project.projectManagerName,
+        organization: card.project.organization,
+        
       }, // Include project details
     }));
+
+    console.log(cards)
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -2770,10 +2918,6 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
-
-
-
-
 
 
 // Delete a card from a task

@@ -31,7 +31,7 @@ const ResetPage = () => {
   const handleReset = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match, choose different');
       setSuccess('');
       return;
     }
@@ -47,7 +47,7 @@ const ResetPage = () => {
 
       window.location.href = '/login';
     } catch (err) {
-      setError('Token has expired');
+      setError(error);
     }
   };
 

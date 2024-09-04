@@ -9,8 +9,23 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { images as staticImages } from "../assets/Images";
 import dayjs from "dayjs";
-import { Card, Modal, Input, Button, DatePicker, Select, notification, Tooltip, Image, } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined, } from "@ant-design/icons";
+import {
+  Card,
+  Modal,
+  Input,
+  Button,
+  DatePicker,
+  Select,
+  notification,
+  Tooltip,
+  Image,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+} from "@ant-design/icons";
 import { BsFillPencilFill } from "react-icons/bs";
 import { FastAverageColor } from "fast-average-color";
 const { TextArea } = Input;
@@ -129,19 +144,19 @@ const Projects = () => {
               const color = await fac.getColorAsync(project.bgUrl.thumb);
               return {
                 ...project,
-                textColor: color.isDark ? 'white' : 'black',
+                textColor: color.isDark ? "white" : "black",
               };
             } catch (error) {
               console.error("Error calculating color:", error);
               return {
                 ...project,
-                textColor: 'black', // default color if there's an error
+                textColor: "black", // default color if there's an error
               };
             }
           }
           return {
             ...project,
-            textColor: 'black', // default color if there's no background image
+            textColor: "black", // default color if there's no background image
           };
         })
       );
@@ -196,7 +211,7 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-          name.toLowerCase().replace(/\s+/g, "") &&
+            name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -322,11 +337,11 @@ const Projects = () => {
           createdBy: createdBy,
           bgUrl: selectedImage
             ? {
-              raw: selectedImage.urls.raw,
-              thumb: selectedImage.urls.thumb,
-              full: selectedImage.urls.full,
-              regular: selectedImage.urls.regular,
-            }
+                raw: selectedImage.urls.raw,
+                thumb: selectedImage.urls.thumb,
+                full: selectedImage.urls.full,
+                regular: selectedImage.urls.regular,
+              }
             : null,
         },
         {
@@ -575,17 +590,17 @@ const Projects = () => {
             }}
           >
             <div className="flex justify-between items-center">
-              <Tooltip title={card.name.length > 20 ? card.name : ""}>
+             
                 <h3
                   className="font-bold truncate"
                   style={{
                     color: card.textColor,
-                    maxWidth: '80%'  // Limit width to allow space for ellipsis button
+                    maxWidth: "80%", // Limit width to allow space for ellipsis button
                   }}
                 >
                   {card.name}
                 </h3>
-              </Tooltip>
+             
               {userRole !== "USER" && (
                 <button
                   className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
@@ -600,17 +615,17 @@ const Projects = () => {
                 </button>
               )}
             </div>
-            <Tooltip title={card.description.length > 20 ? card.description : ""}>
+        
               <p
                 className="truncate"
                 style={{
                   color: card.textColor,
-                  maxWidth: '100%'
+                  maxWidth: "100%",
                 }}
               >
                 {card.description}
               </p>
-            </Tooltip>
+         
             <div className="mt-2 flex justify-between items-center">
               <p
                 className=" rounded-md text-sm inline-block"
@@ -667,7 +682,6 @@ const Projects = () => {
         ))}
       </div>
 
-
       <Modal
         title="Add New Project"
         visible={addProjectModalVisible}
@@ -699,9 +713,14 @@ const Projects = () => {
               placeholder="Project Description"
               value={newProject.description}
               onChange={(e) =>
-                setNewProject((prev) => ({ ...prev, description: e.target.value }))
+                setNewProject((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
               }
-              className={` ${newCardErrors.description ? "border-red-500" : ""}`}
+              className={` ${
+                newCardErrors.description ? "border-red-500" : ""
+              }`}
             />
             {newCardErrors.description && (
               <p className="text-red-500">Project Description is required</p>
@@ -729,7 +748,9 @@ const Projects = () => {
               ))}
             </Select>
             {newCardErrors.email && (
-              <p className="text-red-500">Valid Project Manager email is required</p>
+              <p className="text-red-500">
+                Valid Project Manager email is required
+              </p>
             )}
           </div>
 
@@ -787,8 +808,9 @@ const Projects = () => {
               {unsplashImages.map((image) => (
                 <div
                   key={image.id}
-                  className={`m-2 cursor-pointer ${selectedImage === image ? "border-4 border-blue-500" : ""
-                    }`}
+                  className={`m-2 cursor-pointer ${
+                    selectedImage === image ? "border-4 border-blue-500" : ""
+                  }`}
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image
@@ -808,39 +830,39 @@ const Projects = () => {
         </div>
       </Modal>
 
-
       <Modal
-        title="Rename Project"
-        visible={renameDialogVisible}
-        onOk={handleSaveRename}
-        onCancel={() => setRenameDialogVisible(false)}
-      >
-        <Input
-          placeholder="Project Name"
-          value={renameInputValue}
-          onChange={(e) => {
-            setRenameInputValue(e.target.value);
-            setRenameInputError(false);
-          }}
-          className={renameInputError ? "border-red-500" : ""}
-        />
-        {renameInputError && (
-          <p className="text-red-500">Project Name is required</p>
-        )}
+  title="Rename Project"
+  visible={renameDialogVisible}
+  onOk={handleSaveRename}
+  onCancel={() => setRenameDialogVisible(false)}
+>
+  <Input
+    placeholder="Project Name"
+    value={renameInputValue}
+    onChange={(e) => {
+      setRenameInputValue(e.target.value.trimStart());
+      setRenameInputError(false);
+    }}
+    className={renameInputError ? "border-red-500" : ""}
+  />
+  {renameInputError && (
+    <p className="text-red-500">Project Name is required</p>
+  )}
 
-        <TextArea
-          placeholder="Project Description"
-          value={descriptionInputValue}
-          onChange={(e) => {
-            setDescriptionInputValue(e.target.value);
-            setDescriptionInputError(false);
-          }}
-          className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
-        />
-        {descriptionInputError && (
-          <p className="text-red-500">Project Description is required</p>
-        )}
-      </Modal>
+  <TextArea
+    placeholder="Project Description"
+    value={descriptionInputValue}
+    onChange={(e) => {
+      setDescriptionInputValue(e.target.value.trimStart());
+      setDescriptionInputError(false);
+    }}
+    className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
+  />
+  {descriptionInputError && (
+    <p className="text-red-500">Project Description is required</p>
+  )}
+</Modal>
+
 
       <Modal
         title="Confirm Project Deletion"

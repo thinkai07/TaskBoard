@@ -762,7 +762,7 @@ app.get("/api/cards/user/:userId", async (req, res) => {
 app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
-      "name email"
+      "name email role"
     );
     if (!user) {
       return res
@@ -921,7 +921,7 @@ app.post("/api/login", async (req, res) => {
             organizationId: user.organization._id,
           },
           secretKey,
-          { expiresIn: "1h" } // Token expires in 1 hour
+          { expiresIn: "5h" } // Token expires in 1 hour
         );
         res.json({ success: true, token });
       } else {
@@ -1102,17 +1102,22 @@ app.post("/resetPassword", async (req, res) => {
 
     const decoded = jwt.verify(token, secretKey);
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      { password: hashedPassword, status: "VERIFIED" },
-      { new: true }
-    ); // Update status to 'Verified'
-
+    const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Compare new password with the current hashed password
+    const isMatch = await bcrypt.compare(newPassword, user.password);
+    if (isMatch) {
+      return res.status(400).json({ message: "New password must be different from the old password" });
+    }
+
+    // Hash the new password and update the user
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.status = "VERIFIED"; // Update status to 'Verified'
+    await user.save();
 
     const newUsedToken = new UsedToken({ token });
     await newUsedToken.save();
@@ -1127,6 +1132,91 @@ app.post("/resetPassword", async (req, res) => {
     }
   }
 });
+
+
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
+    }
+
+    // Generate a JWT token for password reset (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { email: user.email, userId: user._id },
+      secretKey,
+      { expiresIn: "1h" }
+    );
+
+    // Save the token in the user document (optional, for reference)
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+    await user.save();
+
+    // Create the reset link using the JWT token
+    const resetLink = `http://13.235.16.113/forgot-password?token=${resetToken}`;
+
+    // Set up email options
+    const mailOptions = {
+      to: user.email,
+      from: 'thinkailabs111@gmail.com',
+      subject: "Password Reset",
+      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+      Please click on the following link, or paste this into your browser to complete the process:\n\n
+      ${resetLink}\n\n
+      If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+    };
+
+    // Send the email with the reset link
+    transporter.sendMail(mailOptions, (err) => {
+      if (err) {
+        console.error("Error sending email:", err);
+        return res.status(500).json({ message: "Error sending email." });
+      }
+      res.json({ message: "Reset password link sent successfully." });
+    });
+  } catch (error) {
+    console.error("Error during forgot password process:", error);
+    res.status(500).json({ message: "Error processing request." });
+  }
+});
+
+// Update password 
+app.post('/api/users/:id/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify the current password (Assuming you are using bcrypt)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  } 
+}); 
+
 
 //projects
 // Function to send emails
@@ -1722,6 +1812,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
+        taskId:newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -1852,6 +1943,7 @@ app.put("/api/projects/:projectId/tasks/:taskId/move",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "move",
         actionDate: movedDate,
         performedBy: movedByUser.name, // Save the email of the user
@@ -1932,6 +2024,7 @@ app.delete("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "delete",
         actionDate: deletedDate,
         performedBy: deletedByUser.name, // Save the email of the user
@@ -1998,6 +2091,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",
         projectId: projectId,
         entityType: "Task",
         entityId: taskId,
+        taskId,
         actionType: "update",
         actionDate: updatedDate,
         performedBy: updatedByUser.name, // Save the email of the user
@@ -2141,6 +2235,12 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       assignedByEmail: createdByUser.name,
     });
     await newNotification.save();
+
+     // Send an email to the assigned user
+     const emailSubject = `You have been assigned a new task: "${name}"`;
+     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+     sendEmail(assignedTo, emailSubject, emailText);
+ 
 
     io.emit("cardCreated", { taskId, card: newCard });
 
@@ -2543,7 +2643,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "project", // Populate the project details
           model: "Project",
-          select: "name description", // Fetch only the necessary fields
+          select: "name description projectManager projectManagerName organization", // Fetch only the necessary fields
         },
       ],
     });
@@ -2617,8 +2717,14 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         id: card.project._id,
         name: card.project.name,
         description: card.project.description,
+        projectManager: card.project.projectManager,
+        projectManagerName: card.project.projectManagerName,
+        organization: card.project.organization,
+        
       }, // Include project details
     }));
+
+    console.log(cards)
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -2741,14 +2847,9 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
 });
 
 
-
-
-
-
 // Delete a card from a task
 
-app.delete(
-  "/api/tasks/:taskId/cards/:cardId",
+app.delete("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
   async (req, res) => {
     const { taskId, cardId } = req.params;
@@ -2790,6 +2891,7 @@ app.delete(
         performedBy: deletedByUser.name,
         projectId: task.project,
         taskId,
+        cardId,
         changes: [
           { field: "deletedBy", oldValue: null, newValue: deletedByUser.name },
           { field: "deletedDate", oldValue: null, newValue: deletedDate },

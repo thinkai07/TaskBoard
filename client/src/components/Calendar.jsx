@@ -106,9 +106,10 @@ const Calendar = () => {
       (event) => dayjs(event.date).format("YYYY-MM-DD") === date
     );
     if (eventsForSelectedDate.length > 0) {
-      navigate(`/calendar/${date}`, { state: { events: eventsForSelectedDate } });
+      navigate(`/calendar/${organizationId}/${date}`, { state: { events: eventsForSelectedDate } });
     }
   };
+  
 
   const handleChangeMonth = (value) => {
     setCurrentMonth(currentMonth.month(value));

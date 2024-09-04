@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
 import { Dropdown, Menu } from "antd"; //added
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
@@ -36,7 +37,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-
+  
 import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
@@ -57,12 +58,12 @@ function KanbanBoard() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [projectManager, setProjectManager] = useState("");
   const [newColumnModalVisible, setNewColumnModalVisible] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -95,6 +96,11 @@ function KanbanBoard() {
     description: "",
     email: "",
   });
+  const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [emailError,setemailError] = useState('');
+  const [startDateError,setstartDateError] = useState('');
+  // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
   const [repository, setRepository] = useState("");
@@ -107,35 +113,53 @@ function KanbanBoard() {
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
-  // const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userComment, setUserComment] = useState("");
   const [comments, setComments] = useState([]);
   const [assignedTo, setAssignedTo] = useState([]);
-  // const [projectName, setProjectName] = useState("");
   const [createdBy, setcreatedBy] = useState([]);
   const [dueDate, setDueDate] = useState("");
   const [estimatedHours, setEstimatedHours] = useState(0);
   const [utilizedHours, setUtilizedHours] = useState(0);
   const [remainingHours, setRemainingHours] = useState(0);
+  const [endDate, setEndDate] = useState('');
+  const [endDateError, setEndDateerror] = useState('');
+  const [estimatedHoursError, setestimatedHoursError] = useState('');
+  const [description, setDescription] = useState(''); 
+  const [descriptionError, setdescriptionerror] = useState('');
+
 
   const { TextArea } = Input;
-  const { Text, Title } = Typography;
+  const { Text, Title, Paragraph } = Typography;
   const [taskLogs, setTaskLogs] = useState([]);
   const { Option } = Select;
   const [selectedCard, setSelectedCard] = useState(null);
+
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
+
   const [startDate, setStartDate] = useState('');
 
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
   };
+  const showAboutModal = () => {
+    setAboutModalVisible(true);
+  };
+
+  const handleAboutModalClose = () => {
+    setAboutModalVisible(false);
+  };
+
+
 
   const handleCardClick = (cardId, columnId, projectId) => {
     navigate(`/rename-card/${columnId}/cards/${cardId}`)
   };
 
 
-
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
+  };
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
@@ -436,6 +460,7 @@ function KanbanBoard() {
         setProjectManager(project.projectManager);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
+        setProjectDescription(project.description);
       }
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -1218,7 +1243,7 @@ function KanbanBoard() {
   }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
-    try {
+    try { 
       // Fetch the user's email (updatedBy)
       const updatedBy = await fetchUserEmail();
       // Get the current date and time (updatedDate)
@@ -1284,13 +1309,13 @@ function KanbanBoard() {
           }}
           key={card.id}
         >
-          <Tooltip title={card.title}>
+          {/* <Tooltip title={card.title}> */}
             <div className="react-kanban-card__title truncate">
               {card.title && card.title.length > 20
                 ? card.title.slice(0, 20) + "..."
                 : card.title}
             </div>
-          </Tooltip>
+         
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <Tooltip title={card.assignedTo}>
@@ -1421,15 +1446,10 @@ function KanbanBoard() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             width: "100%",
-            overflow: "hidden",
-            scrollbarWidth: "none"
           }
           : {}
       }
     >
-
-
-      {/* <div className="flex justify-between items-center mb-4"> */}
       <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
         <div>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
@@ -1448,27 +1468,6 @@ function KanbanBoard() {
           >
             New Column
           </Button>
-
-          {/* <Popover
-            trigger="click"
-            placement="bottomRight"
-            content={
-              <Space direction="vertical">
-
-                <Button
-                  type="default"
-                  icon={<SettingOutlined />}
-                  onClick={openGitModal}
-                  block
-                >
-                  Git Configuration
-                </Button>
-                <RulesButton tasks={tasks} />
-              </Space>
-            }
-          >
-            <Button type="text" icon={<SquareMenu />} />
-          </Popover> */}
 
           <>
             <Button type="text" icon={<SquareMenu style={{ color: textColor }} />} onClick={showDrawer} />
@@ -1539,9 +1538,46 @@ function KanbanBoard() {
                   }}
 
                 />
+                {/* <Button
+                  type="text"
+                  icon={<InfoCircleOutlined />}
+                  onClick={showAboutModal}
+                  style={{
+                    display: "flex",
+                    fontSize: 15,
+                    justifyItems: "left",
+                  }}
+                >
+                  About
+                </Button> */}
+                <button
+      type="button"
+      className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+      onClick={showAboutModal}
+      style={{
+        height: "40px",
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        fontSize: 15,
+      }}
+    >
+      <InfoCircleOutlined style={{ fontSize: 20 }} />
+      About
+    </button>
 
               </Space>
             </Drawer>
+
+            <Modal
+              title="About Project"
+              visible={aboutModalVisible}
+              onCancel={handleAboutModalClose}
+              footer={null}
+            >
+              <Title level={4}>Project: {projectName}</Title>
+              <Paragraph>Project description: {projectDescription}</Paragraph>
+            </Modal>
           </>
         </div>
       </div>
@@ -1683,161 +1719,182 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              clearFieldsAndRefresh();
-            }
-          }}
-        >
-          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
-            <form onSubmit={handleAddCard}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+  <div
+    className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        clearFieldsAndRefresh();
+      }
+    }}
+  >
+    <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+      <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+      <form onSubmit={handleAddCard}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Card Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Card Title"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value.trimStart())}
+            />
+            {titleError && (
+              <p className="text-red-500 text-sm mt-1">{titleError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="assignedEmail"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Assigned (Email)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={handleEmailChange}
+              placeholder="Enter email address"
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            )}
+            {emailSuggestions.length > 0 && (
+              <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                {emailSuggestions.map((suggestion) => (
+                  <li
+                    key={suggestion.email}
+                    onClick={() => {
+                      setEmail(suggestion.email);
+                      setEmailSuggestions([]);
+                    }}
+                    className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
                   >
-                    Card Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Card Title"
-                    required
-                    onChange={(e) =>
-                      (e.target.value = e.target.value.trimStart())
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="assignedEmail"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Assigned (Email)
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    placeholder="Enter email address"
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {emailSuggestions.length > 0 && (
-                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                      {emailSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.email}
-                          onClick={() => {
-                            setEmail(suggestion.email);
-                            setEmailSuggestions([]);
-                          }}
-                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
-                        >
-                          {suggestion.email}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="assignDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Start Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="assignDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min={new Date().toISOString().slice(0, 16)} // Disable past dates
-                    value={startDate}
-                    onChange={handleStartDateChange}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="dueDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    End Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="dueDate"
-                    required
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
-                  />
-                </div>
-              </div>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="estimatedHours"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Estimated Hours
-                  </label>
-                  <input
-                    type="number"
-                    name="estimatedHours"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Estimated Hours"
-                    required
-                    min="0"
-                    step="0.1"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Card Description
-                  </label>
-                  <textarea
-                    name="description"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Card Description"
-                    required
-                    onChange={(e) =>
-                      (e.target.value = e.target.value.trimStart())
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={clearFieldsAndRefresh}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                >
-                  Add Card
-                </button>
-              </div>
-            </form>
+                    {suggestion.email}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="assignDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Start Date
+            </label>
+            <input
+              type="datetime-local"
+              name="assignDate"
+              required
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={new Date().toISOString().slice(0, 16)} // Disable past dates
+              value={startDate}
+              onChange={handleStartDateChange}
+            />
+            {startDateError && (
+              <p className="text-red-500 text-sm mt-1">{startDateError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="dueDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              End Date
+            </label>
+            <input
+              type="datetime-local"
+              name="dueDate"
+              required
+              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+              value={endDate}
+              onChange={handleEndDateChange}
+            />
+            {endDateError && (
+              <p className="text-red-500 text-sm mt-1">{endDateError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              htmlFor="estimatedHours"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Estimated Hours
+            </label>
+            <input
+              type="number"
+              name="estimatedHours"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Estimated Hours"
+              required
+              min="0"
+              step="0.1"
+              value={estimatedHours}
+              onChange={(e) => setEstimatedHours(e.target.value)}
+            />
+            {estimatedHoursError && (
+              <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Card Description
+            </label>
+            <textarea
+              name="description"
+              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Card Description"
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value.trimStart())}
+            />
+            {descriptionError && (
+              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={clearFieldsAndRefresh}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+          >
+            Add Card
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
 
       {showDeleteConfirmation && (

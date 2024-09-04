@@ -1,37 +1,53 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// CalendarDateDetails.js
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Table, Popover, Input, message, Tooltip } from "antd";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Button, Table, Popover, Input, message } from "antd";
 import axios from "axios";
 import { server } from "../constant";
 
 const CalendarDateDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { events } = location.state;
+    const [events, setEvents] = useState([]);
+    const [filteredEvents, setFilteredEvents] = useState([]);
     const [activeCardId, setActiveCardId] = useState(null);
     const [logHoursVisible, setLogHoursVisible] = useState(false);
     const [loggedHours, setLoggedHours] = useState("");
     const [userEmail, setUserEmail] = useState("");
-    const [updatedEvents, setUpdatedEvents] = useState(events);
     const [error, setError] = useState(false);
+    const { organizationId, date } = useParams(); // Get date from URL
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            if (!organizationId) return;
+
+            try {
+                const response = await axios.get(
+                    `${server}/api/calendar/${organizationId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                    }
+                );
+                setEvents(response.data);
+                console.log("projectid", response.data);
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            }
+        };
+
+        fetchEvents();
+    }, [organizationId]);
+
+    useEffect(() => {
+        if (events.length > 0 && date) {
+            const filtered = events.filter(event => {
+                const eventDate = new Date(event.date).toLocaleDateString('en-GB');
+                return eventDate === new Date(date).toLocaleDateString('en-GB');
+            });
+            setFilteredEvents(filtered);
+        }
+    }, [events, date]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -62,22 +78,29 @@ const CalendarDateDetails = () => {
     const handleStartLogging = (cardId) => {
         setActiveCardId(cardId);
         setLogHoursVisible(true);
-        setError(false); //added
+        setError(false);
     };
 
-
-
     const handleLogHours = async () => {
-
-        //added
         if (loggedHours.trim() === "") {
             setError(true);
             return;
         }
-
+    
         if (activeCardId && loggedHours) {
+            const activeEvent = filteredEvents.find(event => event.cardId === activeCardId);
+    
+            // Calculate the total hours after logging the new hours
+            const totalHours = activeEvent.utilizedHours + parseFloat(loggedHours);
+    
+            // Check if total utilized hours exceed estimated hours
+            if (totalHours > activeEvent.estimatedHours) {
+                message.error("Logged hours exceed the estimated hours.");
+                return;
+            }
+    
             try {
-                const activeEvent = updatedEvents.find(event => event.cardId === activeCardId);
+                // Log the hours and update the status if necessary
                 const response = await axios.post(
                     `${server}/api/log-hours`,
                     {
@@ -85,7 +108,7 @@ const CalendarDateDetails = () => {
                         taskId: activeEvent.taskId,
                         cardId: activeCardId,
                         hours: parseFloat(loggedHours),
-                        loggedBy: userEmail
+                        loggedBy: userEmail,
                     },
                     {
                         headers: {
@@ -93,31 +116,33 @@ const CalendarDateDetails = () => {
                         },
                     }
                 );
-
-                // Calculate new utilized hours
-                const newUtilizedHours = activeEvent.utilizedHours + parseFloat(loggedHours);
-
-                // Update the events array with the new utilized hours
-                const newEvents = updatedEvents.map(event =>
+    
+                // Update the local state to reflect the new status and utilized hours
+                const updatedEvents = filteredEvents.map(event =>
                     event.cardId === activeCardId
-                        ? { ...event, utilizedHours: newUtilizedHours }
+                        ? {
+                            ...event,
+                            utilizedHours: totalHours,
+                            status: response.data.cardStatus,
+                        }
                         : event
                 );
-                setUpdatedEvents(newEvents);
-
-                // Reset states
+    
+                setFilteredEvents(updatedEvents);
+    
                 setActiveCardId(null);
                 setLogHoursVisible(false);
                 setLoggedHours("");
                 message.success("Hours logged successfully");
-
+    
             } catch (error) {
                 console.error("Error logging hours:", error);
                 message.error("Failed to log hours");
             }
         }
     };
-
+    
+    
 
     const logHoursContent = (
         <div>
@@ -132,7 +157,7 @@ const CalendarDateDetails = () => {
             />
             {error && (
                 <div style={{ color: 'red', marginBottom: '10px' }}>
-                    Please enter the log hours               .
+                    Please enter the log hours.
                 </div>
             )}
             <Button type="primary" onClick={handleLogHours}>
@@ -181,8 +206,7 @@ const CalendarDateDetails = () => {
             dataIndex: "endDate",
             key: "endDate",
             render: (date) => new Date(date).toLocaleDateString('en-In')
-        }
-        ,
+        },
         { title: "Estimated Hours", dataIndex: "estimatedHours", key: "estimatedHours" },
         { title: "Utilized Hours", dataIndex: "utilizedHours", key: "utilizedHours" },
         {
@@ -191,7 +215,7 @@ const CalendarDateDetails = () => {
             render: (_, record) => (
                 <>
                     <Popover
-                        content={<div style={{ width: '250px' }}>{logHoursContent}</div>} // Set fixed width here
+                        content={<div style={{ width: '250px' }}>{logHoursContent}</div>}
                         title="Log Hours"
                         trigger="click"
                         visible={logHoursVisible && activeCardId === record.cardId}
@@ -221,14 +245,14 @@ const CalendarDateDetails = () => {
     return (
         <div className="p-4">
             <h2 className="text-2xl font-semibold mb-4 text-blue-600">
-                Project Details for {new Date(updatedEvents[0]?.date).toLocaleDateString('en-GB')}
+                Project Details for {new Date(date).toLocaleDateString('en-GB')}
             </h2>
 
             <Button onClick={() => navigate(-1)} style={{ marginBottom: '20px' }}>Back to Calendar</Button>
             <div className="overflow-x-auto">
                 <Table
                     columns={columns}
-                    dataSource={updatedEvents}
+                    dataSource={filteredEvents}
                     rowKey="id"
                 />
             </div>

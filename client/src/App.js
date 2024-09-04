@@ -19,8 +19,14 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
-import RenameCardPage from './pages/RenameCardPage';
-import CalendarDateDetails from './pages/CalendarDateDetails';
+import RenameCardPage from './Pages/RenameCardPage';
+import CalendarDateDetails from './Pages/CalendarDateDetails'
+import ForgotPasswordPage from './Pages/ForgotPasswordPage';
+import ResetForgotPassword from './Pages/ResetForgotPassword';
+
+
+
+
 
 
 const App = () => {
@@ -68,7 +74,8 @@ const App = () => {
         <Route path='/Organization' element={<Organization />} />
         <Route path='/reset-password' element={<ResetPassword />} />
         <Route path='/success' element={<SuccessPage />} />
-
+        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
+        <Route path="/forgot-password" element={<ResetForgotPassword />} />
         <Route
           path="/*"
           element={
@@ -87,7 +94,7 @@ const App = () => {
                   <Route path="/Teamsorg" element={<Teamsorg />} />
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
                   <Route path="/Rules" element={<RulesButton />} />
-                  <Route path="/calendar/:date" element={<CalendarDateDetails />} />
+                  <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails/>} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
 
                 </Routes>

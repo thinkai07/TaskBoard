@@ -73,6 +73,8 @@ const CalendarDateDetails = () => {
         navigate(`/projects/${projectId}/view`);
     };
 
+
+
     const handleStartLogging = (cardId) => {
         setActiveCardId(cardId);
         setLogHoursVisible(true);

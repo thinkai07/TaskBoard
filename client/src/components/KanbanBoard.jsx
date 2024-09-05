@@ -1252,7 +1252,7 @@ function KanbanBoard() {
   }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
-    try {
+    try { 
       // Fetch the user's email (updatedBy)
       const updatedBy = await fetchUserEmail();
       // Get the current date and time (updatedDate)
@@ -1420,7 +1420,7 @@ function KanbanBoard() {
     </div>
   );
 
-  //
+  
 
   const fetchTasks1 = async () => {
     try {

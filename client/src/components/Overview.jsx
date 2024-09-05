@@ -484,7 +484,7 @@ return (
                 </td>
                 <td
                   style={{
-                    padding: '12px 16px',
+                    padding: '12px 16px', 
                     borderBottom: '1px solid #e2e8f0',
                   }}
                 >

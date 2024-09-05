@@ -19,10 +19,12 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
-import RenameCardPage from './Pages/RenameCardPage';
-import CalendarDateDetails from './Pages/CalendarDateDetails'
-import ForgotPasswordPage from './Pages/ForgotPasswordPage';
-import ResetForgotPassword from './Pages/ResetForgotPassword';
+import RenameCardPage from './pages/RenameCardPage';
+import CalendarDateDetails from './pages/CalendarDateDetails'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetForgotPassword from './pages/ResetForgotPassword'
+import StatusSheet from './pages/StatusSheet'
+
 
 
 
@@ -94,6 +96,7 @@ const App = () => {
                   <Route path="/Rules" element={<RulesButton />} />
                   <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails/>} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
+                  <Route path="/statussheet" element={<StatusSheet/>}/>
 
                 </Routes>
               </Layout>

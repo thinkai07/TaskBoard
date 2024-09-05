@@ -461,6 +461,40 @@ const sendRegistrationEmail = (email, name, token) => {
   });
 };
 
+
+//reset password profile update
+// Update password route
+app.post('/api/users/:id/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify the current password (Assuming you are using bcrypt)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 //organisation register
 app.post("/register", async (req, res) => {
   const {
@@ -568,7 +602,7 @@ app.get("/api/card/:cardId", authenticateToken, async (req, res) => {
     const cardDetails = {
       id: card._id,
       name: card.name,
-      
+
       description: card.description,
       assignedTo: card.assignedTo,
       createdBy: card.createdBy,
@@ -2094,120 +2128,24 @@ app.put("/api/projects/:projectId/tasks/:taskId",
 );
 
 //Create card
-// app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
-//   const { taskId } = req.params;
-//   const { name, description, assignedTo, assignDate, dueDate, createdBy } =
-//     req.body;
 
-//   try {
-//     const task = await Task.findById(taskId);
-//     if (!task) {
-//       return res.status(404).json({ message: "Task not found" });
-//     }
-
-//     const project = await Project.findById(task.project);
-//     if (!project) {
-//       return res.status(404).json({ message: "Project not found" });
-//     }
-
-//     // Calculate estimated time in milliseconds
-//     const assignDateObj = new Date(assignDate);
-//     const dueDateObj = new Date(dueDate);
-
-//     const newCard = new Card({
-//       name,
-//       description,
-//       assignedTo,
-//       assignDate,
-//       dueDate,
-//       estimatedTime,
-//       task: taskId,
-//       project: task.project,
-//       createdDate: new Date(),
-//       createdBy,
-//     });
-
-//     await newCard.save();
-//     task.card.push(newCard._id);
-//     await task.save();
-
-//     // Create audit log entry for card creation
-//     const createdByUser = await User.findOne({ email: createdBy });
-//     if (!createdByUser) {
-//       return res.status(404).json({ message: "User not found for createdBy" });
-//     }
-
-//     const newAuditLog = new AuditLog({
-//       entityType: "Card",
-//       entityId: newCard._id,
-//       actionType: "create",
-//       actionDate: new Date(),
-//       performedBy: createdByUser.name,
-//       projectId: task.project,
-//       taskId: task._id,
-//       changes: [
-//         { field: "name", oldValue: null, newValue: name },
-//         { field: "estimatedTime", oldValue: null, newValue: estimatedTime }, // Log estimatedTime change
-//         // Add other relevant changes if needed
-//       ],
-//     });
-
-//     await newAuditLog.save();
-
-//     // Log creation in comments
-//     const newComment = new Comment({
-//       comment: `Card created by ${createdByUser.name}`,
-//       commentBy: createdByUser.name,
-//       card: newCard._id,
-//     });
-//     await newComment.save();
-//     newCard.comments.push(newComment._id);
-//     await newCard.save();
-
-//     // Create notification
-//     const assignedUser = await User.findOne({ email: assignedTo });
-//     if (!assignedUser) {
-//       return res.status(404).json({ message: "Assigned user not found" });
-//     }
-
-//     const newNotification = new Notification({
-//       userId: assignedUser._id,
-//       projectId: task.project,
-//       message: `is assigned to the "${name}" task on Project "${project.name}"`,
-//       type: "TASK_ASSIGNED",
-//       cardId: newCard._id,
-//       assignedByEmail: createdByUser.name,
-//     });
-//     await newNotification.save();
-
-//     // Emit event for real-time update
-//     io.emit("cardCreated", { taskId, card: newCard });
-
-//     res
-//       .status(201)
-//       .json({ message: "Card created successfully", card: newCard });
-//   } catch (error) {
-//     console.error("Error creating card:", error);
-//     res.status(500).json({ message: "Error creating card" });
-//   }
-// });
 
 
 let sequenceNumber = 1000;
 
 function generateUniqueId() {
-    const now = new Date(); 
-    const timestamp = 
-        now.getFullYear().toString() +
-        (now.getMonth() + 1).toString().padStart(2, '0') +
-        now.getDate().toString().padStart(2, '0') +
-        now.getSeconds().toString().padStart(2, '0');
-    sequenceNumber++;
-    const uniquePart = sequenceNumber.toString().padStart(4, '0');
-    return timestamp + uniquePart;
+  const now = new Date();
+  const timestamp =
+    now.getFullYear().toString() +
+    (now.getMonth() + 1).toString().padStart(2, '0') +
+    now.getDate().toString().padStart(2, '0') +
+    now.getSeconds().toString().padStart(2, '0');
+  sequenceNumber++;
+  const uniquePart = sequenceNumber.toString().padStart(4, '0');
+  return timestamp + uniquePart;
 }
 const uniqueId = generateUniqueId();
-console.log(uniqueId); 
+console.log(uniqueId);
 
 
 
@@ -2237,7 +2175,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       dueDate,
       estimatedHours,
       task: taskId,
-    
+
       project: task.project,
       createdDate: new Date(),
       createdBy,
@@ -2254,24 +2192,24 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     }
 
     const newAuditLog = new AuditLog({
-            entityType: "Card",
-            entityId: newCard._id,
-            actionType: "create",
-            actionDate: new Date(),
-            performedBy: createdByUser.name,
-            projectId: task.project,
-            taskId: task._id,
-            cardId:newCard._id,
-            changes: [
-              { field: "name", oldValue: null, newValue: name },
-              { field: "estimatedHours", oldValue: null, newValue: estimatedHours }, // Log estimatedTime change
-              // Add other relevant changes if needed
-            ],
-          });
-      
-          await newAuditLog.save();
-      
-      
+      entityType: "Card",
+      entityId: newCard._id,
+      actionType: "create",
+      actionDate: new Date(),
+      performedBy: createdByUser.name,
+      projectId: task.project,
+      taskId: task._id,
+      cardId: newCard._id,
+      changes: [
+        { field: "name", oldValue: null, newValue: name },
+        { field: "estimatedHours", oldValue: null, newValue: estimatedHours }, // Log estimatedTime change
+        // Add other relevant changes if needed
+      ],
+    });
+
+    await newAuditLog.save();
+
+
 
     const newActivity = new Activity({
       commentBy: createdByUser.name,
@@ -2314,6 +2252,8 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error creating card" });
   }
 });
+
+
 
 
 app.post("/api/notifications", authenticateToken, async (req, res) => {
@@ -2450,7 +2390,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       actionDate: movedDate,
       performedBy: movedByUser.name,
       projectId: sourceTask.project, // Include projectId from source task
-      taskId:sourceTaskId,
+      taskId: sourceTaskId,
       cardId,
       destinationTaskId,
       changes: [
@@ -2565,7 +2505,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
           performedBy: updatedByUser.name,
           projectId: task.project,
           taskId: taskId,
-          cardId:cardId,
+          cardId: cardId,
           changes: changes,
         });
         await newAuditLog.save();
@@ -2788,7 +2728,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
-    
+
   } catch (error) {
     console.error("Error fetching cards:", error);
     res.status(500).json({ message: "Error fetching cards" });
@@ -3141,136 +3081,136 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
 
 
 // //teams related apis
-app.post("/api/projects/:projectId/teams/addUser",authenticateToken,async (req, res) => {
-    const { projectId } = req.params;
-    const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
+app.post("/api/projects/:projectId/teams/addUser", authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+  const { email, teamName, addedBy, addedDate } = req.body; // Removed addedDate since we'll generate it
 
-    try {
-      const project = await Project.findById(projectId).populate("teams");
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-
-      let team = project.teams.find((team) => team.name === teamName);
-      if (!team) {
-        team = new Team({
-          name: teamName,
-          users: [],
-          addedBy,
-          addedDate: new Date(),
-        });
-        await team.save();
-        console.log("addedBy", addedBy);
-
-        project.teams.push(team._id);
-        await project.save();
-      }
-
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if the user has an 'ADMIN' role
-      if (user.role === "ADMIN") {
-        return res
-          .status(400)
-          .json({ message: "Admin users cannot be added to teams" });
-      }
-
-      // Check if the user status is 'unverify'
-      if (user.status === "UNVERIFY") {
-        return res.status(400).json({
-          message:
-            "This user email is not verified. Please verify the email before adding into team.",
-        });
-      }
-
-      const userInTeam = team.users.find(
-        (u) => u.user.toString() === user._id.toString()
-      );
-      if (userInTeam) {
-        return res.status(400).json({ message: "User is already in the team" });
-      }
-
-      team.users.push({ user: user._id, role: "USER" });
-      await team.save();
-
-      res
-        .status(200)
-        .json({ message: "User added to team successfully", team });
-    } catch (error) {
-      console.error("Error adding user to team:", error);
-      res.status(500).json({ message: "Error adding user to team" });
+  try {
+    const project = await Project.findById(projectId).populate("teams");
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
+
+    let team = project.teams.find((team) => team.name === teamName);
+    if (!team) {
+      team = new Team({
+        name: teamName,
+        users: [],
+        addedBy,
+        addedDate: new Date(),
+      });
+      await team.save();
+      console.log("addedBy", addedBy);
+
+      project.teams.push(team._id);
+      await project.save();
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the user has an 'ADMIN' role
+    if (user.role === "ADMIN") {
+      return res
+        .status(400)
+        .json({ message: "Admin users cannot be added to teams" });
+    }
+
+    // Check if the user status is 'unverify'
+    if (user.status === "UNVERIFY") {
+      return res.status(400).json({
+        message:
+          "This user email is not verified. Please verify the email before adding into team.",
+      });
+    }
+
+    const userInTeam = team.users.find(
+      (u) => u.user.toString() === user._id.toString()
+    );
+    if (userInTeam) {
+      return res.status(400).json({ message: "User is already in the team" });
+    }
+
+    team.users.push({ user: user._id, role: "USER" });
+    await team.save();
+
+    res
+      .status(200)
+      .json({ message: "User added to team successfully", team });
+  } catch (error) {
+    console.error("Error adding user to team:", error);
+    res.status(500).json({ message: "Error adding user to team" });
   }
+}
 );
 // Endpoint to get all users under all teams based on project ID
-app.get("/api/projects/:projectId/teams/users",authenticateToken,async (req, res) => {
-    const { projectId } = req.params;
-    try {
-      const project = await Project.findById(projectId).populate({
-        path: "teams",
-        populate: {
-          path: "users.user",
-          model: "User",
-        },
-      });
+app.get("/api/projects/:projectId/teams/users", authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const project = await Project.findById(projectId).populate({
+      path: "teams",
+      populate: {
+        path: "users.user",
+        model: "User",
+      },
+    });
 
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-      const users = [];
-      project.teams.forEach((team) => {
-        team.users.forEach((user) => {
-          users.push({
-            name: user.user.name,
-            email: user.user.email,
-            role: user.role,
-            team: team.name,
-          });
+    const users = [];
+    project.teams.forEach((team) => {
+      team.users.forEach((user) => {
+        users.push({
+          name: user.user.name,
+          email: user.user.email,
+          role: user.role,
+          team: team.name,
         });
       });
+    });
 
-      res.status(200).json({ users });
-    } catch (error) {
-      console.error("Error fetching team users:", error);
-      res.status(500).json({ message: "Error fetching team users" });
-    }
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error fetching team users:", error);
+    res.status(500).json({ message: "Error fetching team users" });
   }
+}
 );
 // Endpoint to get users under a specific team based on project ID and team name
-app.get("/api/projects/:projectId/teams/:teamName/users",authenticateToken,async (req, res) => {
-    const { projectId, teamName } = req.params;
-    try {
-      const project = await Project.findById(projectId).populate({
-        path: "teams",
-        match: { name: teamName },
-        populate: {
-          path: "users.user",
-          model: "User",
-        },
-      });
+app.get("/api/projects/:projectId/teams/:teamName/users", authenticateToken, async (req, res) => {
+  const { projectId, teamName } = req.params;
+  try {
+    const project = await Project.findById(projectId).populate({
+      path: "teams",
+      match: { name: teamName },
+      populate: {
+        path: "users.user",
+        model: "User",
+      },
+    });
 
-      if (!project || project.teams.length === 0) {
-        return res.status(404).json({ message: "Team not found" });
-      }
-
-      const team = project.teams[0];
-      const users = team.users.map((user) => ({
-        name: user.user.name,
-        email: user.user.email,
-        role: user.role,
-        team: team.name,
-      }));
-
-      res.status(200).json({ users });
-    } catch (error) {
-      console.error("Error fetching team users:", error);
-      res.status(500).json({ message: "Error fetching team users" });
+    if (!project || project.teams.length === 0) {
+      return res.status(404).json({ message: "Team not found" });
     }
+
+    const team = project.teams[0];
+    const users = team.users.map((user) => ({
+      name: user.user.name,
+      email: user.user.email,
+      role: user.role,
+      team: team.name,
+    }));
+
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error fetching team users:", error);
+    res.status(500).json({ message: "Error fetching team users" });
   }
+}
 );
 
 // Endpoint to delete a user from a team

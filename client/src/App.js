@@ -27,8 +27,6 @@ import ResetForgotPassword from './Pages/ResetForgotPassword';
 
 
 
-
-
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('token') !== null;

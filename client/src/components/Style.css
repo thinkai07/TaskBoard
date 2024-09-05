@@ -50,4 +50,17 @@
   justify-content: space-between;
 }
 
+.react-kanban-board {
+  overflow-x: scroll; /* Enable horizontal scrolling */
+  display: flex; /* Flexbox layout */
+  align-items: flex-start; /* Align items at the start */
+
+  /* Hide the scrollbar */
+  scrollbar-width: none; /* Firefox */
+}
+
+.react-kanban-board::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Edge */
+}
+
 

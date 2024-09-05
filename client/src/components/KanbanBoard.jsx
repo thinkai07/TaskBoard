@@ -641,14 +641,15 @@ function KanbanBoard() {
     await fetchTasks();
   };
 
-  // // // Update handleAddCard function
+  // // Update handleAddCard function
   const handleAddCard = async (e) => {
     e.preventDefault();
     const cardTitle = e.target.title.value.trim() || "";
     const cardDescription = e.target.description.value.trim() || "";
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
-    const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
+    const estimatedHoursInput = e.target.estimatedHours.value.trim();
+    const estimatedHours = parseFloat(estimatedHoursInput);
 
     if (
       !cardTitle ||
@@ -657,10 +658,13 @@ function KanbanBoard() {
       !email ||
       !assignDate ||
       !dueDate ||
-      !estimatedHours
+      estimatedHoursInput === "" ||
+      estimatedHours <= 0
     ) {
       notification.warning({
-        message: "Please fill in all fields",
+        message: estimatedHours <= 0
+          ? "Estimated hours must be greater than 0"
+          : "Please fill in all fields",
       });
       return;
     }
@@ -703,10 +707,9 @@ function KanbanBoard() {
             name: cardTitle,
             description: cardDescription,
             assignedTo: email,
-            createdBy: email,
             assignDate: assignDate,
             dueDate: dueDate,
-            estimatedHours: estimatedHours, // Include estimatedHours
+            estimatedHours: estimatedHours,
             createdBy: createdBy,
           }),
         }
@@ -716,11 +719,16 @@ function KanbanBoard() {
         throw new Error("Failed to add card");
       }
 
-      await clearFieldsAndRefresh();
+      // Clear fields only after successful card addition
+      setTitle('');
+      setEmail('');
+      setStartDate('');
+      setEndDate('');
+      setEstimatedHours('');
+      setDescription('');
       e.target.title.value = "";
       e.target.description.value = "";
       e.target.estimatedHours.value = "";
-      setEmail("");
 
       setModalVisible(false);
 
@@ -733,6 +741,7 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;

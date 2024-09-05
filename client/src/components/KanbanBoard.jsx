@@ -641,106 +641,208 @@ function KanbanBoard() {
     await fetchTasks();
   };
 
-  // // // Update handleAddCard function
-  const handleAddCard = async (e) => {
-    e.preventDefault();
-    const cardTitle = e.target.title.value.trim() || "";
-    const cardDescription = e.target.description.value.trim() || "";
-    const assignDate = e.target.assignDate.value;
-    const dueDate = e.target.dueDate.value;
-    const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
+//  // // // Update handleAddCard function
+//  const handleAddCard = async (e) => {
+//   e.preventDefault();
+//   const cardTitle = e.target.title.value.trim() || "";
+//   const cardDescription = e.target.description.value.trim() || "";
+//   const assignDate = e.target.assignDate.value;
+//   const dueDate = e.target.dueDate.value;
+//   const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
 
-    // After successfully adding the card, reset all fields
+//   // After successfully adding the card, reset all fields
+//   setTitle('');
+//   setEmail('');
+//   setStartDate('');
+//   setEndDate('');
+//   setEstimatedHours('');
+//   setDescription('');
+
+//   if (
+//     !cardTitle ||
+//     !cardDescription ||
+//     !selectedColumnId ||
+//     !email ||
+//     !assignDate ||
+//     !dueDate ||
+//     !estimatedHours
+//   ) {
+//     notification.warning({
+//       message: "Please fill in all fields",
+//     });
+//     return;
+//   }
+
+//   try {
+//     const createdBy = await fetchUserEmail();
+
+//     const searchResponse = await fetch(
+//       `${server}/api/projects/${projectId}/users/search?email=${email}`,
+//       {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
+//         },
+//       }
+//     );
+
+//     if (!searchResponse.ok) {
+//       throw new Error("User is not part of the project");
+//     }
+
+//     const { users } = await searchResponse.json();
+//     if (users.length === 0) {
+//       notification.warning({
+//         message: "The entered email is not part of the project",
+//       });
+//       return;
+//     }
+
+//     const response = await fetch(
+//       `${server}/api/tasks/${selectedColumnId}/cards`,
+//       {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
+//         },
+//         body: JSON.stringify({
+//           name: cardTitle,
+//           description: cardDescription,
+//           assignedTo: email,
+//           createdBy: email,
+//           assignDate: assignDate,
+//           dueDate: dueDate,
+//           estimatedHours: estimatedHours, // Include estimatedHours
+//           createdBy: createdBy,
+//         }),
+//       }
+//     );
+
+//     if (!response.ok) {
+//       throw new Error("Failed to add card");
+//     }
+
+//     await clearFieldsAndRefresh();
+//     e.target.title.value = "";
+//     e.target.description.value = "";
+//     e.target.estimatedHours.value = "";
+//     setEmail("");
+
+//     setModalVisible(false);
+
+//     await fetchTasks();
+//     notification.success({
+//       message: "Task added Successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error adding card:", error);
+//     alert(error.message);
+//   }
+// };
+const handleAddCard = async (e) => {
+  e.preventDefault();
+  const cardTitle = e.target.title.value.trim() || "";
+  const cardDescription = e.target.description.value.trim() || "";
+  const assignDate = e.target.assignDate.value;
+  const dueDate = e.target.dueDate.value;
+  const estimatedHoursInput = e.target.estimatedHours.value.trim();
+  const estimatedHours = parseFloat(estimatedHoursInput);
+
+  if (
+    !cardTitle ||
+    !cardDescription ||
+    !selectedColumnId ||
+    !email ||
+    !assignDate ||
+    !dueDate ||
+    estimatedHoursInput === "" ||
+    estimatedHours <= 0
+  ) {
+    notification.warning({
+      message: estimatedHours <= 0 
+        ? "Estimated hours must be greater than 0"
+        : "Please fill in all fields",
+    });
+    return;
+  }
+
+  try {
+    const createdBy = await fetchUserEmail();
+
+    const searchResponse = await fetch(
+      `${server}/api/projects/${projectId}/users/search?email=${email}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    if (!searchResponse.ok) {
+      throw new Error("User is not part of the project");
+    }
+
+    const { users } = await searchResponse.json();
+    if (users.length === 0) {
+      notification.warning({
+        message: "The entered email is not part of the project",
+      });
+      return;
+    }
+
+    const response = await fetch(
+      `${server}/api/tasks/${selectedColumnId}/cards`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          name: cardTitle,
+          description: cardDescription,
+          assignedTo: email,
+          assignDate: assignDate,
+          dueDate: dueDate,
+          estimatedHours: estimatedHours,
+          createdBy: createdBy,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to add card");
+    }
+
+    // Clear fields only after successful card addition
     setTitle('');
     setEmail('');
     setStartDate('');
     setEndDate('');
     setEstimatedHours('');
     setDescription('');
+    e.target.title.value = "";
+    e.target.description.value = "";
+    e.target.estimatedHours.value = "";
 
-    if (
-      !cardTitle ||
-      !cardDescription ||
-      !selectedColumnId ||
-      !email ||
-      !assignDate ||
-      !dueDate ||
-      !estimatedHours
-    ) {
-      notification.warning({
-        message: "Please fill in all fields",
-      });
-      return;
-    }
+    setModalVisible(false);
 
-    try {
-      const createdBy = await fetchUserEmail();
+    await fetchTasks();
+    notification.success({
+      message: "Task added Successfully",
+    });
+  } catch (error) {
+    console.error("Error adding card:", error);
+    alert(error.message);
+  }
+};
 
-      const searchResponse = await fetch(
-        `${server}/api/projects/${projectId}/users/search?email=${email}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
 
-      if (!searchResponse.ok) {
-        throw new Error("User is not part of the project");
-      }
 
-      const { users } = await searchResponse.json();
-      if (users.length === 0) {
-        notification.warning({
-          message: "The entered email is not part of the project",
-        });
-        return;
-      }
-
-      const response = await fetch(
-        `${server}/api/tasks/${selectedColumnId}/cards`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            name: cardTitle,
-            description: cardDescription,
-            assignedTo: email,
-            createdBy: email,
-            assignDate: assignDate,
-            dueDate: dueDate,
-            estimatedHours: estimatedHours, // Include estimatedHours
-            createdBy: createdBy,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to add card");
-      }
-
-      await clearFieldsAndRefresh();
-      e.target.title.value = "";
-      e.target.description.value = "";
-      e.target.estimatedHours.value = "";
-      setEmail("");
-
-      setModalVisible(false);
-
-      await fetchTasks();
-      notification.success({
-        message: "Task added Successfully",
-      });
-    } catch (error) {
-      console.error("Error adding card:", error);
-      alert(error.message);
-    }
-  };
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;

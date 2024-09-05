@@ -1,16 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import axios from "axios";

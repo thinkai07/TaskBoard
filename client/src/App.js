@@ -19,11 +19,11 @@ import AuditLog from './components/Auditlog';
 import Teamsorg from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
 import RulesButton from './components/RulePage';
-import RenameCardPage from './pages/RenameCardPage';
-import CalendarDateDetails from './pages/CalendarDateDetails'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetForgotPassword from './pages/ResetForgotPassword'
-import StatusSheet from './pages/StatusSheet'
+import RenameCardPage from './Pages/RenameCardPage';
+import CalendarDateDetails from './Pages/CalendarDateDetails'
+import ForgotPasswordPage from './Pages/ForgotPasswordPage'
+import ResetForgotPassword from './Pages/ResetForgotPassword'
+import StatusSheet from './Pages/StatusSheet'
 
 
 

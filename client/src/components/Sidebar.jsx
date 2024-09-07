@@ -12,6 +12,7 @@ import {
   FileChartColumn
 } from "lucide-react";
 import task from "../assets/task.png";
+import { icon } from "@fortawesome/fontawesome-svg-core";
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -75,7 +76,8 @@ const Sidebar = () => {
           { path: "/members", icon: Users, label: "Members" },
           { path: "/Auditlog", icon: FileText, label: "Auditlog" },
           { path: "/Teamsorg", icon: ShieldHalf, label: "Teams" },
-          { path: "/statussheet", icon:FileChartColumn,label:'StatusSheet'}
+          { path: "/statussheet", icon:FileChartColumn,label:'StatusSheet'},
+          { path: "/timesheet" ,icon:FileChartColumn,label:'Timesheet'}
         ].map(({ path, icon: Icon, label }) => (
           <li
             key={path}

@@ -734,6 +734,67 @@ app.get("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
+// app.get("/api/cards/user/:userId", async (req, res) => {
+//   try {
+//     const userId = req.params.userId;
+
+//     // Fetch the user to get the email
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const userEmail = user.email;
+
+//     // Fetch cards assigned to the user by email
+//     const cards = await Card.find({ assignedTo: userEmail })
+//    .populate({path:'project',select:'projectName'})
+//    .select('name assignDate estimatedHours utilizedTime status project'); 
+//     // Send the response with the cards
+//     res.json(cards);
+//     console.log(cards);
+//   } catch (error) {
+//     console.error("Error fetching cards:", error);
+//     res.status(500).send("Server error");
+//   }
+// });
+
+
+
+//for filters
+app.get('/api/organization/:organizationId/projects', authenticateToken, async (req, res) => {
+  const { organizationId } = req.params;
+
+  try {
+    const projects = await Project.find({ organization: organizationId });
+    if (!projects.length) {
+      return res.status(404).json({ message: 'No projects found for this organization' });
+    }
+    res.status(200).json({ projects });
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Error fetching projects' });
+  }
+});
+
+app.get('/api/projects/:projectId/tasks', authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+
+  try {
+    const tasks = await Task.find({ project: projectId });
+    if (!tasks.length) {
+      return res.status(404).json({ message: 'No tasks found for this project' });
+    }
+    res.status(200).json({ tasks });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ message: 'Error fetching tasks' });
+  }
+});
+
+
+
+
 app.get("/api/cards/user/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -747,16 +808,40 @@ app.get("/api/cards/user/:userId", async (req, res) => {
     const userEmail = user.email;
 
     // Fetch cards assigned to the user by email
-    const cards = await Card.find({ assignedTo: userEmail });
+    const cards = await Card.find({ assignedTo: userEmail })
+      .populate({ path: 'project', select: 'name' })
+      .populate({ path: 'task', select: 'name' })
+      .select('name assignDate estimatedHours utilizedTime status project task');
 
-    // Send the response with the cards
-    res.json(cards);
-    console.log(cards);
+    // Get the card IDs to calculate total utilized hours
+    const cardIds = cards.map(card => card._id);
+
+    // Calculate the sum of logged hours for each card
+    const logs = await Tasklogs.aggregate([
+      { $match: { cardId: { $in: cardIds } } },
+      { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } }
+    ]);
+
+    const hoursMap = logs.reduce((map, log) => {
+      map[log._id] = log.totalHours;
+      return map;
+    }, {});
+
+    // Modify the card data to include utilized hours
+    const modifiedCards = cards.map(card => ({
+      ...card.toObject(),
+      utilizedHours: hoursMap[card._id] || 0
+    }));
+
+    // Send the response with the modified cards
+    res.json(modifiedCards);
   } catch (error) {
     console.error("Error fetching cards:", error);
     res.status(500).send("Server error");
   }
 });
+
+
 
 // User data name route
 app.get("/api/user", authenticateToken, async (req, res) => {
@@ -965,11 +1050,45 @@ function authorizeRoles(...roles) {
   };
 }
 // Get user role route
+// app.get("/api/role", authenticateToken, async (req, res) => {
+//   try {
+//     // Step 1: Find the user and get the organization ID
+//     const user = await User.findOne({ email: req.user.email }).select(
+//       "role organization"
+//     );
+//     if (!user) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "User not found" });
+//     }
+
+//     // Step 2: Find the organization by ID and get the name
+//     const organization = await Organization.findById(user.organization).select(
+//       "name"
+//     );
+//     if (!organization) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Organization not found" });
+//     }
+
+//     res.json({
+//       success: true,
+//       role: user.role,
+//       organizationId: user.organization,
+//       organizationName: organization.name, // Include the organization name in the response
+//     });
+//   } catch (error) {
+//     console.error("Error:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// });
+
 app.get("/api/role", authenticateToken, async (req, res) => {
   try {
     // Step 1: Find the user and get the organization ID
     const user = await User.findOne({ email: req.user.email }).select(
-      "role organization"
+      "email name role organization"
     );
     if (!user) {
       return res
@@ -1214,8 +1333,8 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
-  } 
-}); 
+  }
+});
 
 
 //projects
@@ -1812,7 +1931,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
-        taskId:newTask._id,
+        taskId: newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -2236,11 +2355,11 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     });
     await newNotification.save();
 
-     // Send an email to the assigned user
-     const emailSubject = `You have been assigned a new task: "${name}"`;
-     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
-     sendEmail(assignedTo, emailSubject, emailText);
- 
+    // Send an email to the assigned user
+    const emailSubject = `You have been assigned a new task: "${name}"`;
+    const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+    sendEmail(assignedTo, emailSubject, emailText);
+
 
     io.emit("cardCreated", { taskId, card: newCard });
 
@@ -2720,7 +2839,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         projectManager: card.project.projectManager,
         projectManagerName: card.project.projectManagerName,
         organization: card.project.organization,
-        
+
       }, // Include project details
     }));
 

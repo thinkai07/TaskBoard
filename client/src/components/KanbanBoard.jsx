@@ -37,7 +37,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-  
+
 import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
@@ -98,8 +98,8 @@ function KanbanBoard() {
   });
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
-  const [emailError,setemailError] = useState('');
-  const [startDateError,setstartDateError] = useState('');
+  const [emailError, setemailError] = useState('');
+  const [startDateError, setstartDateError] = useState('');
   // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
@@ -125,7 +125,7 @@ function KanbanBoard() {
   const [endDate, setEndDate] = useState('');
   const [endDateError, setEndDateerror] = useState('');
   const [estimatedHoursError, setestimatedHoursError] = useState('');
-  const [description, setDescription] = useState(''); 
+  const [description, setDescription] = useState('');
   const [descriptionError, setdescriptionerror] = useState('');
 
 
@@ -1243,7 +1243,7 @@ function KanbanBoard() {
   }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
-    try { 
+    try {
       // Fetch the user's email (updatedBy)
       const updatedBy = await fetchUserEmail();
       // Get the current date and time (updatedDate)
@@ -1310,12 +1310,12 @@ function KanbanBoard() {
           key={card.id}
         >
           {/* <Tooltip title={card.title}> */}
-            <div className="react-kanban-card__title truncate">
-              {card.title && card.title.length > 20
-                ? card.title.slice(0, 20) + "..."
-                : card.title}
-            </div>
-         
+          <div className="react-kanban-card__title truncate">
+            {card.title && card.title.length > 20
+              ? card.title.slice(0, 20) + "..."
+              : card.title}
+          </div>
+
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <Tooltip title={card.assignedTo}>
@@ -1411,7 +1411,7 @@ function KanbanBoard() {
     </div>
   );
 
-  
+
 
   const fetchTasks1 = async () => {
     try {
@@ -1551,20 +1551,20 @@ function KanbanBoard() {
                   About
                 </Button> */}
                 <button
-      type="button"
-      className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-      onClick={showAboutModal}
-      style={{
-        height: "40px",
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        fontSize: 15,
-      }}
-    >
-      <InfoCircleOutlined style={{ fontSize: 20 }} />
-      About
-    </button>
+                  type="button"
+                  className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+                  onClick={showAboutModal}
+                  style={{
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    fontSize: 15,
+                  }}
+                >
+                  <InfoCircleOutlined style={{ fontSize: 20 }} />
+                  About
+                </button>
 
               </Space>
             </Drawer>
@@ -1719,181 +1719,181 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-  <div
-    className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-    onClick={(e) => {
-      if (e.target === e.currentTarget) {
-        clearFieldsAndRefresh();
-      }
-    }}
-  >
-    <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
-      <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
-      <form onSubmit={handleAddCard}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Title"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value.trimStart())}
-            />
-            {titleError && (
-              <p className="text-red-500 text-sm mt-1">{titleError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="assignedEmail"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Assigned (Email)
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Enter email address"
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-            {emailSuggestions.length > 0 && (
-              <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                {emailSuggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.email}
-                    onClick={() => {
-                      setEmail(suggestion.email);
-                      setEmailSuggestions([]);
-                    }}
-                    className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              clearFieldsAndRefresh();
+            }
+          }}
+        >
+          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+            <form onSubmit={handleAddCard}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    {suggestion.email}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Title"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value.trimStart())}
+                  />
+                  {titleError && (
+                    <p className="text-red-500 text-sm mt-1">{titleError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="assignedEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Assigned (Email)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  {emailError && (
+                    <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                  )}
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="assignDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Date
-            </label>
-            <input
-              type="datetime-local"
-              name="assignDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={new Date().toISOString().slice(0, 16)} // Disable past dates
-              value={startDate}
-              onChange={handleStartDateChange}
-            />
-            {startDateError && (
-              <p className="text-red-500 text-sm mt-1">{startDateError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="dueDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Date
-            </label>
-            <input
-              type="datetime-local"
-              name="dueDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
-              value={endDate}
-              onChange={handleEndDateChange}
-            />
-            {endDateError && (
-              <p className="text-red-500 text-sm mt-1">{endDateError}</p>
-            )}
-          </div>
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="assignDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="assignDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={new Date().toISOString().slice(0, 16)} // Disable past dates
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                  />
+                  {startDateError && (
+                    <p className="text-red-500 text-sm mt-1">{startDateError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="dueDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+                    value={endDate}
+                    onChange={handleEndDateChange}
+                  />
+                  {endDateError && (
+                    <p className="text-red-500 text-sm mt-1">{endDateError}</p>
+                  )}
+                </div>
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="estimatedHours"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Estimated Hours
-            </label>
-            <input
-              type="number"
-              name="estimatedHours"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Estimated Hours"
-              required
-              min="0"
-              step="0.1"
-              value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value)}
-            />
-            {estimatedHoursError && (
-              <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Description
-            </label>
-            <textarea
-              name="description"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Description"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value.trimStart())}
-            />
-            {descriptionError && (
-              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
-            )}
-          </div>
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="estimatedHours"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Estimated Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="estimatedHours"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Estimated Hours"
+                    required
+                    min="0"
+                    step="0.1"
+                    value={estimatedHours}
+                    onChange={(e) => setEstimatedHours(e.target.value)}
+                  />
+                  {estimatedHoursError && (
+                    <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Description"
+                    required
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value.trimStart())}
+                  />
+                  {descriptionError && (
+                    <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+                  )}
+                </div>
+              </div>
 
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={clearFieldsAndRefresh}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-          >
-            Add Card
-          </button>
+              <div className="flex justify-between">
+                <button
+                  type="button"
+                  onClick={clearFieldsAndRefresh}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Add Card
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
 
 

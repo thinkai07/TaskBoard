@@ -26,6 +26,10 @@ import ResetForgotPassword from './Pages/ResetForgotPassword'
 import StatusSheet from './Pages/StatusSheet'
 
 
+import Timesheet from './Pages/Timesheet';
+import TimesheetDetails from './Pages/TimesheetDetails';
+
+
 
 
 
@@ -97,7 +101,8 @@ const App = () => {
                   <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails/>} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
                   <Route path="/statussheet" element={<StatusSheet/>}/>
-
+                  <Route path='/timesheet' element={<Timesheet />} />
+                  <Route path='/timesheetdetails' element={<TimesheetDetails/>} />
                 </Routes>
               </Layout>
             ) : (

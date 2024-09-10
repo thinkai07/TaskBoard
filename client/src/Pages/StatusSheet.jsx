@@ -17,9 +17,7 @@ const StatusSheet = () => {
     const [dataSource, setDataSource] = useState([]);
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
-
     const [selectedColumn, setSelectedColumn] = useState(null);
-
     const [tasks, setTasks] = useState([]);
     const [userRole, setUserRole] = useState(null);
     const [organizationId, setOrganizationId] = useState(null);
@@ -108,10 +106,6 @@ const StatusSheet = () => {
             console.error("Error fetching cards:", error);
         }
     };
-
-
-
-
     // Fetch tasks based on selected project
     const fetchProjectTasks = async (projectId) => {
         try {
@@ -179,9 +173,6 @@ const StatusSheet = () => {
         setIsModalVisible(false);
     };
 
-
-
-
     //added
     const fetchUserEmail = async () => {
         try {
@@ -200,9 +191,6 @@ const StatusSheet = () => {
     useEffect(() => {
         fetchUserEmail();
     }, []);
-
-
-
 
    // Handle status change
 const handleChangeStatus = async (cardId, newStatus) => {
@@ -317,8 +305,6 @@ const handleChangeStatus = async (cardId, newStatus) => {
             ),
         },
     ];
-
-
     // User selection dropdown menu
     const userMenu = (
         <Menu onClick={(e) => handleUserSelect(e.key)}>

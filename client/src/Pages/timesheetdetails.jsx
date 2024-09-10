@@ -376,6 +376,7 @@ const TimesheetDetails = () => {
                         </Form.Item>
                     </Col>
                 </Row>
+
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>
                         <Button
@@ -386,7 +387,12 @@ const TimesheetDetails = () => {
                         >
                             Add Row
                         </Button>
-                        <Button type="primary" onClick={handleSaveDraft} disabled={submitDisabled || isFormDisabled}>
+                        <Button
+                            type="primary"
+                            onClick={handleSaveDraft}
+                            disabled={submitDisabled || isFormDisabled}
+                            style={{ marginRight: '8px' }} // Add margin here
+                        >
                             Submit
                         </Button>
                         <Button type="default" htmlType="button" onClick={handleSaveDraft}>
@@ -394,6 +400,7 @@ const TimesheetDetails = () => {
                         </Button>
                     </Col>
                 </Row>
+
             </Form>
 
             <Table

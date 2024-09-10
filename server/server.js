@@ -372,7 +372,7 @@ const userSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
   status: { type: String, default: "UNVERIFY" },
 });
-
+//timesheetSchema
 const timesheetSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   employeeName: { type: String, required: true },
@@ -487,16 +487,26 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-
-
 // GET API to fetch a specific timesheet by ID
 app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
   try {
     const userId = req.user._id;
     const timesheetId = req.params.id;
 
-    // Find the timesheet with the specified ID and belonging to the authenticated user
-    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+    // Fetch user information to check role
+    const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Determine if the user is an ADMIN
+    const isAdmin = user.role === 'ADMIN';
+
+    // Find the timesheet based on the user's role
+    const timesheet = isAdmin
+      ? await Timesheet.findById(timesheetId)
+      : await Timesheet.findOne({ _id: timesheetId, user: userId });
 
     if (!timesheet) {
       return res.status(404).json({ success: false, message: "Timesheet not found" });
@@ -512,18 +522,30 @@ app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
 // GET API to fetch all timesheets for the authenticated user
 app.get("/api/timesheets", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user._id;
+      const userId = req.user._id;
 
-    // Fetch all timesheets associated with the authenticated user
-    const timesheets = await Timesheet.find({ user: userId });
+      // Fetch user information to check role
+      const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
 
-    res.status(200).json({ success: true, timesheets });
+      if (!user) {
+          return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      // Check if user is an ADMIN
+      if (user.role === 'ADMIN') {
+          // Fetch all timesheets
+          const timesheets = await Timesheet.find({});
+          return res.status(200).json({ success: true, timesheets });
+      } else {
+          // Fetch timesheets associated with the authenticated user
+          const timesheets = await Timesheet.find({ user: userId });
+          return res.status(200).json({ success: true, timesheets });
+      }
   } catch (error) {
-    console.error("Error fetching timesheets:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+      console.error("Error fetching timesheets:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
-
 // create timesheet
 app.post("/api/timesheet", authenticateToken, async (req, res) => {
   try {
@@ -561,8 +583,6 @@ app.post("/api/timesheet", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
-
-
 // Update timesheet
 app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
   try {

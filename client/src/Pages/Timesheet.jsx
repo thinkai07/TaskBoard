@@ -1,15 +1,203 @@
-//timesheet.jsx
+// // // //timesheet.jsx
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import axios from 'axios';
+// import { Table, Button, Dropdown, Menu, DatePicker } from 'antd';
+// import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+// import { server } from '../constant';
+
+// const Timesheet = () => {
+//     const navigate = useNavigate();
+//     const [timesheetIds, setTimesheetIds] = useState([]);
+//     const [sortedData, setSortedData] = useState([]);
+//     const [filters, setFilters] = useState({
+//         weekStartDate: null,
+//         weekEndDate: null,
+//     });
+
+//     useEffect(() => {
+//         const fetchTimesheetIds = async () => {
+//             try {
+//                 const response = await axios.get(`${server}/api/timesheets`, {
+//                     headers: {
+//                         Authorization: `Bearer ${localStorage.getItem('token')}`,
+//                     },
+//                 });
+//                 if (response.data.success && response.data.timesheets.length > 0) {
+//                     setTimesheetIds(response.data.timesheets);
+//                     setSortedData(response.data.timesheets);
+//                 }
+//             } catch (error) {
+//                 console.error('Error fetching timesheet IDs:', error);
+//             }
+//         };
+
+//         fetchTimesheetIds();
+//     }, []);
+
+//     const handleAddTimesheet = () => {
+//         navigate('/timesheetdetails/new');
+//     };
+
+//     const handleSort = (field, order) => {
+//         const sorted = [...sortedData].sort((a, b) => {
+//             if (order === 'ascend') {
+//                 return a[field].localeCompare(b[field]);
+//             } else {
+//                 return b[field].localeCompare(a[field]);
+//             }
+//         });
+//         setSortedData(sorted);
+//     };
+
+//     const handleDateSort = (field, order) => {
+//         const sorted = [...sortedData].sort((a, b) => {
+//             if (order === 'ascend') {
+//                 return new Date(a[field]) - new Date(b[field]);
+//             } else {
+//                 return new Date(b[field]) - new Date(a[field]);
+//             }
+//         });
+//         setSortedData(sorted);
+//     };
+
+//     const handleDateFilter = (date, dateType) => {
+//         setFilters(prevFilters => ({
+//             ...prevFilters,
+//             [dateType]: date,
+//         }));
+
+//         const filteredData = timesheetIds.filter(timesheet => {
+//             const startDate = new Date(timesheet.weekStartDate);
+//             const endDate = new Date(timesheet.weekEndDate);
+            
+//             if (dateType === 'weekStartDate' && date) {
+//                 return startDate.toDateString() === date.toDate().toDateString();
+//             }
+//             if (dateType === 'weekEndDate' && date) {
+//                 return endDate.toDateString() === date.toDate().toDateString();
+//             }
+//             return true;
+//         });
+
+//         setSortedData(filteredData);
+//     };
+
+//     const createMenu = (field, isDate = false) => (
+//         <Menu>
+//             <Menu.Item key="1" icon={<SortAscendingOutlined />} onClick={() => {
+//                 if (isDate) handleDateSort(field, 'ascend');
+//                 else handleSort(field, 'ascend');
+//             }}>
+//                 Sort Ascending
+//             </Menu.Item>
+//             <Menu.Item key="2" icon={<SortDescendingOutlined />} onClick={() => {
+//                 if (isDate) handleDateSort(field, 'descend');
+//                 else handleSort(field, 'descend');
+//             }}>
+//                 Sort Descending
+//             </Menu.Item>
+//         </Menu>
+//     );
+
+//     const columns = [
+//         {
+//             title: (
+//                 <span>
+//                     Timesheet ID
+//                     <Dropdown overlay={createMenu('_id')} trigger={['click']}>
+//                         <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+//                     </Dropdown>
+//                 </span>
+//             ),
+//             dataIndex: '_id',
+//             key: '_id',
+//             render: (text) => (
+//                 <a href={`/timesheetdetails/${text}`} className="text-blue-500 hover:underline">
+//                     {text}
+//                 </a>
+//             ),
+//         },
+//         {
+//             title: (
+//                 <span>
+//                     Employee Name
+//                     <Dropdown overlay={createMenu('employeeName')} trigger={['click']}>
+//                         <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+//                     </Dropdown>
+//                 </span>
+//             ),
+//             dataIndex: 'employeeName',
+//             key: 'employeeName',
+//         },
+//         {
+//             title: (
+//                 <span>
+//                     Week Start Date
+//                     <DatePicker
+//                         style={{ marginLeft: 8 }}
+//                         onChange={(date) => handleDateFilter(date, 'weekStartDate')}
+//                     />
+//                     <Dropdown overlay={createMenu('weekStartDate', true)} trigger={['click']}>
+//                         <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+//                     </Dropdown>
+//                 </span>
+//             ),
+//             dataIndex: 'weekStartDate',
+//             key: 'weekStartDate',
+//             render: (date) => new Date(date).toLocaleDateString('en-IN'),
+//         },
+//         {
+//             title: (
+//                 <span>
+//                     Week End Date
+//                     <DatePicker
+//                         style={{ marginLeft: 8 }}
+//                         onChange={(date) => handleDateFilter(date, 'weekEndDate')}
+//                     />
+//                     <Dropdown overlay={createMenu('weekEndDate', true)} trigger={['click']}>
+//                         <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+//                     </Dropdown>
+//                 </span>
+//             ),
+//             dataIndex: 'weekEndDate',
+//             key: 'weekEndDate',
+//             render: (date) => new Date(date).toLocaleDateString('en-IN'),
+//         },
+//     ];
+
+//     return (
+//         <div className="p-4">
+//             <h1 className="text-2xl font-bold mb-4">Timesheet</h1>
+//             <div className="flex justify-end mb-4">
+//                 <Button type="primary" onClick={handleAddTimesheet}>
+//                     Add Timesheet
+//                 </Button>
+//             </div>
+//             <Table dataSource={sortedData} columns={columns} rowKey="_id" />
+//         </div>
+//     );
+// };
+
+// export default Timesheet;
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Table, Button, Dropdown, Menu } from 'antd';
-import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { Table, Button, Dropdown, Menu, DatePicker, Input } from 'antd';
+import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, SearchOutlined } from '@ant-design/icons';
 import { server } from '../constant';
 
 const Timesheet = () => {
     const navigate = useNavigate();
     const [timesheetIds, setTimesheetIds] = useState([]);
     const [sortedData, setSortedData] = useState([]);
+    const [filters, setFilters] = useState({
+        weekStartDate: null,
+        weekEndDate: null,
+    });
+    const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
         const fetchTimesheetIds = async () => {
@@ -35,34 +223,85 @@ const Timesheet = () => {
         navigate('/timesheetdetails/new');
     };
 
-    const handleSort = (order) => {
+    const handleSort = (field, order) => {
         const sorted = [...sortedData].sort((a, b) => {
             if (order === 'ascend') {
-                return a._id.localeCompare(b._id);
+                return a[field].localeCompare(b[field]);
             } else {
-                return b._id.localeCompare(a._id);
+                return b[field].localeCompare(a[field]);
             }
         });
         setSortedData(sorted);
     };
 
-    const menu = (
+    const handleDateSort = (field, order) => {
+        const sorted = [...sortedData].sort((a, b) => {
+            if (order === 'ascend') {
+                return new Date(a[field]) - new Date(b[field]);
+            } else {
+                return new Date(b[field]) - new Date(a[field]);
+            }
+        });
+        setSortedData(sorted);
+    };
+
+    const handleDateFilter = (date, dateType) => {
+        setFilters(prevFilters => ({
+            ...prevFilters,
+            [dateType]: date,
+        }));
+
+        const filteredData = timesheetIds.filter(timesheet => {
+            const startDate = new Date(timesheet.weekStartDate);
+            const endDate = new Date(timesheet.weekEndDate);
+
+            if (dateType === 'weekStartDate' && date) {
+                return startDate.toDateString() === date.toDate().toDateString();
+            }
+            if (dateType === 'weekEndDate' && date) {
+                return endDate.toDateString() === date.toDate().toDateString();
+            }
+            return true;
+        });
+
+        setSortedData(filteredData);
+    };
+
+    const createMenu = (field, isDate = false) => (
         <Menu>
-            <Menu.Item key="1" icon={<SortAscendingOutlined />} onClick={() => handleSort('ascend')}>
+            <Menu.Item key="1" icon={<SortAscendingOutlined />} onClick={() => {
+                if (isDate) handleDateSort(field, 'ascend');
+                else handleSort(field, 'ascend');
+            }}>
                 Sort Ascending
             </Menu.Item>
-            <Menu.Item key="2" icon={<SortDescendingOutlined />} onClick={() => handleSort('descend')}>
+            <Menu.Item key="2" icon={<SortDescendingOutlined />} onClick={() => {
+                if (isDate) handleDateSort(field, 'descend');
+                else handleSort(field, 'descend');
+            }}>
                 Sort Descending
             </Menu.Item>
         </Menu>
     );
+
+    const handleSearch = (e) => {
+        const value = e.target.value;
+        setSearchText(value);
+
+        // Case-sensitive search for Timesheet ID and Employee Name
+        const filteredData = timesheetIds.filter((item) =>
+            item._id.includes(value) || item.employeeName.includes(value)
+        );
+        
+        setSortedData(filteredData);
+    };
 
     const columns = [
         {
             title: (
                 <span>
                     Timesheet ID
-                    <Dropdown overlay={menu} trigger={['click']}>
+                    <Dropdown overlay={createMenu('_id')} trigger={['click']}>
                         <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
                     </Dropdown>
                 </span>
@@ -76,27 +315,72 @@ const Timesheet = () => {
             ),
         },
         {
-            title: 'Week Start Date',
-            dataIndex: 'weekStartDate',
-            key: 'weekStartDate',
-            render: (date) => new Date(date).toLocaleDateString('en-IN')
+            title: (
+                <span>
+                    Employee Name
+                    <Dropdown overlay={createMenu('employeeName')} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
+            dataIndex: 'employeeName',
+            key: 'employeeName',
         },
         {
-            title: 'Week End Date',
+            title: (
+                <span>
+                    Week Start Date
+                    <DatePicker
+                        style={{ marginLeft: 8 }}
+                        onChange={(date) => handleDateFilter(date, 'weekStartDate')}
+                    />
+                    <Dropdown overlay={createMenu('weekStartDate', true)} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
+            dataIndex: 'weekStartDate',
+            key: 'weekStartDate',
+            render: (date) => new Date(date).toLocaleDateString('en-IN'),
+        },
+        {
+            title: (
+                <span>
+                    Week End Date
+                    <DatePicker
+                        style={{ marginLeft: 8 }}
+                        onChange={(date) => handleDateFilter(date, 'weekEndDate')}
+                    />
+                    <Dropdown overlay={createMenu('weekEndDate', true)} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
             dataIndex: 'weekEndDate',
             key: 'weekEndDate',
-            render: (date) => new Date(date).toLocaleDateString('en-IN')
+            render: (date) => new Date(date).toLocaleDateString('en-IN'),
         },
     ];
 
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Timesheet</h1>
+
+            {/* Search Input */}
+            <Input
+                placeholder="Search Timesheet ID or Employee Name"
+                value={searchText}
+                onChange={handleSearch}
+                prefix={<SearchOutlined />}
+                style={{ marginBottom: 16, width: 300 }}
+            />
+
             <div className="flex justify-end mb-4">
                 <Button type="primary" onClick={handleAddTimesheet}>
                     Add Timesheet
                 </Button>
             </div>
+
             <Table dataSource={sortedData} columns={columns} rowKey="_id" />
         </div>
     );

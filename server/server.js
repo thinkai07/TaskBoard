@@ -445,6 +445,8 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
+
+
 // // Login route
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
@@ -484,6 +486,7 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 
 // GET API to fetch a specific timesheet by ID
@@ -544,7 +547,7 @@ app.post("/api/timesheet", authenticateToken, async (req, res) => {
           startTime: task.startTime,
           endTime: task.endTime,
           breakHours: task.breakHours,
-          totalhoursworked: task.totalHoursWorked,
+          totalhoursworked: task.totalhoursworked,
           notes: task.notes
         }))
       }))
@@ -589,7 +592,7 @@ app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
         startTime: task.startTime,
         endTime: task.endTime,
         breakHours: task.breakHours,
-        totalhoursworked: task.totalHoursWorked,
+        totalhoursworked: task.totalhoursworked,
         notes: task.notes
       }))
     }));
@@ -1130,15 +1133,6 @@ app.post("/api/addUser",
   }
 );
 
-
-
-
-
-
-
-
-
-
 // Reset password or update password
 app.post("/resetPassword", async (req, res) => {
   const { token, newPassword } = req.body;
@@ -1568,9 +1562,7 @@ app.get("/api/user-status", async (req, res) => {
   }
 });
 
-app.get("/api/projects/:organizationId",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:organizationId",authenticateToken,async (req, res) => {
     const { organizationId } = req.params;
     const userEmail = req.user.email;
     const userRole = req.user.role;
@@ -2167,104 +2159,7 @@ app.put("/api/projects/:projectId/tasks/:taskId",authenticateToken,
   }
 );
 
-//Create card
-// app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
-//   const { taskId } = req.params;
-//   const { name, description, assignedTo, assignDate, dueDate, createdBy } =
-//     req.body;
 
-//   try {
-//     const task = await Task.findById(taskId);
-//     if (!task) {
-//       return res.status(404).json({ message: "Task not found" });
-//     }
-
-//     const project = await Project.findById(task.project);
-//     if (!project) {
-//       return res.status(404).json({ message: "Project not found" });
-//     }
-
-//     // Calculate estimated time in milliseconds
-//     const assignDateObj = new Date(assignDate);
-//     const dueDateObj = new Date(dueDate);
-
-//     const newCard = new Card({
-//       name,
-//       description,
-//       assignedTo,
-//       assignDate,
-//       dueDate,
-//       estimatedTime,
-//       task: taskId,
-//       project: task.project,
-//       createdDate: new Date(),
-//       createdBy,
-//     });
-
-//     await newCard.save();
-//     task.card.push(newCard._id);
-//     await task.save();
-
-//     // Create audit log entry for card creation
-//     const createdByUser = await User.findOne({ email: createdBy });
-//     if (!createdByUser) {
-//       return res.status(404).json({ message: "User not found for createdBy" });
-//     }
-
-//     const newAuditLog = new AuditLog({
-//       entityType: "Card",
-//       entityId: newCard._id,
-//       actionType: "create",
-//       actionDate: new Date(),
-//       performedBy: createdByUser.name,
-//       projectId: task.project,
-//       taskId: task._id,
-//       changes: [
-//         { field: "name", oldValue: null, newValue: name },
-//         { field: "estimatedTime", oldValue: null, newValue: estimatedTime }, // Log estimatedTime change
-//         // Add other relevant changes if needed
-//       ],
-//     });
-
-//     await newAuditLog.save();
-
-//     // Log creation in comments
-//     const newComment = new Comment({
-//       comment: `Card created by ${createdByUser.name}`,
-//       commentBy: createdByUser.name,
-//       card: newCard._id,
-//     });
-//     await newComment.save();
-//     newCard.comments.push(newComment._id);
-//     await newCard.save();
-
-//     // Create notification
-//     const assignedUser = await User.findOne({ email: assignedTo });
-//     if (!assignedUser) {
-//       return res.status(404).json({ message: "Assigned user not found" });
-//     }
-
-//     const newNotification = new Notification({
-//       userId: assignedUser._id,
-//       projectId: task.project,
-//       message: `is assigned to the "${name}" task on Project "${project.name}"`,
-//       type: "TASK_ASSIGNED",
-//       cardId: newCard._id,
-//       assignedByEmail: createdByUser.name,
-//     });
-//     await newNotification.save();
-
-//     // Emit event for real-time update
-//     io.emit("cardCreated", { taskId, card: newCard });
-
-//     res
-//       .status(201)
-//       .json({ message: "Card created successfully", card: newCard });
-//   } catch (error) {
-//     console.error("Error creating card:", error);
-//     res.status(500).json({ message: "Error creating card" });
-//   }
-// });
 
 
 let sequenceNumber = 1000;

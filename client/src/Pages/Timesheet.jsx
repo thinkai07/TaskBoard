@@ -1,83 +1,15 @@
-// // //timesheet.jsx
-// import { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import axios from 'axios';
-// import { server } from '../constant';
-
-// const Timesheet = () => {
-//     const navigate = useNavigate();
-//     const [timesheetIds, setTimesheetIds] = useState([]);
-
-//     useEffect(() => {
-//         const fetchTimesheetIds = async () => {
-//             try {
-//                 const response = await axios.get(`${server}/api/timesheets`, {
-//                     headers: {
-//                         Authorization: `Bearer ${localStorage.getItem('token')}`,
-//                     },
-//                 });
-//                 if (response.data.success && response.data.timesheets.length > 0) {
-//                     setTimesheetIds(response.data.timesheets.map((timesheet) => timesheet._id));
-//                 }
-//             } catch (error) {
-//                 console.error('Error fetching timesheet IDs:', error);
-//             }
-//         };
-
-//         fetchTimesheetIds();
-//     }, []);
-
-//     const handleAddTimesheet = () => {
-//         navigate('/timesheetdetails/new');
-//     };
-
-//     return (
-//         <div className="p-4">
-//             <h1 className="text-2xl font-bold mb-4">Timesheet</h1>
-//             <div className="flex justify-end mb-4">
-//                 <button
-//                     onClick={handleAddTimesheet}
-//                     className="bg-blue-500 text-white py-2 px-4 rounded"
-//                 >
-//                     Add Timesheet
-//                 </button>
-//             </div>
-//             <table className="w-full table-auto">
-//                 <thead>
-//                     <tr>
-//                         <th className="px-4 py-2">Timesheet ID</th>
-//                     </tr>
-//                 </thead>
-//                 <tbody>
-//                 {timesheetIds.map((id, index) => (
-//                         <tr key={index}>
-//                             <td className="border px-4 py-2">
-//                                 <a
-//                                     href={`/timesheetdetails/${id}`}
-//                                     className="text-blue-500 hover:underline"
-//                                 >
-//                                     {id}
-//                                 </a>
-//                             </td>
-//                         </tr>
-//                     ))}
-//                 </tbody>
-//             </table>
-//         </div>
-//     );
-// };
-
-// export default Timesheet;
-
-import { useState, useEffect } from 'react';
+//timesheet.jsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Table, Button } from 'antd';
+import { Table, Button, Dropdown, Menu } from 'antd';
+import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import { server } from '../constant';
 
 const Timesheet = () => {
     const navigate = useNavigate();
     const [timesheetIds, setTimesheetIds] = useState([]);
+    const [sortedData, setSortedData] = useState([]);
 
     useEffect(() => {
         const fetchTimesheetIds = async () => {
@@ -89,6 +21,7 @@ const Timesheet = () => {
                 });
                 if (response.data.success && response.data.timesheets.length > 0) {
                     setTimesheetIds(response.data.timesheets);
+                    setSortedData(response.data.timesheets);
                 }
             } catch (error) {
                 console.error('Error fetching timesheet IDs:', error);
@@ -102,9 +35,38 @@ const Timesheet = () => {
         navigate('/timesheetdetails/new');
     };
 
+    const handleSort = (order) => {
+        const sorted = [...sortedData].sort((a, b) => {
+            if (order === 'ascend') {
+                return a._id.localeCompare(b._id);
+            } else {
+                return b._id.localeCompare(a._id);
+            }
+        });
+        setSortedData(sorted);
+    };
+
+    const menu = (
+        <Menu>
+            <Menu.Item key="1" icon={<SortAscendingOutlined />} onClick={() => handleSort('ascend')}>
+                Sort Ascending
+            </Menu.Item>
+            <Menu.Item key="2" icon={<SortDescendingOutlined />} onClick={() => handleSort('descend')}>
+                Sort Descending
+            </Menu.Item>
+        </Menu>
+    );
+
     const columns = [
         {
-            title: 'Timesheet ID',
+            title: (
+                <span>
+                    Timesheet ID
+                    <Dropdown overlay={menu} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
             dataIndex: '_id',
             key: '_id',
             render: (text) => (
@@ -117,13 +79,13 @@ const Timesheet = () => {
             title: 'Week Start Date',
             dataIndex: 'weekStartDate',
             key: 'weekStartDate',
-            render: (date) => new Date(date).toLocaleDateString('en-In')
+            render: (date) => new Date(date).toLocaleDateString('en-IN')
         },
         {
             title: 'Week End Date',
             dataIndex: 'weekEndDate',
             key: 'weekEndDate',
-            render: (date) => new Date(date).toLocaleDateString('en-In')
+            render: (date) => new Date(date).toLocaleDateString('en-IN')
         },
     ];
 
@@ -135,7 +97,7 @@ const Timesheet = () => {
                     Add Timesheet
                 </Button>
             </div>
-            <Table dataSource={timesheetIds} columns={columns} rowKey="_id" />
+            <Table dataSource={sortedData} columns={columns} rowKey="_id" />
         </div>
     );
 };

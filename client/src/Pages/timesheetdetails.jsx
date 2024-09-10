@@ -1,13 +1,17 @@
+//timesheetdetails.jsx
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Row, Col, Button, DatePicker, Table, message } from 'antd';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
-
+import { useParams, useNavigate } from 'react-router-dom';
 
 const TimesheetDetails = () => {
+    const { timesheetId } = useParams();
+    const navigate = useNavigate();
     const [form] = Form.useForm();
     const [timesheetData, setTimesheetData] = useState({
+        id: null,
         employeeName: '',
         employeeId: '',
         department: '',
@@ -21,14 +25,15 @@ const TimesheetDetails = () => {
     useEffect(() => {
         const fetchTimesheetData = async () => {
             try {
-                const response = await axios.get(`${server}/api/timesheets`, {
+                const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
                 if (response.data.success) {
-                    const fetchedTimesheet = response.data.timesheets[0];
+                    const fetchedTimesheet = response.data.timesheet;
                     const newTimesheetData = {
+                        id: fetchedTimesheet._id,
                         employeeName: fetchedTimesheet.employeeName,
                         employeeId: fetchedTimesheet.employeeID,
                         department: fetchedTimesheet.department,
@@ -57,8 +62,10 @@ const TimesheetDetails = () => {
             }
         };
 
-        fetchTimesheetData();
-    }, [form]);
+        if (timesheetId !== 'new') {
+            fetchTimesheetData();
+        }
+    }, [form, timesheetId]);
 
     const handleAddRow = () => {
         const newRow = {
@@ -76,6 +83,7 @@ const TimesheetDetails = () => {
         setTableData([...tableData, newRow]);
     };
 
+ 
     const handleSaveDraft = async () => {
         try {
             const formValues = await form.validateFields();
@@ -108,17 +116,33 @@ const TimesheetDetails = () => {
                 })),
             };
 
-            const response = await axios.post(
-                `${server}/api/timesheet`,
-                timesheetPayload,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    },
-                }
-            );
+            let response;
+            if (timesheetId === 'new') {
+                // Create new timesheet
+                response = await axios.post(
+                    `${server}/api/timesheet`,
+                    timesheetPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+                navigate(`/timesheetdetails/${response.data.timesheetId}`);
+            } else {
+                // Update existing timesheet
+                response = await axios.put(
+                    `${server}/api/timesheet/${timesheetId}`,
+                    timesheetPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+            }
 
-            if (response.data.message === "Timesheet submitted successfully") {
+            if (response.data.message === "Timesheet submitted successfully" || response.data.message === "Timesheet updated successfully") {
                 message.success('Timesheet saved successfully');
                 setIsFormDisabled(true);
             }
@@ -127,7 +151,6 @@ const TimesheetDetails = () => {
             message.error('Failed to save timesheet');
         }
     };
-
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
@@ -135,127 +158,128 @@ const TimesheetDetails = () => {
     };
 
     const columns = [
-      {
-          title: 'Day of Week',
-          dataIndex: 'day',
-          key: 'day',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'day', e.target.value)}
-                      placeholder="Enter day of the week"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Task Name',
-          dataIndex: 'taskName',
-          key: 'taskName',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'taskName', e.target.value)}
-                      placeholder="Enter task name"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Task Description',
-          dataIndex: 'taskDescription',
-          key: 'taskDescription',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'taskDescription', e.target.value)}
-                      placeholder="Enter task description"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Start Time',
-          dataIndex: 'startTime',
-          key: 'startTime',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'startTime', e.target.value)}
-                      placeholder="Enter start time"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'End Time',
-          dataIndex: 'endTime',
-          key: 'endTime',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'endTime', e.target.value)}
-                      placeholder="Enter end time"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Break Hours',
-          dataIndex: 'breakHours',
-          key: 'breakHours',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'breakHours', e.target.value)}
-                      placeholder="Enter break hours"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Total Hours Worked',
-          dataIndex: 'totalHoursWorked',
-          key: 'totalHoursWorked',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'totalHoursWorked', e.target.value)}
-                      placeholder="Enter total hours worked"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-      {
-          title: 'Notes',
-          dataIndex: 'notes',
-          key: 'notes',
-          render: (text, record, index) =>
-              record.isEditable ? (
-                  <Input
-                      value={text}
-                      onChange={(e) => handleRowChange(index, 'notes', e.target.value)}
-                      placeholder="Enter notes"
-                  />
-              ) : (
-                  <span>{text}</span>
-              ),
-      },
-  ];
+        {
+            title: 'Day of Week',
+            dataIndex: 'day',
+            key: 'day',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'day', e.target.value)}
+                        placeholder="Enter day of the week"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Task Name',
+            dataIndex: 'taskName',
+            key: 'taskName',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'taskName', e.target.value)}
+                        placeholder="Enter task name"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Task Description',
+            dataIndex: 'taskDescription',
+            key: 'taskDescription',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'taskDescription', e.target.value)}
+                        placeholder="Enter task description"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Start Time',
+            dataIndex: 'startTime',
+            key: 'startTime',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'startTime', e.target.value)}
+                        placeholder="Enter start time"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'End Time',
+            dataIndex: 'endTime',
+            key: 'endTime',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'endTime', e.target.value)}
+                        placeholder="Enter end time"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Break Hours',
+            dataIndex: 'breakHours',
+            key: 'breakHours',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'breakHours', e.target.value)}
+                        placeholder="Enter break hours"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Total Hours Worked',
+            dataIndex: 'totalHoursWorked',
+            key: 'totalHoursWorked',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'totalHoursWorked', e.target.value)}
+                        placeholder="Enter total hours worked"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+        {
+            title: 'Notes',
+            dataIndex: 'notes',
+            key: 'notes',
+            render: (text, record, index) =>
+                record.isEditable ? (
+                    <Input
+                        value={text}
+                        onChange={(e) => handleRowChange(index, 'notes', e.target.value)}
+                        placeholder="Enter notes"
+                    />
+                ) : (
+                    <span>{text}</span>
+                ),
+        },
+    ];
+
     const handleSubmit = (values) => {
         console.log('Submitted values:', values);
         // Final submission logic if needed
@@ -265,7 +289,7 @@ const TimesheetDetails = () => {
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Enter Timesheet</h1>
             <Form form={form} onFinish={handleSubmit} layout="vertical" initialValues={timesheetData}>
-                <Row gutter={16}>
+            <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item
                             label="Employee Name"

@@ -55,9 +55,7 @@ cloudinary.config({
 const GITHUB_PERSONAL_ACCESS_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
 
 // Connect to MongoDB
-mongoose
-  .connect(
-    "mongodb+srv://meenakumarimaligeli:Meena%40123@cluster0.ba469xs.mongodb.net/taskBoard",
+mongoose.connect("mongodb+srv://meenakumarimaligeli:Meena%40123@cluster0.ba469xs.mongodb.net/taskBoard",
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => console.log("MongoDB Connected"))
@@ -295,19 +293,6 @@ const taskSchema = new Schema(
   }
 );
 
-// User schema
-const userSchema = new Schema({
-  id: String,
-  name: String,
-  email: String,
-  password: String,
-  role: { type: String },
-  organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-  status: { type: String, default: "UNVERIFY" },
-});
-
 // Audit log schema
 const auditLogSchema = new Schema(
   {
@@ -371,8 +356,54 @@ const taskLogSchema = new Schema({
   },
 });
 
+
+
+
+
+// User schema
+const userSchema = new Schema({
+  id: String,
+  name: String,
+  email: String,
+  password: String,
+  role: { type: String },
+  organization: { type: Schema.Types.ObjectId, ref: "Organization" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  status: { type: String, default: "UNVERIFY" },
+});
+
+const timesheetSchema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  employeeName: { type: String, required: true },
+  employeeID: { type: String, required: true },
+  department: { type: String, required: true },
+  teamLeadName: { type: String, required: true },
+  weekStartDate: { type: Date, required: true },
+  weekEndDate: { type: Date, required: true },
+  days: [
+    {
+      dayOfWeek: { type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], required: true },
+      tasks: [
+        {
+          taskName: { type: String, required: true },
+          taskDescription: { type: String },
+          startTime: { type: String, required: true }, 
+          endTime: { type: String, required: true },
+          breakHours: { type: Number, default: 0 },
+          totalhoursworked: { type: Number, default: 0 },
+          notes: { type: String }
+        }
+      ]
+    }
+  ],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 // Creating models
 const User = mongoose.model("User", userSchema);
+const Timesheet = mongoose.model("Timesheet", timesheetSchema);
 const Task = mongoose.model("Task", taskSchema);
 const Team = mongoose.model("Team", teamSchema);
 const Project = mongoose.model("Project", projectSchema);
@@ -386,6 +417,7 @@ const Rule = mongoose.model("Rule", ruleSchema);
 const Tasklogs = mongoose.model("Tasklogs", taskLogSchema);
 module.exports = {
   User,
+  Timesheet,
   Task,
   Team,
   Project,
@@ -398,6 +430,188 @@ module.exports = {
   Rule,
   Tasklogs
 };
+
+// Secret Key for JWT
+const secretKey = crypto.randomBytes(32).toString("hex");
+// Middleware for authenticating token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, secretKey, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
+// // Login route
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email }).populate("organization");
+
+    if (user) {
+      // Compare the provided password with the stored hashed password
+      const match = await bcrypt.compare(password, user.password);
+
+      if (match) {
+        // Generate a JWT token and include user's _id in the payload
+        const token = jwt.sign(
+          {
+            _id: user._id, // Include user ID in the token payload
+            email: user.email,
+            role: user.role,
+            organizationId: user.organization._id,
+          },
+          secretKey, // Secret key for signing the token
+          { expiresIn: "5h" } // Set token expiration to 5 hours
+        );
+
+        // Respond with the token
+        res.json({ success: true, token });
+      } else {
+        // If the password is incorrect
+        res.status(401).json({ success: false, message: "Invalid email or password" });
+      }
+    } else {
+      // If the user is not found
+      res.status(401).json({ success: false, message: "Invalid email or password" });
+    }
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+
+// GET API to fetch a specific timesheet by ID
+app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const timesheetId = req.params.id;
+
+    // Find the timesheet with the specified ID and belonging to the authenticated user
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ success: false, message: "Timesheet not found" });
+    }
+
+    res.status(200).json({ success: true, timesheet });
+  } catch (error) {
+    console.error("Error fetching timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+// GET API to fetch all timesheets for the authenticated user
+app.get("/api/timesheets", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Fetch all timesheets associated with the authenticated user
+    const timesheets = await Timesheet.find({ user: userId });
+
+    res.status(200).json({ success: true, timesheets });
+  } catch (error) {
+    console.error("Error fetching timesheets:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+// create timesheet
+app.post("/api/timesheet", authenticateToken, async (req, res) => {
+  try {
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+    const userId = req.user._id; // Assuming authenticateToken sets the user in req.user
+
+    // Create new timesheet document associated with the authenticated user
+    const newTimesheet = new Timesheet({
+      user: userId,
+      employeeName,
+      employeeID,
+      department,
+      teamLeadName,
+      weekStartDate: new Date(weekStartDate),
+      weekEndDate: new Date(weekEndDate),
+      days: days.map(day => ({
+        dayOfWeek: day.dayOfWeek,
+        tasks: day.tasks.map(task => ({
+          taskName: task.taskName,
+          taskDescription: task.taskDescription,
+          startTime: task.startTime,
+          endTime: task.endTime,
+          breakHours: task.breakHours,
+          totalhoursworked: task.totalHoursWorked,
+          notes: task.notes
+        }))
+      }))
+    });
+
+    // Save the timesheet document to the database
+    const savedTimesheet = await newTimesheet.save();
+    res.status(201).json({ message: "Timesheet submitted successfully", timesheet: savedTimesheet });
+  } catch (error) {
+    console.error("Error submitting timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+
+// Update timesheet
+app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
+  try {
+    const timesheetId = req.params.id;
+    const userId = req.user._id;
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
+    }
+
+    // Update timesheet fields
+    timesheet.employeeName = employeeName;
+    timesheet.employeeID = employeeID;
+    timesheet.department = department;
+    timesheet.teamLeadName = teamLeadName;
+    timesheet.weekStartDate = new Date(weekStartDate);
+    timesheet.weekEndDate = new Date(weekEndDate);
+    timesheet.days = days.map(day => ({
+      dayOfWeek: day.dayOfWeek,
+      tasks: day.tasks.map(task => ({
+        taskName: task.taskName,
+        taskDescription: task.taskDescription,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        breakHours: task.breakHours,
+        totalhoursworked: task.totalHoursWorked,
+        notes: task.notes
+      }))
+    }));
+
+    // Save the updated timesheet
+    const updatedTimesheet = await timesheet.save();
+    res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+  } catch (error) {
+    console.error("Error updating timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
 
 const tempOrganizationSchema = new Schema({
   name: String,
@@ -801,121 +1015,6 @@ app.delete("/api/deleteUser/:id",
     }
   }
 );
-
-// Function to delete user from both database and GitHub
-// const deleteUser = async (userId) => {
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       console.log(`User not found: ${userId}`);
-//       return;
-//     }
-
-//     const organization = await Organization.findById(user.organization);
-//     if (!organization) {
-//       console.log(`Organization not found for user: ${userId}`);
-//       return;
-//     }
-
-//     try {
-//       const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
-
-//       const githubResponse = await axios.delete(
-//         `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         }
-//       );
-
-//       console.log("GitHub membership deletion response:", githubResponse.data);
-//     } catch (error) {
-//       console.error(
-//         "Error removing user from GitHub organization:",
-//         error.response ? error.response.data : error.message
-//       );
-//       // Proceeding with database deletion even if GitHub deletion fails
-//     }
-
-//     await User.findByIdAndDelete(userId);
-//     console.log(`User ${userId} deleted successfully from both database and GitHub`);
-//   } catch (error) {
-//     console.error("Error deleting user:", error);
-//   }
-// };
-
-// // Schedule the job to run every minute
-// cron.schedule("* * * * *", async () => {
-//   console.log("Running scheduled job to delete unverified users...");
-
-//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-//   try {
-//     const usersToDelete = await User.find({
-//       status: "UNVERIFY",
-//       createdAt: { $lt: fiveMinutesAgo },
-//     });
-
-//     for (const user of usersToDelete) {
-//       await deleteUser(user._id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching users for deletion:", error);
-//   }
-// });
-
-// Login route
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email }).populate("organization");
-    if (user) {
-      const match = await bcrypt.compare(password, user.password);
-      if (match) {
-        const token = jwt.sign(
-          {
-            email: user.email,
-            role: user.role,
-            organizationId: user.organization._id,
-          },
-          secretKey,
-          { expiresIn: "5h" } // Token expires in 1 hour
-        );
-        res.json({ success: true, token });
-      } else {
-        res
-          .status(401)
-          .json({ success: false, message: "Invalid email or password" });
-      }
-    } else {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// Secret Key for JWT
-const secretKey = crypto.randomBytes(32).toString("hex");
-
-// Middleware for authenticating token
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (token == null) return res.sendStatus(401);
-
-  jwt.verify(token, secretKey, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
 // Middleware for authorizing based on role
 function authorizeRoles(...roles) {
   return (req, res, next) => {
@@ -959,8 +1058,6 @@ app.get("/api/role", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-
 // Add user
 app.post("/api/addUser",
   authenticateToken,
@@ -1034,39 +1131,14 @@ app.post("/api/addUser",
 );
 
 
-// Login route
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email }).populate("organization");
-    if (user) {
-      const match = await bcrypt.compare(password, user.password);
-      if (match) {
-        const token = jwt.sign(
-          {
-            email: user.email,
-            role: user.role,
-            organizationId: user.organization._id,
-          },
-          secretKey,
-          { expiresIn: "1h" } // Token expires in 1 hour
-        );
-        res.json({ success: true, token });
-      } else {
-        res
-          .status(401)
-          .json({ success: false, message: "Invalid email or password" });
-      }
-    } else {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
+
+
+
+
+
+
+
+
 // Reset password or update password
 app.post("/resetPassword", async (req, res) => {
   const { token, newPassword } = req.body;
@@ -1111,7 +1183,6 @@ app.post("/resetPassword", async (req, res) => {
     }
   }
 });
-
 
 app.post("/api/forgot-password", async (req, res) => {
   const { email } = req.body;
@@ -1451,9 +1522,6 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
 );
 
 // custom image
-
-
-
 app.put("/api/projects/:projectId/customImages",
   authenticateToken,
   async (req, res) => {
@@ -1846,9 +1914,7 @@ app.post("/api/projects/:projectId/tasks",
 );
 
 //get task
-app.get("/api/projects/:projectId/tasks",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/projects/:projectId/tasks",authenticateToken,async (req, res) => {
     const { projectId } = req.params;
 
     try {
@@ -1870,9 +1936,7 @@ app.get("/api/projects/:projectId/tasks",
     }
   }
 );
-app.put("/api/projects/:projectId/tasks/:taskId/move",
-  authenticateToken,
-  async (req, res) => {
+app.put("/api/projects/:projectId/tasks/:taskId/move",authenticateToken,async (req, res) => {
     const { projectId, taskId } = req.params;
     const { newIndex, movedBy, movedDate } = req.body;
 
@@ -1960,9 +2024,7 @@ app.put("/api/projects/:projectId/tasks/:taskId/move",
 );
 
 //delelte column
-app.delete("/api/projects/:projectId/tasks/:taskId",
-  authenticateToken,
-  async (req, res) => {
+app.delete("/api/projects/:projectId/tasks/:taskId",authenticateToken,async (req, res) => {
     const { projectId, taskId } = req.params;
     const { deletedBy, deletedDate } = req.body;
 
@@ -2034,8 +2096,7 @@ app.delete("/api/projects/:projectId/tasks/:taskId",
   }
 );
 // Update (rename) task
-app.put("/api/projects/:projectId/tasks/:taskId",
-  authenticateToken,
+app.put("/api/projects/:projectId/tasks/:taskId",authenticateToken,
   async (req, res) => {
     const { projectId, taskId } = req.params;
     const { name, updatedBy, updatedDate } = req.body;

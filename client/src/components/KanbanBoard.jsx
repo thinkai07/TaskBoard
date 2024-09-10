@@ -37,7 +37,7 @@ import BackgroundChange from "./BackgroundChange";
 import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-  
+
 import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
@@ -98,8 +98,8 @@ function KanbanBoard() {
   });
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
-  const [emailError,setemailError] = useState('');
-  const [startDateError,setstartDateError] = useState('');
+  const [emailError, setemailError] = useState('');
+  const [startDateError, setstartDateError] = useState('');
   // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
@@ -125,7 +125,7 @@ function KanbanBoard() {
   const [endDate, setEndDate] = useState('');
   const [endDateError, setEndDateerror] = useState('');
   const [estimatedHoursError, setestimatedHoursError] = useState('');
-  const [description, setDescription] = useState(''); 
+  const [description, setDescription] = useState('');
   const [descriptionError, setdescriptionerror] = useState('');
 
 
@@ -641,208 +641,106 @@ function KanbanBoard() {
     await fetchTasks();
   };
 
-//  // // // Update handleAddCard function
-//  const handleAddCard = async (e) => {
-//   e.preventDefault();
-//   const cardTitle = e.target.title.value.trim() || "";
-//   const cardDescription = e.target.description.value.trim() || "";
-//   const assignDate = e.target.assignDate.value;
-//   const dueDate = e.target.dueDate.value;
-//   const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
+  // // Update handleAddCard function
+  const handleAddCard = async (e) => {
+    e.preventDefault();
+    const cardTitle = e.target.title.value.trim() || "";
+    const cardDescription = e.target.description.value.trim() || "";
+    const assignDate = e.target.assignDate.value;
+    const dueDate = e.target.dueDate.value;
+    const estimatedHoursInput = e.target.estimatedHours.value.trim();
+    const estimatedHours = parseFloat(estimatedHoursInput);
 
-//   // After successfully adding the card, reset all fields
-//   setTitle('');
-//   setEmail('');
-//   setStartDate('');
-//   setEndDate('');
-//   setEstimatedHours('');
-//   setDescription('');
-
-//   if (
-//     !cardTitle ||
-//     !cardDescription ||
-//     !selectedColumnId ||
-//     !email ||
-//     !assignDate ||
-//     !dueDate ||
-//     !estimatedHours
-//   ) {
-//     notification.warning({
-//       message: "Please fill in all fields",
-//     });
-//     return;
-//   }
-
-//   try {
-//     const createdBy = await fetchUserEmail();
-
-//     const searchResponse = await fetch(
-//       `${server}/api/projects/${projectId}/users/search?email=${email}`,
-//       {
-//         method: "GET",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${localStorage.getItem("token")}`,
-//         },
-//       }
-//     );
-
-//     if (!searchResponse.ok) {
-//       throw new Error("User is not part of the project");
-//     }
-
-//     const { users } = await searchResponse.json();
-//     if (users.length === 0) {
-//       notification.warning({
-//         message: "The entered email is not part of the project",
-//       });
-//       return;
-//     }
-
-//     const response = await fetch(
-//       `${server}/api/tasks/${selectedColumnId}/cards`,
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${localStorage.getItem("token")}`,
-//         },
-//         body: JSON.stringify({
-//           name: cardTitle,
-//           description: cardDescription,
-//           assignedTo: email,
-//           createdBy: email,
-//           assignDate: assignDate,
-//           dueDate: dueDate,
-//           estimatedHours: estimatedHours, // Include estimatedHours
-//           createdBy: createdBy,
-//         }),
-//       }
-//     );
-
-//     if (!response.ok) {
-//       throw new Error("Failed to add card");
-//     }
-
-//     await clearFieldsAndRefresh();
-//     e.target.title.value = "";
-//     e.target.description.value = "";
-//     e.target.estimatedHours.value = "";
-//     setEmail("");
-
-//     setModalVisible(false);
-
-//     await fetchTasks();
-//     notification.success({
-//       message: "Task added Successfully",
-//     });
-//   } catch (error) {
-//     console.error("Error adding card:", error);
-//     alert(error.message);
-//   }
-// };
-const handleAddCard = async (e) => {
-  e.preventDefault();
-  const cardTitle = e.target.title.value.trim() || "";
-  const cardDescription = e.target.description.value.trim() || "";
-  const assignDate = e.target.assignDate.value;
-  const dueDate = e.target.dueDate.value;
-  const estimatedHoursInput = e.target.estimatedHours.value.trim();
-  const estimatedHours = parseFloat(estimatedHoursInput);
-
-  if (
-    !cardTitle ||
-    !cardDescription ||
-    !selectedColumnId ||
-    !email ||
-    !assignDate ||
-    !dueDate ||
-    estimatedHoursInput === "" ||
-    estimatedHours <= 0
-  ) {
-    notification.warning({
-      message: estimatedHours <= 0 
-        ? "Estimated hours must be greater than 0"
-        : "Please fill in all fields",
-    });
-    return;
-  }
-
-  try {
-    const createdBy = await fetchUserEmail();
-
-    const searchResponse = await fetch(
-      `${server}/api/projects/${projectId}/users/search?email=${email}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-
-    if (!searchResponse.ok) {
-      throw new Error("User is not part of the project");
-    }
-
-    const { users } = await searchResponse.json();
-    if (users.length === 0) {
+    if (
+      !cardTitle ||
+      !cardDescription ||
+      !selectedColumnId ||
+      !email ||
+      !assignDate ||
+      !dueDate ||
+      estimatedHoursInput === "" ||
+      estimatedHours <= 0
+    ) {
       notification.warning({
-        message: "The entered email is not part of the project",
+        message: estimatedHours <= 0
+          ? "Estimated hours must be greater than 0"
+          : "Please fill in all fields",
       });
       return;
     }
 
-    const response = await fetch(
-      `${server}/api/tasks/${selectedColumnId}/cards`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          name: cardTitle,
-          description: cardDescription,
-          assignedTo: email,
-          assignDate: assignDate,
-          dueDate: dueDate,
-          estimatedHours: estimatedHours,
-          createdBy: createdBy,
-        }),
+    try {
+      const createdBy = await fetchUserEmail();
+
+      const searchResponse = await fetch(
+        `${server}/api/projects/${projectId}/users/search?email=${email}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!searchResponse.ok) {
+        throw new Error("User is not part of the project");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to add card");
+      const { users } = await searchResponse.json();
+      if (users.length === 0) {
+        notification.warning({
+          message: "The entered email is not part of the project",
+        });
+        return;
+      }
+
+      const response = await fetch(
+        `${server}/api/tasks/${selectedColumnId}/cards`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            name: cardTitle,
+            description: cardDescription,
+            assignedTo: email,
+            assignDate: assignDate,
+            dueDate: dueDate,
+            estimatedHours: estimatedHours,
+            createdBy: createdBy,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add card");
+      }
+
+      // Clear fields only after successful card addition
+      setTitle('');
+      setEmail('');
+      setStartDate('');
+      setEndDate('');
+      setEstimatedHours('');
+      setDescription('');
+      e.target.title.value = "";
+      e.target.description.value = "";
+      e.target.estimatedHours.value = "";
+
+      setModalVisible(false);
+
+      await fetchTasks();
+      notification.success({
+        message: "Task added Successfully",
+      });
+    } catch (error) {
+      console.error("Error adding card:", error);
+      alert(error.message);
     }
-
-    // Clear fields only after successful card addition
-    setTitle('');
-    setEmail('');
-    setStartDate('');
-    setEndDate('');
-    setEstimatedHours('');
-    setDescription('');
-    e.target.title.value = "";
-    e.target.description.value = "";
-    e.target.estimatedHours.value = "";
-
-    setModalVisible(false);
-
-    await fetchTasks();
-    notification.success({
-      message: "Task added Successfully",
-    });
-  } catch (error) {
-    console.error("Error adding card:", error);
-    alert(error.message);
-  }
-};
-
-
-
+  };
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -1420,12 +1318,12 @@ const handleAddCard = async (e) => {
           key={card.id}
         >
           {/* <Tooltip title={card.title}> */}
-            <div className="react-kanban-card__title truncate">
-              {card.title && card.title.length > 20
-                ? card.title.slice(0, 20) + "..."
-                : card.title}
-            </div>
-         
+          <div className="react-kanban-card__title truncate">
+            {card.title && card.title.length > 20
+              ? card.title.slice(0, 20) + "..."
+              : card.title}
+          </div>
+
           <div className="react-kanban-card__assignedTo flex items-center">
             {card.assignedTo && (
               <Tooltip title={card.assignedTo}>
@@ -1648,33 +1546,21 @@ const handleAddCard = async (e) => {
                   }}
 
                 />
-                {/* <Button
-                  type="text"
-                  icon={<InfoCircleOutlined />}
+                <button
+                  type="button"
+                  className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
                   onClick={showAboutModal}
                   style={{
+                    height: "40px",
                     display: "flex",
+                    alignItems: "center",
+                    width: "100%",
                     fontSize: 15,
-                    justifyItems: "left",
                   }}
                 >
+                  <InfoCircleOutlined style={{ fontSize: 20 }} />
                   About
-                </Button> */}
-                <button
-      type="button"
-      className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-      onClick={showAboutModal}
-      style={{
-        height: "40px",
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        fontSize: 15,
-      }}
-    >
-      <InfoCircleOutlined style={{ fontSize: 20 }} />
-      About
-    </button>
+                </button>
 
               </Space>
             </Drawer>
@@ -1733,9 +1619,7 @@ const handleAddCard = async (e) => {
                 display: "flex",
                 flexDirection: "column",
                 width: "300px",
-                // position:"fixed",
                 position: "sticky",
-                // zIndex: 1000,
               }}
             >
               <div
@@ -1743,17 +1627,10 @@ const handleAddCard = async (e) => {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-
                   marginBottom: "0.5rem",
                   padding: "0.5rem",
                   backgroundColor: "#F7FAFC",
-
-                  // marginBottom: "0.5rem",
-                  // padding: "0.5rem",
-
                   backgroundColor: "#ededed",
-
-                  // borderRadius: "20px",
                 }}
                 onDoubleClick={() => {
                   setEditingColumnId(id);
@@ -1829,184 +1706,181 @@ const handleAddCard = async (e) => {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-  <div
-    className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-    onClick={(e) => {
-      if (e.target === e.currentTarget) {
-        clearFieldsAndRefresh();
-      }
-    }}
-  >
-    <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
-      <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
-      <form onSubmit={handleAddCard}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Title"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value.trimStart())}
-            />
-            {titleError && (
-              <p className="text-red-500 text-sm mt-1">{titleError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="assignedEmail"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Assigned (Email)
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Enter email address"
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-            {emailSuggestions.length > 0 && (
-              <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                {emailSuggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.email}
-                    onClick={() => {
-                      setEmail(suggestion.email);
-                      setEmailSuggestions([]);
-                    }}
-                    className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              clearFieldsAndRefresh();
+            }
+          }}
+        >
+          <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
+            <form onSubmit={handleAddCard}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    {suggestion.email}
-                  </li>
-                ))}
-              </ul>
-            )}
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Title"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value.trimStart())}
+                  />
+                  {titleError && (
+                    <p className="text-red-500 text-sm mt-1">{titleError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="assignedEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Assigned (Email)
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  {emailError && (
+                    <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                  )}
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="assignDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="assignDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={new Date().toISOString().slice(0, 16)} // Disable past dates
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                  />
+                  {startDateError && (
+                    <p className="text-red-500 text-sm mt-1">{startDateError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="dueDate"
+                    required
+                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
+                    value={endDate}
+                    onChange={handleEndDateChange}
+                  />
+                  {endDateError && (
+                    <p className="text-red-500 text-sm mt-1">{endDateError}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label
+                    htmlFor="estimatedHours"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Estimated Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="estimatedHours"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Estimated Hours"
+                    required
+                    min="0"
+                    step="0.1"
+                    value={estimatedHours}
+                    onChange={(e) => setEstimatedHours(e.target.value)}
+                  />
+                  {estimatedHoursError && (
+                    <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Card Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Card Description"
+                    required
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value.trimStart())}
+                  />
+                  {descriptionError && (
+                    <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  type="button"
+                  onClick={clearFieldsAndRefresh}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Add Card
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="assignDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Date
-            </label>
-            <input
-              type="datetime-local"
-              name="assignDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={new Date().toISOString().slice(0, 16)} // Disable past dates
-              value={startDate}
-              onChange={handleStartDateChange}
-            />
-            {startDateError && (
-              <p className="text-red-500 text-sm mt-1">{startDateError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="dueDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Date
-            </label>
-            <input
-              type="datetime-local"
-              name="dueDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
-              value={endDate}
-              onChange={handleEndDateChange}
-            />
-            {endDateError && (
-              <p className="text-red-500 text-sm mt-1">{endDateError}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="estimatedHours"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Estimated Hours
-            </label>
-            <input
-              type="number"
-              name="estimatedHours"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Estimated Hours"
-              required
-              min="0"
-              step="0.1"
-              value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value)}
-            />
-            {estimatedHoursError && (
-              <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Description
-            </label>
-            <textarea
-              name="description"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Description"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value.trimStart())}
-            />
-            {descriptionError && (
-              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={clearFieldsAndRefresh}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-          >
-            Add Card
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
-
+      )}
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl">

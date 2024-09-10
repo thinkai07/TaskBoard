@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   SquareKanban,
   PanelsTopLeft,
@@ -9,6 +9,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ShieldHalf,
+  FileChartColumn,
+  Clock
 } from "lucide-react";
 import task from "../assets/task.png";
 
@@ -74,6 +76,8 @@ const Sidebar = () => {
           { path: "/members", icon: Users, label: "Members" },
           { path: "/Auditlog", icon: FileText, label: "Auditlog" },
           { path: "/Teamsorg", icon: ShieldHalf, label: "Teams" },
+          { path: "/timesheet", icon: Clock, label: "Time Sheet" }, // Added Time Sheet
+          { path: "/statussheet", icon:FileChartColumn,label:'StatusSheet'},
         ].map(({ path, icon: Icon, label }) => (
           <li
             key={path}

@@ -17,6 +17,8 @@ const AdminPanel = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
+  const [username, setUsername] = useState("");  // New state for username
+  const [employeeId, setEmployeeId] = useState("");  // New state for employeeId
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState("");
@@ -63,8 +65,8 @@ const AdminPanel = () => {
     setLoading(true);
     setError(null);
 
-    if (!name.trim()) {
-      setError("Please enter a valid name.");
+    if (!name.trim() || !username.trim() || !employeeId.trim()) {
+      setError("Please enter a valid name, username, and employee ID.");
       setLoading(false);
       return;
     }
@@ -88,6 +90,8 @@ const AdminPanel = () => {
           name,
           email: email.trim(),
           role,
+          username,  // Send username
+          employeeId,  // Send employeeId
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -99,6 +103,8 @@ const AdminPanel = () => {
       setName("");
       setEmail("");
       setRole("user");
+      setUsername("");  // Reset username
+      setEmployeeId("");  // Reset employeeId
       setIsModalOpen(false);
       message.success("User added successfully!");
     } catch (error) {
@@ -138,14 +144,15 @@ const AdminPanel = () => {
     const filtered = data.filter(
       (user) =>
         user.name.toLowerCase().includes(value) ||
-        user.email.toLowerCase().includes(value)
+        user.email.toLowerCase().includes(value) ||
+        user.username.toLowerCase().includes(value)  // Include username in search
     );
     setFilteredData(filtered);
   };
 
   const columns = [
     {
-      title: "Name",
+      title: "Git username",
       dataIndex: "name",
       key: "name",
     },
@@ -153,6 +160,16 @@ const AdminPanel = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
+    },
+    {
+      title: "Username",
+      dataIndex: "username",  // New column for username
+      key: "username",
+    },
+    {
+      title: "Employee ID",
+      dataIndex: "employeeId",  // New column for employeeId
+      key: "employeeId",
     },
     {
       title: "Role",
@@ -182,6 +199,7 @@ const AdminPanel = () => {
         ]
       : []),
   ];
+
   if (loading) {
     return (
       <div
@@ -203,10 +221,10 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="p-4 m-4  rounded-lg shadow-md">
+    <div className="p-4 m-4 rounded-lg shadow-md">
       <div className="flex justify-end gap-10 mb-4">
         <Input
-          placeholder="Search by name or email"
+          placeholder="Search by name, email, or username"
           value={searchTerm}
           onChange={handleSearch}
           className="w-1/3"
@@ -236,7 +254,7 @@ const AdminPanel = () => {
       >
         {error && <div className="mb-4 text-red-600">{error}</div>}
         <Input
-          placeholder="Name"
+          placeholder="Git Username"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="mb-4"
@@ -245,6 +263,18 @@ const AdminPanel = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Username"
+          value={username}  // New input for username
+          onChange={(e) => setUsername(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Employee ID"
+          value={employeeId}  // New input for employeeId
+          onChange={(e) => setEmployeeId(e.target.value)}
           className="mb-4"
         />
       </Modal>
@@ -266,3 +296,13 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
+
+
+
+
+
+
+
+
+

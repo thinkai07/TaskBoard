@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pie,Bar,Doughnut } from 'react-chartjs-2';
+import { Pie, Bar, Doughnut } from 'react-chartjs-2';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Card } from 'antd';
@@ -35,10 +35,10 @@ const Overview = () => {
   const [statusCounts, setStatusCounts] = useState({ pending: 0, inProgress: 0, completed: 0 });
   const [totalCardCount, setTotalCardCount] = useState(0);
   const [userCardCounts, setUserCardCounts] = useState({
-      pending: 0,
-      inprogress: 0,
-      completed: 0
-    });
+    pending: 0,
+    inprogress: 0,
+    completed: 0
+  });
   const [selectedUser, setSelectedUser] = useState(null);
   const [cards, setCards] = useState([]);
 
@@ -73,52 +73,52 @@ const Overview = () => {
         })
         .catch(error => {
           console.error('There was an error fetching the overview data!', error);
-       
-       });
-       
-    
-    
 
-    axios.get(`${server}/api/users`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    })
-      .then(response => {
-        console.log("Users Data Response:", response.data);
-        setUsers(response.data.users);
+        });
+
+
+
+
+      axios.get(`${server}/api/users`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
-      .catch(error => {
-        console.error('There was an error fetching the users!', error);
-      });
-  }
+        .then(response => {
+          console.log("Users Data Response:", response.data);
+          setUsers(response.data.users);
+        })
+        .catch(error => {
+          console.error('There was an error fetching the users!', error);
+        });
+    }
 
   }, [organizationId]);
-  
+
   const handleUserChange = async (event) => {
     const userId = event.target.value;
     setSelectedUser(userId);
-  
+
     if (userId) {
       try {
         const response = await axios.get(`${server}/api/cards/user/${userId}`);
         const userCards = response.data;
         setCards(userCards);
-  
+
         // Calculate card counts for the selected user
         const counts = userCards.reduce((acc, card) => {
           acc[card.status] = (acc[card.status] || 0) + 1;
           return acc;
         }, {});
-  
+
         setTotalCardCount(userCards.length); // Total cards for the selected user
         setUserCardCounts({
           pending: counts['pending'] || 0,
           inprogress: counts['inprogress'] || 0,
           completed: counts['completed'] || 0,
         });
-  
+
         // Render the bar chart when cards data changes
         setGroupedData(groupByMonthAndStatus(userCards));
-        
+
       } catch (error) {
         console.error('Error fetching cards:', error);
       }
@@ -133,8 +133,8 @@ const Overview = () => {
       setGroupedData({});
     }
   };
-  
-  
+
+
 
 
 
@@ -146,14 +146,14 @@ const Overview = () => {
   const noDataColor = '#e5e7eb';
 
   const data = {
-    labels: [ 'Pending', 'In-Progress', 'Completed'],
+    labels: ['Pending', 'In-Progress', 'Completed'],
     datasets: [
       {
         label: 'Cards Overview',
         data: totalCards ? [totalPendingCards, totalInProgressCards, totalCompletedCards] : [1],
         backgroundColor: totalCards ? ['#f7665a', ' #efe152', '#10b981'] : [noDataColor], // Yellow for Pending, Orange for In Progress, Green for Completed
-    }
-    
+      }
+
     ],
   };
 
@@ -183,7 +183,7 @@ const Overview = () => {
   };
 
 
-  
+
 
   const handleViewProjectTasks = (projectId) => {
     navigate(`/projects/${projectId}/view`);
@@ -215,7 +215,7 @@ const Overview = () => {
   const inprogressData = months.map((month) => groupedData[month].inprogress);
   const completedData = months.map((month) => groupedData[month].completed);
 
-  
+
   const barData = {
     labels: months,
     datasets: [
@@ -238,25 +238,25 @@ const Overview = () => {
   };
 
   const defaultDoughnutData = {
-  labels: ['No Data'],
-  datasets: [
-    {
-      data: [100],
-      backgroundColor: ['#e2e8f0'], // Default color
-    },
-  ],
-};
+    labels: ['No Data'],
+    datasets: [
+      {
+        data: [100],
+        backgroundColor: ['#e2e8f0'], // Default color
+      },
+    ],
+  };
 
-const defaultBarData = {
-  labels: ['No Data'],
-  datasets: [
-    {
-      label: 'No Data',
-      data: [100],
-      backgroundColor: '#e2e8f0', // Default color
-    },
-  ],
-};
+  const defaultBarData = {
+    labels: ['No Data'],
+    datasets: [
+      {
+        label: 'No Data',
+        data: [100],
+        backgroundColor: '#e2e8f0', // Default color
+      },
+    ],
+  };
 
   const barOptions = {
     responsive: true,
@@ -270,251 +270,251 @@ const defaultBarData = {
       },
     },
   };
-  
-  
+
+
   if (!overviewData.projects.length) {
     return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'center', // Center horizontally
-            alignItems: 'center', // Center vertically
-            height: '100vh' // Full height of the viewport
-        }}>
-            <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
-            Loading...
-        </div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center', // Center horizontally
+        alignItems: 'center', // Center vertically
+        height: '100vh' // Full height of the viewport
+      }}>
+        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
+        Loading...
+      </div>
     );
-}
+  }
 
 
-return (
-  <div style={{ padding: '24px', backgroundColor: '#f7fafc', fontWeight: '600' }}>
-  <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
-    {/* First Column - 4 Cards */}
-    <div style={{ flex: 0.65 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <div
-            style={{
-              backgroundColor: 'white',
-              boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-              borderRadius: '24px',
-              padding: '10px',
-              textAlign: 'center',
-              width: '60%',
-              height: '140px',
-            }}
-          >
-            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-              Total Projects
-            </h3>
-            <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-              +{overviewData.totalProjects}
-            </p>
-          </div>
-          <div
-            style={{
-              backgroundColor: 'white',
-              boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-              borderRadius: '24px',
-              padding: '10px',
-              textAlign: 'center',
-              width: '60%',
-              height: '140px',
-            }}
-          >
-            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-              Total Members
-            </h3>
-            <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-              +{overviewData.totalMembers}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <div
-            style={{
-              backgroundColor: 'white',
-              boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-              borderRadius: '24px',
-              padding: '10px',
-              textAlign: 'center',
-              width: '60%',
-              height: '140px',
-            }}
-          >
-            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-              Total Tasks
-            </h3>
-            <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-              +{overviewData.totalCards}
-            </p>
-          </div>
-          <div
-            style={{
-              backgroundColor: 'white',
-              boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-              borderRadius: '24px',
-              padding: '10px',
-              textAlign: 'center',
-              width: '60%',
-              height: '140px',
-            }}
-          >
-            <Pie data={data} options={options} />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Second Column - User Details, Doughnut Chart, Bar Plot */}
-    <div style={{ flex: 0.35 }}>
-<Card
-  style={{ width: '100%', padding: '16px',height:'300px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',borderRadius: '24px', }}
-  bodyStyle={{ padding: '0' }}
->
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-    <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568' }}>User Details</h3>
-    <select
-      onChange={handleUserChange}
-      value={selectedUser || ''}
-      style={{ padding: '8px', fontSize: '16px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-    >
-      <option value="">Select a user</option>
-      {users.map((user) => (
-        <option key={user._id} value={user._id}>
-          {user.name}
-        </option>
-      ))}
-    </select>
-  </div>
-  <div style={{ width: '100%' }}>
-    <Doughnut data={selectedUser ? data1 : defaultDoughnutData} options={options} />
-  </div>
-</Card>
-</div>
-  </div>
-
-  {/* Table Section */}
-  <div style={{ marginTop: '32px' }}>
-    <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568', marginBottom: '16px' }}>
-      Project Details
-    </h3>
-    <div style={{ overflowX: 'auto' }}>
-      <div style={{ maxHeight: '370px', overflowY: 'auto', scrollbarWidth: 'none' }}>
-        <table
-          style={{
-            width: '100%',
-            backgroundColor: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            fontWeight: '600',
-          }}
-        >
-          <thead className="top-0 z-10 sticky bg-gray-100">
-            <tr>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                Project Name
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                Project Members
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                Total Tasks
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                Pending Tasks
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                In-Progress Tasks
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
-                Completed Tasks
-              </th>
-              <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {overviewData.projects.map((project, index) => (
-              <tr
-                key={index}
+  return (
+    <div style={{ padding: '24px', backgroundColor: '#f7fafc', fontWeight: '600' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
+        {/* First Column - 4 Cards */}
+        <div style={{ flex: 0.65 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <div
                 style={{
-                  backgroundColor: index % 2 === 0 ? '#f7fafc' : 'white',
-                  cursor: 'pointer',
+                  backgroundColor: 'white',
+                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '24px',
+                  padding: '10px',
+                  textAlign: 'center',
+                  width: '60%',
+                  height: '140px',
                 }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = '#edf2f7')
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    index % 2 === 0 ? '#f7fafc' : 'white')
-                }
               >
-                <td
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.name}
-                </td>
-                <td
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.projectMembers.length}
-                </td>
-                <td
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.totalCards}
-                </td>
-                <td
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.totalPendingCards}
-                </td>
-                <td
-                  style={{
-                    padding: '12px 16px', 
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.totalInProgressCards}
-                </td>
-                <td
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
-                  }}
-                >
-                  {project.totalCompletedCards}
-                </td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
-          <button
-            style={{ backgroundColor: '#3b82f6', color: 'white', padding: '4px 12px', borderRadius: '8px' }}
-            onClick={() => handleViewProjectTasks(project.id)}
+                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+                  Total Projects
+                </h3>
+                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+                  +{overviewData.totalProjects}
+                </p>
+              </div>
+              <div
+                style={{
+                  backgroundColor: 'white',
+                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '24px',
+                  padding: '10px',
+                  textAlign: 'center',
+                  width: '60%',
+                  height: '140px',
+                }}
+              >
+                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+                  Total Members
+                </h3>
+                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+                  +{overviewData.totalMembers}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <div
+                style={{
+                  backgroundColor: 'white',
+                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '24px',
+                  padding: '10px',
+                  textAlign: 'center',
+                  width: '60%',
+                  height: '140px',
+                }}
+              >
+                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+                  Total Tasks
+                </h3>
+                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+                  +{overviewData.totalCards}
+                </p>
+              </div>
+              <div
+                style={{
+                  backgroundColor: 'white',
+                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '24px',
+                  padding: '10px',
+                  textAlign: 'center',
+                  width: '60%',
+                  height: '140px',
+                }}
+              >
+                <Pie data={data} options={options} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Second Column - User Details, Doughnut Chart, Bar Plot */}
+        <div style={{ flex: 0.35 }}>
+          <Card
+            style={{ width: '100%', padding: '16px', height: '300px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: '24px', }}
+            bodyStyle={{ padding: '0' }}
           >
-            View
-          </button>
-        </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568' }}>User Details</h3>
+              <select
+                onChange={handleUserChange}
+                value={selectedUser || ''}
+                style={{ padding: '8px', fontSize: '16px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+              >
+                <option value="">Select a user</option>
+                {users.map((user) => (
+                  <option key={user._id} value={user._id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ width: '100%' }}>
+              <Doughnut data={selectedUser ? data1 : defaultDoughnutData} options={options} />
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div style={{ marginTop: '32px' }}>
+        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#4a5568', marginBottom: '16px' }}>
+          Project Details
+        </h3>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ maxHeight: '370px', overflowY: 'auto', scrollbarWidth: 'none' }}>
+            <table
+              style={{
+                width: '100%',
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontWeight: '600',
+              }}
+            >
+              <thead className="top-0 z-10 sticky bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    Project Name
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    Project Members
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    Total Tasks
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    Pending Tasks
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    In-Progress Tasks
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">
+                    Completed Tasks
+                  </th>
+                  <th className="px-4 py-3 border-b-2 border-gray-200 text-left font-normal">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {overviewData.projects.map((project, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      backgroundColor: index % 2 === 0 ? '#f7fafc' : 'white',
+                      cursor: 'pointer',
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.backgroundColor = '#edf2f7')
+                    }
+                    onMouseOut={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      index % 2 === 0 ? '#f7fafc' : 'white')
+                    }
+                  >
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.name}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.projectMembers.length}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.totalCards}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.totalPendingCards}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.totalInProgressCards}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {project.totalCompletedCards}
+                    </td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+                      <button
+                        style={{ backgroundColor: '#3b82f6', color: 'white', padding: '4px 12px', borderRadius: '8px' }}
+                        onClick={() => handleViewProjectTasks(project.id)}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-);
+  );
 
 };
 

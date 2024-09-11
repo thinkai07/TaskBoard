@@ -227,18 +227,3 @@ const Timesheet = () => {
 };
 
 export default Timesheet;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

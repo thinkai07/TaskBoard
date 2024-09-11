@@ -415,18 +415,3 @@ const TimesheetDetails = () => {
 };
 
 export default TimesheetDetails;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,3 +1,238 @@
+// //teammemberspage.jsx
+// import React, { useState, useEffect } from "react";
+// import { useLocation } from "react-router-dom";
+// import axios from "axios";
+// import { server } from "../constant";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faTrash } from "@fortawesome/free-solid-svg-icons";
+// import { Input, Button, Table, Modal, notification } from "antd";
+// import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+// const TeamMembersPage = () => {
+//   const location = useLocation();
+//   const { teamName, organizationId, teamId } = location.state || {};
+
+//   const [members, setMembers] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [newMemberEmail, setNewMemberEmail] = useState("");
+//   const [emailSuggestions, setEmailSuggestions] = useState([]);
+//   const [addMemberError, setAddMemberError] = useState(false);
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [selectedUserId, setSelectedUserId] = useState(null);
+
+//   useEffect(() => {
+//     const fetchMembers = async () => {
+//       try {
+//         const response = await axios.get(
+//           `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
+//           {
+//             headers: {
+//               Authorization: `Bearer ${localStorage.getItem("token")}`,
+//             },
+//           }
+//         );
+//         setMembers(response.data.users || []);
+//         setLoading(false);
+//       } catch (error) {
+//         console.error("Error fetching members:", error);
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchMembers();
+//   }, [organizationId, teamId, members]);
+
+//   const handleEmailChange = async (event) => {
+//     setNewMemberEmail(event.target.value);
+//     if (event.target.value.length > 0) {
+//       try {
+//         const response = await axios.get(`${server}/api/users/search`, {
+//           params: { email: event.target.value, fields: "email status name" },
+//           headers: {
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//         });
+//         setEmailSuggestions(response.data.users || []);
+//       } catch (error) {
+//         console.error("Error fetching email suggestions:", error);
+//       }
+//     } else {
+//       setEmailSuggestions([]);
+//     }
+//   };
+
+//   const handleAddMember = async () => {
+//     try {
+//       const response = await axios.post(
+//         `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
+//         { email: newMemberEmail, role: "USER" },
+//         {
+//           headers: {
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//         }
+//       );
+
+//       if (response.data && response.data.user) {
+//         setMembers((prevMembers) => [...prevMembers, response.data.user]);
+//       } else {
+//         console.error("Unexpected response format:", response);
+//       }
+//       setNewMemberEmail("");
+//       setEmailSuggestions([]);
+//       setAddMemberError(false);
+//       notification.success({
+//         message: "Team member added Successfully",
+//       });
+//     } catch (error) {
+//       console.error("Error adding member:", error);
+//       setAddMemberError(true);
+//     }
+//   };
+
+//   const openModal = (userId) => {
+//     setSelectedUserId(userId);
+//     setIsModalOpen(true);
+//   };
+
+//   const closeModal = () => {
+//     setIsModalOpen(false);
+//     setSelectedUserId(null);
+//   };
+
+//   const handleDeleteMember = async () => {
+//     try {
+//       await axios.delete(
+//         `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${localStorage.getItem("token")}`,
+//           },
+//           data: { removedBy: localStorage.getItem("userId") }, // Add removedBy info
+//         }
+//       );
+//       setMembers((prevMembers) =>
+//         prevMembers.filter((member) => member.id !== selectedUserId)
+//       );
+//       closeModal();
+//       notification.success({
+//         message: "Team member deleted Successfully",
+//       });
+//     } catch (error) {
+//       console.error("Error deleting member:", error);
+//     }
+//   };
+
+//   if (loading) {
+//     return (
+//       <div
+//         style={{
+//           display: "flex",
+//           justifyContent: "center", // Center horizontally
+//           alignItems: "center", // Center vertically
+//           height: "100vh", // Full height of the viewport
+//         }}
+//       >
+//         <FontAwesomeIcon
+//           icon={faSpinner}
+//           spin
+//           style={{ marginRight: "10px" }}
+//         />
+//         Loading...
+//       </div>
+//     );
+//   }
+//   const columns = [
+//     {
+//       title: "Email",
+//       dataIndex: "email",
+//       key: "email",
+//     },
+//     {
+//       title: "Action",
+//       key: "action",
+//       render: (_, record) => (
+//         <Button onClick={() => openModal(record.id)} type="text" danger>
+//           <FontAwesomeIcon icon={faTrash} />
+//         </Button>
+//       ),
+//     },
+//   ];
+
+//   return (
+//     <div className="min-h-full bg-light-white rounded-3xl p-8">
+//       <h1 className="text-2xl text-gray-500 font-semibold mb-4">
+//         Team Name: {teamName}
+//       </h1>
+
+//       <div className="flex items-start space-x-2 mb-4">
+//         <Input
+//           type="email"
+//           placeholder="Enter member email"
+//           value={newMemberEmail}
+//           onChange={handleEmailChange}
+//           className={`w-96 ${addMemberError ? "border-red-500" : ""}`}
+//         />
+//         <Button onClick={handleAddMember} type="primary">
+//           Add
+//         </Button>
+//       </div>
+
+//       {emailSuggestions.length > 0 && newMemberEmail.length > 0 && (
+//         <div className="relative">
+//           <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
+//             {emailSuggestions
+//               .filter((user) => user.status === "VERIFIED") // Filter out users with 'UNVERIFY' status
+//               .map((user) => (
+//                 <li
+//                   key={user.id}
+//                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+//                   onClick={() => {
+//                     setNewMemberEmail(user.email);
+//                     setEmailSuggestions([]);
+//                     setAddMemberError(false);
+//                   }}
+//                 >
+//                   {user.email}
+//                 </li>
+//               ))}
+//           </ul>
+//         </div>
+//       )}
+
+//       <Table
+//         dataSource={members}
+//         columns={columns}
+//         rowKey="id"
+//         className="mt-7"
+//       />
+
+//       <Modal
+//         open={isModalOpen}
+//         onCancel={closeModal}
+//         footer={[
+//           <Button key="cancel" onClick={closeModal}>
+//             Cancel
+//           </Button>,
+//           <Button
+//             key="delete"
+//             onClick={handleDeleteMember}
+//             type="primary"
+//             danger
+//           >
+//             Delete
+//           </Button>,
+//         ]}
+//         title="Delete Confirmation"
+//       >
+//         <p>Are you sure you want to delete this member?</p>
+//       </Modal>
+//     </div>
+//   );
+// };
+
+// export default TeamMembersPage;
+
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -6,15 +241,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 const TeamMembersPage = () => {
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [newMemberUsername, setNewMemberUsername] = useState("");
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
   const [addMemberError, setAddMemberError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -41,22 +276,22 @@ const TeamMembersPage = () => {
     fetchMembers();
   }, [organizationId, teamId, members]);
 
-  const handleEmailChange = async (event) => {
-    setNewMemberEmail(event.target.value);
+  const handleUsernameChange = async (event) => {
+    setNewMemberUsername(event.target.value);
     if (event.target.value.length > 0) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
-          params: { email: event.target.value, fields: "email status name" },
+          params: { username: event.target.value, fields: "username status name" },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        setEmailSuggestions(response.data.users || []);
+        setUsernameSuggestions(response.data.users || []);
       } catch (error) {
-        console.error("Error fetching email suggestions:", error);
+        console.error("Error fetching username suggestions:", error);
       }
     } else {
-      setEmailSuggestions([]);
+      setUsernameSuggestions([]);
     }
   };
 
@@ -64,7 +299,7 @@ const TeamMembersPage = () => {
     try {
       const response = await axios.post(
         `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
-        { email: newMemberEmail, role: "USER" },
+        { username: newMemberUsername, role: "USER" },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -77,11 +312,11 @@ const TeamMembersPage = () => {
       } else {
         console.error("Unexpected response format:", response);
       }
-      setNewMemberEmail("");
-      setEmailSuggestions([]);
+      setNewMemberUsername("");
+      setUsernameSuggestions([]);
       setAddMemberError(false);
       notification.success({
-        message: "Team member added Successfully",
+        message: "Team member added successfully",
       });
     } catch (error) {
       console.error("Error adding member:", error);
@@ -107,7 +342,7 @@ const TeamMembersPage = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          data: { removedBy: localStorage.getItem("userId") }, // Add removedBy info
+          data: { removedBy: localStorage.getItem("userId") },
         }
       );
       setMembers((prevMembers) =>
@@ -115,7 +350,7 @@ const TeamMembersPage = () => {
       );
       closeModal();
       notification.success({
-        message: "Team member deleted Successfully",
+        message: "Team member deleted successfully",
       });
     } catch (error) {
       console.error("Error deleting member:", error);
@@ -127,9 +362,9 @@ const TeamMembersPage = () => {
       <div
         style={{
           display: "flex",
-          justifyContent: "center", // Center horizontally
-          alignItems: "center", // Center vertically
-          height: "100vh", // Full height of the viewport
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
         }}
       >
         <FontAwesomeIcon
@@ -141,11 +376,12 @@ const TeamMembersPage = () => {
       </div>
     );
   }
+
   const columns = [
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
     },
     {
       title: "Action",
@@ -166,10 +402,10 @@ const TeamMembersPage = () => {
 
       <div className="flex items-start space-x-2 mb-4">
         <Input
-          type="email"
-          placeholder="Enter member email"
-          value={newMemberEmail}
-          onChange={handleEmailChange}
+          type="text"
+          placeholder="Enter member username"
+          value={newMemberUsername}
+          onChange={handleUsernameChange}
           className={`w-96 ${addMemberError ? "border-red-500" : ""}`}
         />
         <Button onClick={handleAddMember} type="primary">
@@ -177,22 +413,22 @@ const TeamMembersPage = () => {
         </Button>
       </div>
 
-      {emailSuggestions.length > 0 && newMemberEmail.length > 0 && (
+      {usernameSuggestions.length > 0 && newMemberUsername.length > 0 && (
         <div className="relative">
           <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
-            {emailSuggestions
-              .filter((user) => user.status === "VERIFIED") // Filter out users with 'UNVERIFY' status
+            {usernameSuggestions
+              .filter((user) => user.status === "VERIFIED") // Filter out unverified users
               .map((user) => (
                 <li
                   key={user.id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   onClick={() => {
-                    setNewMemberEmail(user.email);
-                    setEmailSuggestions([]);
+                    setNewMemberUsername(user.username);
+                    setUsernameSuggestions([]);
                     setAddMemberError(false);
                   }}
                 >
-                  {user.email}
+                  {user.username}
                 </li>
               ))}
           </ul>
@@ -231,3 +467,4 @@ const TeamMembersPage = () => {
 };
 
 export default TeamMembersPage;
+

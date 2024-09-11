@@ -81,35 +81,8 @@ const organizationSchema = new Schema({
   teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
 });
 
-//timesheeet
-//timesheeet
-const timesheetSchema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  employeeName: { type: String, required: true },
-  employeeID: { type: String, required: true },
-  department: { type: String, required: true },
-  teamLeadName: { type: String, required: true },
-  weekStartDate: { type: Date, required: true },
-  weekEndDate: { type: Date, required: true },
-  days: [
-    {
-      dayOfWeek: { type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], required: true },
-      tasks: [
-        {
-          taskName: { type: String, required: true },
-          taskDescription: { type: String },
-          startTime: { type: String, required: true }, 
-          endTime: { type: String, required: true },
-          breakHours: { type: Number, default: 0 },
-          totalhoursworked: { type: Number, default: 0 },
-          notes: { type: String }
-        }
-      ]
-    }
-  ],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
+
+
 
 const ruleSchema = new Schema({
   projectId: [{ type: Schema.Types.ObjectId, ref: "Project" }],
@@ -409,6 +382,35 @@ const taskLogSchema = new Schema({
   },
 });
 
+//timesheetSchema
+const timesheetSchema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  employeeName: { type: String, required: true },
+  employeeID: { type: String, required: true },
+  department: { type: String, required: true },
+  teamLeadName: { type: String, required: true },
+  weekStartDate: { type: Date, required: true },
+  weekEndDate: { type: Date, required: true },
+  days: [
+    {
+      dayOfWeek: { type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], required: true },
+      tasks: [
+        {
+          taskName: { type: String, required: true },
+          taskDescription: { type: String },
+          startTime: { type: String, required: true }, 
+          endTime: { type: String, required: true },
+          breakHours: { type: Number, default: 0 },
+          totalhoursworked: { type: Number, default: 0 },
+          notes: { type: String }
+        }
+      ]
+    }
+  ],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 // Creating models
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
@@ -530,42 +532,7 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
   }
 });
 
-app.post("/api/timesheet", authenticateToken, async (req, res) => {
-  try {
-    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
-    const userId = req.user.id;
 
-    // Create new timesheet document
-    const newTimesheet = new TimeSheets({
-      user: userId,
-      employeeName,
-      employeeID,
-      department,
-      teamLeadName,
-      weekStartDate: new Date(weekStartDate),
-      weekEndDate: new Date(weekEndDate),
-      days: days.map(day => ({
-        dayOfWeek: day.dayOfWeek,
-        tasks: day.tasks.map(task => ({
-          taskName: task.taskName,
-          taskDescription: task.taskDescription,
-          startTime: task.startTime,
-          endTime: task.endTime,
-          breakHours: task.breakHours,
-          totalhoursworked: task.totalHoursWorked,
-          notes: task.notes
-        }))
-      }))
-    });
-
-    // Save the timesheet document to the database
-    const savedTimesheet = await newTimesheet.save();
-    res.status(201).json({ message: "Timesheet submitted successfully", TimeSheets: savedTimesheet });
-  } catch (error) {
-    console.error("Error submitting timesheet:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
-  }
-});
 
 
 //organisation register
@@ -1180,6 +1147,7 @@ app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
+
 
 // Secret Key for JWT
 const secretKey = crypto.randomBytes(32).toString("hex");

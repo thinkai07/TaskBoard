@@ -1,9 +1,12 @@
-//adminpannel.jsx
-import axios from "axios";
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { server } from "../constant";
+import { Table, Button, Input, Modal, Select, message, Spin } from "antd";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import useTokenValidation from "./UseTockenValidation";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IoIosSearch, IoMdPersonAdd } from "react-icons/io";
 
 const AdminPanel = () => {
   useTokenValidation();
@@ -51,8 +54,6 @@ const AdminPanel = () => {
     fetchUserRole();
   }, []);
 
-
-
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
@@ -61,6 +62,12 @@ const AdminPanel = () => {
     const token = localStorage.getItem("token");
     setLoading(true);
     setError(null);
+
+    if (!name.trim()) {
+      setError("Please enter a valid name.");
+      setLoading(false);
+      return;
+    }
 
     if (!validateEmail(email.trim())) {
       setError("Please enter a valid email address.");
@@ -93,8 +100,7 @@ const AdminPanel = () => {
       setEmail("");
       setRole("user");
       setIsModalOpen(false);
-      setSuccessMessage("User added successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      message.success("User added successfully!");
     } catch (error) {
       console.error("Error adding user:", error);
       setError("Failed to add user. Please try again.");
@@ -119,8 +125,7 @@ const AdminPanel = () => {
       setFilteredData(updatedData);
       setIsConfirmModalOpen(false);
       setUserIdToDelete(null);
-      setSuccessMessage("User deleted successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      message.success("User deleted successfully!");
     } catch (error) {
       console.error("Error deleting user:", error);
       setError("Failed to delete user. Please try again.");
@@ -128,234 +133,136 @@ const AdminPanel = () => {
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.toLowerCase();
     setSearchTerm(value);
     const filtered = data.filter(
       (user) =>
-        user.name.toLowerCase().includes(value.toLowerCase()) ||
-        user.email.toLowerCase().includes(value.toLowerCase())
+        user.name.toLowerCase().includes(value) ||
+        user.email.toLowerCase().includes(value)
     );
     setFilteredData(filtered);
   };
 
-  return (
-    <div className="bg-white rounded-xl overflow-hidden">
-      {successMessage && (
-        <div className="flex justify-center items-center p-4 bg-green-100 w-96 text-green-800 rounded-2xl">
-          <AiOutlineCheckCircle className="mr-2" />
-          <span>{successMessage}</span>
-        </div>
-      )}
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+    },
+    ...(userRole === "ADMIN"
+      ? [
+          {
+            title: "Actions",
+            key: "actions",
+            render: (text, record) => (
+              <Button
+                type="primary"
+                danger
+                onClick={() => confirmDeleteUser(record._id)}
+              >
+                Delete
+              </Button>
+            ),
+          },
+        ]
+      : []),
+  ];
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center", // Center horizontally
+          alignItems: "center", // Center vertically
+          height: "100vh", // Full height of the viewport
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          style={{ marginRight: "10px" }}
+        />
+        Loading...
+      </div>
+    );
+  }
 
-      <div className="flex justify-between p-4">
-        {userRole === "ADMIN" && (
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-2xl"
-            onClick={() => setIsModalOpen(true)}
-          >
-            Add User
-          </button>
-        )}
-        <input
-          type="text"
+  return (
+    <div className="p-4 m-4  rounded-lg shadow-md">
+      <div className="flex justify-end gap-10 mb-4">
+        <Input
           placeholder="Search by name or email"
           value={searchTerm}
           onChange={handleSearch}
-          className="px-4 py-2 border border-gray-300 rounded-2xl"
+          className="w-1/3"
+          prefix={<IoIosSearch />}
         />
+        {userRole === "ADMIN" && (
+          <Button type="primary" onClick={() => setIsModalOpen(true)}>
+            Add User <IoMdPersonAdd size={18} />
+          </Button>
+        )}
       </div>
-      <table className="min-w-full divide-y bg-gray-200 divide-gray-1000">
-        <thead>
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Name</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Email</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Role</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Status</th> {/* Add Status column */}
-            {userRole === "ADMIN" && (
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black-400 uppercase tracking-wider">Actions</th>
-            )}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredData.map((item, index) => (
-            <tr key={index}>
-              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-normal break-words max-w-xs">{item.name}</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-normal break-words max-w-xs">{item.email}</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{item.role}</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{item.status}</td> {/* Display status */}
-              {userRole === "ADMIN" && (
-                <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">
-                  <button className="px-4 py-2 bg-red-600 text-white rounded-2xl" onClick={() => confirmDeleteUser(item._id)}>Delete</button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {isModalOpen && (
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 transition-opacity"
-              aria-hidden="true"
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-            <div className="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3
-                      className="text-lg leading-6 font-medium text-gray-900"
-                      id="modal-title"
-                    >
-                      Add User
-                    </h3>
-                    <div className="mt-2">
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        value={name}
-                        onChange={(e) => {
-                          let inputValue = e.target.value;
 
-                          // Trim leading spaces
-                          if (inputValue.startsWith(" ")) {
-                            inputValue = inputValue.trimStart();
-                          }
+      <Table
+        columns={columns}
+        dataSource={filteredData}
+        rowKey={(record) => record._id}
+        loading={loading}
+        className="p-2"
+      />
 
-                          // Allow spaces after the first character
-                          const formattedName = inputValue
-                            .replace(/^[^a-zA-Z0-9_]+/, "")
-                            .replace(/[^a-zA-Z0-9_\s]/g, "");
+      <Modal
+        title="Add User"
+        visible={isModalOpen}
+        onOk={handleAddUser}
+        onCancel={() => setIsModalOpen(false)}
+        confirmLoading={loading}
+      >
+        {error && <div className="mb-4 text-red-600">{error}</div>}
+        <Input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mb-4"
+        />
+      </Modal>
 
-                          setName(formattedName);
-                        }}
-                        className="mt-2 p-2 border border-gray-300 rounded-2xl w-full"
-                      />
-
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          // Remove leading spaces and other invalid characters, keeping only valid email characters
-                          const cleanedEmail = inputValue.replace(/^\s+/, '').replace(/[^a-zA-Z0-9@._-]/g, '');
-                          setEmail(cleanedEmail);
-                        }}
-                        onBlur={() => {
-                          if (email && !validateEmail(email)) {
-                            setError("Please enter a valid email address.");
-                          } else {
-                            setError(null);
-                          }
-                        }}
-                        className={`mt-2 p-2 border ${error ? "border-red-500" : "border-gray-300"
-                          } rounded-2xl w-full`}
-                      />
-
-                      {error && (
-                        <div className="text-red-500 mt-2">{error}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="px-4 justify-between py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={handleAddUser}
-                  disabled={loading}
-                >
-                  {loading ? "Submitting..." : "Submit"}
-                </button>
-                <button
-                  type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isConfirmModalOpen && (
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 transition-opacity"
-              aria-hidden="true"
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-            <div className="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3
-                      className="text-lg leading-6 font-medium text-gray-900"
-                      id="modal-title"
-                    >
-                      Confirm Delete
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Are you sure  want to delete this user?
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={handleDeleteUser}
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-2xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={() => setIsConfirmModalOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        title="Confirm Delete"
+        visible={isConfirmModalOpen}
+        onOk={handleDeleteUser}
+        onCancel={() => setIsConfirmModalOpen(false)}
+        confirmLoading={loading}
+      >
+        <p>
+          Are you sure you want to delete this user? This action cannot be
+          undone.
+        </p>
+      </Modal>
     </div>
   );
 };
 
 export default AdminPanel;
-
-
-
-
-
-
-
-
-
-
-
-

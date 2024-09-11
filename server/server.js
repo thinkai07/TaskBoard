@@ -2725,7 +2725,7 @@ app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
     // Create a new comment
     const newComment = new Comment({
       comment,
-      commentBy: user.name,
+      commentBy: user.username,
       card: card._id,
     });
 

@@ -457,7 +457,7 @@ function KanbanBoard() {
       );
       if (project) {
         setProjectName(project.name);
-        setProjectManager(project.projectManager);
+        setProjectManager(project.projectManagerName);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
         setProjectDescription(project.description);
@@ -1224,32 +1224,32 @@ function KanbanBoard() {
     setModalType(null);
   };
 
-  useEffect(() => {
-    async function fetchProjectDetails() {
-      try {
-        const response = await fetch(`${server}/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+  // useEffect(() => {
+  //   async function fetchProjectDetails() {
+  //     try {
+  //       const response = await fetch(`${server}/api/projects/${projectId}`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch project details");
-        }
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch project details");
+  //       }
 
-        const project = await response.json();
-        setProjectName(project.name);
-        console.log(project.projectManager);
-        setProjectManager(project.projectManger);
-      } catch (error) {
-        console.error("Error fetching project details:", error);
-      }
-    }
+  //       const project = await response.json();
+  //       setProjectName(project.name);
+  //       console.log(project.projectManager);
+  //       setProjectManager(project.projectManger);
+  //     } catch (error) {
+  //       console.error("Error fetching project details:", error);
+  //     }
+  //   }
 
-    fetchProjectDetails();
-  }, [server, projectId]); // Dependencies for useEffect
+  //   fetchProjectDetails();
+  // }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
     try {
@@ -1903,8 +1903,6 @@ function KanbanBoard() {
           </div>
         </div>
       )}
-
-
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

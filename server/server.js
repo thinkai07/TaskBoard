@@ -1383,7 +1383,7 @@ app.post("/api/projects", async (req, res) => {
       name,
       description,
       projectManager,
-      projectManagerName: projectManagerUser.name, // Store the name here
+      projectManagerName: projectManagerUser.username, // Store the name here
       organization: organization._id,
       teams: teams || [],
       tasks: [],
@@ -1402,7 +1402,7 @@ app.post("/api/projects", async (req, res) => {
       entityId: newProject._id,
       actionType: "create",
       actionDate: new Date(),
-      performedBy: createProjectUser.name,
+      performedBy: createProjectUser.username,
       changes: [],
     });
 
@@ -1658,16 +1658,16 @@ app.get("/api/projects/:organizationId",
         });
       }
 
-      // Populate projectManager field with User details
+      // Populate the projectManager field with the username
       const projects = await projectsQuery
-        .populate("projectManager", "name") // Populate the projectManager field and include only the name field
+        .populate("projectManager", "username") // Populate the projectManager with the username field
         .exec();
 
-      // Transform projects to include projectManagerName
+      // Transform projects to include projectManagerUsername
       const transformedProjects = projects.map((project) => ({
         ...project._doc,
-        projectManagerName: project.projectManager
-          ? project.projectManager.name
+        projectManagerUsername: project.projectManager
+          ? project.projectManager.username // Include the username of the project manager
           : "N/A",
       }));
 
@@ -1678,6 +1678,7 @@ app.get("/api/projects/:organizationId",
     }
   }
 );
+
 
 app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
   try {
@@ -2742,7 +2743,6 @@ app.post("/api/card/:cardId/comments", authenticateToken, async (req, res) => {
   }
 });
 
-
 app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   const { taskId } = req.params;
 
@@ -2764,7 +2764,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
           populate: {
             path: "loggedBy", // Optionally populate loggedBy details
             model: "User",
-            select: "name email", // Fetch only the necessary fields
+            select: "name email username", // Fetch only the necessary fields
           },
         },
         {
@@ -2793,65 +2793,83 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       return map;
     }, {});
 
-    const cards = task.card.map((card) => ({
-      id: card._id,
-      name: card.name,
-      description: card.description,
-      assignedTo: card.assignedTo,
-      createdBy: card.createdBy,
-      status: card.status,
-      estimatedHours: card.estimatedHours,
-      utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
-      uniqueId: card.uniqueId,
-      createdDate: moment(card.createdDate)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DD HH:mm:ss"),
-      assignDate: moment(card.assignDate)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DD HH:mm:ss"),
-      dueDate: moment(card.dueDate)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DD HH:mm:ss"),
-      comments: card.comments.map((comment) => ({
-        id: comment._id,
-        comment: comment.comment,
-        commentBy: comment.commentBy,
-        createdAt: moment(comment.createdAt)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DD HH:mm:ss"),
-      })),
-      activities: card.activities.map((activity) => ({
-        id: activity._id,
-        commentBy: activity.commentBy,
-        comment: activity.comment,
-        createdAt: moment(activity.createdAt)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DD HH:mm:ss"),
-      })),
-      taskLogs: card.taskLogs.map((taskLog) => ({
-        id: taskLog._id,
-        hours: taskLog.hours,
-        logDate: moment(taskLog.logDate)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DD HH:mm:ss"),
-        loggedBy: {
-          id: taskLog.loggedBy._id,
-          name: taskLog.loggedBy.name,
-          email: taskLog.loggedBy.email,
-        },
-      })),
-      project: {
-        id: card.project._id,
-        name: card.project.name,
-        description: card.project.description,
-        projectManager: card.project.projectManager,
-        projectManagerName: card.project.projectManagerName,
-        organization: card.project.organization,
-        
-      }, // Include project details
-    }));
+    // Create a map to store user details (email -> username) to avoid multiple database calls
+    const userMap = {};
 
-    console.log(cards)
+    // Helper function to get the username by email
+    const getUsernameByEmail = async (email) => {
+      if (userMap[email]) {
+        return userMap[email]; // Use cached username if available
+      }
+      const user = await User.findOne({ email }, "username"); // Only fetch the username
+      if (user) {
+        userMap[email] = user.username; // Cache the username
+        return user.username;
+      }
+      return email; // Return email if user is not found
+    };
+
+    // Fetch card details along with usernames
+    const cards = await Promise.all(
+      task.card.map(async (card) => ({
+        id: card._id,
+        name: card.name,
+        description: card.description,
+        assignedTo: await getUsernameByEmail(card.assignedTo),
+        createdBy: await getUsernameByEmail(card.createdBy),
+        status: card.status,
+        estimatedHours: card.estimatedHours,
+        utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
+        uniqueId: card.uniqueId,
+        createdDate: moment(card.createdDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        assignDate: moment(card.assignDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        dueDate: moment(card.dueDate)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        comments: card.comments.map((comment) => ({
+          id: comment._id,
+          comment: comment.comment,
+          commentBy: comment.commentBy,
+          createdAt: moment(comment.createdAt)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss"),
+        })),
+        activities: card.activities.map((activity) => ({
+          id: activity._id,
+          commentBy: activity.commentBy,
+          comment: activity.comment,
+          createdAt: moment(activity.createdAt)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss"),
+        })),
+        taskLogs: card.taskLogs.map((taskLog) => ({
+          id: taskLog._id,
+          hours: taskLog.hours,
+          logDate: moment(taskLog.logDate)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss"),
+          loggedBy: {
+            id: taskLog.loggedBy._id,
+            name: taskLog.loggedBy.name,
+            email: taskLog.loggedBy.email,
+          },
+        })),
+        project: {
+          id: card.project._id,
+          name: card.project.name,
+          description: card.project.description,
+          projectManager: card.project.projectManager,
+          projectManagerName: card.project.projectManagerName,
+          organization: card.project.organization,
+        }, // Include project details
+      }))
+    );
+
+    console.log(cards);
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -2861,6 +2879,129 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
+
+// app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
+//   const { taskId } = req.params;
+
+//   try {
+//     const task = await Task.findById(taskId).populate({
+//       path: "card",
+//       populate: [
+//         {
+//           path: "comments",
+//           model: "Comment",
+//         },
+//         {
+//           path: "activities",
+//           model: "Activity",
+//         },
+//         {
+//           path: "taskLogs", // Populate task logs for each card
+//           model: "Tasklogs",
+//           populate: {
+//             path: "loggedBy", // Optionally populate loggedBy details
+//             model: "User",
+//             select: "name email username", // Fetch only the necessary fields
+//           },
+//         },
+//         {
+//           path: "project", // Populate the project details
+//           model: "Project",
+//           select: "name description projectManager projectManagerName organization", // Fetch only the necessary fields
+//         },
+//       ],
+//     });
+
+//     if (!task) {
+//       return res.status(404).json({ message: "Task not found" });
+//     }
+
+//     const cardIds = task.card.map((card) => card._id);
+
+//     // Calculate the sum of logged hours for each card
+//     const logs = await Tasklogs.aggregate([
+//       { $match: { cardId: { $in: cardIds } } },
+//       { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+//     ]);
+
+//     // Create a map of cardId to total logged hours
+//     const hoursMap = logs.reduce((map, log) => {
+//       map[log._id] = log.totalHours;
+//       return map;
+//     }, {});
+
+
+    
+
+//     const cards = task.card.map((card) => ({
+//       id: card._id,
+//       name: card.name,
+//       description: card.description,
+//       assignedTo: card.assignedTo,
+//       createdBy: card.createdBy,
+//       status: card.status,
+//       estimatedHours: card.estimatedHours,
+//       utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
+//       uniqueId: card.uniqueId,
+//       createdDate: moment(card.createdDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       assignDate: moment(card.assignDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       dueDate: moment(card.dueDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       comments: card.comments.map((comment) => ({
+//         id: comment._id,
+//         comment: comment.comment,
+//         commentBy: comment.commentBy,
+//         createdAt: moment(comment.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       activities: card.activities.map((activity) => ({
+//         id: activity._id,
+//         commentBy: activity.commentBy,
+//         comment: activity.comment,
+//         createdAt: moment(activity.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       taskLogs: card.taskLogs.map((taskLog) => ({
+//         id: taskLog._id,
+//         hours: taskLog.hours,
+//         logDate: moment(taskLog.logDate)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//         loggedBy: {
+//           id: taskLog.loggedBy._id,
+//           name: taskLog.loggedBy.name,
+//           email: taskLog.loggedBy.email,
+//         },
+//       })),
+//       project: {
+//         id: card.project._id,
+//         name: card.project.name,
+//         description: card.project.description,
+//         projectManager: card.project.projectManager,
+//         projectManagerName: card.project.projectManagerName,
+//         organization: card.project.organization,
+        
+//       }, // Include project details
+//     }));
+
+//     console.log(cards)
+
+//     // Include the task name in the response
+//     res.status(200).json({ taskName: task.name, cards });
+
+//   } catch (error) {
+//     console.error("Error fetching cards:", error);
+//     res.status(500).json({ message: "Error fetching cards" });
+//   }
+// });
 
 
 app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {

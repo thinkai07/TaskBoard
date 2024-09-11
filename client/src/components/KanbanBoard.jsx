@@ -455,7 +455,7 @@ function KanbanBoard() {
       );
       if (project) {
         setProjectName(project.name);
-        setProjectManager(project.projectManager);
+        setProjectManager(project.projectManagerName);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
         setProjectDescription(project.description);

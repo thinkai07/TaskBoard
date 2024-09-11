@@ -17,7 +17,7 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-
+  const [userName,setUserName] = useState();
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -254,7 +254,8 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
         setUserRole(response.data.role);
         setOrganizationId(response.data.organizationId);
         setOrganizationName(response.data.organizationName);
-        console.log("org", response.data);
+        setUserName(response.data.username)
+        console.log("username", response.data.username);
       } catch (error) {
         console.error("Error fetching user role:", error);
       }
@@ -362,7 +363,7 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
     <div className="flex items-center justify-between h-14 text-base p-4 sticky top-0 z-10 border-1 shadow-sm">
       <div className="flex items-center">
         <div className="ml-3">
-          <h1 className="font-semibold text-2xl">HI! {user?.name}</h1>
+          <h1 className="font-semibold text-2xl">HI! {userName}</h1>
           <h3 className="font-medium text-md">
             <span className="text-gray-500">{formatDate(currentTime)}</span>
           </h3>

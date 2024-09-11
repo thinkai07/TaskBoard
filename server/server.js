@@ -1210,8 +1210,9 @@ app.get("/api/role", authenticateToken, async (req, res) => {
   try {
     // Step 1: Find the user and get the organization ID
     const user = await User.findOne({ email: req.user.email }).select(
-      "email name role organization"
+      "email name role username organization "
     );
+    console.log(user)
     if (!user) {
       return res
         .status(404)
@@ -1233,6 +1234,7 @@ app.get("/api/role", authenticateToken, async (req, res) => {
       role: user.role,
       organizationId: user.organization,
       organizationName: organization.name, // Include the organization name in the response
+      username:user.username
     });
   } catch (error) {
     console.error("Error:", error);

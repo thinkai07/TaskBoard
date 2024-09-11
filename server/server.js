@@ -330,10 +330,13 @@ const taskSchema = new Schema(
 );
 
 // User schema
+// User schema
 const userSchema = new Schema({
   id: String,
   name: String,
   email: String,
+  username: String, // New field
+  employeeId: String, // New field
   password: String,
   role: { type: String },
   organization: { type: Schema.Types.ObjectId, ref: "Organization" },
@@ -1097,17 +1100,19 @@ app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
-    const { name, email, role } = req.body;
+    const { name, email, username, employeeId, role } = req.body; // Include new fields
     try {
-      if (!name || !email || !role) {
+      if (!name || !email || !role || !username || !employeeId) { // Check new fields
         return res.status(400).json({ message: "All fields are required" });
       }
       const newUser = new User({
         name,
         email,
+        username, // New field
+        employeeId, // New field
         role: "USER",
         organization: req.user.organizationId,
-        status: "UNVERIFY", // Set default status as 'unverify'
+        status: "UNVERIFY",
       });
       // Find the organization by ID
       const organization = await Organization.findById(req.user.organizationId);
@@ -1120,7 +1125,7 @@ app.post("/api/addUser",
       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
         expiresIn: "3d",
       });
-      const resetLink = `http://13.235.16.113/reset-password?token=${token}`;
+      const resetLink = `http://localhost:5000/reset-password?token=${token}`;
 
       sendResetEmail(email, resetLink);
 
@@ -1129,7 +1134,7 @@ app.post("/api/addUser",
         const githubResponse = await axios.put(
           `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
           {
-            role: "member", // Use 'member' or 'admin' depending on the role you want to assign
+            role: "member",
           },
           {
             headers: {
@@ -1146,7 +1151,6 @@ app.post("/api/addUser",
           "Error adding user to GitHub organization:",
           error.response ? error.response.data : error.message
         );
-        // Handle the error but do not fail the entire request
         return res.status(500).json({
           message: "User added to the organization but not to GitHub",
           user: newUser,

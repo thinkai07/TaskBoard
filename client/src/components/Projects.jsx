@@ -211,7 +211,7 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-            name.toLowerCase().replace(/\s+/g, "") &&
+          name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -337,11 +337,11 @@ const Projects = () => {
           createdBy: createdBy,
           bgUrl: selectedImage
             ? {
-                raw: selectedImage.urls.raw,
-                thumb: selectedImage.urls.thumb,
-                full: selectedImage.urls.full,
-                regular: selectedImage.urls.regular,
-              }
+              raw: selectedImage.urls.raw,
+              thumb: selectedImage.urls.thumb,
+              full: selectedImage.urls.full,
+              regular: selectedImage.urls.regular,
+            }
             : null,
         },
         {
@@ -590,17 +590,17 @@ const Projects = () => {
             }}
           >
             <div className="flex justify-between items-center">
-             
-                <h3
-                  className="font-bold truncate"
-                  style={{
-                    color: card.textColor,
-                    maxWidth: "80%", // Limit width to allow space for ellipsis button
-                  }}
-                >
-                  {card.name}
-                </h3>
-             
+
+              <h3
+                className="font-bold truncate"
+                style={{
+                  color: card.textColor,
+                  maxWidth: "80%", // Limit width to allow space for ellipsis button
+                }}
+              >
+                {card.name}
+              </h3>
+
               {userRole !== "USER" && (
                 <button
                   className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
@@ -615,17 +615,17 @@ const Projects = () => {
                 </button>
               )}
             </div>
-        
-              <p
-                className="truncate"
-                style={{
-                  color: card.textColor,
-                  maxWidth: "100%",
-                }}
-              >
-                {card.description}
-              </p>
-         
+
+            <p
+              className="truncate"
+              style={{
+                color: card.textColor,
+                maxWidth: "100%",
+              }}
+            >
+              {card.description}
+            </p>
+
             <div className="mt-2 flex justify-between items-center">
               <p
                 className=" rounded-md text-sm inline-block"
@@ -718,9 +718,8 @@ const Projects = () => {
                   description: e.target.value,
                 }))
               }
-              className={` ${
-                newCardErrors.description ? "border-red-500" : ""
-              }`}
+              className={` ${newCardErrors.description ? "border-red-500" : ""
+                }`}
             />
             {newCardErrors.description && (
               <p className="text-red-500">Project Description is required</p>
@@ -808,9 +807,8 @@ const Projects = () => {
               {unsplashImages.map((image) => (
                 <div
                   key={image.id}
-                  className={`m-2 cursor-pointer ${
-                    selectedImage === image ? "border-4 border-blue-500" : ""
-                  }`}
+                  className={`m-2 cursor-pointer ${selectedImage === image ? "border-4 border-blue-500" : ""
+                    }`}
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image
@@ -831,37 +829,37 @@ const Projects = () => {
       </Modal>
 
       <Modal
-  title="Rename Project"
-  visible={renameDialogVisible}
-  onOk={handleSaveRename}
-  onCancel={() => setRenameDialogVisible(false)}
->
-  <Input
-    placeholder="Project Name"
-    value={renameInputValue}
-    onChange={(e) => {
-      setRenameInputValue(e.target.value.trimStart());
-      setRenameInputError(false);
-    }}
-    className={renameInputError ? "border-red-500" : ""}
-  />
-  {renameInputError && (
-    <p className="text-red-500">Project Name is required</p>
-  )}
+        title="Rename Project"
+        visible={renameDialogVisible}
+        onOk={handleSaveRename}
+        onCancel={() => setRenameDialogVisible(false)}
+      >
+        <Input
+          placeholder="Project Name"
+          value={renameInputValue}
+          onChange={(e) => {
+            setRenameInputValue(e.target.value.trimStart());
+            setRenameInputError(false);
+          }}
+          className={renameInputError ? "border-red-500" : ""}
+        />
+        {renameInputError && (
+          <p className="text-red-500">Project Name is required</p>
+        )}
 
-  <TextArea
-    placeholder="Project Description"
-    value={descriptionInputValue}
-    onChange={(e) => {
-      setDescriptionInputValue(e.target.value.trimStart());
-      setDescriptionInputError(false);
-    }}
-    className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
-  />
-  {descriptionInputError && (
-    <p className="text-red-500">Project Description is required</p>
-  )}
-</Modal>
+        <TextArea
+          placeholder="Project Description"
+          value={descriptionInputValue}
+          onChange={(e) => {
+            setDescriptionInputValue(e.target.value.trimStart());
+            setDescriptionInputError(false);
+          }}
+          className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
+        />
+        {descriptionInputError && (
+          <p className="text-red-500">Project Description is required</p>
+        )}
+      </Modal>
 
 
       <Modal

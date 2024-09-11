@@ -76,7 +76,7 @@ const Sidebar = () => {
           { path: "/members", icon: Users, label: "Members" },
           { path: "/Auditlog", icon: FileText, label: "Auditlog" },
           { path: "/Teamsorg", icon: ShieldHalf, label: "Teams" },
-          { path: "/statussheet", icon:FileChartColumn,label:'StatusSheet'},
+          { path: "/statussheet", icon: FileChartColumn, label: 'StatusSheet' },
           { path: "/timesheet", icon: Clock, label: "Time Sheet" }, // Added Time Sheet
         ].map(({ path, icon: Icon, label }) => (
           <li

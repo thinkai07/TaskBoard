@@ -1,8 +1,46 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form } from 'antd';
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { server } from '../constant';
+
 
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
@@ -16,7 +54,7 @@ const StatusSheet = () => {
     const [dataSource, setDataSource] = useState([]);
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
-    
+
     const [selectedColumn, setSelectedColumn] = useState(null);
 
     const [tasks, setTasks] = useState([]);
@@ -25,8 +63,10 @@ const StatusSheet = () => {
     const [createdBy, setCreatedBy] = useState(null);
     const [form] = Form.useForm(); // Add this line to create the form instance
     const [assignedEmail, setAssignedEmail] = useState('');
-    const [selectedUserName, setSelectedUserName] = useState(''); 
+    const [selectedUserName, setSelectedUserName] = useState('');
     const [userProjects, setUserProjects] = useState([]);
+    const [tableData, setTableData] = useState('');
+    const [userEmail, setUserEmail] = useState("");
 
     // Fetch user role, organization ID, and createdBy email, then fetch users for the organization
     useEffect(() => {
@@ -72,42 +112,41 @@ const StatusSheet = () => {
     }, []);
 
     // Fetch cards assigned to the selected user
-   // Fetch cards assigned to the selected user
-const fetchUserCards = async (userId) => {
-    try {
-        const response = await axios.get(`${server}/api/cards/user/${userId}`);
+    const fetchUserCards = async (userId) => {
+        try {
+            const response = await axios.get(`${server}/api/cards/user/${userId}`);
 
-        const modifiedData = response.data.map((card) => ({
-            key: card._id, // Assuming each card has an '_id'
-            projectName: card.project?.name || "N/A",
-            columnName: card.task?.name || "N/A",
-            assignedDate: card.assignDate ? new Date(card.assignDate).toLocaleDateString() : "N/A", // Format date for UI
-            taskName: card.name || "N/A", // Map 'name' to 'taskName'
-            estimatedHours: card.estimatedHours || "N/A",
-            utilizedHours: card.utilizedHours || "N/A",
-            status: card.status || "N/A",
-        }));
+            const modifiedData = response.data.map((card) => ({
+                key: card._id, // Assuming each card has an '_id'
+                projectName: card.project?.name || "N/A",
+                columnName: card.task?.name || "N/A",
+                assignedDate: card.assignDate ? new Date(card.assignDate).toLocaleDateString() : "N/A", // Format date for UI
+                taskName: card.name || "N/A", // Map 'name' to 'taskName'
+                estimatedHours: card.estimatedHours || "N/A",
+                utilizedHours: card.utilizedHours || "N/A",
+                status: card.status || "N/A",
+            }));
 
-        console.log("Modified data for table:", modifiedData); // Log the modified data for debugging
+            console.log("Modified data for table:", modifiedData); // Log the modified data for debugging
 
-        setDataSource(modifiedData); // Update table with the modified cards data
+            setDataSource(modifiedData); // Update table with the modified cards data
 
-        // Extract unique projects by their IDs
-        const uniqueProjects = response.data.reduce((acc, card) => {
-            const project = card.project;
-            if (project && !acc.find(p => p._id === project._id)) {
-                acc.push({ _id: project._id, name: project.name });
-            }
-            return acc;
-        }, []);
+            // Extract unique projects by their IDs
+            const uniqueProjects = response.data.reduce((acc, card) => {
+                const project = card.project;
+                if (project && !acc.find(p => p._id === project._id)) {
+                    acc.push({ _id: project._id, name: project.name });
+                }
+                return acc;
+            }, []);
 
-        setProjects(uniqueProjects); // Set the unique projects for the selector
-    } catch (error) {
-        console.error("Error fetching cards:", error);
-    }
-};
+            setProjects(uniqueProjects); // Set the unique projects for the selector
+        } catch (error) {
+            console.error("Error fetching cards:", error);
+        }
+    };
 
-    
+
 
 
     // Fetch tasks based on selected project
@@ -177,7 +216,64 @@ const fetchUserCards = async (userId) => {
         setIsModalVisible(false);
     };
 
-    // Table columns definition
+
+
+
+    //added
+    const fetchUserEmail = async () => {
+        try {
+            const response = await axios.get(`${server}/api/user`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+            setUserEmail(response.data.user.email);
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
+
+    // Use fetchUserEmail inside useEffect
+    useEffect(() => {
+        fetchUserEmail();
+    }, []);
+
+
+
+
+    // Handle status change
+    const handleChangeStatus = async (cardId, newStatus) => {
+        try {
+            const updatedBy = userEmail; // Use the state value
+            const updatedDate = new Date().toISOString();
+
+            setDataSource((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.key === cardId ? { ...task, status: newStatus } : task
+                )
+            );
+
+            // Make the PUT request to update the status in the backend
+            const response = await axios.put(`${server}/api/cards/${cardId}/status`, {
+                status: newStatus,
+                updatedBy,
+                updatedDate,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                }
+            });
+
+            if (!response.status === 200) {
+                throw new Error('Failed to update status');
+            }
+
+            const data = await response.json();
+            console.log('Status updated successfully:', data);
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    };
     // Table columns definition
     const columns = [
         {
@@ -245,13 +341,19 @@ const fetchUserCards = async (userId) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            render: (text) =>
-            (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-                    {text}
-                </div>
-            )
-        },
+            render: (status, record) => (
+                <Select
+                    defaultValue={status}
+                    style={{ width: 120 }}
+                    onChange={(value) => handleChangeStatus(record.key, value)}
+                    disabled={userRole !== 'ADMIN'} // Disable for non-admin users
+                >
+                    <Option value="inprogress">In Progress</Option>
+                    <Option value="completed">Completed</Option>
+                    <Option value="pending">Pending</Option>
+                </Select>
+            ),
+        }
     ];
 
 
@@ -269,21 +371,36 @@ const fetchUserCards = async (userId) => {
     return (
         <div style={{ padding: '20px' }}>
             {/* Dropdown for selecting users */}
+            {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                {selectedUser && (
+                    <Button style={{ marginRight: '10px' }} type="primary" onClick={() => setIsModalVisible(true)}>
+                        <PlusOutlined /> Add Task
+                    </Button>
+                )}
+                <Dropdown overlay={userMenu}>
+                    <Button>
+                        {selectedUserName || 'Select User'} <DownOutlined />
+                    </Button>
+                </Dropdown>
+            </div> */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
                 {selectedUser && (
                     <Button style={{ marginRight: '10px' }} type="primary" onClick={() => setIsModalVisible(true)}>
                         <PlusOutlined /> Add Task
                     </Button>
                 )}
-                 <Dropdown overlay={userMenu}>
-                    <Button>
+
+                <Dropdown overlay={userMenu}>
+                    <Button style={{ width: '160px' }}>
                         {selectedUserName || 'Select User'} <DownOutlined />
                     </Button>
                 </Dropdown>
+
             </div>
 
             {/* Table */}
-            <div style={{ margin: '0 auto', maxWidth: '95%' }}>
+            <div
+                style={{ margin: '0 auto', maxWidth: '95%' }} className='dark'>
                 {selectedUser ? (
                     <Table dataSource={dataSource} columns={columns} />
                 ) : (
@@ -301,15 +418,15 @@ const fetchUserCards = async (userId) => {
                 <Form form={form} layout="vertical" onFinish={handleOk}>
                     {/* Row 1: Select Project and Select Task */}
                     <div style={{ display: 'flex', gap: '10px' }}>
-                    <Form.Item label="Select Project" name="project" style={{ flex: 1 }} rules={[{ required: true, message: 'Please select a project' }]}>
-    <Select placeholder="Select a project" onChange={handleProjectSelect}>
-        {projects.map((project) => (
-            <Option key={project._id} value={project._id}>
-                {project.name}
-            </Option>
-        ))}
-    </Select>
-</Form.Item>
+                        <Form.Item label="Select Project" name="project" style={{ flex: 1 }} rules={[{ required: true, message: 'Please select a project' }]}>
+                            <Select placeholder="Select a project" onChange={handleProjectSelect}>
+                                {projects.map((project) => (
+                                    <Option key={project._id} value={project._id}>
+                                        {project.name}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
 
 
                         <Form.Item
@@ -368,3 +485,23 @@ const fetchUserCards = async (userId) => {
 };
 
 export default StatusSheet;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,40 +1,5 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form } from 'antd';
@@ -167,7 +132,7 @@ const StatusSheet = () => {
     const handleUserSelect = (userId) => {
         const selectedUser = users.find(user => user._id === userId);
         setSelectedUser(userId);
-        setSelectedUserName(selectedUser.name); // Update user name
+        setSelectedUserName(selectedUser.username); // Update user name
         setAssignedEmail(selectedUser.email); // Store selected user's email
         fetchUserCards(userId); // Fetch cards for the selected user
 
@@ -362,7 +327,7 @@ const StatusSheet = () => {
         <Menu onClick={(e) => handleUserSelect(e.key)}>
             {users.map((user) => (
                 <Menu.Item key={user._id}>
-                    {user.name}
+                    {user.username}
                 </Menu.Item>
             ))}
         </Menu>
@@ -485,22 +450,6 @@ const StatusSheet = () => {
 };
 
 export default StatusSheet;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

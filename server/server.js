@@ -4075,30 +4075,6 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
 });
 
 
-
-// app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
-//   try {
-//     const { projectId } = req.params;
-//     const auditLogs = await AuditLog.find({
-//       $or: [
-//         { projectId }, // Project-related actions
-//         { entityId: projectId, entityType: "Project" }, // Specific project actions
-//       ],
-//     }).populate("performedBy", "name email");
-
-//     if (!auditLogs || auditLogs.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "No audit logs found for this project" });
-//     }
-
-//     res.status(200).json(auditLogs);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
-
 app.get("/api/protected", authenticateToken, (req, res) => {
   res.json({ message: "This is a protected endpoint!", user: req.user });
 });

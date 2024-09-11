@@ -82,8 +82,9 @@ const organizationSchema = new Schema({
 });
 
 //timesheeet
+//timesheeet
 const timesheetSchema = new Schema({
-  // user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   employeeName: { type: String, required: true },
   employeeID: { type: String, required: true },
   department: { type: String, required: true },
@@ -421,7 +422,7 @@ const Activity = mongoose.model("Activity", activitySchema);
 const Notification = mongoose.model("Notification", NotificationSchema);
 const Rule = mongoose.model("Rule", ruleSchema);
 const Tasklogs = mongoose.model("Tasklogs", taskLogSchema);
-const TimeSheets = mongoose.model("Timesheets", timesheetSchema);
+const Timesheet = mongoose.model("Timesheet", timesheetSchema);
 module.exports = {
   User,
   Task,
@@ -435,7 +436,7 @@ module.exports = {
   Notification,
   Rule,
   Tasklogs,
-  TimeSheets
+  Timesheet
 };
 
 const tempOrganizationSchema = new Schema({
@@ -773,25 +774,24 @@ app.get("/validate-email", async (req, res) => {
   }
 });
 
-//mail search
 app.get("/api/users/search", authenticateToken, async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) {
-      return res
-        .status(400)
-        .json({ message: "Email query parameter is required" });
-    }
+  const { username, fields } = req.query;
 
-    const users = await User.find({
-      email: { $regex: email, $options: "i" },
-      organization: req.user.organizationId,
-    }).select("email status username");
+  try {
+    // Find users by username using regex for partial matches
+    const users = await User.find(
+      { username: new RegExp(username, "i") }, // case-insensitive match
+      fields
+    );
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
 
     res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Error fetching users" });
+    res.status(500).json({ message: "Error fetching users", error });
   }
 });
 
@@ -1002,36 +1002,182 @@ app.delete("/api/deleteUser/:id",
 // });
 
 // Login route
+// // Login route
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
+    // Find the user by email
     const user = await User.findOne({ email }).populate("organization");
+
     if (user) {
+      // Compare the provided password with the stored hashed password
       const match = await bcrypt.compare(password, user.password);
+
       if (match) {
+        // Generate a JWT token and include user's _id in the payload
         const token = jwt.sign(
           {
+            _id: user._id, // Include user ID in the token payload
             email: user.email,
             role: user.role,
             organizationId: user.organization._id,
           },
-          secretKey,
-          { expiresIn: "5h" } // Token expires in 1 hour
+          secretKey, // Secret key for signing the token
+          { expiresIn: "5h" } // Set token expiration to 5 hours
         );
+
+        // Respond with the token
         res.json({ success: true, token });
       } else {
-        res
-          .status(401)
-          .json({ success: false, message: "Invalid email or password" });
+        // If the password is incorrect
+        res.status(401).json({ success: false, message: "Invalid email or password" });
       }
     } else {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
+      // If the user is not found
+      res.status(401).json({ success: false, message: "Invalid email or password" });
     }
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error during login:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// GET API to fetch a specific timesheet by ID
+app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const timesheetId = req.params.id;
+
+    // Fetch user information to check role
+    const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Determine if the user is an ADMIN
+    const isAdmin = user.role === 'ADMIN';
+
+    // Find the timesheet based on the user's role
+    const timesheet = isAdmin
+      ? await Timesheet.findById(timesheetId)
+      : await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ success: false, message: "Timesheet not found" });
+    }
+
+    res.status(200).json({ success: true, timesheet });
+  } catch (error) {
+    console.error("Error fetching timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+// GET API to fetch all timesheets for the authenticated user
+app.get("/api/timesheets", authenticateToken, async (req, res) => {
+  try {
+      const userId = req.user._id;
+
+      // Fetch user information to check role
+      const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
+
+      if (!user) {
+          return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      // Check if user is an ADMIN
+      if (user.role === 'ADMIN') {
+          // Fetch all timesheets
+          const timesheets = await Timesheet.find({});
+          return res.status(200).json({ success: true, timesheets });
+      } else {
+          // Fetch timesheets associated with the authenticated user
+          const timesheets = await Timesheet.find({ user: userId });
+          return res.status(200).json({ success: true, timesheets });
+      }
+  } catch (error) {
+      console.error("Error fetching timesheets:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+// create timesheet
+app.post("/api/timesheet", authenticateToken, async (req, res) => {
+  try {
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+    const userId = req.user._id; // Assuming authenticateToken sets the user in req.user
+
+    // Create new timesheet document associated with the authenticated user
+    const newTimesheet = new Timesheet({
+      user: userId,
+      employeeName,
+      employeeID,
+      department,
+      teamLeadName,
+      weekStartDate: new Date(weekStartDate),
+      weekEndDate: new Date(weekEndDate),
+      days: days.map(day => ({
+        dayOfWeek: day.dayOfWeek,
+        tasks: day.tasks.map(task => ({
+          taskName: task.taskName,
+          taskDescription: task.taskDescription,
+          startTime: task.startTime,
+          endTime: task.endTime,
+          breakHours: task.breakHours,
+          totalhoursworked: task.totalhoursworked,
+          notes: task.notes
+        }))
+      }))
+    });
+
+    // Save the timesheet document to the database
+    const savedTimesheet = await newTimesheet.save();
+    res.status(201).json({ message: "Timesheet submitted successfully", timesheet: savedTimesheet });
+  } catch (error) {
+    console.error("Error submitting timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+// Update timesheet
+app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
+  try {
+    const timesheetId = req.params.id;
+    const userId = req.user._id;
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
+    }
+
+    // Update timesheet fields
+    timesheet.employeeName = employeeName;
+    timesheet.employeeID = employeeID;
+    timesheet.department = department;
+    timesheet.teamLeadName = teamLeadName;
+    timesheet.weekStartDate = new Date(weekStartDate);
+    timesheet.weekEndDate = new Date(weekEndDate);
+    timesheet.days = days.map(day => ({
+      dayOfWeek: day.dayOfWeek,
+      tasks: day.tasks.map(task => ({
+        taskName: task.taskName,
+        taskDescription: task.taskDescription,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        breakHours: task.breakHours,
+        totalhoursworked: task.totalhoursworked,
+        notes: task.notes
+      }))
+    }));
+
+    // Save the updated timesheet
+    const updatedTimesheet = await timesheet.save();
+    res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+  } catch (error) {
+    console.error("Error updating timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 
@@ -3725,97 +3871,52 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
   }
 );
 
-//create users inside teams
-app.post("/api/organizations/:organizationId/teams/:teamId/users",
-  authenticateToken,
-  async (req, res) => {
-    const { organizationId, teamId } = req.params;
-    const { email, role } = req.body;
+app.post("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken, async (req, res) => {
+  const { organizationId, teamId } = req.params;
+  const { username, role } = req.body;
 
-    try {
-      // Find the organization
-      const organization = await Organization.findById(organizationId);
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
-      }
-
-      // Find the team
-      const team = await Team.findById(teamId);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
-      }
-
-      // Check if the team belongs to the organization
-      if (!organization.teams.includes(team._id)) {
-        return res
-          .status(400)
-          .json({ message: "Team does not belong to this organization" });
-      }
-
-      // Find the user
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if the user has an 'ADMIN' role
-      if (user.role === "ADMIN") {
-        return res
-          .status(400)
-          .json({ message: "Admin users cannot be added to teams" });
-      }
-
-      // Check if the user status is 'unverify'
-      if (user.status === "UNVERIFY") {
-        return res.status(400).json({
-          message:
-            "This user email is not verified. Please verify the email before adding into team.",
-        });
-      }
-
-      // Check if the user is already in the team
-      const userInTeam = team.users.find(
-        (u) => u.user.toString() === user._id.toString()
-      );
-      if (userInTeam) {
-        return res.status(400).json({ message: "User is already in the team" });
-      }
-
-      // Add the user to the team in MongoDB
-      team.users.push({ user: user._id, role: role || "USER" });
-      await team.save();
-
-      // Add the user to the GitHub team
-      const githubTeamResponse = await axios.put(
-        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
-        {},
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("GitHub team membership updated:", githubTeamResponse.data);
-
-      res.status(200).json({
-        message:
-          "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
-        team,
-        githubTeam: githubTeamResponse.data,
-      });
-    } catch (error) {
-      console.error("Error adding user to team:", error);
-      res
-        .status(500)
-        .json({ message: "Error adding user to team", error: error.message });
+  try {
+    // Find the organization
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
     }
-  }
-);
 
-app.get("/api/organizations/:organizationId/teams/:teamId/users",
-  authenticateToken,
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Check if the team belongs to the organization
+    if (!organization.teams.includes(team._id)) {
+      return res.status(400).json({ message: "Team does not belong to this organization" });
+    }
+
+    // Find the user by username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the user is already in the team
+    const userInTeam = team.users.find((u) => u.user.toString() === user._id.toString());
+    if (userInTeam) {
+      return res.status(400).json({ message: "User is already in the team" });
+    }
+
+    // Add the user to the team
+    team.users.push({ user: user._id, role: role || "USER" });
+    await team.save();
+
+    res.status(200).json({ message: "User added to team successfully", user });
+  } catch (error) {
+    console.error("Error adding user to team:", error);
+    res.status(500).json({ message: "Error adding user to team", error });
+  }
+});
+
+app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
 
@@ -3826,10 +3927,10 @@ app.get("/api/organizations/:organizationId/teams/:teamId/users",
         return res.status(404).json({ message: "Organization not found" });
       }
 
-      // Find the team and populate its users
+      // Find the team and populate its users, including username
       const team = await Team.findById(teamId).populate(
         "users.user",
-        "name email status"
+        "name email username status"
       );
       if (!team) {
         return res.status(404).json({ message: "Team not found" });
@@ -3842,11 +3943,12 @@ app.get("/api/organizations/:organizationId/teams/:teamId/users",
           .json({ message: "Team does not belong to this organization" });
       }
 
-      // Format the user data
+      // Format the user data to include the username
       const users = team.users.map((user) => ({
         id: user.user._id,
         name: user.user.name,
         email: user.user.email,
+        username: user.user.username, // Include username in the response
         role: user.role,
         status: user.user.status,
       }));

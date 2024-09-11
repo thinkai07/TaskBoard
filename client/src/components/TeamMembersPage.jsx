@@ -6,15 +6,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 const TeamMembersPage = () => {
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [newMemberUsername, setNewMemberUsername] = useState("");
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
   const [addMemberError, setAddMemberError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -41,22 +41,22 @@ const TeamMembersPage = () => {
     fetchMembers();
   }, [organizationId, teamId, members]);
 
-  const handleEmailChange = async (event) => {
-    setNewMemberEmail(event.target.value);
+  const handleUsernameChange = async (event) => {
+    setNewMemberUsername(event.target.value);
     if (event.target.value.length > 0) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
-          params: { email: event.target.value, fields: "email status name" },
+          params: { username: event.target.value, fields: "username status name" },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        setEmailSuggestions(response.data.users || []);
+        setUsernameSuggestions(response.data.users || []);
       } catch (error) {
-        console.error("Error fetching email suggestions:", error);
+        console.error("Error fetching username suggestions:", error);
       }
     } else {
-      setEmailSuggestions([]);
+      setUsernameSuggestions([]);
     }
   };
 
@@ -64,7 +64,7 @@ const TeamMembersPage = () => {
     try {
       const response = await axios.post(
         `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
-        { email: newMemberEmail, role: "USER" },
+        { username: newMemberUsername, role: "USER" },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -77,11 +77,11 @@ const TeamMembersPage = () => {
       } else {
         console.error("Unexpected response format:", response);
       }
-      setNewMemberEmail("");
-      setEmailSuggestions([]);
+      setNewMemberUsername("");
+      setUsernameSuggestions([]);
       setAddMemberError(false);
       notification.success({
-        message: "Team member added Successfully",
+        message: "Team member added successfully",
       });
     } catch (error) {
       console.error("Error adding member:", error);
@@ -107,7 +107,7 @@ const TeamMembersPage = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          data: { removedBy: localStorage.getItem("userId") }, // Add removedBy info
+          data: { removedBy: localStorage.getItem("userId") },
         }
       );
       setMembers((prevMembers) =>
@@ -115,7 +115,7 @@ const TeamMembersPage = () => {
       );
       closeModal();
       notification.success({
-        message: "Team member deleted Successfully",
+        message: "Team member deleted successfully",
       });
     } catch (error) {
       console.error("Error deleting member:", error);
@@ -127,9 +127,9 @@ const TeamMembersPage = () => {
       <div
         style={{
           display: "flex",
-          justifyContent: "center", // Center horizontally
-          alignItems: "center", // Center vertically
-          height: "100vh", // Full height of the viewport
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
         }}
       >
         <FontAwesomeIcon
@@ -141,11 +141,12 @@ const TeamMembersPage = () => {
       </div>
     );
   }
+
   const columns = [
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
     },
     {
       title: "Action",
@@ -166,10 +167,10 @@ const TeamMembersPage = () => {
 
       <div className="flex items-start space-x-2 mb-4">
         <Input
-          type="email"
-          placeholder="Enter member email"
-          value={newMemberEmail}
-          onChange={handleEmailChange}
+          type="text"
+          placeholder="Enter member username"
+          value={newMemberUsername}
+          onChange={handleUsernameChange}
           className={`w-96 ${addMemberError ? "border-red-500" : ""}`}
         />
         <Button onClick={handleAddMember} type="primary">
@@ -177,22 +178,22 @@ const TeamMembersPage = () => {
         </Button>
       </div>
 
-      {emailSuggestions.length > 0 && newMemberEmail.length > 0 && (
+      {usernameSuggestions.length > 0 && newMemberUsername.length > 0 && (
         <div className="relative">
           <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
-            {emailSuggestions
-              .filter((user) => user.status === "VERIFIED") // Filter out users with 'UNVERIFY' status
+            {usernameSuggestions
+              .filter((user) => user.status === "VERIFIED") // Filter out unverified users
               .map((user) => (
                 <li
                   key={user.id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   onClick={() => {
-                    setNewMemberEmail(user.email);
-                    setEmailSuggestions([]);
+                    setNewMemberUsername(user.username);
+                    setUsernameSuggestions([]);
                     setAddMemberError(false);
                   }}
                 >
-                  {user.email}
+                  {user.username}
                 </li>
               ))}
           </ul>

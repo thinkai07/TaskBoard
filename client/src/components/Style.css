@@ -22,7 +22,14 @@
   overflow-y: auto;
 }
 
-/* WebKit browsers */
+.react-kanban-card__title {
+  border-bottom: 70px #eee;
+  padding-bottom: 5px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
 .react-kanban-column::-webkit-scrollbar {
   width: 10px;
 }
@@ -40,16 +47,6 @@
   background: #555;
 }
 
-
-
-.react-kanban-card__title {
-  border-bottom: 70px #eee;
-  padding-bottom: 5px;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-}
-
 .react-kanban-board {
   overflow-x: scroll; /* Enable horizontal scrolling */
   display: flex; /* Flexbox layout */
@@ -62,5 +59,3 @@
 .react-kanban-board::-webkit-scrollbar {
   display: none; /* Chrome, Safari, and Edge */
 }
-
-

@@ -1,18 +1,16 @@
 //timesheetdetails.jsx
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select } from 'antd';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
 import { useParams, useNavigate } from 'react-router-dom';
-
-const { Option } = Select;
-
+import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select } from 'antd';
 
 const TimesheetDetails = () => {
     const { timesheetId } = useParams();
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { Option } = Select;
     const [timesheetData, setTimesheetData] = useState({
         id: null,
         employeeName: '',
@@ -24,6 +22,7 @@ const TimesheetDetails = () => {
     });
     const [tableData, setTableData] = useState([]);
     const [isFormDisabled, setIsFormDisabled] = useState(false);
+    const [submitDisabled, setSubmitDisabled] = useState(true); // Added to track button state
 
     useEffect(() => {
         const fetchTimesheetData = async () => {
@@ -85,7 +84,6 @@ const TimesheetDetails = () => {
         };
         setTableData([...tableData, newRow]);
     };
-
 
     const handleSaveDraft = async () => {
         try {
@@ -154,13 +152,21 @@ const TimesheetDetails = () => {
             message.error('Failed to save timesheet');
         }
     };
+
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
         setTableData(newData);
     };
 
+    useEffect(() => {
+        // Check if all days from Monday to Friday are present
+        const requiredDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const addedDays = tableData.map(row => row.day);
+        const allDaysAdded = requiredDays.every(day => addedDays.includes(day));
 
+        setSubmitDisabled(!allDaysAdded);
+    }, [tableData]);
 
     const columns = [
         {
@@ -173,7 +179,7 @@ const TimesheetDetails = () => {
                         value={text}
                         onChange={(value) => handleRowChange(index, 'day', value)}
                         placeholder="Select day"
-                        style={{ width: '150px' }}
+                        style={{ width: '120px' }}
                     >
                         <Option value="Monday">Monday</Option>
                         <Option value="Tuesday">Tuesday</Option>
@@ -215,6 +221,7 @@ const TimesheetDetails = () => {
                     <span>{text}</span>
                 ),
         },
+
         {
             title: 'Start Time',
             dataIndex: 'startTime',
@@ -369,6 +376,7 @@ const TimesheetDetails = () => {
                         </Form.Item>
                     </Col>
                 </Row>
+
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>
                         <Button
@@ -379,7 +387,12 @@ const TimesheetDetails = () => {
                         >
                             Add Row
                         </Button>
-                        <Button type="primary" htmlType="submit" style={{ marginRight: '8px' }}>
+                        <Button
+                            type="primary"
+                            onClick={handleSaveDraft}
+                            disabled={submitDisabled || isFormDisabled}
+                            style={{ marginRight: '8px' }} // Add margin here
+                        >
                             Submit
                         </Button>
                         <Button type="default" htmlType="button" onClick={handleSaveDraft}>
@@ -387,6 +400,7 @@ const TimesheetDetails = () => {
                         </Button>
                     </Col>
                 </Row>
+
             </Form>
 
             <Table
@@ -401,3 +415,18 @@ const TimesheetDetails = () => {
 };
 
 export default TimesheetDetails;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -417,8 +417,8 @@ const StatusSheet = () => {
                             <Input placeholder="Enter task title" />
                         </Form.Item>
 
-                        <Form.Item label="Assigned (Email)" name="assignedEmail" style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the assigned email' }]}>
-                            <Input placeholder="Enter email" />
+                        <Form.Item label="Assigned To"  style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the assigned email' }]}>
+                            <Input placeholder={selectedUserName} disabled/>
                         </Form.Item>
                     </div>
 

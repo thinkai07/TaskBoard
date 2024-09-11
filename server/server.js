@@ -2486,8 +2486,8 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 
 
     const newActivity = new Activity({
-      commentBy: createdByUser.name,
-      comment: `Card created by ${createdByUser.name}`,
+      commentBy: createdByUser.username,
+      comment: `Card created by ${createdByUser.username}`,
       card: newCard._id,
     });
     await newActivity.save();
@@ -2506,7 +2506,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       message: `is assigned to the "${name}" task on Project "${project.name}"`,
       type: "TASK_ASSIGNED",
       cardId: newCard._id,
-      assignedByEmail: createdByUser.name,
+      assignedByEmail: createdByUser.username,
     });
     await newNotification.save();
 
@@ -2647,7 +2647,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
 
     // Create activity log entry for card move
     const newActivity = new Activity({
-      commentBy: movedByUser.name,
+      commentBy: movedByUser.username,
       comment: `Card moved from ${sourceTask.name} to ${destinationTask.name}`,
       card: card._id,
     });
@@ -2662,7 +2662,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       entityId: cardId,
       actionType: "move",
       actionDate: movedDate,
-      performedBy: movedByUser.name,
+      performedBy: movedByUser.username,
       projectId: sourceTask.project, // Include projectId from source task
       taskId: sourceTaskId,
       cardId,
@@ -2776,7 +2776,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
           entityId: cardId,
           actionType: "update",
           actionDate: updatedDate,
-          performedBy: updatedByUser.name,
+          performedBy: updatedByUser.username,
           projectId: task.project,
           taskId: taskId,
           cardId: cardId,
@@ -2789,7 +2789,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
       if (comment) {
         const newComment = new Comment({
           comment: comment,
-          commentBy: updatedByUser.name,
+          commentBy: updatedByUser.username,
           card: card._id,
         });
         await newComment.save();
@@ -2798,7 +2798,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
       } else {
         // Create an activity log entry if no specific comment was provided
         const newActivity = new Activity({
-          commentBy: updatedByUser.name,
+          commentBy: updatedByUser.username,
           comment: `Card updated by ${updatedByUser.name}`,
           card: card._id,
         });
@@ -2826,7 +2826,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
         message: notificationMessage,
         type: "TASK_RENAMED",
         cardId: card._id,
-        assignedByEmail: updatedByUser.name,
+        assignedByEmail: updatedByUser.username,
       });
 
       await newNotification.save();
@@ -2903,6 +2903,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "activities",
           model: "Activity",
+          
         },
         {
           path: "taskLogs", // Populate task logs for each card
@@ -3000,7 +3001,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
             .format("YYYY-MM-DD HH:mm:ss"),
           loggedBy: {
             id: taskLog.loggedBy._id,
-            name: taskLog.loggedBy.name,
+            name: taskLog.loggedBy.username,
             email: taskLog.loggedBy.email,
           },
         })),
@@ -3381,8 +3382,8 @@ app.post('/api/log-hours', async (req, res) => {
 
       // Log status update in activity
       const statusActivity = new Activity({
-        comment: `Card status updated from ${previousStatus} to inprogress by ${loggedByUser.name}`,
-        commentBy: loggedByUser.name,
+        comment: `Card status updated from ${previousStatus} to inprogress by ${loggedByUser.username}`,
+        commentBy: loggedByUser.username,
         card: card._id,
       });
       await statusActivity.save();
@@ -4337,6 +4338,14 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
       return map;
     }, {});
 
+    // Fetch usernames for assignedTo emails
+    const assignedEmails = [...new Set(assignedCards.map(card => card.assignedTo))];
+    const users = await User.find({ email: { $in: assignedEmails } }).select('email username');
+    const userMap = users.reduce((map, user) => {
+      map[user.email] = user.username;
+      return map;
+    }, {});
+
     const events = assignedCards
       .filter((card) => card.project && card.task)
       .flatMap((card) => [
@@ -4349,7 +4358,7 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
           taskName: card.task.name,
           cardId: card._id,
           cardName: card.name,
-          assignedTo: card.assignedTo,
+          assignedTo: userMap[card.assignedTo] || card.assignedTo, // Replace email with username
           createdDate: card.createdDate,
           status: card.status,
           type: "Assign Date",
@@ -4366,6 +4375,7 @@ app.get("/api/calendar/:organizationId", authenticateToken, async (req, res) => 
     res.status(500).json({ message: "Error retrieving calendar data" });
   }
 });
+
 
 
 app.get("/api/projects/:projectId/audit-logs", async (req, res) => {

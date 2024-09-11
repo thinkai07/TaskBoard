@@ -497,7 +497,7 @@ const Projects = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          params: { email: value, organizationId: organizationId },
+          params: { username: value, organizationId: organizationId },
         });
 
         if (response.data.users.length > 0) {
@@ -508,7 +508,7 @@ const Projects = () => {
           setProjectManagerError(true);
         }
       } catch (error) {
-        console.error("Error fetching user emails:", error);
+        console.error("Error fetching user username:", error);
         setEmailSuggestions([]);
         setProjectManagerError(true);
       }
@@ -518,10 +518,10 @@ const Projects = () => {
     }
   };
 
-  const isValidEmail = (email) => {
+  const isValidEmail = (username) => {
     const re =
       /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
+    return re.test(String(username).toLowerCase());
   };
 
   const fetchUserEmail = async () => {
@@ -531,7 +531,7 @@ const Projects = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      return response.data.user.email;
+      return response.data.user.username;
     } catch (error) {
       console.error("Error fetching user data:", error);
       throw error;
@@ -728,31 +728,32 @@ const Projects = () => {
           </div>
 
           <div>
-            <Select
-              className="w-full"
-              placeholder="Select a Project Manager"
-              value={
-                newProject.projectManager.length > 0
-                  ? newProject.projectManager
-                  : null
-              }
-              onChange={handleProjectManagerChange}
-              onSearch={handleProjectManagerChange}
-              filterOption={false}
-              showSearch
-            >
-              {emailSuggestions.map((user) => (
-                <Option key={user._id} value={user.email}>
-                  {user.email}
-                </Option>
-              ))}
-            </Select>
-            {newCardErrors.email && (
-              <p className="text-red-500">
-                Valid Project Manager email is required
-              </p>
-            )}
-          </div>
+  <Select
+    className="w-full"
+    placeholder="Select a Project Manager"
+    value={
+      newProject.projectManager.length > 0
+        ? newProject.projectManager
+        : null
+    }
+    onChange={handleProjectManagerChange}
+    onSearch={handleProjectManagerChange}
+    filterOption={false}
+    showSearch
+  >
+    {emailSuggestions.map((user) => (
+      <Option key={user._id} value={user.username}>
+        {user.username}
+      </Option>
+    ))}
+  </Select>
+  {newCardErrors.username && (
+    <p className="text-red-500">
+      Valid Project Manager username is required
+    </p>
+  )}
+</div>
+
 
           <div>
             <DatePicker

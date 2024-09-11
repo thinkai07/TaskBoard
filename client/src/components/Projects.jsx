@@ -241,7 +241,7 @@ const Projects = () => {
   const handleSaveNewCard = async () => {
     const newErrors = { ...newCardErrors };
     let hasError = false;
-
+  
     if (!newProject.name.trim()) {
       newErrors.name = true;
       hasError = true;
@@ -265,22 +265,22 @@ const Projects = () => {
       setTeamInputError(true);
       hasError = true;
     }
-
+  
     if (!selectedImage) {
       setBgImageError(true);
       hasError = true;
     }
-
+  
     if (hasError) {
       setNewCardErrors(newErrors);
       return;
     }
-
+  
     if (!newProject.teams) {
       setTeamInputError(true);
       hasError = true;
     }
-
+  
     const isDuplicate = await checkDuplicateProjectName(newProject.name);
     if (isDuplicate) {
       setNewCardErrors({ ...newErrors, name: true });
@@ -289,7 +289,7 @@ const Projects = () => {
       });
       return;
     }
-
+  
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
@@ -297,23 +297,23 @@ const Projects = () => {
         },
         params: {
           email: newProject.projectManager,
-          fields: "email status name",
+          fields: "email status username", // Ensure username is included
         },
       });
-
+  
       if (response.data.users.length === 0) {
         setNewCardErrors({ ...newErrors, email: true });
         setProjectManagerError(true);
         return;
       }
-
+  
       const statusResponse = await axios.get(`${server}/api/user-status`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         params: { email: newProject.projectManager },
       });
-
+  
       if (statusResponse.data.status === "unverified") {
         setNewCardErrors({ ...newErrors, email: true });
         notification.warning({
@@ -321,18 +321,17 @@ const Projects = () => {
         });
         return;
       }
-
+  
       const createdBy = await fetchUserEmail();
-
+  
       const projectResponse = await axios.post(
         `${server}/api/projects`,
         {
           organizationId: organizationId,
           name: newProject.name.trim(),
           description: newProject.description.trim(),
-          projectManager: newProject.projectManager,
+          projectManager: newProject.projectManager, // Save the email
           startDate: newProject.startDate,
-          // teams: newProject.teams,
           teams: [newProject.teams],
           createdBy: createdBy,
           bgUrl: selectedImage
@@ -350,8 +349,7 @@ const Projects = () => {
           },
         }
       );
-      console.log(projectResponse.data);
-
+  
       const newProjectData = projectResponse.data.project;
       setCards((prevCards) => [
         ...prevCards,
@@ -366,6 +364,7 @@ const Projects = () => {
       console.error("Error creating new project:", error);
     }
   };
+  
 
   const handleDeleteCard = async (cardId) => {
     try {
@@ -490,7 +489,7 @@ const Projects = () => {
   const handleProjectManagerChange = async (value) => {
     setNewProject((prev) => ({ ...prev, projectManager: value }));
     setProjectManagerError(false);
-
+  
     if (value) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
@@ -499,16 +498,21 @@ const Projects = () => {
           },
           params: { email: value, organizationId: organizationId },
         });
-
+  
         if (response.data.users.length > 0) {
-          setEmailSuggestions(response.data.users);
+          const suggestions = response.data.users.map((user) => ({
+            username: user.username, // Fetch the username
+            email: user.email,
+          }));
+          
+          setEmailSuggestions(suggestions); // Set username and email as suggestions
           setProjectManagerError(false);
         } else {
           setEmailSuggestions([]);
           setProjectManagerError(true);
         }
       } catch (error) {
-        console.error("Error fetching user emails:", error);
+        console.error("Error fetching user details:", error);
         setEmailSuggestions([]);
         setProjectManagerError(true);
       }
@@ -517,6 +521,8 @@ const Projects = () => {
       setProjectManagerError(false);
     }
   };
+  
+  
 
   const isValidEmail = (email) => {
     const re =
@@ -727,30 +733,31 @@ const Projects = () => {
           </div>
 
           <div>
-            <Select
-              className="w-full"
-              placeholder="Select a Project Manager"
-              value={
-                newProject.projectManager.length > 0
-                  ? newProject.projectManager
-                  : null
-              }
-              onChange={handleProjectManagerChange}
-              onSearch={handleProjectManagerChange}
-              filterOption={false}
-              showSearch
-            >
-              {emailSuggestions.map((user) => (
-                <Option key={user._id} value={user.email}>
-                  {user.email}
-                </Option>
-              ))}
-            </Select>
-            {newCardErrors.email && (
+          <Select
+  className="w-full"
+  placeholder="Select a Project Manager"
+  value={
+    newProject.projectManager.length > 0
+      ? newProject.projectManager
+      : null
+  }
+  onChange={handleProjectManagerChange}
+  onSearch={handleProjectManagerChange}
+  filterOption={false}
+  showSearch
+>
+  {emailSuggestions.map((suggestion, index) => (
+    <Select.Option key={index} value={suggestion.email}>
+      {suggestion.username}
+    </Select.Option>
+  ))}
+</Select>
+
+            {/* {newCardErrors.email && (
               <p className="text-red-500">
                 Valid Project Manager email is required
               </p>
-            )}
+            )} */}
           </div>
 
           <div>

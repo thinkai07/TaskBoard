@@ -786,7 +786,7 @@ app.get("/api/users/search", authenticateToken, async (req, res) => {
     const users = await User.find({
       email: { $regex: email, $options: "i" },
       organization: req.user.organizationId,
-    }).select("email status");
+    }).select("email status username");
 
     res.status(200).json({ users });
   } catch (error) {

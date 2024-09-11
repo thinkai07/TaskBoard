@@ -38,7 +38,7 @@ import { Bell, SquareChevronDown } from "lucide-react";
 import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 
-import { FastAverageColor } from 'fast-average-color';
+import { FastAverageColor } from "fast-average-color";
 
 const initialBoard = {
   columns: [],
@@ -54,6 +54,8 @@ function KanbanBoard() {
   const containerRef = useRef(null);
   const { projectId } = useParams();
   const [bgUrl, setBgUrl] = useState("");
+  const [username, setUsername] = useState(""); // For displaying the username
+
   const [renameColumnError, setRenameColumnError] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -78,7 +80,7 @@ function KanbanBoard() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [textColor, setTextColor] = useState('black'); //added
+  const [textColor, setTextColor] = useState("black"); //added
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,10 +98,10 @@ function KanbanBoard() {
     description: "",
     email: "",
   });
-  const [title, setTitle] = useState('');
-  const [titleError, setTitleError] = useState('');
-  const [emailError, setemailError] = useState('');
-  const [startDateError, setstartDateError] = useState('');
+  const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
+  const [emailError, setemailError] = useState("");
+  const [startDateError, setstartDateError] = useState("");
   // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
@@ -122,12 +124,11 @@ function KanbanBoard() {
   const [estimatedHours, setEstimatedHours] = useState(0);
   const [utilizedHours, setUtilizedHours] = useState(0);
   const [remainingHours, setRemainingHours] = useState(0);
-  const [endDate, setEndDate] = useState('');
-  const [endDateError, setEndDateerror] = useState('');
-  const [estimatedHoursError, setestimatedHoursError] = useState('');
-  const [description, setDescription] = useState('');
-  const [descriptionError, setdescriptionerror] = useState('');
-
+  const [endDate, setEndDate] = useState("");
+  const [endDateError, setEndDateerror] = useState("");
+  const [estimatedHoursError, setestimatedHoursError] = useState("");
+  const [description, setDescription] = useState("");
+  const [descriptionError, setdescriptionerror] = useState("");
 
   const { TextArea } = Input;
   const { Text, Title, Paragraph } = Typography;
@@ -137,7 +138,7 @@ function KanbanBoard() {
 
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
-  const [startDate, setStartDate] = useState('');
+  const [startDate, setStartDate] = useState("");
 
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
@@ -150,12 +151,9 @@ function KanbanBoard() {
     setAboutModalVisible(false);
   };
 
-
-
   const handleCardClick = (cardId, columnId, projectId) => {
-    navigate(`/rename-card/${columnId}/cards/${cardId}`)
+    navigate(`/rename-card/${columnId}/cards/${cardId}`);
   };
-
 
   const handleEndDateChange = (e) => {
     setEndDate(e.target.value);
@@ -305,9 +303,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -457,7 +455,7 @@ function KanbanBoard() {
       );
       if (project) {
         setProjectName(project.name);
-        setProjectManager(project.projectManagerName);
+        setProjectManager(project.projectManager);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
         setProjectDescription(project.description);
@@ -483,7 +481,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-      projects.find((project) => project._id === projectId)?.projectManager);
+        projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -561,13 +559,18 @@ function KanbanBoard() {
 
       if (bgUrl && bgUrl.raw) {
         const fac = new FastAverageColor();
-        fac.getColorAsync(bgUrl.raw)
+        fac
+          .getColorAsync(bgUrl.raw)
           .then((color) => {
-            const isLight = (color.value[0] * 0.299 + color.value[1] * 0.587 + color.value[2] * 0.114) > 186;
-            setTextColor(isLight ? 'black' : 'white');
+            const isLight =
+              color.value[0] * 0.299 +
+                color.value[1] * 0.587 +
+                color.value[2] * 0.114 >
+              186;
+            setTextColor(isLight ? "black" : "white");
           })
           .catch((error) => {
-            console.error('Error extracting color:', error);
+            console.error("Error extracting color:", error);
           });
       }
     } catch (error) {
@@ -585,7 +588,6 @@ function KanbanBoard() {
     setEmail("");
     setTeam("");
   };
-
 
   const openRenameCardModal = (
     columnId,
@@ -626,7 +628,6 @@ function KanbanBoard() {
     setDueDate(dueDate);
   };
 
-
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
     if (document.forms[0]) {
@@ -662,9 +663,10 @@ function KanbanBoard() {
       estimatedHours <= 0
     ) {
       notification.warning({
-        message: estimatedHours <= 0
-          ? "Estimated hours must be greater than 0"
-          : "Please fill in all fields",
+        message:
+          estimatedHours <= 0
+            ? "Estimated hours must be greater than 0"
+            : "Please fill in all fields",
       });
       return;
     }
@@ -720,12 +722,12 @@ function KanbanBoard() {
       }
 
       // Clear fields only after successful card addition
-      setTitle('');
-      setEmail('');
-      setStartDate('');
-      setEndDate('');
-      setEstimatedHours('');
-      setDescription('');
+      setTitle("");
+      setEmail("");
+      setStartDate("");
+      setEndDate("");
+      setEstimatedHours("");
+      setDescription("");
       e.target.title.value = "";
       e.target.description.value = "";
       e.target.estimatedHours.value = "";
@@ -741,7 +743,6 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
-
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -968,9 +969,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -1224,32 +1225,32 @@ function KanbanBoard() {
     setModalType(null);
   };
 
-  // useEffect(() => {
-  //   async function fetchProjectDetails() {
-  //     try {
-  //       const response = await fetch(`${server}/api/projects/${projectId}`, {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //       });
+  useEffect(() => {
+    async function fetchProjectDetails() {
+      try {
+        const response = await fetch(`${server}/api/projects/${projectId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
-  //       if (!response.ok) {
-  //         throw new Error("Failed to fetch project details");
-  //       }
+        if (!response.ok) {
+          throw new Error("Failed to fetch project details");
+        }
 
-  //       const project = await response.json();
-  //       setProjectName(project.name);
-  //       console.log(project.projectManager);
-  //       setProjectManager(project.projectManger);
-  //     } catch (error) {
-  //       console.error("Error fetching project details:", error);
-  //     }
-  //   }
+        const project = await response.json();
+        setProjectName(project.name);
+        console.log(project.projectManager);
+        setProjectManager(project.projectManger);
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+      }
+    }
 
-  //   fetchProjectDetails();
-  // }, [server, projectId]); // Dependencies for useEffect
+    fetchProjectDetails();
+  }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
     try {
@@ -1420,8 +1421,6 @@ function KanbanBoard() {
     </div>
   );
 
-
-
   const fetchTasks1 = async () => {
     try {
       const response = await axios.get(
@@ -1442,20 +1441,17 @@ function KanbanBoard() {
     fetchTasks1();
   }, [boardData]);
 
-
-
-
   return (
     <div
       className="  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl "
       style={
         bgUrl
           ? {
-            backgroundImage: `url(${bgUrl.raw})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            width: "100%",
-          }
+              backgroundImage: `url(${bgUrl.raw})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              width: "100%",
+            }
           : {}
       }
     >
@@ -1465,7 +1461,8 @@ function KanbanBoard() {
             Project : <span className="font-normal">{projectName}</span>
           </h1>
           <h1 className="text-xl font-semibold" style={{ color: textColor }}>
-            Project Manager : <span className="font-normal">{projectManager}</span>
+            Project Manager :{" "}
+            <span className="font-normal">{projectManager}</span>
           </h1>
         </div>
         <div className="flex space-x-2 ">
@@ -1479,7 +1476,11 @@ function KanbanBoard() {
           </Button>
 
           <>
-            <Button type="text" icon={<SquareMenu style={{ color: textColor }} />} onClick={showDrawer} />
+            <Button
+              type="text"
+              icon={<SquareMenu style={{ color: textColor }} />}
+              onClick={showDrawer}
+            />
 
             <Drawer
               title="Settings"
@@ -1545,7 +1546,6 @@ function KanbanBoard() {
                     alignItems: "center",
                     width: "100%",
                   }}
-
                 />
                 {/* <Button
                   type="text"
@@ -1574,7 +1574,6 @@ function KanbanBoard() {
                   <InfoCircleOutlined style={{ fontSize: 20 }} />
                   About
                 </button>
-
               </Space>
             </Drawer>
 
@@ -1762,16 +1761,16 @@ function KanbanBoard() {
                 </div>
                 <div>
                   <label
-                    htmlFor="assignedEmail"
+                    htmlFor="assignedUsername"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Assigned (Email)
+                    Assigned (Username)
                   </label>
                   <input
-                    type="email"
-                    value={email}
+                    type="text"
+                    value={username} // Show the selected username
                     onChange={handleEmailChange}
-                    placeholder="Enter email address"
+                    placeholder="Enter username"
                     className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -1784,12 +1783,14 @@ function KanbanBoard() {
                         <li
                           key={suggestion.email}
                           onClick={() => {
-                            setEmail(suggestion.email);
-                            setEmailSuggestions([]);
+                            setUsername(suggestion.username); // Set the username for display
+                            setEmail(suggestion.email); // Keep the email internally
+                            setEmailSuggestions([]); // Clear suggestions after selection
                           }}
                           className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
                         >
-                          {suggestion.email}
+                          {suggestion.username}{" "}
+                          {/* Display only the username */}
                         </li>
                       ))}
                     </ul>
@@ -1815,7 +1816,9 @@ function KanbanBoard() {
                     onChange={handleStartDateChange}
                   />
                   {startDateError && (
-                    <p className="text-red-500 text-sm mt-1">{startDateError}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {startDateError}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -1860,7 +1863,9 @@ function KanbanBoard() {
                     onChange={(e) => setEstimatedHours(e.target.value)}
                   />
                   {estimatedHoursError && (
-                    <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {estimatedHoursError}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -1879,7 +1884,9 @@ function KanbanBoard() {
                     onChange={(e) => setDescription(e.target.value.trimStart())}
                   />
                   {descriptionError && (
-                    <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {descriptionError}
+                    </p>
                   )}
                 </div>
               </div>
@@ -2047,8 +2054,9 @@ function KanbanBoard() {
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
-              }`}
+            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${
+              isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
+            }`}
           >
             <button
               onClick={closeGitModal}

@@ -4071,6 +4071,7 @@ app.get("/api/projects/:projectId/users/search",
             matchingUsers.push({
               name: user.user.name,
               email: user.user.email,
+              username:user.user.username,
               role: user.role,
               team: team.name,
             });

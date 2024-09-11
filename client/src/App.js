@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Projects from './components/Projects';
 import Tasks from './components/KanbanBoard';
+import TasksPage from './components/Taskspage'; // Import the new TasksPage component
 import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import RegistrationPage from './components/RegistrationPage';
@@ -12,22 +13,12 @@ import AdminPanel from './components/AdminPanel';
 import Organization from './components/Organization';
 import ResetPassword from './components/ResetPassword';
 import KanbanBoard from './components/KanbanBoard';
-
+import Teams from './components/Teams';
 import SuccessPage from './components/SuccessPage';
 import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
-import Teamsorg from './components/Teamsorg';
+import TeamsPage from './components/Teamsorg';
 import TeamMembersPage from './components/TeamMembersPage';
-import RulesButton from './components/RulePage';
-import RenameCardPage from './Pages/RenameCardPage';
-import CalendarDateDetails from './Pages/CalendarDateDetails'
-import ForgotPasswordPage from './Pages/ForgotPasswordPage';
-import ResetForgotPassword from './Pages/ResetForgotPassword';
-import TimesheetPage from './Pages/Timesheet';
-import TimesheetDetails from './Pages/TimesheetDetails';
-// import StatusSheet from './Pages/StatusSheet'
-
-
 
 
 
@@ -74,11 +65,10 @@ const App = () => {
       <Routes>
         <Route path='/login' element={<LoginPage onLogin={handleLogin} />} />
         <Route path='/register' element={<RegistrationPage />} />
-        <Route path='/Organization' element={<Organization />} />
+        <Route path='/Organization' element={<Organization />} /> 
         <Route path='/reset-password' element={<ResetPassword />} />
-        <Route path='/success' element={<SuccessPage />} />
-        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
-        <Route path="/forgot-password" element={<ResetForgotPassword />} />
+        <Route path='/success' element= {<SuccessPage />} />
+
         <Route
           path="/*"
           element={
@@ -88,23 +78,17 @@ const App = () => {
                   <Route path="projects" element={<Projects />} />
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
                   <Route path="/" element={<Overview />} />
-                  <Route path='/members' element={<AdminPanel />} />
+                  <Route path='/tasks' element={<TasksPage user={user} />} /> 
+                  <Route path='/members' element={<AdminPanel />} /> 
+                  <Route path="/projects/:projectId/teams" element={<Teams/>} />
                   <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/Auditlog" element={<AuditLog />} />
-                  <Route path="/Teamsorg" element={<Teamsorg />} />
-                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
-                  <Route path="/Rules" element={<RulesButton />} />
-                  <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails/>} />
-                  <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
-                  <Route path="/timesheet" element={<TimesheetPage />} />
-                  {/* <Route path="/timesheetdetails" element={<TimesheetDetails/>}/> */}
-                  <Route path="/timesheetdetails/:timesheetId" element={<TimesheetDetails />} />
-                  {/* <Route path="/statussheet" element={<StatusSheet />} /> */}
-
+                  <Route path="/Auditlog" element={<AuditLog/>} /> 
+                  <Route path="/Teamsorg" element={<TeamsPage/>} /> 
+                  <Route path="/teams/:teamId/members" element={<TeamMembersPage />} /> 
                 </Routes>
               </Layout>
-            ) : (
+            ) : ( 
               <Navigate to="/login" />
             )
           }

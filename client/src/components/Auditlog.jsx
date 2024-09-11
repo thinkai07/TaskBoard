@@ -1,23 +1,17 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Layout, Select, Table, Typography, Space } from "antd";
-import { server } from "../constant";
-import useTokenValidation from "./UseTockenValidation";
-
-const { Content } = Layout;
-const { Title } = Typography;
-const { Option } = Select;
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { server } from '../constant';
+import useTokenValidation from './UseTockenValidation';
 
 const AuditLog = () => {
   useTokenValidation();
-  const [selectedProject, setSelectedProject] = useState("");
-  const [userRole, setUserRole] = useState("");
-  const [organizationId, setOrganizationId] = useState("");
+  const [selectedProject, setSelectedProject] = useState('');
+  const [userRole, setUserRole] = useState('');
+  const [organizationId, setOrganizationId] = useState('');
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-  const { Title, Text } = Typography;
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -65,7 +59,8 @@ const AuditLog = () => {
       );
       setTasks(tasksResponse.data.tasks);
 
-      const cardsPromises = tasksResponse.data.tasks.map((task) =>
+      // Fetch cards for all tasks
+      const cardsPromises = tasksResponse.data.tasks.map(task =>
         axios.get(`${server}/api/tasks/${task.id}/cards`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -73,9 +68,7 @@ const AuditLog = () => {
         })
       );
       const cardsResponses = await Promise.all(cardsPromises);
-      const allCards = cardsResponses.flatMap(
-        (response) => response.data.cards
-      );
+      const allCards = cardsResponses.flatMap(response => response.data.cards);
       setCards(allCards);
     } catch (error) {
       console.error("Error fetching tasks and cards:", error);
@@ -92,24 +85,14 @@ const AuditLog = () => {
           },
         }
       );
-
-      const logsWithNames = response.data.map((log) => ({
-        ...log,
-        taskName: log.taskId ? log.taskId.name : null,
-        cardName: log.cardId ? log.cardId.name : null,
-      }));
-
-      const sortedLogs = logsWithNames.sort(
-        (a, b) => new Date(b.actionDate) - new Date(a.actionDate)
-      );
-
-      setAuditLogs(sortedLogs);
+      setAuditLogs(response.data);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
     }
   };
 
-  const handleProjectChange = (projectId) => {
+  const handleProjectChange = (e) => {
+    const projectId = e.target.value;
     setSelectedProject(projectId);
     if (projectId) {
       fetchTasksAndCards(projectId);
@@ -121,153 +104,79 @@ const AuditLog = () => {
     }
   };
 
-  const columns = [
-    // {
-    //   title: "Project Name",
-    //   dataIndex: "projectName",
-    //   key: "projectName",
-    //   render: () => projects.find((p) => p._id === selectedProject)?.name,
-    // },
-    {
-      title: "Project Name",
-      dataIndex: "projectName",
-      key: "projectName",
-      render: () => (
-        <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-          {projects.find((p) => p._id === selectedProject)?.name}
-        </div>
-      ),
-    },
-    // {
-    //   title: "Task Name",
-    //   dataIndex: "taskName",
-    //   key: "taskName",
-    //   render: (_, record) => 
-    //     (record.entityType === "Task" || record.entityType === "Card") &&
-    //     (record.taskName || record.cardName || `#${record.entityId.slice(-6)}`),
-    // },
-    {
-      title: "Task Name",
-      dataIndex: "taskName",
-      key: "taskName",
-      render: (_, record) => (
-        (record.entityType === "Task" || record.entityType === "Card") && (
-          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-            {record.taskName || record.cardName || `#${record.entityId.slice(-6)}`}
-          </div>
-        )
-      ),
-    },
-    // {
-    //   title: "Card Name",
-    //   dataIndex: "cardName",
-    //   key: "cardName",
-    //   render: (_, record) =>
-    //     record.entityType === "Card" &&
-    //     (record.cardName || `#${record.entityId.slice(-6)}`),
-    // },
-    {
-      title: "Card Name",
-      dataIndex: "cardName",
-      key: "cardName",
-      render: (_, record) => (
-        record.entityType === "Card" && (
-          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-            {record.cardName || `#${record.entityId.slice(-6)}`}
-          </div>
-        )
-      ),
-    },
-
-    {
-      title: "Action By",
-      dataIndex: "performedBy",
-      key: "performedBy",
-    },
-    {
-      title: "Activity Date",
-      dataIndex: "actionDate",
-      key: "actionDate",
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: "Activity",
-      dataIndex: "actionType",
-      key: "actionType",
-    },
-    // {
-    //   title: "Old Value",
-    //   dataIndex: "oldValue",
-    //   key: "oldValue",
-    //   render: (_, record) =>
-    //     record.changes.length > 0 && (
-    //       <div>
-    //         {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
-    //       </div>
-    //     ),
-    // },
-    {
-      title: "Old Value",
-      dataIndex: "oldValue",
-      key: "oldValue",
-      render: (_, record) =>
-        record.changes.length > 0 && (
-          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-            {record.changes[0].field}: {JSON.stringify(record.changes[0].oldValue)}
-          </div>
-        ),
-    },
-    {
-      title: "New Value",
-      dataIndex: "newValue",
-      key: "newValue",
-      render: (_, record) =>
-        record.changes.length > 0 && (
-          <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
-            {record.changes[0].field}: {JSON.stringify(record.changes[0].newValue)}
-          </div>
-        ),
-    },
-  ];
-
   return (
-    <Layout>
-      <Content style={{ padding: "24px", backgroundColor: "white" }}>
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Title level={4}>Audit Logs</Title>
-            <Select
-              style={{ width: 200 }}
-              placeholder="Select a Project"
-              onChange={handleProjectChange}
-              value={selectedProject}
-            >
-              <Option value="">Select a Project</Option>
-              {projects.map((project) => (
-                <Option key={project._id} value={project._id}>
-                  {project.name}
-                </Option>
-              ))}
-            </Select>
-          </div>
+    <div className="h-auto bg-gray-100 p-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-4">
+        <h1 className="text-2xl font-semibold">Audit Logs</h1>
+        <select
+          value={selectedProject}
+          onChange={handleProjectChange}
+          className="border border-gray-300 rounded-md p-2"
+        >
+          <option value="">Select a Project</option>
+          {projects.map((project) => (
+            <option key={project._id} value={project._id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          {selectedProject ? (
-            <Table
-              columns={columns}
-              dataSource={auditLogs}
-              rowKey="_id"
-              pagination={{ pageSize: 8 }}
-            />
-          ) : (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <Text strong style={{ fontSize: 18 }}>
-                No project selected. Please select a project.
-              </Text>
-            </div>
-          )}
-        </Space>
-      </Content>
-    </Layout>
+      {selectedProject && (
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Project Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Column Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Task Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action By
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {auditLogs.map((log) => (
+                <tr key={log._id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {projects.find(p => p._id === selectedProject)?.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === 'Task' ? tasks.find(t => t.id === log.entityId)?.name || 'Unknown Task' : ''}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.entityType === 'Card' 
+                      ? cards.find(c => c.id === log.entityId)?.name || 'Unknown Card' 
+                      : ''}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.performedBy}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(log.actionDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.actionType}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -90,11 +90,11 @@ const Organization = () => {
     <div className="flex min-h-screen items-center justify-center bg-gray-300">
       <div className="w-screen max-w-5xl rounded-3xl overflow-hidden shadow-lg flex">
         <div className="w-full md:w-1/2 bg-white p-8 flex flex-col justify-center">
-          <h1 className="text-4xl font-semibold mb-6">Register</h1>
+          <h1 className="text-4xl font-bold mb-6">Register</h1>
           {error && <div className="text-red-500 mb-4">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="fullName">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fullName">
                 Name
               </label>
               <input
@@ -107,7 +107,7 @@ const Organization = () => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="organizationName">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="organizationName">
                 Organization Name
               </label>
               <input
@@ -120,7 +120,7 @@ const Organization = () => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="email">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
                 Email
               </label>
               <input
@@ -133,7 +133,7 @@ const Organization = () => {
               />
             </div>
             <div className="mb-6 relative">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
                 Password
               </label>
               <input
@@ -161,13 +161,13 @@ const Organization = () => {
             </div>
             <div className="flex items-center justify-between">
               <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 type="submit"
               >
                 Sign Up
               </button>
               <a
-                className="inline-block align-baseline font-semibold text-sm text-blue-500 hover:text-blue-800"
+                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
                 href="/login"
               >
                 Already a member? Login
@@ -194,6 +194,15 @@ const Organization = () => {
 };
 
 export default Organization;
+
+
+
+
+
+
+
+
+
 
 
 

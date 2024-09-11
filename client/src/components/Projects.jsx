@@ -1,35 +1,12 @@
+//projects.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
 import useTokenValidation from "./UseTockenValidation";
-import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { images as staticImages } from "../assets/Images";
 import dayjs from "dayjs";
-import {
-  Card,
-  Modal,
-  Input,
-  Button,
-  DatePicker,
-  Select,
-  notification,
-  Tooltip,
-  Image,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EllipsisOutlined,
-} from "@ant-design/icons";
-import { BsFillPencilFill } from "react-icons/bs";
-import { FastAverageColor } from "fast-average-color";
-const { TextArea } = Input;
-const { Option } = Select;
+import { notification } from 'antd';
 
 const Projects = () => {
   useTokenValidation();
@@ -50,63 +27,59 @@ const Projects = () => {
     name: false,
     description: false,
     email: false,
-    startDate: false,
   });
   const [projectManager, setProjectManager] = useState("");
   const [emailSuggestions, setEmailSuggestions] = useState([]);
+
   const [isAddingCard, setIsAddingCard] = useState(false);
+
   const [renameInputError, setRenameInputError] = useState(false);
   const [descriptionInputError, setDescriptionInputError] = useState(false);
   const [projectManagerError, setProjectManagerError] = useState(false);
+
+
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [availableTeams, setAvailableTeams] = useState([]);
-  const [teamInputError, setTeamInputError] = useState(false);
-  const [teamInputErrorMessage, setTeamInputErrorMessage] = useState("");
-  const [teamInputValue, setTeamInputValue] = useState("");
-  const [selectedTeams, setSelectedTeams] = useState([]);
-  const [addProjectModalVisible, setAddProjectModalVisible] = useState(false);
-  const [newProject, setNewProject] = useState({
-    name: "",
-    description: "",
-    projectManager: "",
-    startDate: null,
-    teams: "",
-  });
-  const dropdownRef = useRef(null);
-  const [loading, setLoading] = useState(true);
-  //added
-  const fac = new FastAverageColor();
-  const [unsplashImages, setUnsplashImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [bgImageError, setBgImageError] = useState(false);
 
-  // Add this function to fetch images from Unsplash
-  const fetchUnsplashImages = async () => {
-    try {
-      const response = await axios.get(
-        "https://api.unsplash.com/photos/random",
-        {
-          params: {
-            count: 6,
-            client_id: "rn5n3NUhw16AjjwCfCt3e1TKhiiKHCOxBdEp8E0c-KY", // Replace with your Unsplash API key
-          },
-        }
-      );
-      setUnsplashImages(response.data);
-    } catch (error) {
-      console.error("Error fetching Unsplash images:", error);
-      setUnsplashImages(staticImages);
-    }
+  const [teamInputValue, setTeamInputValue] = useState("");
+
+  const handleTeamInputFocus = () => {
+    const filtered = availableTeams.filter(team =>
+      team.name.toLowerCase().includes(teamInputValue.toLowerCase())
+    );
+    setFilteredTeams(filtered);
+    setShowTeamDropdown(true);
   };
 
-  // Call this function when the modal opens
-  useEffect(() => {
-    if (addProjectModalVisible) {
-      fetchUnsplashImages();
+  const handleTeamInputChange = (event) => {
+    const value = event.target.value;
+    setTeamInputValue(value);
+    setSelectedTeamName(value);
+    const filtered = availableTeams.filter(team =>
+      team.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredTeams(filtered);
+    setShowTeamDropdown(true);
+  };
+
+  const [selectedTeams, setSelectedTeams] = useState([]);
+
+  const handleTeamSelect = (team) => {
+    if (!selectedTeams.includes(team._id)) {
+      setSelectedTeams([...selectedTeams, team._id]);
+      setSelectedTeamName(team.name);
+      setTeamInputValue(team.name);
     }
-  }, [addProjectModalVisible]);
+    setShowTeamDropdown(false);
+  };
+
+  const handleClearTeamInput = () => {
+    setSelectedTeamName("");
+    setTeamInputValue("");
+    setShowTeamDropdown(false);
+  };
 
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
@@ -136,48 +109,19 @@ const Projects = () => {
           },
         }
       );
-
-      const projectsWithColors = await Promise.all(
-        response.data.projects.map(async (project) => {
-          if (project.bgUrl && project.bgUrl.thumb) {
-            try {
-              const color = await fac.getColorAsync(project.bgUrl.thumb);
-              return {
-                ...project,
-                textColor: color.isDark ? "white" : "black",
-              };
-            } catch (error) {
-              console.error("Error calculating color:", error);
-              return {
-                ...project,
-                textColor: "black", // default color if there's an error
-              };
-            }
-          }
-          return {
-            ...project,
-            textColor: "black", // default color if there's no background image
-          };
-        })
-      );
-
-      setCards(projectsWithColors);
+      setCards(response.data.projects);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
   };
-
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const response = await axios.get(
-          `${server}/api/organizations/${organizationId}/teams`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await axios.get(`${server}/api/organizations/${organizationId}/teams`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         setAvailableTeams(response.data.teams || []);
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -188,6 +132,18 @@ const Projects = () => {
       fetchTeams();
     }
   }, [organizationId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowTooltipIndex(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleCardClick = async (projectId) => {
     try {
@@ -211,7 +167,7 @@ const Projects = () => {
       return existingProjects.some(
         (project) =>
           project.name.toLowerCase().replace(/\s+/g, "") ===
-            name.toLowerCase().replace(/\s+/g, "") &&
+          name.toLowerCase().replace(/\s+/g, "") &&
           project._id !== excludeProjectId
       );
     } catch (error) {
@@ -220,54 +176,102 @@ const Projects = () => {
     }
   };
 
+  const handleTitleChange = (event, index) => {
+    const value = event.target.value.replace(/^\s+/, "");
+    const updatedCards = [...cards];
+    updatedCards[index].name = value;
+    setCards(updatedCards);
+    setNewCardErrors({ ...newCardErrors, name: false });
+  };
+
+  const handleDescriptionChange = (event, index) => {
+    const value = event.target.value.replace(/^\s+/, "");
+    const updatedCards = [...cards];
+    updatedCards[index].description = value;
+    setCards(updatedCards);
+    setNewCardErrors({ ...newCardErrors, description: false });
+  };
+
+  const handleEmailChange = (event, index) => {
+    const updatedCards = [...cards];
+    updatedCards[index].projectManager = event.target.value;
+    setCards(updatedCards);
+    setNewCardErrors({ ...newCardErrors, email: false });
+    setProjectManagerError(false); // Add this line
+  };
+
+  const isValidEmail = (email) => {
+    const re =
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
   const handleAddCard = () => {
-    setAddProjectModalVisible(true);
-    setNewProject({
+    if (isAddingCard) return;
+
+    resetTeamsState(); // Add this line
+
+    const newCard = {
+      _id: uuidv4(),
       name: "",
       description: "",
       projectManager: "",
-      startDate: null,
-      teams: [],
-      bgUrl: "",
-    });
-    setNewCardErrors({
-      name: false,
-      description: false,
-      email: false,
-      startDate: false,
-    });
+      isNew: true,
+    };
+    setCards((prevCards) => [...prevCards, newCard]);
+    setEditableCard(newCard._id);
+    setNewCardErrors({ name: false, description: false, email: false });
+    setIsAddingCard(true);
+  };
+  const resetTeamsState = () => {
+    setSelectedTeams([]);
+    setSelectedTeamName("");
+    setTeamInputValue("");
+    setFilteredTeams([]);
+    setShowTeamDropdown(false);
   };
 
-  const handleSaveNewCard = async () => {
+  const handleCancelNewCard = () => {
+    setCards((prevCards) => prevCards.filter((card) => card._id !== editableCard));
+    setEditableCard(null);
+    setIsAddingCard(false);
+    setNewCardErrors({ name: false, description: false, email: false });
+    resetTeamsState(); // Add this line
+  };
+
+  const fetchUserEmail = async () => {
+    try {
+      const response = await axios.get(`${server}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data.user.email; // Return the email
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      throw error; // Propagate the error
+    }
+  };
+
+  const handleSaveNewCard = async (index) => {
+    const card = cards[index];
     const newErrors = { ...newCardErrors };
     let hasError = false;
 
-    if (!newProject.name.trim()) {
+    if (!card.name.trim()) {
       newErrors.name = true;
       hasError = true;
     }
-    if (!newProject.description.trim()) {
+    if (!card.description.trim()) {
       newErrors.description = true;
       hasError = true;
     }
-    if (
-      !newProject.projectManager ||
-      !isValidEmail(newProject.projectManager)
-    ) {
+    if (!card.projectManager || !isValidEmail(card.projectManager)) {
       newErrors.email = true;
       hasError = true;
     }
-    if (!newProject.startDate) {
+    if (!card.startDate) {
       newErrors.startDate = true;
-      hasError = true;
-    }
-    if (newProject.teams.length === 0) {
-      setTeamInputError(true);
-      hasError = true;
-    }
-
-    if (!selectedImage) {
-      setBgImageError(true);
       hasError = true;
     }
 
@@ -276,29 +280,25 @@ const Projects = () => {
       return;
     }
 
-    if (!newProject.teams) {
-      setTeamInputError(true);
-      hasError = true;
-    }
-
-    const isDuplicate = await checkDuplicateProjectName(newProject.name);
+    // Check for duplicate project name
+    const isDuplicate = await checkDuplicateProjectName(card.name);
     if (isDuplicate) {
       setNewCardErrors({ ...newErrors, name: true });
+
       notification.warning({
         message: "Project name taken. Choose another",
+        // description: "We can't assign the admin to the project",
       });
       return;
     }
 
+    // Check if email is part of the organization
     try {
       const response = await axios.get(`${server}/api/users/search`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        params: {
-          email: newProject.projectManager,
-          fields: "email status name",
-        },
+        params: { email: card.projectManager, organizationId: organizationId },
       });
 
       if (response.data.users.length === 0) {
@@ -306,43 +306,63 @@ const Projects = () => {
         setProjectManagerError(true);
         return;
       }
+    } catch (error) {
+      console.error("Error checking project manager email:", error);
+      setNewCardErrors({ ...newErrors, email: true });
+      setProjectManagerError(true);
+      return;
+    }
 
-      const statusResponse = await axios.get(`${server}/api/user-status`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        params: { email: newProject.projectManager },
+    // Check the project manager's status
+    const statusResponse = await axios.get(`${server}/api/user-status`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      params: { email: card.projectManager },
+    });
+
+    if (statusResponse.data.status === "unverified") {
+      setNewCardErrors({ ...newErrors, email: true });
+      //   alert(
+      //     "The project manager's email is not verified. Please verify the email before creating the project."
+
+      //   );
+
+      notification.warning({
+        message: " Verify email before creating project",
+
       });
+      return;
+    }
 
-      if (statusResponse.data.status === "unverified") {
-        setNewCardErrors({ ...newErrors, email: true });
-        notification.warning({
-          message: "Verify email before creating project",
-        });
-        return;
-      }
+    // Fetch the logged-in user's email
+    let createdBy;
+    try {
+      createdBy = await fetchUserEmail();
+    } catch (error) {
+      setNewCardErrors({ ...newErrors, createdBy: true });
+      //   alert("Error fetching logged-in user's email. Please try again.");
 
-      const createdBy = await fetchUserEmail();
 
-      const projectResponse = await axios.post(
+      notification.warning({
+        message: "  Error fetching user email. Please try again",
+
+      });
+      return;
+    }
+
+    // If we've made it here, the project name is unique, email is valid and part of the organization
+    try {
+      const response = await axios.post(
         `${server}/api/projects`,
         {
           organizationId: organizationId,
-          name: newProject.name.trim(),
-          description: newProject.description.trim(),
-          projectManager: newProject.projectManager,
-          startDate: newProject.startDate,
-          // teams: newProject.teams,
-          teams: [newProject.teams],
+          name: card.name.trim(),
+          description: card.description.trim(),
+          projectManager: card.projectManager,
+          startDate: card.startDate,
+          teams: selectedTeams,
           createdBy: createdBy,
-          bgUrl: selectedImage
-            ? {
-                raw: selectedImage.urls.raw,
-                thumb: selectedImage.urls.thumb,
-                full: selectedImage.urls.full,
-                regular: selectedImage.urls.regular,
-              }
-            : null,
         },
         {
           headers: {
@@ -350,21 +370,47 @@ const Projects = () => {
           },
         }
       );
-      console.log(projectResponse.data);
-
-      const newProjectData = projectResponse.data.project;
+      const newProject = response.data.project;
       setCards((prevCards) => [
-        ...prevCards,
+        ...prevCards.filter((c) => c._id !== card._id),
         {
-          ...newProjectData,
-          projectManagerStatus: projectResponse.data.projectManagerStatus,
+          ...newProject,
+          projectManagerStatus: response.data.projectManagerStatus,
         },
       ]);
-      setAddProjectModalVisible(false);
+      setEditableCard(null);
+      setIsAddingCard(false);
       fetchProjects(organizationId);
     } catch (error) {
       console.error("Error creating new project:", error);
+      setIsAddingCard(false);
     }
+  };
+
+  const handleDateChange = (event, index, field) => {
+    setCards((prevCards) => {
+      const updatedCards = [...prevCards];
+      updatedCards[index][field] = event.target.value;
+      return updatedCards;
+    });
+  };
+
+  const handleRenameCard = (index) => {
+    setRenameIndex(index);
+    setRenameInputValue(cards[index].name);
+    setDescriptionInputValue(cards[index].description);
+    setProjectManager(cards[index].projectManager);
+    setRenameDialogVisible(true);
+  };
+
+  const handleRenameInputChange = (event) => {
+    setRenameInputValue(event.target.value.replace(/^\s+/, ""));
+    setRenameInputError(false);
+  };
+
+  const handleDescriptionInputChange = (event) => {
+    setDescriptionInputValue(event.target.value.replace(/^\s+/, ""));
+    setDescriptionInputError(false);
   };
 
   const handleDeleteCard = async (cardId) => {
@@ -380,6 +426,7 @@ const Projects = () => {
       console.error("Error deleting project:", error);
     }
   };
+
   const handleDelete = (index) => {
     setDeleteIndex(index);
     setDeleteDialogVisible(true);
@@ -396,12 +443,8 @@ const Projects = () => {
     setDeleteIndex(null);
   };
 
-  const handleRenameCard = (index) => {
-    setRenameIndex(index);
-    setRenameInputValue(cards[index].name);
-    setDescriptionInputValue(cards[index].description);
-    setProjectManager(cards[index].projectManager);
-    setRenameDialogVisible(true);
+  const handleEditClick = (index) => {
+    setShowTooltipIndex(index);
   };
 
   const handleSaveRename = async () => {
@@ -421,6 +464,7 @@ const Projects = () => {
       return;
     }
 
+    // Check if the user's email can be fetched
     let updatedBy;
     try {
       updatedBy = await fetchUserEmail();
@@ -436,7 +480,8 @@ const Projects = () => {
     if (isDuplicate) {
       setRenameInputError(true);
       notification.warning({
-        message: "Name already exists. Choose another",
+        message: " Name already exists. Choose another",
+
       });
       return;
     }
@@ -448,7 +493,7 @@ const Projects = () => {
           name: renameInputValue,
           description: descriptionInputValue,
           projectManager: projectManager,
-          updatedBy: updatedBy,
+          updatedBy: updatedBy, // Include updatedBy here
         },
         {
           headers: {
@@ -473,22 +518,9 @@ const Projects = () => {
     }
   };
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowTooltipIndex(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleProjectManagerChange = async (value) => {
-    setNewProject((prev) => ({ ...prev, projectManager: value }));
+  const handleProjectManagerChange = async (event) => {
+    const value = event.target.value;
+    setProjectManager(value);
     setProjectManagerError(false);
 
     if (value) {
@@ -497,7 +529,7 @@ const Projects = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          params: { username: value, organizationId: organizationId },
+          params: { email: value, organizationId: organizationId },
         });
 
         if (response.data.users.length > 0) {
@@ -508,7 +540,7 @@ const Projects = () => {
           setProjectManagerError(true);
         }
       } catch (error) {
-        console.error("Error fetching user username:", error);
+        console.error("Error fetching user emails:", error);
         setEmailSuggestions([]);
         setProjectManagerError(true);
       }
@@ -518,362 +550,407 @@ const Projects = () => {
     }
   };
 
-  const isValidEmail = (username) => {
-    const re =
-      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(username).toLowerCase());
-  };
-
-  const fetchUserEmail = async () => {
-    try {
-      const response = await axios.get(`${server}/api/user`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      return response.data.user.username;
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      throw error;
-    }
-  };
-  if (!cards.length) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <FontAwesomeIcon
-          icon={faSpinner}
-          spin
-          style={{ marginRight: "10px" }}
-        />
-        Loading...
-      </div>
-    );
-  }
-  const filterTeams = (input, option) => {
-    return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-  };
   return (
-    <div className="min-h-full bg-light-white rounded-3xl p-8">
+    <div className="min-h-screen bg-light-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-4">
         {userRole === "ADMIN" && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
+          <button
+            className="border border-blue-500 text-white py-2 px-4 rounded-full flex  items-center bg-blue-500 "
             onClick={handleAddCard}
             disabled={isAddingCard}
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 mr-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
+            </svg>
             Add Project
-          </Button>
+          </button>
         )}
       </div>
-
-      <div className="flex flex-wrap justify-start">
+      <div className="flex flex-wrap justify-right">
         {cards.map((card, index) => (
-          <Card
+          <div
             key={card._id}
-            className="m-4 w-64 cursor-pointer relative"
-            hoverable
-            onClick={() => handleCardClick(card._id)}
-            style={{
-              backgroundImage: card.bgUrl.thumb
-                ? `url(${card.bgUrl.thumb})`
-                : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
+            className=" bg-white rounded-3xl border-t-4 border-black relative shadow-xl p-6 m-4 w-72 cursor-pointer"
           >
-            <div className="flex justify-between items-center">
-             
-                <h3
-                  className="font-bold truncate"
-                  style={{
-                    color: card.textColor,
-                    maxWidth: "80%", // Limit width to allow space for ellipsis button
+            {editableCard === card._id ? (
+              <div>
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="text"
+                >
+                  Project Name
+                </label>
+                <input
+                  type="text"
+                  placeholder=" project name"
+                  value={card.name}
+                  onChange={(event) => handleTitleChange(event, index)}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline${newCardErrors.name ? "border-red-500" : ""
+                    }`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {newCardErrors.name && (
+                  <span className="text-red-500">This field is required</span>
+                )}
+                <label
+                  className="block text-gray-700 pt-2 text-sm font-bold mb-2"
+                  htmlFor="text"
+                >
+                  Project Description
+                </label>
+                <textarea
+                  placeholder="Project description"
+                  value={card.description}
+                  onChange={(event) => handleDescriptionChange(event, index)}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.description ? "border-red-500" : ""
+                    }`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {newCardErrors.description && (
+                  <span className="text-red-500">This field is required</span>
+                )}
+                <label
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                  htmlFor="text"
+                >
+                  Project Manager
+                </label>
+                <input
+                  type="email"
+                  placeholder="Project manager email"
+                  value={card.projectManager}
+                  onChange={(event) => {
+                    handleProjectManagerChange(event);
+                    setCards((prevCards) => {
+                      const updatedCards = [...prevCards];
+                      updatedCards[index].projectManager = event.target.value;
+                      return updatedCards;
+                    });
                   }}
-                >
-                  {card.name}
-                </h3>
-             
-              {userRole !== "USER" && (
-                <button
-                  className="border-none rounded-md cursor-pointer p-2 flex items-center hover:bg-white hover:scale-105 transition-all duration-200 ease-in-out shadow-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTooltipIndex(
-                      showTooltipIndex === index ? null : index
-                    );
-                  }}
-                >
-                  <EllipsisVertical style={{ color: card.textColor }} />
-                </button>
-              )}
-            </div>
-        
-              <p
-                className="truncate"
-                style={{
-                  color: card.textColor,
-                  maxWidth: "100%",
-                }}
-              >
-                {card.description}
-              </p>
-         
-            <div className="mt-2 flex justify-between items-center">
-              <p
-                className=" rounded-md text-sm inline-block"
-                style={{ color: card.textColor }}
-              >
-                Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
-              </p>
-              <Tooltip title={card.projectManager}>
-                <div
-                  className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-full text-xs"
-                  style={{ color: card.textColor }}
-                >
-                  {card.projectManager.charAt(0).toUpperCase()}
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.email || projectManagerError
+                      ? "border-red-500"
+                      : ""
+                    }`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={card.startDate}
+                  onChange={(event) =>
+                    handleDateChange(event, index, "startDate")
+                  }
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${newCardErrors.startDate ? "border-red-500" : ""
+                    }`}
+                />
+                {newCardErrors.startDate && (
+                  <span className="text-red-500">Start date is required</span>
+                )}
+
+                {newCardErrors.email && (
+                  <span className="text-red-500">
+                    {projectManagerError
+                      ? "This mail is not a part of this organization"
+                      : "This field is required"}
+                  </span>
+                )}
+                {emailSuggestions.length > 0 &&
+                  card.projectManager.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {emailSuggestions.map((user) => (
+                        <li
+                          key={user._id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setCards((prevCards) => {
+                              const updatedCards = [...prevCards];
+                              updatedCards[index].projectManager = user.email;
+                              return updatedCards;
+                            });
+                            setProjectManager(user.email);
+                            setEmailSuggestions([]);
+                            setProjectManagerError(false);
+                          }}
+                        >
+                          {user.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                <label className="block text-gray-700 text-sm font-bold mb-2">Teams</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={teamInputValue}
+                    onChange={handleTeamInputChange}
+                    onFocus={handleTeamInputFocus}
+                    onBlur={() => setTimeout(() => setShowTeamDropdown(false), 200)}
+                    placeholder="Type to select a team..."
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                  {showTeamDropdown && filteredTeams.length > 0 && (
+                    <ul
+                      style={{
+                        position: 'absolute',
+                        zIndex: 10,
+                        width: '100%',
+                        backgroundColor: 'white',
+                        border: '1px solid #e2e8f0',
+                        marginTop: '4px',
+                        borderRadius: '0.375rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        maxHeight: '120px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {filteredTeams.map((team) => (
+                        <li
+                          key={team._id}
+                          onClick={() => handleTeamSelect(team)}
+                          style={{
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #e2e8f0',
+                            ':hover': {
+                              backgroundColor: '#f7fafc'
+                            }
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
+                        >
+                          {team.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              </Tooltip>
-            </div>
-            {card.projectManagerStatus === "unverify" && (
-              <span className="text-yellow-500">(Unverified)</span>
-            )}
-            {showTooltipIndex === index && (
-              <div
-                ref={dropdownRef}
-                className="absolute right-6 top-10 ml-2 w-36 bg-white border rounded-md shadow-lg z-10"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  type="text"
-                  block
-                  icon={<BsFillPencilFill />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRenameCard(index);
-                    setShowTooltipIndex(null);
-                  }}
-                >
-                  Rename
-                </Button>
-                <Button
-                  type="text"
-                  block
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(index);
-                    setShowTooltipIndex(null);
-                  }}
-                >
-                  Delete
-                </Button>
+                <div className="mt-2">
+                  {selectedTeams.map(teamId => {
+                    const team = availableTeams.find(t => t._id === teamId);
+                    // return (
+                    //   <span key={teamId} className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+                    //     {team ? team.name : 'Unknown Team'}
+                    //     <button
+                    //       onClick={() => handleRemoveTeam(teamId)}
+                    //       className="ml-2 text-red-500 font-bold"
+                    //     >
+                    //       &times;
+                    //     </button>
+                    //   </span>
+                    // );
+                  })}
+                </div>
+
+                <div className="flex justify-between">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2"
+                    onClick={() => handleSaveNewCard(index)}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md mt-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelNewCard();
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div onClick={() => handleCardClick(card._id)}>
+                  <div className="relative group">
+                    <span className="block truncate max-w-[200px]">
+                      {card.name}
+                    </span>
+                    {card.name.length > 20 && (
+                      <span className="absolute hidden group-hover:block bg-black text-white p-2 rounded z-10 -mt-1 ml-14">
+                        {card.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative group mt-2">
+                    <span className="block truncate max-w-[200px] text-gray-500">
+                      {card.description}
+                    </span>
+                    {card.description.length > 20 && (
+                      <span className="absolute hidden group-hover:block bg-black text-white p-2 rounded z-10 -mt-1 ml-14">
+                        {card.description}
+                      </span>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <div>
+                        <p className="text-gray-500 text-sm">Start Date</p>
+                        <p className="font-medium">
+                          {dayjs(card.startDate).format("DD, MMM YYYY")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <div className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-full">
+                      {card.projectManager.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="ml-2 text-gray-700 relative group">
+                      {card.projectManager.length > 20
+                        ? card.projectManager.substring(0, 20) + "..."
+                        : card.projectManager}
+                      {card.projectManager.length > 20 && (
+                        <span className="absolute hidden group-hover:block bg-black text-white p-2 rounded z-10 left-0 mt-1">
+                          {card.projectManager}
+                        </span>
+                      )}
+                    </span>
+                    {card.projectManagerStatus === "unverify" && (
+                      <span className="ml-2 text-yellow-500">(Unverified)</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="absolute top-0 right-0 p-2">
+                  {userRole !== "USER" && (
+                    <button
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditClick(index);
+                      }}
+                    >
+                      &#x2022;&#x2022;&#x2022;
+                    </button>
+                  )}
+                  {showTooltipIndex === index && (
+                    <div
+                      className="absolute right-0 mt-2 w-48 bg-white border rounded-2xl shadow-lg"
+                      ref={menuRef}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        className="block w-full text-left px-4 py-2 text-gray-700 rounded-2xl hover:bg-gray-100"
+                        onClick={() => handleRenameCard(index)}
+                      >
+                        Rename
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-red-500 rounded-2xl hover:bg-gray-100"
+                        onClick={() => handleDelete(index)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
-          </Card>
+          </div>
         ))}
       </div>
 
-      <Modal
-        title="Add New Project"
-        visible={addProjectModalVisible}
-        onOk={handleSaveNewCard}
-        onCancel={() => setAddProjectModalVisible(false)}
-        width={700}
-        bodyStyle={{
-          maxHeight: "70vh", // Limit the modal body height to 70% of the viewport height
-          overflowY: "auto", // Enable vertical scrolling within the modal body
-        }}
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Input
-              placeholder="Project Name"
-              value={newProject.name}
-              onChange={(e) =>
-                setNewProject((prev) => ({ ...prev, name: e.target.value }))
-              }
-              className={newCardErrors.name ? "border-red-500" : ""}
-            />
-            {newCardErrors.name && (
-              <p className="text-red-500">Project Name is required</p>
-            )}
-          </div>
-
-          <div>
-            <TextArea
-              placeholder="Project Description"
-              value={newProject.description}
-              onChange={(e) =>
-                setNewProject((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              className={` ${
-                newCardErrors.description ? "border-red-500" : ""
-              }`}
-            />
-            {newCardErrors.description && (
-              <p className="text-red-500">Project Description is required</p>
-            )}
-          </div>
-
-          <div>
-  <Select
-    className="w-full"
-    placeholder="Select a Project Manager"
-    value={
-      newProject.projectManager.length > 0
-        ? newProject.projectManager
-        : null
-    }
-    onChange={handleProjectManagerChange}
-    onSearch={handleProjectManagerChange}
-    filterOption={false}
-    showSearch
-  >
-    {emailSuggestions.map((user) => (
-      <Option key={user._id} value={user.username}>
-        {user.username}
-      </Option>
-    ))}
-  </Select>
-  {newCardErrors.username && (
-    <p className="text-red-500">
-      Valid Project Manager username is required
-    </p>
-  )}
-</div>
-
-
-          <div>
-            <DatePicker
-              className="w-full"
-              placeholder="Start Date"
-              value={newProject.startDate ? dayjs(newProject.startDate) : null}
-              onChange={(date) =>
-                setNewProject((prev) => ({
-                  ...prev,
-                  startDate: date ? date.toDate() : null,
-                }))
-              }
-              disabledDate={(current) => {
-                // Disable past dates
-                return current && current < dayjs().startOf("day");
-              }}
-            />
-            {newCardErrors.startDate && (
-              <p className="text-red-500">Start Date is required</p>
-            )}
-          </div>
-
-          <div className="col-span-2">
-            <Select
-              className="w-full"
-              placeholder="Search and select a team"
-              value={newProject.teams}
-              onChange={(value) => {
-                setNewProject((prev) => ({ ...prev, teams: value }));
-                setTeamInputError(false);
-              }}
-              showSearch
-              filterOption={filterTeams}
-              optionFilterProp="children"
-              listHeight={120} // This sets the height of the dropdown list
-              maxTagCount={4} // This limits the number of visible selected tags
-              maxTagTextLength={20} // This truncates long team names in the tags
+      {renameDialogVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 w-96 rounded-3xl  shadow-4xl">
+            <h2 className="block text-gray-700 text-lg font-bold mb-2">
+              Rename Project
+            </h2>
+            <label
+              className="block text-gray-700 text-sm font-bold mb-2"
+              htmlFor="text"
             >
-              {availableTeams.map((team) => (
-                <Option key={team._id} value={team._id}>
-                  {team.name}
-                </Option>
-              ))}
-            </Select>
-            {teamInputError && (
-              <p className="text-red-500">At least one team is required</p>
+              Project Name
+            </label>
+            <input
+              type="text"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${renameInputError ? "border-red-500" : ""
+                }`}
+              value={renameInputValue}
+              onChange={handleRenameInputChange}
+              placeholder="Project Name"
+              required
+            />
+            {renameInputError && (
+              <span className="text-red-500 ">Project Name is required</span>
             )}
-          </div>
+            <label
+              className="block text-gray-700 text-sm font-bold mb-2"
+              htmlFor="text"
+            >
+              Description
+            </label>
+            <textarea
+              className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${descriptionInputError ? "border-red-500" : ""
+                }`}
+              value={descriptionInputValue}
+              onChange={handleDescriptionInputChange}
+              placeholder="Project Description"
+              required
+            />
+            {descriptionInputError && (
+              <span className="text-red-500">
+                Project Description is required
+              </span>
+            )}
+            {projectManagerError && (
+              <span className="text-red-500">
+                Project Manager Email is required
+              </span>
+            )}
 
-          <div className="col-span-2 mt-4">
-            <h4>Select Background Image</h4>
-            <div className="flex flex-wrap justify-center items-center overflow-y-auto max-h-40">
-              {unsplashImages.map((image) => (
-                <div
-                  key={image.id}
-                  className={`m-2 cursor-pointer ${
-                    selectedImage === image ? "border-4 border-blue-500" : ""
-                  }`}
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <Image
-                    src={image.urls.thumb}
-                    alt={image.alt_description}
-                    width={80}
-                    height={80}
-                    preview={false}
-                  />
-                </div>
-              ))}
+            <div className=" flex justify-between px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <button
+                className="mt-3 w-full   rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => setRenameDialogVisible(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="w-full   rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={handleSaveRename}
+              >
+                Save
+              </button>
             </div>
-            {bgImageError && (
-              <p className="text-red-500">Background image is required</p>
-            )}
           </div>
         </div>
-      </Modal>
-
-      <Modal
-  title="Rename Project"
-  visible={renameDialogVisible}
-  onOk={handleSaveRename}
-  onCancel={() => setRenameDialogVisible(false)}
->
-  <Input
-    placeholder="Project Name"
-    value={renameInputValue}
-    onChange={(e) => {
-      setRenameInputValue(e.target.value.trimStart());
-      setRenameInputError(false);
-    }}
-    className={renameInputError ? "border-red-500" : ""}
-  />
-  {renameInputError && (
-    <p className="text-red-500">Project Name is required</p>
-  )}
-
-  <TextArea
-    placeholder="Project Description"
-    value={descriptionInputValue}
-    onChange={(e) => {
-      setDescriptionInputValue(e.target.value.trimStart());
-      setDescriptionInputError(false);
-    }}
-    className={`mt-4 ${descriptionInputError ? "border-red-500" : ""}`}
-  />
-  {descriptionInputError && (
-    <p className="text-red-500">Project Description is required</p>
-  )}
-</Modal>
-
-
-      <Modal
-        title="Confirm Project Deletion"
-        visible={deleteDialogVisible}
-        onOk={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      >
-        <p>Are you sure you want to delete this project?</p>
-      </Modal>
+      )}
+      {deleteDialogVisible && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-3xl shadow-4xl">
+            <h2 className="text-lg font-bold mb-4">Confirm Project Deletion</h2>
+            <p> delete this project?</p>
+            <div className="flex justify-between mt-4">
+              <button
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+                onClick={handleCancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded-3xl ml-2"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 export default Projects;

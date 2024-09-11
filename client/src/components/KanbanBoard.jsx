@@ -2,9 +2,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
-import { Dropdown, Menu } from "antd"; //added
-import { InfoCircleOutlined } from "@ant-design/icons";
-import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
   BsPencilSquare,
@@ -12,33 +9,16 @@ import {
   BsTrash,
   BsX,
 } from "react-icons/bs";
-import { Tooltip } from "antd";
 import "@lourenci/react-kanban/dist/styles.css";
 import { useParams } from "react-router-dom";
 import { server } from "../constant";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../components/Style.css";
 import useTokenValidation from "./UseTockenValidation";
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
-import RulesButton from "./RulePage";
-import { FaPlus } from "react-icons/fa";
-import { FcEmptyTrash } from "react-icons/fc";
-import { MdCancel } from "react-icons/md";
-import { Popover, Button, Space, Modal, Form, Input, Select } from "antd";
-import { MoreOutlined, SettingOutlined, ToolOutlined } from "@ant-design/icons";
-import { SquareMenu } from "lucide-react";
-import { Plus } from "lucide-react";
-import { X } from "lucide-react";
-import { BsFillPencilFill } from "react-icons/bs";
-import BackgroundChange from "./BackgroundChange";
-import { Bell, SquareChevronDown } from "lucide-react";
-import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
-import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
-  
-import { FastAverageColor } from 'fast-average-color';
 
 const initialBoard = {
   columns: [],
@@ -58,27 +38,24 @@ function KanbanBoard() {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [projectName, setProjectName] = useState("");
-  const [projectDescription, setProjectDescription] = useState("");
   const [projectManager, setProjectManager] = useState("");
   const [newColumnModalVisible, setNewColumnModalVisible] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [showRenameConfirmation, setShowRenameConfirmation] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showRenameInput, setShowRenameInput] = useState(false);
   const [renameCardModalVisible, setRenameCardModalVisible] = useState(false);
   const [renameCardTitle, setRenameCardTitle] = useState("");
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [memberAdded, setMemberAdded] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(true);
-  const [activities, setActivities] = useState([]);
-  const [tasks, setTasks] = useState([]);
+
   const [renameCardDescription, setRenameCardDescription] = useState("");
   const [selectedCardId, setSelectedCardId] = useState(null);
   const suggestionListRef = useRef(null);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [textColor, setTextColor] = useState('black'); //added
+
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,11 +73,6 @@ function KanbanBoard() {
     description: "",
     email: "",
   });
-  const [title, setTitle] = useState('');
-  const [titleError, setTitleError] = useState('');
-  const [emailError,setemailError] = useState('');
-  const [startDateError,setstartDateError] = useState('');
-  // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
   const [repository, setRepository] = useState("");
@@ -108,84 +80,17 @@ function KanbanBoard() {
   const existingRepoRef = useRef(null);
   const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [copiedButton, setCopiedButton] = useState(null);
-  const [editingColumnId, setEditingColumnId] = useState(null);
-  const [tempColumnName, setTempColumnName] = useState("");
+
 
   const [newColumnError, setNewColumnError] = useState(false);
   const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [userComment, setUserComment] = useState("");
   const [comments, setComments] = useState([]);
-  const [assignedTo, setAssignedTo] = useState([]);
-  const [createdBy, setcreatedBy] = useState([]);
-  const [dueDate, setDueDate] = useState("");
-  const [estimatedHours, setEstimatedHours] = useState(0);
-  const [utilizedHours, setUtilizedHours] = useState(0);
-  const [remainingHours, setRemainingHours] = useState(0);
-  const [endDate, setEndDate] = useState('');
-  const [endDateError, setEndDateerror] = useState('');
-  const [estimatedHoursError, setestimatedHoursError] = useState('');
-  const [description, setDescription] = useState(''); 
-  const [descriptionError, setdescriptionerror] = useState('');
 
-
-  const { TextArea } = Input;
-  const { Text, Title, Paragraph } = Typography;
-  const [taskLogs, setTaskLogs] = useState([]);
-  const { Option } = Select;
-  const [selectedCard, setSelectedCard] = useState(null);
-
-  const [aboutModalVisible, setAboutModalVisible] = useState(false);
-
-  const [startDate, setStartDate] = useState('');
-
-  const handleStartDateChange = (e) => {
-    setStartDate(e.target.value);
-  };
-  const showAboutModal = () => {
-    setAboutModalVisible(true);
-  };
-
-  const handleAboutModalClose = () => {
-    setAboutModalVisible(false);
-  };
-
-
-
-  const handleCardClick = (cardId, columnId, projectId) => {
-    navigate(`/rename-card/${columnId}/cards/${cardId}`)
-  };
-
-
-  const handleEndDateChange = (e) => {
-    setEndDate(e.target.value);
-  };
   const handleTeamsClick = () => {
     navigate(`/projects/${projectId}/teams`);
   };
 
   const [userRole, setUserRole] = useState("");
-
-  const location = useLocation();
-  //added
-  const [showBackgroundChange, setShowBackgroundChange] = useState(false);
-
-  //added for antd drawer
-  const [visible, setVisible] = useState(false);
-
-  const showDrawer = () => {
-    setVisible(true);
-  };
-
-  const onClose = () => {
-    setVisible(false);
-  };
-
-  const isProjectRoute = location.pathname.startsWith("/projects/");
-  //added
-  const handleBackgroundChangeClick = () => {
-    setShowBackgroundChange(true);
-  };
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -206,7 +111,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://13.235.16.113:5000");
+    const newSocket = io("http://localhost:3001");
     setSocket(newSocket);
   }, []);
 
@@ -229,6 +134,49 @@ function KanbanBoard() {
               : column
           ),
         }));
+      });
+
+      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
+        console.log("Card moved event received:", {
+          cardId,
+          sourceTaskId,
+          destinationTaskId,
+        });
+        setBoardData((prevState) => {
+          if (!prevState || !prevState.columns) {
+            console.error("Invalid board state:", prevState);
+            return prevState;
+          }
+
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === sourceTaskId) {
+              return {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== cardId),
+              };
+            }
+            if (column.id === destinationTaskId) {
+              const movedCard = prevState.columns
+                .find((col) => col.id === sourceTaskId)
+                ?.cards.find((card) => card.id === cardId);
+
+              if (!movedCard) {
+                console.error("Moved card not found:", {
+                  cardId,
+                  sourceTaskId,
+                });
+                return column;
+              }
+
+              return {
+                ...column,
+                cards: [...column.cards, movedCard],
+              };
+            }
+            return column;
+          });
+          return { ...prevState, columns: updatedColumns };
+        });
       });
 
       socket.on("cardRenamed", ({ cardId, newTitle, newDescription }) => {
@@ -305,55 +253,12 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === taskId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
-      });
-
-      socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
-        console.log("Card moved event received:", {
-          cardId,
-          sourceTaskId,
-          destinationTaskId,
-        });
-        setBoardData((prevState) => {
-          if (!prevState || !prevState.columns) {
-            console.error("Invalid board state:", prevState);
-            return prevState;
-          }
-
-          const updatedColumns = prevState.columns.map((column) => {
-            if (column.id === sourceTaskId) {
-              return {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              };
-            }
-            if (column.id === destinationTaskId) {
-              const movedCard = prevState.columns
-                .find((col) => col.id === sourceTaskId)
-                ?.cards.find((card) => card.id === cardId);
-
-              if (!movedCard) {
-                console.error("Moved card not found:", {
-                  cardId,
-                  sourceTaskId,
-                });
-                return column;
-              }
-
-              return {
-                ...column,
-                cards: [...column.cards, movedCard],
-              };
-            }
-            return column;
-          });
-          return { ...prevState, columns: updatedColumns };
-        });
       });
     }
     return () => {
@@ -389,6 +294,7 @@ function KanbanBoard() {
   }, []);
 
   //
+
   useEffect(() => {
     const fetchUserRoleAndOrganization = async () => {
       try {
@@ -460,7 +366,6 @@ function KanbanBoard() {
         setProjectManager(project.projectManager);
         setRepoName(project.repoName); // Store repoName
         setRepository(project.repository); // Store repository
-        setProjectDescription(project.description);
       }
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -483,7 +388,7 @@ function KanbanBoard() {
     userFromLocalStorage &&
     (user.role === "ADMIN" ||
       emailFromLocalStorage ===
-      projects.find((project) => project._id === projectId)?.projectManager);
+        projects.find((project) => project._id === projectId)?.projectManager);
 
   // Update fetchTasks function to include cards
   async function fetchTasks() {
@@ -498,11 +403,9 @@ function KanbanBoard() {
           },
         }
       );
-
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
-
       const { tasks, bgUrl } = await response.json();
 
       const columns = await Promise.all(
@@ -517,59 +420,28 @@ function KanbanBoard() {
               },
             }
           );
-
-          if (!cardsResponse.ok) {
-            throw new Error("Failed to fetch cards for task " + task.name);
-          }
-
           const { cards } = await cardsResponse.json();
-
+          console.log(cards);
           return {
             id: task.id,
             title: task.name,
-            cards: cards.map((card) => {
-              const utilizedHours = card.utilizedHours || 0;
-              const estimatedHours = card.estimatedHours || 0;
-              const remainingHours = estimatedHours - utilizedHours;
-
-              return {
-                id: card.id,
-                title: card.name || "",
-                description: card.description || "",
-                columnId: task.id,
-                assignedTo: card.assignedTo,
-                createdBy: card.createdBy,
-                status: card.status,
-                assignDate: card.assignDate,
-                dueDate: card.dueDate,
-                comments: card.comments || [],
-                activities: card.activities || [],
-                taskLogs: card.taskLogs || [],
-                estimatedHours: estimatedHours,
-                utilizedHours: utilizedHours,
-                remainingHours: remainingHours,
-                cardId: card.uniqueId,
-              };
-            }),
+            cards: cards.map((card) => ({
+              id: card.id,
+              title: card.name || "",
+              description: card.description || "",
+              columnId: task.id,
+              assignedTo: card.assignedTo,
+              status: card.status,
+              assignDate: card.assignDate,
+              dueDate: card.dueDate,
+              comments: card.comments || [],
+            })),
           };
         })
       );
-
       setBgUrl(bgUrl);
       console.log(bgUrl);
       setBoardData({ columns });
-
-      if (bgUrl && bgUrl.raw) {
-        const fac = new FastAverageColor();
-        fac.getColorAsync(bgUrl.raw)
-          .then((color) => {
-            const isLight = (color.value[0] * 0.299 + color.value[1] * 0.587 + color.value[2] * 0.114) > 186;
-            setTextColor(isLight ? 'black' : 'white');
-          })
-          .catch((error) => {
-            console.error('Error extracting color:', error);
-          });
-      }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
@@ -579,6 +451,11 @@ function KanbanBoard() {
     console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
 
+  //added
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setMemberAdded(false); // Reset the state
@@ -586,20 +463,12 @@ function KanbanBoard() {
     setTeam("");
   };
 
-
   const openRenameCardModal = (
     columnId,
     cardId,
     currentTitle,
     currentDescription,
-    currentComments,
-    currentActivities,
-    currentTaskLogs,
-    estimatedHours, // New parameter
-    utilizedHours, // New parameter
-    assignedTo, // New parameter
-    createdBy,
-    dueDate
+    currentComments
   ) => {
     console.log("openRenameCardModal called with:", cardId, currentComments);
 
@@ -609,23 +478,7 @@ function KanbanBoard() {
     setRenameCardDescription(currentDescription);
     setComments(currentComments || []); // Ensure comments are set correctly
     setRenameCardModalVisible(true);
-    setActivities(currentActivities || []);
-    setTaskLogs(currentTaskLogs || []);
-
-    // Calculate remaining hours
-    const remainingHours = estimatedHours - utilizedHours;
-
-    // Set the actual hours to be displayed
-    setEstimatedHours(estimatedHours);
-    setUtilizedHours(utilizedHours);
-    setRemainingHours(remainingHours);
-
-    //added
-    setAssignedTo(assignedTo);
-    setcreatedBy(createdBy);
-    setDueDate(dueDate);
   };
-
 
   const clearFieldsAndRefresh = async () => {
     // Clear input fields
@@ -648,7 +501,6 @@ function KanbanBoard() {
     const cardDescription = e.target.description.value.trim() || "";
     const assignDate = e.target.assignDate.value;
     const dueDate = e.target.dueDate.value;
-    const estimatedHours = parseFloat(e.target.estimatedHours.value) || 0;
 
     if (
       !cardTitle ||
@@ -656,8 +508,7 @@ function KanbanBoard() {
       !selectedColumnId ||
       !email ||
       !assignDate ||
-      !dueDate ||
-      !estimatedHours
+      !dueDate
     ) {
       notification.warning({
         message: "Please fill in all fields",
@@ -666,8 +517,10 @@ function KanbanBoard() {
     }
 
     try {
+      // Fetch the logged-in user's email
       const createdBy = await fetchUserEmail();
 
+      // Search for the user within the project's teams
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -691,6 +544,7 @@ function KanbanBoard() {
         return;
       }
 
+      // Proceed to add the card
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -703,11 +557,9 @@ function KanbanBoard() {
             name: cardTitle,
             description: cardDescription,
             assignedTo: email,
-            createdBy: email,
             assignDate: assignDate,
             dueDate: dueDate,
-            estimatedHours: estimatedHours, // Include estimatedHours
-            createdBy: createdBy,
+            createdBy: createdBy, // Include createdBy
           }),
         }
       );
@@ -717,17 +569,16 @@ function KanbanBoard() {
       }
 
       await clearFieldsAndRefresh();
+      // Clear input fields
       e.target.title.value = "";
       e.target.description.value = "";
-      e.target.estimatedHours.value = "";
       setEmail("");
 
+      // Close the modal
       setModalVisible(false);
 
+      // Refresh board data
       await fetchTasks();
-      notification.success({
-        message: "Task added Successfully",
-      });
     } catch (error) {
       console.error("Error adding card:", error);
       alert(error.message);
@@ -774,6 +625,38 @@ function KanbanBoard() {
     }
   };
 
+  // //cardmove
+  // Update handleCardMove function
+  // async function handleCardMove(card, source, destination) {
+  //   const updatedBoard = moveCard(boardData, source, destination);
+  //   setBoardData(updatedBoard);
+
+  //   const movedBy = await fetchUserEmail();
+
+  //   try {
+  //     const response = await fetch(`${server}/api/cards/${card.id}/move`, {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //       },
+  //       body: JSON.stringify({
+  //         sourceTaskId: source.fromColumnId,
+  //         destinationTaskId: destination.toColumnId,
+  //         movedBy: movedBy,
+  //         movedDate: new Date().toISOString(),
+  //       }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to move card");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error moving card:", error);
+  //     setBoardData(boardData);
+  //   }
+  // }
+
   useEffect(() => {
     if (projectId) {
       fetchTasks();
@@ -800,18 +683,44 @@ function KanbanBoard() {
     }
   }, [newColumnModalVisible, modalVisible]);
 
-  // Polling function
-  const pollForUpdates = async () => {
-    await fetchTasks();
-  };
+  // Update the handleCardMove function
+  // async function handleCardMove(card, source, destination) {
+  //   // Update the frontend state
+  //   const updatedBoard = moveCard(boardData, source, destination);
+  //   setBoardData(updatedBoard);
 
-  // Set up polling
-  useEffect(() => {
-    const intervalId = setInterval(pollForUpdates, 5000);
+  //   const movedBy = await fetchUserEmail();
 
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Update the backend
+  //   try {
+  //     const response = await fetch(`${server}/api/cards/${card.id}/move`, {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //       },
+  //       body: JSON.stringify({
+  //         sourceTaskId: source.fromColumnId,
+  //         destinationTaskId: destination.toColumnId,
+  //         movedBy: movedBy,
+  //         movedDate: new Date().toISOString(),
+  //       }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to move card");
+  //     }
+
+  //     // If the move was successful, you might want to refetch the board data
+  //     // to ensure frontend and backend are in sync
+  //     await fetchTasks();
+  //   } catch (error) {
+  //     console.error("Error moving card:", error);
+  //     // Optionally, revert the frontend state if the backend update fails
+  //     setBoardData(boardData);
+  //   }
+  // }
+
 
   const handleCardMove = async (card, source, destination) => {
     const updatedBoard = moveCard(boardData, source, destination);
@@ -870,60 +779,6 @@ function KanbanBoard() {
     }
   };
 
-  //coloumn rename automatic
-  const handleColumnNameBlur = async (columnId) => {
-    if (tempColumnName.trim() === "") {
-      notification.error({
-        message: "Column name cannot be empty",
-      });
-      setEditingColumnId(null);
-      return;
-    }
-
-    setEditingColumnId(null);
-    const column = boardData.columns.find((col) => col.id === columnId);
-    if (column && tempColumnName !== column.title) {
-      try {
-        let updatedBy = await fetchUserEmail();
-        const response = await fetch(
-          `${server}/api/projects/${projectId}/tasks/${columnId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              name: tempColumnName,
-              updatedBy: updatedBy,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to rename column");
-        }
-
-        setBoardData((prevState) => ({
-          ...prevState,
-          columns: prevState.columns.map((col) =>
-            col.id === columnId ? { ...col, title: tempColumnName } : col
-          ),
-        }));
-
-        // notification.success({
-        //   message: 'Column Renamed Successfully',
-        // });
-      } catch (error) {
-        console.error("Error renaming column:", error);
-        notification.error({
-          message: "Failed to rename column",
-        });
-      }
-    } else {
-      setTempColumnName("");
-    }
-  };
 
   const confirmRemoveCard = (columnId, cardId) => {
     setCardToDelete({ columnId, cardId });
@@ -959,9 +814,9 @@ function KanbanBoard() {
           columns: prevState.columns.map((column) =>
             column.id === columnId
               ? {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== cardId),
-              }
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== cardId),
+                }
               : column
           ),
         }));
@@ -976,9 +831,6 @@ function KanbanBoard() {
         setTimeout(() => {
           setShowSuccessMessage(false);
         }, 3000);
-        notification.success({
-          message: "task deleted Successfully",
-        });
       } catch (error) {
         console.error("Error removing card:", error);
       }
@@ -1046,20 +898,19 @@ function KanbanBoard() {
     setNewColumnModalVisible(true);
   };
 
-  const handleAddColumnSubmit = async () => {
+  const handleAddColumnSubmit = async (e) => {
+    e.preventDefault();
     const trimmedColumnName = newColumnName.trim();
     if (!trimmedColumnName) {
       setNewColumnError(true);
       return;
     }
-
-    setLoading(true);
     let createdBy;
     try {
-      createdBy = await fetchUserEmail(); // Assume fetchUserEmail is a function that gets the user's email
+      createdBy = await fetchUserEmail();
+      console.log(createdBy);
     } catch (error) {
       console.error("Error fetching logged-in user's email:", error);
-      setLoading(false);
       return;
     }
 
@@ -1091,14 +942,11 @@ function KanbanBoard() {
           { id: task._id, title: task.name, cards: [], createdBy: createdBy },
         ],
       }));
-      notification.success({ message: "Column created successfully" });
       setNewColumnModalVisible(false);
       setNewColumnName("");
       setNewColumnError(false);
     } catch (error) {
       console.error("Error adding task:", error);
-    } finally {
-      setLoading(false);
     }
   };
   // Update the handleRenameColumn function
@@ -1137,9 +985,6 @@ function KanbanBoard() {
               : column
           ),
         }));
-        notification.success({
-          message: "Column Renamed Successfully",
-        });
       } catch (error) {
         console.error("Error renaming column:", error);
       }
@@ -1147,59 +992,53 @@ function KanbanBoard() {
     closeModal();
   };
 
-  const handleRemoveColumn = async (columnId) => {
-    let deletedBy;
-    try {
-      deletedBy = await fetchUserEmail();
-    } catch (error) {
-      console.error("Error fetching logged-in user's email:", error);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${server}/api/projects/${projectId}/tasks/${columnId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ deletedBy }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to remove column");
+  const handleRemoveColumn = async () => {
+    if (selectedColumnId) {
+      let deletedBy;
+      try {
+        deletedBy = await fetchUserEmail();
+      } catch (error) {
+        console.error("Error fetching logged-in user's email:", error);
+        return;
       }
 
-      setBoardData((prevState) => ({
-        ...prevState,
-        columns: prevState.columns.filter((column) => column.id !== columnId),
-      }));
+      try {
+        const response = await fetch(
+          `${server}/api/projects/${projectId}/tasks/${selectedColumnId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ deletedBy }), // Include deletedBy
+          }
+        );
 
-      setShowDeleteSuccess(true);
-      setTimeout(() => {
-        setShowDeleteSuccess(false);
-      }, 3000);
-      notification.success({
-        message: "Column Deleted Successfully",
-      });
-    } catch (error) {
-      console.error("Error removing column:", error);
-      notification.error({
-        message: "Failed to delete column",
-        description: error.message,
-      });
+        if (!response.ok) {
+          throw new Error("Failed to remove column");
+        }
+
+        setBoardData((prevState) => ({
+          ...prevState,
+          columns: prevState.columns.filter(
+            (column) => column.id !== selectedColumnId
+          ),
+        }));
+
+        // Show success message
+        setShowDeleteSuccess(true);
+
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setShowDeleteSuccess(false);
+        }, 3000);
+      } catch (error) {
+        console.error("Error removing column:", error);
+      }
     }
-  };
-  const showRemoveColumnConfirmation = (columnId) => {
-    Modal.confirm({
-      title: "Are you sure you want to remove this column?",
-      onOk() {
-        handleRemoveColumn(columnId);
-      },
-    });
+    closeModal();
+    setShowConfirmation(false);
   };
 
   const openModal = (columnId, type) => {
@@ -1242,8 +1081,65 @@ function KanbanBoard() {
     fetchProjectDetails();
   }, [server, projectId]); // Dependencies for useEffect
 
+  //add team
+  const handleTeamSubmit = async () => {
+    if (!email || !team) {
+      notification.warning({
+        message: "Please fill in all fields",
+        // description: "We can't assign the admin to the project",
+      });
+      return;
+    }
+
+    try {
+      // Fetch the logged-in user's email
+      const addedBy = await fetchUserEmail();
+
+      // Proceed with adding the user to the team
+      const response = await fetch(
+        `${server}/api/projects/${projectId}/teams/addUser`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ email, teamName: team, addedBy }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Check if the user is ADMIN based on the response from backend
+        if (data.userRole === "ADMIN") {
+          console.log("Admin email:", email); // Log admin email
+
+          notification.warning({
+            message: "We can't assign the admin to the project",
+          });
+        } else {
+          alert(`${data.message}`);
+        }
+        return;
+      }
+
+      notification.success({
+        message: "User added to team successfully",
+      });
+      setMemberAdded(true); // Set the state to true
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+
+      notification.warning({
+        message: "An error occurred while adding user to team",
+      });
+    }
+  };
+
   async function handleChangeStatus(cardId, newStatus) {
-    try { 
+    try {
       // Fetch the user's email (updatedBy)
       const updatedBy = await fetchUserEmail();
       // Get the current date and time (updatedDate)
@@ -1282,303 +1178,542 @@ function KanbanBoard() {
     }
   }
 
-  //added
-  const statusMenu = (cardId) => (
-    <Menu
-      onClick={(e) => handleChangeStatus(cardId, e.key)}
-      items={[
-        { key: "pending", label: "Pending" },
-        { key: "inprogress", label: "Inprogress" },
-        { key: "completed", label: "Completed" },
-      ]}
-    />
-  );
+  const handleaddmember = async (event) => {
+    const value = event.target.value;
+    setEmail(value);
+
+    if (value) {
+      try {
+        const response = await axios.get(`${server}/api/users/search`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          params: { email: value },
+        });
+
+        setEmailSuggestions(response.data.users);
+      } catch (error) {
+        console.error("Error fetching user emails:", error);
+      }
+    } else {
+      setEmailSuggestions([]);
+    }
+  };
 
   const renderCard = (card, { dragging }) => (
     <div
       className={`react-kanban-card ${dragging ? "dragging" : ""}`}
-      style={{ borderRadius: "10px", maxWidth: "750px", overflow: "hidden" }}
-      onClick={() => handleCardClick(card.id, card.columnId, projectId)}
+      style={{ borderRadius: "20px", maxWidth: "750px" }}
     >
-      <div className="p-4">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-          key={card.id}
-        >
-          {/* <Tooltip title={card.title}> */}
-            <div className="react-kanban-card__title truncate">
-              {card.title && card.title.length > 20
-                ? card.title.slice(0, 20) + "..."
-                : card.title}
-            </div>
-         
-          <div className="react-kanban-card__assignedTo flex items-center">
-            {card.assignedTo && (
-              <Tooltip title={card.assignedTo}>
-                <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative">
-                  <span className="cursor-pointer">
-                    {card.assignedTo.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </Tooltip>
-            )}
+      <div className="react-kanban-card__title truncate" title={card.title}>
+        {card.title && card.title.length > 20
+          ? card.title.slice(0, 28) + "..."
+          : card.title}
+      </div>
+      <div
+        className="react-kanban-card__description truncate"
+        title={card.description || ""}
+      >
+        {card.description && card.description.length > 35
+          ? card.description.slice(0, 35) + "..."
+          : card.description || ""}
+      </div>
+      <div className="react-kanban-card__assignedTo flex items-center justify-end">
+        {card.assignedTo && (
+          <div className="profile-picture w-6 h-6 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold ml-2 relative group">
+            <span className="group-hover:block hidden absolute top-8 right-0 bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+              {card.assignedTo}
+            </span>
+            {card.assignedTo.charAt(0).toUpperCase()}
           </div>
-        </div>
-        <div className="react-kanban-card__dueDate">
-          {card.dueDate && (
-            <div className="text-sm text-gray-500">
-              Due Date:{" "}
-              {new Date(card.dueDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-              })}
-            </div>
-          )}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div className="react-kanban-card__status">
-              <Select
-                value={card.status}
-                onChange={(value) => handleChangeStatus(card.id, value)}
-                onClick={(e) => e.stopPropagation()} // Prevent modal from opening
-                style={{ width: 110, height: 25 }} // Adjust width as needed
-              >
-                <Option value="pending">Pending</Option>
-                <Option value="inprogress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-              </Select>
-            </div>
-            <Tooltip title={`Card ID: ${card.cardId}`}>
-              <div style={{ marginLeft: "10px", font: "small-caption" }}>
-                <h1>ID:{card.cardId}</h1>
-              </div>
-            </Tooltip>
-          </div>
+        )}
+      </div>
 
-          {canShowActions && (
-            <button
-              className="delete-card-button"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent click event from bubbling up
-                confirmRemoveCard(card.columnId, card.id);
-              }}
-              style={{
-                marginRight: "10px",
-                color: "red",
-                paddingTop: "5px",
-                marginLeft: "30%",
-                marginTop: "3%",
-              }}
-            >
-              {/* <BsTrash /> */}
-            </button>
-          )}
+      <div className="react-kanban-card__assignDate">
+        {card.assignDate && (
+          <div className="text-sm text-gray-500">
+            Assign Date:{" "}
+            {new Date(card.assignDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            })}
+          </div>
+        )}
+      </div>
+      <div className="react-kanban-card__dueDate">
+        {card.dueDate && (
+          <div className="text-sm text-gray-500">
+            Due Date:{" "}
+            {new Date(card.dueDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            })}
+          </div>
+        )}
+      </div>
+      <div className="react-kanban-card__status">
+        <select
+          value={card.status}
+          onChange={(e) => handleChangeStatus(card.id, e.target.value)}
+        >
+          <option value="pending">Pending</option>
+          <option value="inprogress">Inprogress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "10px",
+        }}
+      >
+        {canShowActions && (
           <button
             className="delete-card-button"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent click event from bubbling up
-              openRenameCardModal(
-                card.columnId,
-                card.id,
-                card.title,
-                card.description,
-                card.comments,
-                card.activities,
-                card.taskLogs
-              );
-            }}
-            style={{ color: "black", marginTop: "4%" }}
+            onClick={() => confirmRemoveCard(card.columnId, card.id)}
           >
-            {/* <BsFillPencilFill /> */}
+            <BsTrash />
           </button>
-        </div>
+        )}
+
+        <button
+          className="delete-card-button"
+          onClick={() =>
+            openRenameCardModal(
+              card.columnId,
+              card.id,
+              card.title,
+              card.description,
+              card.comments
+            )
+          }
+        >
+          <BsPencilSquare />
+        </button>
       </div>
     </div>
   );
 
-  //
+  ////
 
-  const fetchTasks1 = async () => {
-    try {
-      const response = await axios.get(
-        `${server}/api/projects/${projectId}/tasks`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+  const handleSaveComment = async () => {
+    if (comment.trim()) {
+      try {
+        const updatedBy = await fetchUserEmail();
+
+        const response = await fetch(
+          `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              updatedBy: updatedBy,
+              comment: comment.trim(),
+              name: renameCardTitle,
+              description: renameCardDescription,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to save comment");
         }
-      );
-      setTasks(response.data.tasks);
-      console.log("tasks1 done");
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
+
+        // Update local state immediately
+        setBoardData((prevState) => {
+          const updatedColumns = prevState.columns.map((column) => {
+            if (column.id === selectedColumnId) {
+              return {
+                ...column,
+                cards: column.cards.map((card) => {
+                  if (card.id === selectedCardId) {
+                    return {
+                      ...card,
+                      comments: [
+                        ...card.comments,
+                        { commentBy: userEmail, comment: comment.trim() },
+                      ],
+                    };
+                  }
+                  return card;
+                }),
+              };
+            }
+            return column;
+          });
+
+          return { ...prevState, columns: updatedColumns };
+        });
+
+        // Update the comments state
+        setComments([
+          ...comments,
+          { commentBy: userEmail, comment: comment.trim() },
+        ]);
+
+        // Clear the comment input
+        setComment("");
+
+        // Optionally fetch the latest data from the server
+        await fetchTasks();
+      } catch (error) {
+        console.error("Error saving comment:", error);
+      }
     }
   };
-  useEffect(() => {
-    fetchTasks1();
-  }, [boardData]);
 
+  const handleRenameCard = async (e) => {
+    e.preventDefault();
+    const trimmedTitle = renameCardTitle.trim();
+    const trimmedDescription = renameCardDescription.trim();
+    let hasErrors = false;
+    const errors = { title: "", description: "" };
 
+    if (!trimmedTitle) {
+      errors.title = "Please enter a card title";
+      hasErrors = true;
+    }
+    if (!trimmedDescription) {
+      errors.description = "Please enter a card description";
+      hasErrors = true;
+    }
 
+    if (hasErrors) {
+      setRenameCardErrors(errors);
+      return;
+    }
+
+    try {
+      const updatedBy = await fetchUserEmail();
+
+      const response = await fetch(
+        `${server}/api/tasks/${selectedColumnId}/cards/${selectedCardId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            name: trimmedTitle,
+            description: trimmedDescription,
+            updatedBy: updatedBy,
+            updatedDate: new Date().toISOString(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to rename card");
+      }
+
+      // Update local state
+      setBoardData((prevState) => {
+        const updatedColumns = prevState.columns.map((column) => {
+          if (column.id === selectedColumnId) {
+            return {
+              ...column,
+              cards: column.cards.map((card) =>
+                card.id === selectedCardId
+                  ? {
+                      ...card,
+                      title: trimmedTitle,
+                      description: trimmedDescription,
+                    }
+                  : card
+              ),
+            };
+          }
+          return column;
+        });
+
+        return { ...prevState, columns: updatedColumns };
+      });
+
+      // Optionally fetch the latest data from the server
+      await fetchTasks();
+
+      setRenameCardErrors({ title: "", description: "" });
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        setRenameCardModalVisible(false); // Close the modal after showing success message
+      }, 1000);
+    } catch (error) {
+      console.error("Error renaming card:", error);
+    }
+  };
 
   return (
     <div
-      className="  bg-light-multicolor h-[calc(100vh-57px)] rounded-xl "
+      className="p-4 overflow-y-auto h-auto bg-light-multicolor rounded-3xl"
       style={
         bgUrl
           ? {
-            backgroundImage: `url(${bgUrl.raw})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            width: "100%",
-          }
+              backgroundImage: `url(${bgUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              height: "100vh",
+              width: "100%",
+            }
           : {}
       }
     >
-      <div className="flex justify-between items-center  bg-gray-500 bg-opacity-20 pl-2 pb-2 ">
+      <div>
+        {renameCardModalVisible && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-3xl w-5/12">
+              <h2 className="text-lg font-bold mb-4">Rename Card</h2>
+              <form onSubmit={handleRenameCard}>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={renameCardTitle}
+                    onChange={(e) => {
+                      setRenameCardTitle(e.target.value);
+                      setRenameCardErrors((prev) => ({ ...prev, title: "" }));
+                    }}
+                    className={`border ${
+                      renameCardErrors.title
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } rounded-3xl px-4 py-2 w-full`}
+                    placeholder="Card Title"
+                  />
+                  {renameCardErrors.title && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {renameCardErrors.title}
+                    </p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <textarea
+                    value={renameCardDescription}
+                    onChange={(e) => {
+                      setRenameCardDescription(e.target.value);
+                      setRenameCardErrors((prev) => ({
+                        ...prev,
+                        description: "",
+                      }));
+                    }}
+                    className={`border ${
+                      renameCardErrors.description
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } rounded-3xl px-4 py-2 w-full`}
+                    placeholder="Card Description"
+                  />
+                  {renameCardErrors.description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {renameCardErrors.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRenameCardModalVisible(false);
+                      setRenameCardErrors({ title: "", description: "" });
+                    }}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+              <div className="mt-4 h-96 overflow-y-auto">
+                <div className="flex items-center mb-4 pt-6">
+                  <RxActivityLog size={24} className="mr-2" />
+                  <h2 className="text-lg font-bold">Activity</h2>
+                  <button
+                    onClick={() => setCommentsVisible(!commentsVisible)}
+                    className="ml-auto bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+                  >
+                    {commentsVisible ? "Hide Comments" : "Show Comments"}
+                  </button>
+                </div>
+                <div className="flex items-center mb-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                    V
+                  </div>
+                  <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Write your comment"
+                    className="border border-gray-300 rounded-3xl px-4 py-2 w-full ml-2"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSaveComment}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl mt-2"
+                >
+                  Save Comment
+                </button>
+                {commentsVisible && (
+                  <div className="flex flex-col space-y-4 pt-6">
+                    {comments
+                      .slice()
+                      .reverse()
+                      .map((comment, idx) => (
+                        <div
+                          key={idx}
+                          className={`ml-2 text-gray-700 mt-2 flex items-start ${
+                            idx === 0
+                              ? "bg-gray-100 p-2 rounded-lg"
+                              : "bg-white p-2 rounded-lg"
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex justify-center items-center font-bold">
+                            {comment.commentBy[0].toUpperCase()}
+                          </div>
+                          <p className="ml-2">
+                            <span className="font-bold">
+                              {comment.commentBy}
+                            </span>
+                            : {comment.comment}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showSuccessPopup && (
+          <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
+            <div className="bg-green-400 p-2 rounded-xl">
+              <h2 className="text-lg text-white font-bold mb-2">
+                Card renamed successfully
+              </h2>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: textColor }}>
-            Project : <span className="font-normal">{projectName}</span>
-          </h1>
-          <h1 className="text-xl font-semibold" style={{ color: textColor }}>
-            Project Manager : <span className="font-normal">{projectManager}</span>
+          <h1 className="text-xl font-semibold">Project : {projectName}</h1>
+          <h1 className="text-xl font-semibold">
+            Project Manager : {projectManager}
           </h1>
         </div>
         <div className="flex space-x-2 ">
-          <Button
-            type="primary"
-            icon={<Plus />}
-            onClick={handleAddColumn}
-            style={{ borderRadius: "8px" }}
-          >
-            New Column
-          </Button>
-
-          <>
-            <Button type="text" icon={<SquareMenu style={{ color: textColor }} />} onClick={showDrawer} />
-
-            <Drawer
-              title="Settings"
-              placement="right"
-              onClose={onClose}
-              visible={visible}
-              width={300} // Adjust width as needed
+          {/* {canShowActions && (
+            <button
+              onClick={handleOpenModal}
+              className={`${memberAdded ? "bg-gray-400" : "bg-green-500"
+                } text-white px-4 py-2 rounded-full`}
+              disabled={memberAdded}
             >
-              {showBackgroundChange && (
-                <BackgroundChange
-                  onClose={() => setShowBackgroundChange(false)} // Close BackgroundChange without closing Drawer
-                  onImageSelect={onClose} // Close the Drawer when an image is selected
-                />
-              )}
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <button
-                  type="button" // Changed to 'button' for semantic correctness
-                  className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  onClick={() => {
-                    openGitModal();
-                    onClose(); // Close the Drawer after opening Git Modal
-                  }}
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                    paddingRight: "25px",
-                  }}
-                >
-                  <SettingOutlined
-                    style={{
-                      fontSize: 20,
-                      display: "flex",
-                      justifyItems: "left",
-                    }}
+              {memberAdded ? "Member Added" : "+ Add member"}
+            </button>
+          )} */}
+          {/* added */}
+
+          {isModalOpen && (
+            <div className="fixed inset-0 flex items-center justify-center bg-slate-700 z-50 bg-opacity-50">
+              <div className="bg-white p-6 w-96 rounded-3xl shadow-4xl">
+                <div className="relative">
+                  <label className="block mb-2">Email:</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleaddmember}
+                    placeholder="Enter email address"
+                    className="border border-gray-300 p-2 rounded-3xl w-full"
                   />
-                  Git Configuration
-                </button>
-                {isProjectRoute && (
-                  <button
-                    type="button"
-                    className="flex flex-row items-left justify-left gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                    onClick={() => setShowBackgroundChange(true)} // Only show BackgroundChange
-                    style={{
-                      height: "40px",
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
+                  {emailSuggestions.length > 0 && (
+                    <ul
+                      className="absolute bg-white border border-gray-300 rounded-3xl mt-2 w-full z-10"
+                      ref={suggestionListRef}
+                    >
+                      {emailSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.email}
+                          onClick={() => {
+                            setEmail(suggestion.email);
+                            setEmailSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                        >
+                          {suggestion.email}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <label className="block mb-2">Team:</label>
+                  <select
+                    value={team}
+                    onChange={(e) => setTeam(e.target.value)}
+                    className="border border-gray-300 p-2 rounded-3xl w-full"
                   >
-                    <SquareChevronDown style={{ fontSize: 20 }} />
-                    Change Background
+                    <option value="">Select a team</option>
+                    <option value="Development">Development</option>
+                    <option value="DevOps">DevOps</option>
+                    <option value="Testing">Testing</option>
+                  </select>
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <button
+                    className="bg-gray-500 text-white px-4 py-2 rounded-3xl mr-2"
+                    onClick={handleCloseModal}
+                  >
+                    Cancel
                   </button>
-                )}
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                    onClick={() => handleTeamSubmit()}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                <RulesButton
-                  tasks={tasks}
-                  className="flex flex-row justify-center items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-                  style={{
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
+          {/* <button
+            className="bg-blue-500 text-white px-4 py-2 rounded-full"
+            onClick={handleTeamsClick}
+          >
+            Teams
+          </button> */}
+          <button
+            onClick={openGitModal}
+            className="bg-green-500 text-white px-4 py-2 rounded-full"
+          >
+            Git Configuration
+          </button>
 
-                />
-                {/* <Button
-                  type="text"
-                  icon={<InfoCircleOutlined />}
-                  onClick={showAboutModal}
-                  style={{
-                    display: "flex",
-                    fontSize: 15,
-                    justifyItems: "left",
-                  }}
-                >
-                  About
-                </Button> */}
-                <button
-      type="button"
-      className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
-      onClick={showAboutModal}
-      style={{
-        height: "40px",
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        fontSize: 15,
-      }}
-    >
-      <InfoCircleOutlined style={{ fontSize: 20 }} />
-      About
-    </button>
-
-              </Space>
-            </Drawer>
-
-            <Modal
-              title="About Project"
-              visible={aboutModalVisible}
-              onCancel={handleAboutModalClose}
-              footer={null}
-            >
-              <Title level={4}>Project: {projectName}</Title>
-              <Paragraph>Project description: {projectDescription}</Paragraph>
-            </Modal>
-          </>
+          <button
+            onClick={handleAddColumn}
+            className="bg-blue-500 text-white px-4 py-2 rounded-full"
+          >
+            + New Column
+          </button>
         </div>
       </div>
       <div ref={containerRef} className="overflow-x-auto">
@@ -1623,9 +1758,6 @@ function KanbanBoard() {
                 display: "flex",
                 flexDirection: "column",
                 width: "300px",
-                // position:"fixed",
-                position: "sticky",
-                // zIndex: 1000,
               }}
             >
               <div
@@ -1633,83 +1765,38 @@ function KanbanBoard() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-
                   marginBottom: "0.5rem",
                   padding: "0.5rem",
                   backgroundColor: "#F7FAFC",
-
-                  // marginBottom: "0.5rem",
-                  // padding: "0.5rem",
-
-                  backgroundColor: "#ededed",
-
-                  // borderRadius: "20px",
-                }}
-                onDoubleClick={() => {
-                  setEditingColumnId(id);
-                  setTempColumnName(title);
+                  borderRadius: "20px",
                 }}
               >
-                {editingColumnId === id ? (
-                  <input
-                    type="text"
-                    value={tempColumnName}
-                    onChange={(e) => setTempColumnName(e.target.value)}
-                    onBlur={() => handleColumnNameBlur(id)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handleColumnNameBlur(id);
-                      }
-                    }}
-                    autoFocus
-                    className="w-full p-1 border rounded"
-                  />
-                ) : (
-                  <span className="truncate max-w-[200px]" title={title}>
-                    {title}
-                  </span>
-                )}
+                <span className="truncate max-w-[200px]" title={title}>
+                  {title}
+                </span>
                 {canShowActions && (
-                  <Popover
-                    content={
-                      <div>
-                        <Button
-                          type="text"
-                          block
-                          onClick={() => showRemoveColumnConfirmation(id)}
-                        >
-                          Remove Column
-                        </Button>
-                      </div>
-                    }
-                    trigger="click"
-                    placement="bottomRight"
+                  <button
+                    onClick={() => openModal(id, "options")}
+                    className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
                   >
-                    <Button
-                      type="text"
-                      icon={<MoreOutlined />}
-                      className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 focus:outline-none p-2 rounded-full"
-                    />
-                  </Popover>
+                    <BsThreeDotsVertical />
+                  </button>
                 )}
               </div>
-              {canShowActions && (
-                <button
-                  onClick={() => openModal(id, "addCard")}
-                  style={{
-                    width: "100%",
-                    backgroundColor: "white",
-                    borderBottomLeftRadius: "0.375rem",
-                    borderBottomRightRadius: "0.375rem",
-                    padding: "0.5rem",
-                    color: "#5f5e5e",
-                    textAlign: "center",
-                    paddingLeft: "50%",
-                  }}
-                >
-                  <FaPlus />
-                </button>
-              )}
+              <button
+                onClick={() => openModal(id, "addCard")}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#EDF2F7",
+                  borderBottomLeftRadius: "0.375rem",
+                  borderBottomRightRadius: "0.375rem",
+                  padding: "0.5rem",
+                  color: "#4A5568",
+                  textAlign: "center",
+                }}
+              >
+                +
+              </button>
             </div>
           )}
           renderCard={renderCard}
@@ -1719,183 +1806,114 @@ function KanbanBoard() {
       </div>
 
       {modalVisible && modalType === "addCard" && (
-  <div
-    className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-    onClick={(e) => {
-      if (e.target === e.currentTarget) {
-        clearFieldsAndRefresh();
-      }
-    }}
-  >
-    <div className="bg-white w-[800px] p-6 rounded-lg shadow-lg">
-      <h2 className="text-lg font-semibold mb-4">Add New Card</h2>
-      <form onSubmit={handleAddCard}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Title"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value.trimStart())}
-            />
-            {titleError && (
-              <p className="text-red-500 text-sm mt-1">{titleError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="assignedEmail"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Assigned (Email)
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Enter email address"
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-            {emailSuggestions.length > 0 && (
-              <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                {emailSuggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.email}
-                    onClick={() => {
-                      setEmail(suggestion.email);
-                      setEmailSuggestions([]);
-                    }}
-                    className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
-                  >
-                    {suggestion.email}
-                  </li>
-                ))}
-              </ul>
-            )}
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white w-96  p-6 rounded-3xl shadow-lg">
+            <h2 className="text-lg font-bold mb-4">Add New Card</h2>
+            <form onSubmit={handleAddCard}>
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Card Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
+                placeholder="Card Title"
+                required
+                onChange={(e) => (e.target.value = e.target.value.trimStart())}
+              />
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Card Description
+              </label>
+              <textarea
+                name="description"
+                className="border border-gray-300 rounded-xl px-4 py-2 mb-4 w-full"
+                placeholder="Card Description"
+                required
+                onChange={(e) => (e.target.value = e.target.value.trimStart())}
+              />
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Assigned To (Email)
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={handleEmailChange}
+                placeholder="Enter email address"
+                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
+              />
+              {emailSuggestions.length > 0 && (
+                <ul
+                  className="absolute bg-white border border-gray-300 rounded-3xl mt-2 w-80 z-10"
+                  ref={suggestionListRef}
+                >
+                  {emailSuggestions.map((suggestion) => (
+                    <li
+                      key={suggestion.email}
+                      onClick={() => {
+                        setEmail(suggestion.email);
+                        setEmailSuggestions([]);
+                      }}
+                      className="p-2 hover:bg-gray-200  rounded-3xl cursor-pointer"
+                    >
+                      {suggestion.email}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <label
+                htmlFor="assignDate"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Assigned Date
+              </label>
+              <input
+                type="datetime-local"
+                name="assignDate"
+                required
+                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
+              />
+              <label
+                htmlFor="dueDate"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Due Date
+              </label>
+              <input
+                type="datetime-local"
+                name="dueDate"
+                required
+                className="border border-gray-300 p-2 rounded-3xl w-full mb-4"
+              />
+
+              {/* Email suggestions list */}
+              <div className="flex px-4 py-2 justify-between">
+                <button
+                  type="button"
+                  onClick={clearFieldsAndRefresh}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                >
+                  Add Card
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="assignDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Date
-            </label>
-            <input
-              type="datetime-local"
-              name="assignDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={new Date().toISOString().slice(0, 16)} // Disable past dates
-              value={startDate}
-              onChange={handleStartDateChange}
-            />
-            {startDateError && (
-              <p className="text-red-500 text-sm mt-1">{startDateError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="dueDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Date
-            </label>
-            <input
-              type="datetime-local"
-              name="dueDate"
-              required
-              className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={startDate || new Date().toISOString().slice(0, 16)} // Disable past dates and enforce start date restriction
-              value={endDate}
-              onChange={handleEndDateChange}
-            />
-            {endDateError && (
-              <p className="text-red-500 text-sm mt-1">{endDateError}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="estimatedHours"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Estimated Hours
-            </label>
-            <input
-              type="number"
-              name="estimatedHours"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Estimated Hours"
-              required
-              min="0"
-              step="0.1"
-              value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value)}
-            />
-            {estimatedHoursError && (
-              <p className="text-red-500 text-sm mt-1">{estimatedHoursError}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Card Description
-            </label>
-            <textarea
-              name="description"
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Card Description"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value.trimStart())}
-            />
-            {descriptionError && (
-              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={clearFieldsAndRefresh}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-          >
-            Add Card
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
+      )}
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -1919,6 +1937,13 @@ function KanbanBoard() {
           </div>
         </div>
       )}
+      {showDeleteSuccess && (
+        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
+            <p className="font-semibold">Column deleted successfully</p>
+          </div>
+        </div>
+      )}
       {showSuccessMessage && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50">
           <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
@@ -1928,48 +1953,62 @@ function KanbanBoard() {
       )}
 
       {newColumnModalVisible && (
-        <Modal
-          title="Add New Column"
-          visible={newColumnModalVisible}
-          onCancel={() => setNewColumnModalVisible(false)}
-          footer={null}
-        >
-          <Form onFinish={handleAddColumnSubmit}>
-            <Form.Item
-              validateStatus={newColumnError ? "error" : ""}
-              help={newColumnError ? "Please enter a column name" : ""}
-            >
-              <Input
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto">
+          <div className="bg-white p-6 w-96 rounded-3xl shadow-lg max-h-screen ">
+            <h2 className="text-lg font-bold mb-4">Add New Column</h2>
+
+            <form onSubmit={handleAddColumnSubmit}>
+              <input
+                type="text"
                 value={newColumnName}
                 onChange={(e) => {
                   setNewColumnName(e.target.value.trimStart());
                   setNewColumnError(false);
                 }}
+                className={`border ${
+                  newColumnError ? "border-red-500" : "border-gray-300"
+                } rounded-xl px-3 py-3 mb-4 w-full`}
                 placeholder="Column Name"
-                size="large"
+                required
               />
-            </Form.Item>
-            <Form.Item>
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setNewColumnModalVisible(false)}
-                  style={{ marginRight: 8 }}
+              {newColumnError && (
+                <p className="text-red-500 text-sm mb-2">
+                  Please enter a column name
+                </p>
+              )}
+              <div className="flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewColumnModalVisible(false);
+                    setNewColumnError(false);
+                  }}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl mr-2"
                 >
                   Cancel
-                </Button>
-                <Button type="primary" htmlType="submit" loading={loading}>
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-3xl"
+                >
                   Add Column
-                </Button>
+                </button>
               </div>
-            </Form.Item>
-          </Form>
-        </Modal>
+            </form>
+          </div>
+        </div>
       )}
 
       {modalVisible && modalType === "options" && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-3xl shadow-lg">
             <h2 className="text-lg font-bold mb-4">Column Options</h2>
+            <button
+              onClick={() => setShowRenameInput(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
+            >
+              Rename Column
+            </button>
             <button
               onClick={() => setShowConfirmation(true)}
               className="bg-blue-500 text-white px-4 py-2 rounded-3xl w-full mb-2"
@@ -1986,6 +2025,7 @@ function KanbanBoard() {
               <BsX className="text-gray-500" />
             </button>
           </div>
+
           {showConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
@@ -2009,6 +2049,55 @@ function KanbanBoard() {
               </div>
             </div>
           )}
+          {showRenameInput && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div className="bg-white p-6 rounded-3xl h-1/3 w-4/12 shadow-lg">
+                <h2 className="text-lg font-bold mb-4">Rename Column</h2>
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => {
+                    setNewColumnName(e.target.value.trimStart());
+                    setRenameColumnError(false);
+                  }}
+                  className={`border rounded-2xl p-2 w-full mb-4 ${
+                    renameColumnError ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter the new name for the column"
+                />
+                {renameColumnError && (
+                  <p className="text-red-500 text-sm mb-2">
+                    Please enter a column name
+                  </p>
+                )}
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => {
+                      if (newColumnName.trim()) {
+                        setShowRenameInput(false);
+                        setShowRenameConfirmation(true);
+                      } else {
+                        setRenameColumnError(true);
+                      }
+                    }}
+                    className="bg-green-500 text-white px-4 py-2 rounded-3xl"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRenameInput(false);
+                      setRenameColumnError(false);
+                    }}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-3xl"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showRenameConfirmation && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-3xl shadow-lg">
@@ -2037,31 +2126,21 @@ function KanbanBoard() {
           )}
         </div>
       )}
+
       {isGitModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div
-            className={`bg-white p-6 rounded-lg shadow-lg w-2/3 h-5/6 overflow-y-auto relative transition-transform transition-opacity duration-300 ease-out transform ${isGitModalOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"
-              }`}
+            className="bg-white p-6 rounded-3xl shadow-lg w-2/3 h-5/6 overflow-y-auto"
+            style={{ scrollbarWidth: "none" }}
           >
-            <button
-              onClick={closeGitModal}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-              aria-label="Close modal"
-            >
-              <X size={24} />
-            </button>
-            <h2 className="text-xl font-semibold mb-6 border-b pb-2">
-              Git Configuration
-            </h2>
-            <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-2">
-                Quick setup — if you've done this kind of thing before
-              </p>
-              <div className="flex justify-between items-center bg-gray-100 p-3 rounded-md shadow-sm">
+            <h2 className="text-lg font-bold mb-4">Git Configuration</h2>
+            <div className="bg-gray-100 p-4 rounded mb-4">
+              <p>Quick setup — if you've done this kind of thing before</p>
+              <div className="flex justify-between items-center bg-gray-200 p-2 rounded">
                 <code className="text-sm overflow-x-auto">{repository}</code>
                 <button
                   onClick={() => copyToClipboard(repository, "button1")}
-                  className="ml-2 p-2 rounded bg-gray-200 hover:bg-gray-300"
+                  className="ml-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
                 >
                   {copiedButton === "button1" ? (
                     "Copied"
@@ -2071,63 +2150,66 @@ function KanbanBoard() {
                 </button>
               </div>
             </div>
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-gray-800 mb-2">
+            <div className="bg-gray-100 p-4 rounded mb-4">
+              <p className="font-semibold">
                 ...or create a new repository on the command line
               </p>
-              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
-                <pre ref={newRepoRef} className="whitespace-pre-wrap">
-                  <code>
-                    {`echo "# ${repoName}" >> README.md
+              <pre
+                ref={newRepoRef}
+                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+              >
+                {`echo "# ${repoName}" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git branch -M main
 git remote add origin ${repository}
 git push -u origin main`}
-                  </code>
-                </pre>
-                <button
-                  onClick={() =>
-                    copyToClipboard(newRepoRef.current.innerText, "button2")
-                  }
-                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
-                >
-                  {copiedButton === "button2" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
-                </button>
-              </div>
+              </pre>
+              <button
+                onClick={() =>
+                  copyToClipboard(newRepoRef.current.innerText, "button2")
+                }
+                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+              >
+                {copiedButton === "button2" ? (
+                  "Copied"
+                ) : (
+                  <MdOutlineContentCopy />
+                )}
+              </button>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-800 mb-2">
+            <div className="bg-gray-100 p-4 rounded mb-4">
+              <p className="font-semibold">
                 ...or push an existing repository from the command line
               </p>
-              <div className="relative bg-gray-100 p-3 rounded-md shadow-sm">
-                <pre ref={existingRepoRef} className="whitespace-pre-wrap">
-                  {`git remote add origin ${repository}
+              <pre
+                ref={existingRepoRef}
+                className="bg-gray-200 p-2 rounded whitespace-pre-wrap"
+              >
+                {`git remote add origin ${repository}
 git branch -M main
 git push -u origin main`}
-                </pre>
-                <button
-                  onClick={() =>
-                    copyToClipboard(
-                      existingRepoRef.current.innerText,
-                      "button3"
-                    )
-                  }
-                  className="absolute right-2 top-2 bg-gray-200 hover:bg-gray-300 p-1 rounded"
-                >
-                  {copiedButton === "button3" ? (
-                    "Copied"
-                  ) : (
-                    <MdOutlineContentCopy />
-                  )}
-                </button>
-              </div>
+              </pre>
+              <button
+                onClick={() =>
+                  copyToClipboard(existingRepoRef.current.innerText, "button3")
+                }
+                className="mt-2 bg-gray-300 p-1 rounded hover:bg-gray-400"
+              >
+                {copiedButton === "button3" ? (
+                  "Copied"
+                ) : (
+                  <MdOutlineContentCopy />
+                )}
+              </button>
             </div>
+            <button
+              onClick={closeGitModal}
+              className="bg-red-600 text-white p-2 rounded mt-4 w-full text-center"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

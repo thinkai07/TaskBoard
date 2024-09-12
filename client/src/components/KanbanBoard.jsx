@@ -823,7 +823,6 @@ function KanbanBoard() {
     return () => clearInterval(intervalId);
   }, []);
 
-  
   const handleCardMove = async (card, source, destination) => {
     // Optimistically update the UI
     const updatedBoard = moveCard(boardData, source, destination);
@@ -832,8 +831,8 @@ function KanbanBoard() {
     const movedBy = await fetchUserEmail();
   
     try {
+      // Check if the card is being moved within the same column (reordering)
       if (source.fromColumnId === destination.toColumnId) {
-        // Reorder card within the same column
         const response = await axios.put(
           `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
           {
@@ -845,7 +844,7 @@ function KanbanBoard() {
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            }
           }
         );
   
@@ -853,21 +852,21 @@ function KanbanBoard() {
           throw new Error("Failed to reorder card");
         }
       } else {
-        // Move card to a different column
+        // Moving card to a different column
         const response = await axios.put(
           `${server}/api/cards/${card.id}/move`,
           {
             sourceTaskId: source.fromColumnId,
             destinationTaskId: destination.toColumnId,
             sourceIndex: source.fromPosition,
-            destinationIndex: destination.toPosition, // Pass the destination index
+            destinationIndex: destination.toPosition,
             movedBy,
             movedDate: new Date().toISOString(),
           },
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            }
           }
         );
   
@@ -884,12 +883,6 @@ function KanbanBoard() {
       setBoardData(boardData);
     }
   };
-  
-  
-  
-  
-
-
   
   
 

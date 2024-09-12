@@ -1241,7 +1241,7 @@ app.post("/api/addUser",
       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
         expiresIn: "3d",
       });
-      const resetLink = `http://localhost:5000/reset-password?token=${token}`;
+      const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
       sendResetEmail(email, resetLink);
 
@@ -1370,7 +1370,7 @@ app.post("/api/forgot-password", async (req, res) => {
     await user.save();
 
     // Create the reset link using the JWT token
-    const resetLink = `http://13.235.16.113/forgot-password?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/forgot-password?token=${resetToken}`;
 
     // Set up email options
     const mailOptions = {
@@ -2566,9 +2566,51 @@ app.post("/api/notifications/unread", async (req, res) => {
   }
 });
 
+app.put("/api/tasks/:taskId/cards/:cardId/reorder", authenticateToken, async (req, res) => {
+  const { taskId, cardId } = req.params;
+  const { newIndex, oldIndex, movedBy, movedDate } = req.body;
+
+  try {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Remove card from the old index
+    const cardIndex = task.card.indexOf(cardId);
+    if (cardIndex === -1) {
+      return res.status(404).json({ message: "Card not found in task" });
+    }
+    task.card.splice(oldIndex, 1); // Remove from old index
+
+    // Insert card at the new index
+    task.card.splice(newIndex, 0, cardId); // Insert at new index
+
+    await task.save();
+
+    // Find the user who moved the card
+    const movedByUser = await User.findOne({ email: movedBy });
+
+    // Create activity log
+    const newActivity = new Activity({
+      commentBy: movedByUser.username,
+      comment: `Card reordered within ${task.name}`,
+      card: cardId,
+    });
+    await newActivity.save();
+
+    res.status(200).json({ message: "Card reordered successfully", task });
+  } catch (error) {
+    console.error("Error reordering card:", error);
+    res.status(500).json({ message: "Error reordering card" });
+  }
+});
+
+
+
 app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
-  const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
+  const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
 
   try {
     const card = await Card.findById(cardId);
@@ -2586,36 +2628,22 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Destination task not found" });
     }
 
-    // Retrieve the card names for the old and new values
-    const sourceCardName = card.name; // Assuming card schema has a 'name' field
-    const destinationCardName = card.name;
-
-    // Create activity for the card move
-    const movedByUser = await User.findOne({ email: movedBy });
-    if (!movedByUser) {
-      return res.status(404).json({ message: "User not found for movedBy" });
-    }
-
-    const cardIndex = sourceTask.card.indexOf(cardId);
-    if (cardIndex === -1) {
-      return res.status(404).json({ message: "Card not found in source task" });
-    }
-    sourceTask.card.splice(cardIndex, 1);
+    // Remove card from the specific index in the source task
+    sourceTask.card.splice(sourceIndex, 1);
     await sourceTask.save();
 
-    destinationTask.card.push(cardId);
+    // Insert the card at the destination index in the destination task
+    destinationTask.card.splice(destinationIndex, 0, cardId);
     await destinationTask.save();
 
+    // Update the card's task reference
     card.task = destinationTaskId;
-    if (!card.movedBy) {
-      card.movedBy = [];
-    }
     card.movedBy.push(movedBy);
     card.movedDate.push(movedDate);
-
     await card.save();
 
-    // Create activity log entry for card move
+    // Create activity log
+    const movedByUser = await User.findOne({ email: movedBy });
     const newActivity = new Activity({
       commentBy: movedByUser.username,
       comment: `Card moved from ${sourceTask.name} to ${destinationTask.name}`,
@@ -2623,54 +2651,24 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     });
     await newActivity.save();
 
-    card.activities.push(newActivity._id);
-    await card.save();
-
-    // Create audit log entry for card move
+    // Create audit log
     const newAuditLog = new AuditLog({
       entityType: "Card",
       entityId: cardId,
       actionType: "move",
       actionDate: movedDate,
       performedBy: movedByUser.username,
-      projectId: sourceTask.project, // Include projectId from source task
+      projectId: sourceTask.project,
       taskId: sourceTaskId,
       cardId,
       destinationTaskId,
       changes: [
-        {
-          field: "task",
-          oldValue: `${sourceTask.name} (Card: ${sourceCardName})`,
-          newValue: `${destinationTask.name} (Card: ${destinationCardName})`,
-        },
+        { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "movedBy", oldValue: null, newValue: movedBy },
         { field: "movedDate", oldValue: null, newValue: movedDate },
       ],
     });
-
     await newAuditLog.save();
-
-    const project = await Project.findById(sourceTask.project);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const assignedUser = await User.findOne({ email: card.assignedTo });
-    if (!assignedUser) {
-      return res.status(404).json({ message: "Assigned user not found" });
-    }
-
-    // Create notification
-    const newNotification = new Notification({
-      userId: assignedUser._id,
-      projectId: sourceTask.project,
-      message: `Card "${card.name}" is moved from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
-      type: "CARD_MOVED",
-      assignedByEmail: movedByUser.name,
-      cardId: card._id,
-    });
-
-    await newNotification.save();
 
     // Emit event
     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
@@ -2681,6 +2679,124 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error moving card" });
   }
 });
+
+
+
+// app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
+//   const { cardId } = req.params;
+//   const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
+
+//   try {
+//     const card = await Card.findById(cardId);
+//     if (!card) {
+//       return res.status(404).json({ message: "Card not found" });
+//     }
+
+//     const sourceTask = await Task.findById(sourceTaskId);
+//     if (!sourceTask) {
+//       return res.status(404).json({ message: "Source task not found" });
+//     }
+
+//     const destinationTask = await Task.findById(destinationTaskId);
+//     if (!destinationTask) {
+//       return res.status(404).json({ message: "Destination task not found" });
+//     }
+
+//     // Retrieve the card names for the old and new values
+//     const sourceCardName = card.name; // Assuming card schema has a 'name' field
+//     const destinationCardName = card.name;
+
+//     // Create activity for the card move
+//     const movedByUser = await User.findOne({ email: movedBy });
+//     if (!movedByUser) {
+//       return res.status(404).json({ message: "User not found for movedBy" });
+//     }
+
+//     const cardIndex = sourceTask.card.indexOf(cardId);
+//     if (cardIndex === -1) {
+//       return res.status(404).json({ message: "Card not found in source task" });
+//     }
+//     sourceTask.card.splice(cardIndex, 1);
+//     await sourceTask.save();
+
+//     destinationTask.card.push(cardId);
+//     await destinationTask.save();
+
+//     card.task = destinationTaskId;
+//     if (!card.movedBy) {
+//       card.movedBy = [];
+//     }
+//     card.movedBy.push(movedBy);
+//     card.movedDate.push(movedDate);
+
+//     await card.save();
+
+//     // Create activity log entry for card move
+//     const newActivity = new Activity({
+//       commentBy: movedByUser.username,
+//       comment: `Card moved from ${sourceTask.name} to ${destinationTask.name}`,
+//       card: card._id,
+//     });
+//     await newActivity.save();
+
+//     card.activities.push(newActivity._id);
+//     await card.save();
+
+//     // Create audit log entry for card move
+//     const newAuditLog = new AuditLog({
+//       entityType: "Card",
+//       entityId: cardId,
+//       actionType: "move",
+//       actionDate: movedDate,
+//       performedBy: movedByUser.username,
+//       projectId: sourceTask.project, // Include projectId from source task
+//       taskId: sourceTaskId,
+//       cardId,
+//       destinationTaskId,
+//       changes: [
+//         {
+//           field: "task",
+//           oldValue: `${sourceTask.name} (Card: ${sourceCardName})`,
+//           newValue: `${destinationTask.name} (Card: ${destinationCardName})`,
+//         },
+//         { field: "movedBy", oldValue: null, newValue: movedBy },
+//         { field: "movedDate", oldValue: null, newValue: movedDate },
+//       ],
+//     });
+
+//     await newAuditLog.save();
+
+//     const project = await Project.findById(sourceTask.project);
+//     if (!project) {
+//       return res.status(404).json({ message: "Project not found" });
+//     }
+
+//     const assignedUser = await User.findOne({ email: card.assignedTo });
+//     if (!assignedUser) {
+//       return res.status(404).json({ message: "Assigned user not found" });
+//     }
+
+//     // Create notification
+//     const newNotification = new Notification({
+//       userId: assignedUser._id,
+//       projectId: sourceTask.project,
+//       message: `Card "${card.name}" is moved from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
+//       type: "CARD_MOVED",
+//       assignedByEmail: movedByUser.name,
+//       cardId: card._id,
+//     });
+
+//     await newNotification.save();
+
+//     // Emit event
+//     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
+
+//     res.status(200).json({ message: "Card moved successfully", card });
+//   } catch (error) {
+//     console.error("Error moving card:", error);
+//     res.status(500).json({ message: "Error moving card" });
+//   }
+// });
 //in page to put comments
 app.put("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
@@ -3428,7 +3544,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
       entityId: cardId,
       actionType: "update",
       actionDate: updatedDate,
-      performedBy: updatedByUser.name,
+      performedBy: updatedByUser.username,
       projectId: card.project, // Include projectId in the audit log
       taskId: card.task, // Include taskId in the audit log
       cardId,

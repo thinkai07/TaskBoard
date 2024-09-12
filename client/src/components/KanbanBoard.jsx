@@ -823,18 +823,21 @@ function KanbanBoard() {
     return () => clearInterval(intervalId);
   }, []);
 
+  
   const handleCardMove = async (card, source, destination) => {
+    // Optimistically update the UI
     const updatedBoard = moveCard(boardData, source, destination);
     setBoardData(updatedBoard);
-
+  
     const movedBy = await fetchUserEmail();
-
+  
     try {
       if (source.fromColumnId === destination.toColumnId) {
-        // Card is reordered within the same task
+        // Reorder card within the same column
         const response = await axios.put(
           `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
           {
+            oldIndex: source.fromPosition,
             newIndex: destination.toPosition,
             movedBy,
             movedDate: new Date().toISOString(),
@@ -845,17 +848,19 @@ function KanbanBoard() {
             },
           }
         );
-
+  
         if (response.status !== 200) {
           throw new Error("Failed to reorder card");
         }
       } else {
-        // Card is moved to a different task
+        // Move card to a different column
         const response = await axios.put(
           `${server}/api/cards/${card.id}/move`,
           {
             sourceTaskId: source.fromColumnId,
             destinationTaskId: destination.toColumnId,
+            sourceIndex: source.fromPosition,
+            destinationIndex: destination.toPosition, // Pass the destination index
             movedBy,
             movedDate: new Date().toISOString(),
           },
@@ -865,12 +870,12 @@ function KanbanBoard() {
             },
           }
         );
-
+  
         if (response.status !== 200) {
           throw new Error("Failed to move card");
         }
       }
-
+  
       // Refetch the board data to ensure frontend and backend are in sync
       await fetchTasks();
     } catch (error) {
@@ -879,6 +884,71 @@ function KanbanBoard() {
       setBoardData(boardData);
     }
   };
+  
+  
+  
+  
+
+
+  
+  
+
+  // const handleCardMove = async (card, source, destination) => {
+  //   const updatedBoard = moveCard(boardData, source, destination);
+  //   setBoardData(updatedBoard);
+
+  //   const movedBy = await fetchUserEmail();
+
+  //   try {
+  //     if (source.fromColumnId === destination.toColumnId) {
+  //       // Card is reordered within the same task
+  //       const response = await axios.put(
+  //         `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
+  //         {
+  //           newIndex: destination.toPosition,
+  //           movedBy,
+  //           movedDate: new Date().toISOString(),
+  //         },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           },
+  //         }
+  //       );
+
+  //       if (response.status !== 200) {
+  //         throw new Error("Failed to reorder card");
+  //       }
+  //     } else {
+  //       // Card is moved to a different task
+  //       const response = await axios.put(
+  //         `${server}/api/cards/${card.id}/move`,
+  //         {
+  //           sourceTaskId: source.fromColumnId,
+  //           destinationTaskId: destination.toColumnId,
+  //           movedBy,
+  //           movedDate: new Date().toISOString(),
+  //         },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           },
+  //         }
+  //       );
+
+  //       if (response.status !== 200) {
+  //         throw new Error("Failed to move card");
+  //       }
+  //     }
+
+  //     // Refetch the board data to ensure frontend and backend are in sync
+  //     await fetchTasks();
+  //   } catch (error) {
+  //     console.error("Error moving/reordering card:", error);
+  //     // Revert the frontend state if the backend update fails
+  //     setBoardData(boardData);
+  //   }
+  // };
 
   //coloumn rename automatic
   const handleColumnNameBlur = async (columnId) => {

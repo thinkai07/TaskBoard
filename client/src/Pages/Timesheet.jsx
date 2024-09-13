@@ -133,6 +133,18 @@ const Timesheet = () => {
     };
 
     const columns = [
+
+        {
+            title: (<span>
+                Employee ID
+                <Dropdown overlay={createMenu('employeeID')} trigger={['click']}>
+                    <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                </Dropdown>
+            </span>
+            ),
+            dataIndex: 'employeeID',
+            key: 'employeeID'
+        },
         {
             title: (
                 <span>

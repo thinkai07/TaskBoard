@@ -126,6 +126,10 @@ const Projects = () => {
     fetchUserRoleAndOrganization();
   }, []);
 
+  const filterProjectManager = (input, option) => {
+    return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+  }
+
   const fetchProjects = async (organizationId) => {
     try {
       const response = await axios.get(
@@ -486,6 +490,39 @@ const Projects = () => {
     };
   }, []);
 
+  const handleDropdownVisibleChange = async (open) => {
+    if (open) {
+      try {
+        const response = await axios.get(`${server}/api/users/search`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          params: { organizationId: organizationId }, // Add necessary parameters
+        });
+
+        if (response.data.users.length > 0) {
+          const suggestions = response.data.users.map((user) => ({
+            username: user.username,
+            email: user.email,
+          }));
+
+          setEmailSuggestions(suggestions); // Set username and email as suggestions
+          setProjectManagerError(false);
+        } else {
+          setEmailSuggestions([]);
+          setProjectManagerError(true);
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+        setEmailSuggestions([]);
+        setProjectManagerError(true);
+      }
+    }
+    //   else {
+    //    setEmailSuggestions([]); // Clear suggestions when dropdown closes
+    //  }
+  };
+
   const handleProjectManagerChange = async (value) => {
     setNewProject((prev) => ({ ...prev, projectManager: value }));
     setProjectManagerError(false);
@@ -731,33 +768,31 @@ const Projects = () => {
               <p className="text-red-500">Project Description is required</p>
             )}
           </div>
-
           <div>
-          <Select
-  className="w-full"
-  placeholder="Select a Project Manager"
-  value={
-    newProject.projectManager.length > 0
-      ? newProject.projectManager
-      : null
-  }
-  onChange={handleProjectManagerChange}
-  onSearch={handleProjectManagerChange}
-  filterOption={false}
-  showSearch
->
-  {emailSuggestions.map((suggestion, index) => (
-    <Select.Option key={index} value={suggestion.email}>
-      {suggestion.username}
-    </Select.Option>
-  ))}
-</Select>
+            <Select
+              className="w-full"
+              placeholder="Select a Project Manager"
+              value={newProject.projectManager.length > 0 ? newProject.projectManager : null}
+              onChange={handleProjectManagerChange}
+              onSearch={handleProjectManagerChange}
+              onDropdownVisibleChange={handleDropdownVisibleChange} // Fetch suggestions when dropdown is visible
+              filterOption={filterProjectManager}
+              optionFilterProp="children"
+              listHeight={120}
+              maxTagCount={4}
+              maxTagTextLength={20}
+              showSearch
+            >
+              {emailSuggestions.map((suggestion, index) => (
+                <Select.Option key={index} value={suggestion.email}>
+                  {suggestion.username}
+                </Select.Option>
+              ))}
+            </Select>
 
             {/* {newCardErrors.email && (
-              <p className="text-red-500">
-                Valid Project Manager email is required
-              </p>
-            )} */}
+    <p className="text-red-500">Valid Project Manager email is required</p>
+  )} */}
           </div>
 
           <div>

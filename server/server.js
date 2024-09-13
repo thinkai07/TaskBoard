@@ -2568,7 +2568,7 @@ app.post("/api/notifications/unread", async (req, res) => {
 
 app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
-  const { sourceTaskId, destinationTaskId, movedBy, movedDate } = req.body;
+  const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
 
   try {
     const card = await Card.findById(cardId);
@@ -2577,45 +2577,27 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     }
 
     const sourceTask = await Task.findById(sourceTaskId);
-    if (!sourceTask) {
-      return res.status(404).json({ message: "Source task not found" });
-    }
-
     const destinationTask = await Task.findById(destinationTaskId);
-    if (!destinationTask) {
-      return res.status(404).json({ message: "Destination task not found" });
+    if (!sourceTask || !destinationTask) {
+      return res.status(404).json({ message: "Task not found" });
     }
 
-    // Retrieve the card names for the old and new values
-    const sourceCardName = card.name; // Assuming card schema has a 'name' field
-    const destinationCardName = card.name;
-
-    // Create activity for the card move
-    const movedByUser = await User.findOne({ email: movedBy });
-    if (!movedByUser) {
-      return res.status(404).json({ message: "User not found for movedBy" });
-    }
-
-    const cardIndex = sourceTask.card.indexOf(cardId);
-    if (cardIndex === -1) {
-      return res.status(404).json({ message: "Card not found in source task" });
-    }
-    sourceTask.card.splice(cardIndex, 1);
+    // Remove card from source task
+    sourceTask.card.splice(sourceIndex, 1);
     await sourceTask.save();
 
-    destinationTask.card.push(cardId);
+    // Add card to destination task
+    destinationTask.card.splice(destinationIndex, 0, cardId);
     await destinationTask.save();
 
+    // Update card's task reference
     card.task = destinationTaskId;
-    if (!card.movedBy) {
-      card.movedBy = [];
-    }
     card.movedBy.push(movedBy);
     card.movedDate.push(movedDate);
-
     await card.save();
 
-    // Create activity log entry for card move
+    // Log activity
+    const movedByUser = await User.findOne({ email: movedBy });
     const newActivity = new Activity({
       commentBy: movedByUser.username,
       comment: `Card moved from ${sourceTask.name} to ${destinationTask.name}`,
@@ -2623,56 +2605,26 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     });
     await newActivity.save();
 
-    card.activities.push(newActivity._id);
-    await card.save();
-
-    // Create audit log entry for card move
+    // Create audit log
     const newAuditLog = new AuditLog({
       entityType: "Card",
       entityId: cardId,
       actionType: "move",
       actionDate: movedDate,
       performedBy: movedByUser.username,
-      projectId: sourceTask.project, // Include projectId from source task
+      projectId: sourceTask.project,
       taskId: sourceTaskId,
       cardId,
       destinationTaskId,
       changes: [
-        {
-          field: "task",
-          oldValue: `${sourceTask.name} (Card: ${sourceCardName})`,
-          newValue: `${destinationTask.name} (Card: ${destinationCardName})`,
-        },
+        { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "movedBy", oldValue: null, newValue: movedBy },
         { field: "movedDate", oldValue: null, newValue: movedDate },
       ],
     });
-
     await newAuditLog.save();
 
-    const project = await Project.findById(sourceTask.project);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const assignedUser = await User.findOne({ email: card.assignedTo });
-    if (!assignedUser) {
-      return res.status(404).json({ message: "Assigned user not found" });
-    }
-
-    // Create notification
-    const newNotification = new Notification({
-      userId: assignedUser._id,
-      projectId: sourceTask.project,
-      message: `Card "${card.name}" is moved from "${sourceTask.name}" to "${destinationTask.name}" on Project "${project.name}"`,
-      type: "CARD_MOVED",
-      assignedByEmail: movedByUser.name,
-      cardId: card._id,
-    });
-
-    await newNotification.save();
-
-    // Emit event
+    // Emit real-time event
     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
 
     res.status(200).json({ message: "Card moved successfully", card });
@@ -2681,6 +2633,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error moving card" });
   }
 });
+
 //in page to put comments
 app.put("/api/tasks/:taskId/cards/:cardId",
   authenticateToken,
@@ -2816,6 +2769,7 @@ app.put("/api/tasks/:taskId/cards/:cardId",
     }
   }
 );
+
 
 
 
@@ -4010,60 +3964,51 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
   }
 );
 
-app.get("/api/projects/:projectId/users/search",
-  authenticateToken,
-  async (req, res) => {
-    const { projectId } = req.params;
-    const { email } = req.query;
+app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+  const { email } = req.query;
 
-    if (!email) {
-      return res
-        .status(400)
-        .json({ message: "Email query parameter is required" });
+  try {
+    const project = await Project.findById(projectId).populate({
+      path: "teams",
+      populate: {
+        path: "users.user",
+        model: "User",
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    try {
-      const project = await Project.findById(projectId).populate({
-        path: "teams",
-        populate: {
-          path: "users.user",
-          model: "User",
-        },
+    const matchingUsers = [];
+    project.teams.forEach((team) => {
+      team.users.forEach((user) => {
+        if (!email || user.user.email.toLowerCase().includes(email.toLowerCase())) {
+          matchingUsers.push({
+            name: user.user.name,
+            email: user.user.email,
+            username: user.user.username,
+            role: user.role,
+            team: team.name,
+          });
+        }
       });
+    });
 
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-
-      const matchingUsers = [];
-      project.teams.forEach((team) => {
-        team.users.forEach((user) => {
-          if (user.user.email.toLowerCase().includes(email.toLowerCase())) {
-            matchingUsers.push({
-              name: user.user.name,
-              email: user.user.email,
-              username:user.user.username,
-              role: user.role,
-              team: team.name,
-            });
-          }
-        });
+    if (matchingUsers.length === 0) {
+      return res.status(404).json({
+        message: "No users found within the project teams with the given email",
       });
-
-      if (matchingUsers.length === 0) {
-        return res.status(404).json({
-          message:
-            "No users found within the project teams with the given email",
-        });
-      }
-
-      res.status(200).json({ users: matchingUsers });
-    } catch (error) {
-      console.error("Error searching project team users:", error);
-      res.status(500).json({ message: "Error searching project team users" });
     }
+
+    res.status(200).json({ users: matchingUsers });
+  } catch (error) {
+    console.error("Error searching project team users:", error);
+    res.status(500).json({ message: "Error searching project team users" });
   }
-);
+});
+
 
 app.get("/api/projects/:projectId/teams",
   authenticateToken,
@@ -4531,86 +4476,81 @@ cardSchema.post("update", async function (doc) {
   await executeBackgroundJob();
 });
 
-// const executeBackgroundJob = async () => {
-//   try {
-//     console.log('Running scheduled background job...');
+const executeBackgroundJob = async () => {
+  try {
+    console.log('Running scheduled background job...');
 
-//     // Find rules related to 'Card Move' that need to be executed
-//     const rules = await Rule.find({ trigger: 'Card Move' });
+    // Find rules related to 'Card Move' that need to be executed
+    const rules = await Rule.find({ trigger: 'Card Move' });
 
-//     for (const rule of rules) {
-//       // console.log(`Processing rule ${rule._id}:`);
+    for (const rule of rules) {
+    
 
-//       // Fetch the project by ID
-//       const project = await Project.findById(rule.projectId);
-//       if (!project) {
-//         // console.error(`Project ${rule.projectId} not found.`);
-//         continue; // Skip to the next rule if the project is not found
-//       }
+      // Fetch the project by ID
+      const project = await Project.findById(rule.projectId);
+      if (!project) {
+  
+        continue; 
+      }
 
-//       // Fetch all cards associated with the project
-//       let cardsToMove = await Card.find({ project: rule.projectId });
+      // Fetch all cards associated with the project
+      let cardsToMove = await Card.find({ project: rule.projectId });
 
-//       for (const card of cardsToMove) {
-//         // Get the user ID based on the updatedBy email
-//         const user = await User.findOne({ email: card.updatedBy });
-//         if (!user) {
-//           console.error(`User with email ${card.updatedBy} not found.`);
-//           continue; // Skip to the next card if the user is not found
-//         }
+      for (const card of cardsToMove) {
+        // Get the user ID based on the updatedBy email
+        const user = await User.findOne({ email: card.updatedBy });
+        if (!user) {
+          console.error(`User with email ${card.updatedBy} not found.`);
+          continue; 
+        }
 
-//         // Check the createdByCondition
-//         if (rule.createdByCondition === 'by me') {
-//           if (!rule.createdBy.includes(user._id.toString())) {
-//             console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
-//             continue; // Skip this card if the user ID doesn't match
-//           }
-//         } else if (rule.createdByCondition === 'by anyone except me') {
-//           if (rule.createdBy.includes(user._id.toString())) {
-//             console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
-//             continue; // Skip this card if the user ID matches the excluded user
-//           }
-//         }
+        // Check the createdByCondition
+        if (rule.createdByCondition === 'by me') {
+          if (!rule.createdBy.includes(user._id.toString())) {
+            console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
+            continue;
+          }
+        } else if (rule.createdByCondition === 'by anyone except me') {
+          if (rule.createdBy.includes(user._id.toString())) {
+            console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
+            continue; 
+          }
+        }
 
-//         // Fetch the destination list by name
-//         const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
-//         if (!destinationList) {
-//           console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
-//           continue; // Skip to the next rule if the destination list is not found
-//         }
+        // Fetch the destination list by name
+        const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
+        if (!destinationList) {
+          console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
+          continue;
+        }
 
-//         // Check if the rule applies to this card based on triggerCondition
-//         if (!rule.triggerCondition || card.status === rule.triggerCondition) {
-//           // Find the current task (list) of the card
-//           const currentTask = await Task.findById(card.task);
+        // Check if the rule applies to this card based on triggerCondition
+        if (!rule.triggerCondition || card.status === rule.triggerCondition) {
+          // Find the current task (list) of the card
+          const currentTask = await Task.findById(card.task);
 
-//           // Remove the card from the current list
-//           if (currentTask) {
-//             currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
-//             await currentTask.save();
-//           }
+          // Remove the card from the current list
+          if (currentTask) {
+            currentTask.card = currentTask.card.filter(cardId => !cardId.equals(card._id));
+            await currentTask.save();
+          }
 
-//           // Add the card to the destination list
-//           destinationList.card.push(card._id);
-//           await destinationList.save();
+          // Add the card to the destination list         
+          destinationList.card.push(card._id);
+          await destinationList.save();
 
-//           // Update the card's task field
-//           card.task = destinationList._id;
-//           await card.save();
+          // Update the card's task field
+          card.task = destinationList._id;
+          await card.save();
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error running scheduled job:', error);
+  }
+};
 
-//           // console.log(`Card ${card._id} moved to list ${destinationList.name} based on rule ${rule._id}`);
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Error running scheduled job:', error);
-//   }
-// };
-
-// setInterval(executeBackgroundJob, 5000);
-
-// Schedule the job to run every minute
-// cron.schedule('* * * * *', executeBackgroundJob);
+setInterval(executeBackgroundJob, 5000);
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);

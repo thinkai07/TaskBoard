@@ -2574,7 +2574,6 @@ app.post("/api/notifications/unread", async (req, res) => {
 app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
   const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
-  const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
 
   try {
     const card = await Card.findById(cardId);
@@ -2586,31 +2585,22 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     const destinationTask = await Task.findById(destinationTaskId);
     if (!sourceTask || !destinationTask) {
       return res.status(404).json({ message: "Task not found" });
-    if (!sourceTask || !destinationTask) {
-      return res.status(404).json({ message: "Task not found" });
     }
 
-    // Remove card from source task
-    sourceTask.card.splice(sourceIndex, 1);
     // Remove card from source task
     sourceTask.card.splice(sourceIndex, 1);
     await sourceTask.save();
 
     // Add card to destination task
     destinationTask.card.splice(destinationIndex, 0, cardId);
-    // Add card to destination task
-    destinationTask.card.splice(destinationIndex, 0, cardId);
     await destinationTask.save();
 
-    // Update card's task reference
     // Update card's task reference
     card.task = destinationTaskId;
     card.movedBy.push(movedBy);
     card.movedDate.push(movedDate);
     await card.save();
 
-    // Log activity
-    const movedByUser = await User.findOne({ email: movedBy });
     // Log activity
     const movedByUser = await User.findOne({ email: movedBy });
     const newActivity = new Activity({
@@ -2621,7 +2611,6 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     await newActivity.save();
 
     // Create audit log
-    // Create audit log
     const newAuditLog = new AuditLog({
       entityType: "Card",
       entityId: cardId,
@@ -2629,12 +2618,10 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       actionDate: movedDate,
       performedBy: movedByUser.username,
       projectId: sourceTask.project,
-      projectId: sourceTask.project,
       taskId: sourceTaskId,
       cardId,
       destinationTaskId,
       changes: [
-        { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "movedBy", oldValue: null, newValue: movedBy },
         { field: "movedDate", oldValue: null, newValue: movedDate },
@@ -2645,7 +2632,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     // Emit real-time event
     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
 
-    res.status(200).json({ message: "Card reordered successfully", task });
+    res.status(200).json({ message: "Card moved successfully", card });
   } catch (error) {
     console.error("Error moving card:", error);
     res.status(500).json({ message: "Error moving card" });

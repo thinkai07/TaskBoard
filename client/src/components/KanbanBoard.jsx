@@ -825,12 +825,16 @@ function KanbanBoard() {
 
   const handleCardMove = async (card, source, destination) => {
     // Optimistically update the UI
+    // Optimistically update the UI
     const updatedBoard = moveCard(boardData, source, destination);
     setBoardData(updatedBoard);
   
+  
     const movedBy = await fetchUserEmail();
   
+  
     try {
+      // Check if the card is being moved within the same column (reordering)
       // Check if the card is being moved within the same column (reordering)
       if (source.fromColumnId === destination.toColumnId) {
         const response = await axios.put(

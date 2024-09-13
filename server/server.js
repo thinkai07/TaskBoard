@@ -1241,7 +1241,7 @@ app.post("/api/addUser",
       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
         expiresIn: "3d",
       });
-      const resetLink = `http://localhost:5000/reset-password?token=${token}`;
+      const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
       sendResetEmail(email, resetLink);
 
@@ -1301,6 +1301,7 @@ const sendResetEmail = (email, link) => {
   });
 };
 // //reset password
+
 app.post("/resetPassword", async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -1319,10 +1320,13 @@ app.post("/resetPassword", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Compare new password with the current hashed password
-    const isMatch = await bcrypt.compare(newPassword, user.password);
-    if (isMatch) {
-      return res.status(400).json({ message: "New password must be different from the old password" });
+    // Check if the user already has a password set
+    if (user.password) {
+      // Compare new password with the current hashed password
+      const isMatch = await bcrypt.compare(newPassword, user.password);
+      if (isMatch) {
+        return res.status(400).json({ message: "New password must be different from the old password" });
+      }
     }
 
     // Hash the new password and update the user
@@ -1344,6 +1348,7 @@ app.post("/resetPassword", async (req, res) => {
     }
   }
 });
+
 
 
 app.post("/api/forgot-password", async (req, res) => {
@@ -1370,7 +1375,7 @@ app.post("/api/forgot-password", async (req, res) => {
     await user.save();
 
     // Create the reset link using the JWT token
-    const resetLink = `http://13.235.16.113/forgot-password?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/forgot-password?token=${resetToken}`;
 
     // Set up email options
     const mailOptions = {
@@ -2569,6 +2574,7 @@ app.post("/api/notifications/unread", async (req, res) => {
 app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
   const { cardId } = req.params;
   const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
+  const { sourceTaskId, destinationTaskId, sourceIndex, destinationIndex, movedBy, movedDate } = req.body;
 
   try {
     const card = await Card.findById(cardId);
@@ -2580,22 +2586,31 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     const destinationTask = await Task.findById(destinationTaskId);
     if (!sourceTask || !destinationTask) {
       return res.status(404).json({ message: "Task not found" });
+    if (!sourceTask || !destinationTask) {
+      return res.status(404).json({ message: "Task not found" });
     }
 
+    // Remove card from source task
+    sourceTask.card.splice(sourceIndex, 1);
     // Remove card from source task
     sourceTask.card.splice(sourceIndex, 1);
     await sourceTask.save();
 
     // Add card to destination task
     destinationTask.card.splice(destinationIndex, 0, cardId);
+    // Add card to destination task
+    destinationTask.card.splice(destinationIndex, 0, cardId);
     await destinationTask.save();
 
+    // Update card's task reference
     // Update card's task reference
     card.task = destinationTaskId;
     card.movedBy.push(movedBy);
     card.movedDate.push(movedDate);
     await card.save();
 
+    // Log activity
+    const movedByUser = await User.findOne({ email: movedBy });
     // Log activity
     const movedByUser = await User.findOne({ email: movedBy });
     const newActivity = new Activity({
@@ -2606,6 +2621,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     await newActivity.save();
 
     // Create audit log
+    // Create audit log
     const newAuditLog = new AuditLog({
       entityType: "Card",
       entityId: cardId,
@@ -2613,10 +2629,12 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
       actionDate: movedDate,
       performedBy: movedByUser.username,
       projectId: sourceTask.project,
+      projectId: sourceTask.project,
       taskId: sourceTaskId,
       cardId,
       destinationTaskId,
       changes: [
+        { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "task", oldValue: sourceTask.name, newValue: destinationTask.name },
         { field: "movedBy", oldValue: null, newValue: movedBy },
         { field: "movedDate", oldValue: null, newValue: movedDate },
@@ -2627,7 +2645,7 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     // Emit real-time event
     io.emit("cardMoved", { cardId, sourceTaskId, destinationTaskId });
 
-    res.status(200).json({ message: "Card moved successfully", card });
+    res.status(200).json({ message: "Card reordered successfully", task });
   } catch (error) {
     console.error("Error moving card:", error);
     res.status(500).json({ message: "Error moving card" });
@@ -3382,7 +3400,7 @@ app.put("/api/cards/:cardId/status", authenticateToken, async (req, res) => {
       entityId: cardId,
       actionType: "update",
       actionDate: updatedDate,
-      performedBy: updatedByUser.name,
+      performedBy: updatedByUser.username,
       projectId: card.project, // Include projectId in the audit log
       taskId: card.task, // Include taskId in the audit log
       cardId,

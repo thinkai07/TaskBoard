@@ -831,7 +831,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    console.log(user.email);
+    // console.log(user.email);
     res.json({ success: true, user });
   } catch (error) {
     console.error("Error:", error);
@@ -874,10 +874,10 @@ app.delete("/api/deleteUser/:id",
           }
         );
 
-        console.log(
-          "GitHub membership deletion response:",
-          githubResponse.data
-        );
+        // console.log(
+        //   "GitHub membership deletion response:",
+        //   githubResponse.data
+        // );
       } catch (error) {
         console.error(
           "Error removing user from GitHub organization:",
@@ -1261,7 +1261,7 @@ app.post("/api/addUser",
           }
         );
 
-        console.log("GitHub membership response:", githubResponse.data);
+        // console.log("GitHub membership response:", githubResponse.data);
       } catch (error) {
         console.error(
           "Error adding user to GitHub organization:",
@@ -1498,7 +1498,7 @@ app.post("/api/projects", async (req, res) => {
       }
       teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
     }
-    console.log("Team names:", teamNames); // Add a log to check team names
+    //console.log("Team names:", teamNames); // Add a log to check team names
 
     const newProject = new Project({
       name,
@@ -1516,7 +1516,7 @@ app.post("/api/projects", async (req, res) => {
     });
 
     await newProject.save();
-    console.log("New project created:", newProject);
+    // console.log("New project created:", newProject);
 
     const auditLog = new AuditLog({
       entityType: "Project",
@@ -1528,7 +1528,7 @@ app.post("/api/projects", async (req, res) => {
     });
 
     await auditLog.save();
-    console.log("Audit log created:", auditLog);
+    // console.log("Audit log created:", auditLog);
 
     organization.projects.push(newProject._id);
     await organization.save();
@@ -1566,7 +1566,7 @@ app.post("/api/projects", async (req, res) => {
       .toLowerCase();
     let githubResponse;
     try {
-      console.log(organization)
+      
       githubResponse = await axios.post(
         `https://api.github.com/orgs/${organization.name}/repos`,
         {
@@ -1581,17 +1581,17 @@ app.post("/api/projects", async (req, res) => {
           },
         }
       );
-      console.log("GitHub repository created:", githubResponse.data);
+      
 
       // Update project with repository info
       newProject.repository = githubResponse.data.html_url;
       newProject.repoName = repoName;
       await newProject.save();
-      console.log(
-        "Project repository URL and repo name updated:",
-        newProject.repository,
-        newProject.repoName
-      );
+      // console.log(
+      //   "Project repository URL and repo name updated:",
+      //   newProject.repository,
+      //   newProject.repoName
+      // );
     } catch (error) {
       console.error(
         "Error creating GitHub repository:",
@@ -1618,10 +1618,7 @@ app.post("/api/projects", async (req, res) => {
               },
             }
           );
-          console.log(
-            `Team ${teamName} assigned to GitHub repository:`,
-            teamAssignResponse.data
-          );
+         
         } catch (error) {
           console.error(
             `Error assigning team ${teamName} to GitHub repository:`,
@@ -1658,7 +1655,7 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      console.log(projectId);
+      
       const { bgUrl } = req.body;
 
       // const result = await cloudinary.uploader.upload(bgUrl, {
@@ -1697,7 +1694,7 @@ app.put("/api/projects/:projectId/customImages",
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      console.log(projectId);
+      
       const { imageUrl } = req.body;
 
       const updatedProject = await Project.findByIdAndUpdate(
@@ -1967,7 +1964,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
           },
         }
       );
-      console.log("GitHub repository deleted:", githubResponse.data);
+     
     } catch (error) {
       console.error(
         "Error deleting GitHub repository:",
@@ -2363,7 +2360,7 @@ function generateUniqueId() {
   return timestamp + uniquePart;
 }
 const uniqueId = generateUniqueId();
-console.log(uniqueId);
+
 
 
 app.get('/api/organization/:organizationId/projects', authenticateToken, async (req, res) => {
@@ -2508,7 +2505,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 app.post("/api/notifications", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.body;
-    console.log("Requested notifications for userId:", userId);
+   
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -2516,7 +2513,7 @@ app.post("/api/notifications", authenticateToken, async (req, res) => {
 
     // Fetch notifications for the specified userId
     const notifications = await Notification.find({ userId }, "message");
-    console.log("Fetched notifications for user:", userId, notifications);
+    
 
     res.status(200).json({ notifications });
   } catch (error) {
@@ -3044,7 +3041,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       }))
     );
 
-    console.log(cards);
+   
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -3055,128 +3052,6 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   }
 });
 
-
-// app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
-//   const { taskId } = req.params;
-
-//   try {
-//     const task = await Task.findById(taskId).populate({
-//       path: "card",
-//       populate: [
-//         {
-//           path: "comments",
-//           model: "Comment",
-//         },
-//         {
-//           path: "activities",
-//           model: "Activity",
-//         },
-//         {
-//           path: "taskLogs", // Populate task logs for each card
-//           model: "Tasklogs",
-//           populate: {
-//             path: "loggedBy", // Optionally populate loggedBy details
-//             model: "User",
-//             select: "name email username", // Fetch only the necessary fields
-//           },
-//         },
-//         {
-//           path: "project", // Populate the project details
-//           model: "Project",
-//           select: "name description projectManager projectManagerName organization", // Fetch only the necessary fields
-//         },
-//       ],
-//     });
-
-//     if (!task) {
-//       return res.status(404).json({ message: "Task not found" });
-//     }
-
-//     const cardIds = task.card.map((card) => card._id);
-
-//     // Calculate the sum of logged hours for each card
-//     const logs = await Tasklogs.aggregate([
-//       { $match: { cardId: { $in: cardIds } } },
-//       { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
-//     ]);
-
-//     // Create a map of cardId to total logged hours
-//     const hoursMap = logs.reduce((map, log) => {
-//       map[log._id] = log.totalHours;
-//       return map;
-//     }, {});
-
-
-    
-
-//     const cards = task.card.map((card) => ({
-//       id: card._id,
-//       name: card.name,
-//       description: card.description,
-//       assignedTo: card.assignedTo,
-//       createdBy: card.createdBy,
-//       status: card.status,
-//       estimatedHours: card.estimatedHours,
-//       utilizedHours: hoursMap[card._id] || 0, // Include total logged hours
-//       uniqueId: card.uniqueId,
-//       createdDate: moment(card.createdDate)
-//         .tz("Asia/Kolkata")
-//         .format("YYYY-MM-DD HH:mm:ss"),
-//       assignDate: moment(card.assignDate)
-//         .tz("Asia/Kolkata")
-//         .format("YYYY-MM-DD HH:mm:ss"),
-//       dueDate: moment(card.dueDate)
-//         .tz("Asia/Kolkata")
-//         .format("YYYY-MM-DD HH:mm:ss"),
-//       comments: card.comments.map((comment) => ({
-//         id: comment._id,
-//         comment: comment.comment,
-//         commentBy: comment.commentBy,
-//         createdAt: moment(comment.createdAt)
-//           .tz("Asia/Kolkata")
-//           .format("YYYY-MM-DD HH:mm:ss"),
-//       })),
-//       activities: card.activities.map((activity) => ({
-//         id: activity._id,
-//         commentBy: activity.commentBy,
-//         comment: activity.comment,
-//         createdAt: moment(activity.createdAt)
-//           .tz("Asia/Kolkata")
-//           .format("YYYY-MM-DD HH:mm:ss"),
-//       })),
-//       taskLogs: card.taskLogs.map((taskLog) => ({
-//         id: taskLog._id,
-//         hours: taskLog.hours,
-//         logDate: moment(taskLog.logDate)
-//           .tz("Asia/Kolkata")
-//           .format("YYYY-MM-DD HH:mm:ss"),
-//         loggedBy: {
-//           id: taskLog.loggedBy._id,
-//           name: taskLog.loggedBy.name,
-//           email: taskLog.loggedBy.email,
-//         },
-//       })),
-//       project: {
-//         id: card.project._id,
-//         name: card.project.name,
-//         description: card.project.description,
-//         projectManager: card.project.projectManager,
-//         projectManagerName: card.project.projectManagerName,
-//         organization: card.project.organization,
-        
-//       }, // Include project details
-//     }));
-
-//     console.log(cards)
-
-//     // Include the task name in the response
-//     res.status(200).json({ taskName: task.name, cards });
-
-//   } catch (error) {
-//     console.error("Error fetching cards:", error);
-//     res.status(500).json({ message: "Error fetching cards" });
-//   }
-// });
 
 
 app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {
@@ -3688,7 +3563,7 @@ app.delete("/api/projects/:projectId/teams/:teamName/users",
 
       team.users.splice(userIndex, 1);
       await team.save();
-      console.log("removedBy", removedBy);
+      
       res
         .status(200)
         .json({ message: "User removed from team successfully", removedBy });
@@ -3757,7 +3632,7 @@ app.post("/api/organizations/:organizationId/teams",
       // Update the team with the GitHub slug
       team.slug = githubTeamResponse.data.slug;
       await team.save();
-      console.log("teams created");
+     
       res.status(200).json({
         message: "Team created successfully",
         team,
@@ -3835,7 +3710,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId",
         }
       );
 
-      console.log("GitHub team deleted:", githubTeamResponse.data);
+      
 
       res
         .status(200)
@@ -3884,7 +3759,7 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
         }
       );
 
-      console.log("GitHub team updated:", githubTeamResponse.data);
+     
 
       res.status(200).json({
         message: "Team updated successfully",
@@ -3899,6 +3774,8 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
     }
   }
 );
+
+
 
 app.post("/api/organizations/:organizationId/teams/:teamId/users",
   authenticateToken,
@@ -3959,9 +3836,12 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
       team.users.push({ user: user._id, role: role || "USER" });
       await team.save();
 
+      // Format team name for GitHub API
+      const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+
       // Add the user to the GitHub team
       const githubTeamResponse = await axios.put(
-        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
+        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
         {},
         {
           headers: {
@@ -3971,7 +3851,6 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
         }
       );
 
-      console.log("GitHub team membership updated:", githubTeamResponse.data);
 
       res.status(200).json({
         message:
@@ -3989,50 +3868,6 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
 );
 
 
-// app.post("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken, async (req, res) => {
-//   const { organizationId, teamId } = req.params;
-//   const { username, role } = req.body;
-
-//   try {
-//     // Find the organization
-//     const organization = await Organization.findById(organizationId);
-//     if (!organization) {
-//       return res.status(404).json({ message: "Organization not found" });
-//     }
-
-//     // Find the team
-//     const team = await Team.findById(teamId);
-//     if (!team) {
-//       return res.status(404).json({ message: "Team not found" });
-//     }
-
-//     // Check if the team belongs to the organization
-//     if (!organization.teams.includes(team._id)) {
-//       return res.status(400).json({ message: "Team does not belong to this organization" });
-//     }
-
-//     // Find the user by username
-//     const user = await User.findOne({ username });
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // Check if the user is already in the team
-//     const userInTeam = team.users.find((u) => u.user.toString() === user._id.toString());
-//     if (userInTeam) {
-//       return res.status(400).json({ message: "User is already in the team" });
-//     }
-
-//     // Add the user to the team
-//     team.users.push({ user: user._id, role: role || "USER" });
-//     await team.save();
-
-//     res.status(200).json({ message: "User added to team successfully", user });
-//   } catch (error) {
-//     console.error("Error adding user to team:", error);
-//     res.status(500).json({ message: "Error adding user to team", error });
-//   }
-// });
 
 app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,
   async (req, res) => {
@@ -4127,9 +3962,12 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Format team name for GitHub API (replace spaces with hyphens and make lowercase)
+      const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+
       // Remove the user from the GitHub team
       const githubTeamResponse = await axios.delete(
-        `https://api.github.com/orgs/${organization.name}/teams/${team.name}/memberships/${user.name}`,
+        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
         {
           headers: {
             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
@@ -4138,7 +3976,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
         }
       );
 
-      console.log("GitHub team membership deleted:", githubTeamResponse.data);
+     
 
       res.status(200).json({
         message: "User removed from team successfully in MongoDB and GitHub",
@@ -4156,6 +3994,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
     }
   }
 );
+
 
 app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
   const { projectId } = req.params;
@@ -4508,7 +4347,7 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
     }
 
     res.status(200).json(auditLogs);
-    console.log(auditLogs)
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -4517,28 +4356,7 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
 
 
 
-// app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
-//   try {
-//     const { projectId } = req.params;
-//     const auditLogs = await AuditLog.find({
-//       $or: [
-//         { projectId }, // Project-related actions
-//         { entityId: projectId, entityType: "Project" }, // Specific project actions
-//       ],
-//     }).populate("performedBy", "name email");
 
-//     if (!auditLogs || auditLogs.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "No audit logs found for this project" });
-//     }
-
-//     res.status(200).json(auditLogs);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
 
 app.get("/api/protected", authenticateToken, (req, res) => {
   res.json({ message: "This is a protected endpoint!", user: req.user });
@@ -4672,7 +4490,7 @@ cardSchema.post("update", async function (doc) {
 
 const executeBackgroundJob = async () => {
   try {
-    console.log('Running scheduled background job...');
+    // console.log('Running scheduled background job...');
 
     // Find rules related to 'Card Move' that need to be executed
     const rules = await Rule.find({ trigger: 'Card Move' });

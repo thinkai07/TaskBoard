@@ -40,7 +40,7 @@ const TeamMembersPage = () => {
     };
 
     fetchMembers();
-  }, [organizationId, teamId, members]);
+  }, []);
 
   const handleUsernameChange = async (event) => {
     setNewMemberUsername(event.target.value);

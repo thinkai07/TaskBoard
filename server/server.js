@@ -464,9 +464,9 @@ const TempUser = mongoose.model("TempUser", tempUserSchema);
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("New client connected");
+  // console.log("New client connected");
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    // console.log("Client disconnected");
   });
 });
 
@@ -493,7 +493,7 @@ const sendRegistrationEmail = (email, name, token) => {
     if (error) {
       console.error("Error sending registration email:", error);
     } else {
-      console.log("Registration email sent:", info.response);
+      // console.log("Registration email sent:", info.response);
     }
   });
 };
@@ -831,7 +831,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    // console.log(user.email);
+    // // console.log(user.email);
     res.json({ success: true, user });
   } catch (error) {
     console.error("Error:", error);
@@ -874,6 +874,10 @@ app.delete("/api/deleteUser/:id",
           }
         );
 
+        // console.log(
+        //   "GitHub membership deletion response:",
+        //   githubResponse.data
+        // );
         // console.log(
         //   "GitHub membership deletion response:",
         //   githubResponse.data
@@ -1180,7 +1184,7 @@ app.get("/api/role", authenticateToken, async (req, res) => {
     const user = await User.findOne({ email: req.user.email }).select(
       "email name role username organization "
     );
-    console.log(user)
+    // console.log(user)
     if (!user) {
       return res
         .status(404)
@@ -1296,7 +1300,7 @@ const sendResetEmail = (email, link) => {
     if (error) {
       console.error("Error sending email:", error);
     } else {
-      console.log("Email sent:", info.response);
+      // console.log("Email sent:", info.response);
     }
   });
 };
@@ -1449,7 +1453,7 @@ const sendEmail = (email, subject, text) => {
     if (error) {
       console.error("Error sending email:", error);
     } else {
-      console.log("Email sent:", info.response);
+      // console.log("Email sent:", info.response);
     }
   });
 };
@@ -1468,23 +1472,23 @@ app.post("/api/projects", async (req, res) => {
   } = req.body;
 
   try {
-    console.log("Received request to create project:", req.body);
+    // console.log("Received request to create project:", req.body);
 
     const organization = await Organization.findById(organizationId);
     if (!organization) {
-      console.log("Organization not found");
+      // console.log("Organization not found");
       return res.status(404).json({ message: "Organization not found" });
     }
 
     const projectManagerUser = await User.findOne({ email: projectManager });
     if (!projectManagerUser) {
-      console.log("Project manager not found");
+      // console.log("Project manager not found");
       return res.status(404).json({ message: "Project manager not found" });
     }
 
     const createProjectUser = await User.findOne({ email: createdBy });
     if (!createProjectUser) {
-      console.log("Creator not found");
+      // console.log("Creator not found");
       return res.status(404).json({ message: "Creator not found" });
     }
 
@@ -1493,12 +1497,12 @@ app.post("/api/projects", async (req, res) => {
     if (teams && teams.length > 0) {
       const existingTeams = await Team.find({ _id: { $in: teams } });
       if (existingTeams.length !== teams.length) {
-        console.log("Some teams not found");
+        // console.log("Some teams not found");
         return res.status(404).json({ message: "Some teams not found" });
       }
       teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
     }
-    //console.log("Team names:", teamNames); // Add a log to check team names
+    // console.log("Team names:", teamNames); // Add a log to check team names
 
     const newProject = new Project({
       name,
@@ -1529,10 +1533,11 @@ app.post("/api/projects", async (req, res) => {
 
     await auditLog.save();
     // console.log("Audit log created:", auditLog);
+    // console.log("Audit log created:", auditLog);
 
     organization.projects.push(newProject._id);
     await organization.save();
-    console.log("Organization updated with new project");
+    // console.log("Organization updated with new project");
 
     // Update teams with the new project
     if (teams && teams.length > 0) {
@@ -1540,7 +1545,7 @@ app.post("/api/projects", async (req, res) => {
         { _id: { $in: teams } },
         { $push: { projects: newProject._id } }
       );
-      console.log("Teams updated with new project");
+      // console.log("Teams updated with new project");
     }
 
     const token = jwt.sign(
@@ -1558,7 +1563,7 @@ app.post("/api/projects", async (req, res) => {
     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
     await sendEmail(projectManager, "New Project Created", emailText);
-    console.log("Email sent to project manager");
+    // console.log("Email sent to project manager");
 
     // Create GitHub repository
     const repoName = `${organization.name}-${newProject.name}-repo`
@@ -1581,12 +1586,17 @@ app.post("/api/projects", async (req, res) => {
           },
         }
       );
-      
+      // console.log("GitHub repository created:", githubResponse.data);
 
       // Update project with repository info
       newProject.repository = githubResponse.data.html_url;
       newProject.repoName = repoName;
       await newProject.save();
+      // console.log(
+      //   "Project repository URL and repo name updated:",
+      //   newProject.repository,
+      //   newProject.repoName
+      // );
       // console.log(
       //   "Project repository URL and repo name updated:",
       //   newProject.repository,
@@ -1618,7 +1628,10 @@ app.post("/api/projects", async (req, res) => {
               },
             }
           );
-         
+          // console.log(
+          //   `Team ${teamName} assigned to GitHub repository:`,
+          //   teamAssignResponse.data
+          // );
         } catch (error) {
           console.error(
             `Error assigning team ${teamName} to GitHub repository:`,
@@ -1694,7 +1707,7 @@ app.put("/api/projects/:projectId/customImages",
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      
+      // 
       const { imageUrl } = req.body;
 
       const updatedProject = await Project.findByIdAndUpdate(
@@ -1950,7 +1963,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
       .replace(/\s+/g, "-")
       .toLowerCase();
 
-    console.log("Attempting to delete GitHub repository:", repoName);
+    // console.log("Attempting to delete GitHub repository:", repoName);
 
     // Attempt to delete the GitHub repository
     try {
@@ -3418,7 +3431,7 @@ app.post("/api/projects/:projectId/teams/addUser", authenticateToken, async (req
         addedDate: new Date(),
       });
       await team.save();
-      console.log("addedBy", addedBy);
+      // console.log("addedBy", addedBy);
 
       project.teams.push(team._id);
       await project.save();
@@ -3627,7 +3640,7 @@ app.post("/api/organizations/:organizationId/teams",
         }
       );
 
-      console.log("GitHub team created:", githubTeamResponse.data);
+      // console.log("GitHub team created:", githubTeamResponse.data);
 
       // Update the team with the GitHub slug
       team.slug = githubTeamResponse.data.slug;
@@ -3976,6 +3989,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
         }
       );
 
+      // console.log("GitHub team membership deleted:", githubTeamResponse.data);
      
 
       res.status(200).json({
@@ -4347,7 +4361,7 @@ app.get("/api/projects/:projectId/audit-logs", async (req, res) => {
     }
 
     res.status(200).json(auditLogs);
-    
+    // console.log(auditLogs)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -4491,6 +4505,7 @@ cardSchema.post("update", async function (doc) {
 const executeBackgroundJob = async () => {
   try {
     // console.log('Running scheduled background job...');
+    // console.log('Running scheduled background job...');
 
     // Find rules related to 'Card Move' that need to be executed
     const rules = await Rule.find({ trigger: 'Card Move' });
@@ -4519,12 +4534,12 @@ const executeBackgroundJob = async () => {
         // Check the createdByCondition
         if (rule.createdByCondition === 'by me') {
           if (!rule.createdBy.includes(user._id.toString())) {
-            console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
+            // console.log(`Skipping card ${card._id} as it was not updated by the specified user.`);
             continue;
           }
         } else if (rule.createdByCondition === 'by anyone except me') {
           if (rule.createdBy.includes(user._id.toString())) {
-            console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
+            // console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
             continue; 
           }
         }
@@ -4564,7 +4579,7 @@ const executeBackgroundJob = async () => {
 
 setInterval(executeBackgroundJob, 5000);
 
-server.listen(port, () => {
+server.listen(port, host="0.0.0.0", () => {
   console.log(`Server is running on port ${port}`);
 });
 

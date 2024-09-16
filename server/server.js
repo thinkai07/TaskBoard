@@ -481,7 +481,7 @@ const transporter = nodemailer.createTransport({
 
 // // Send Registration Email with Token Function
 const sendRegistrationEmail = (email, name, token) => {
-  const link = `http://13.235.16.113/success?token=${token}`;
+  const link = `${process.env.UI_ADDRESS}/success?token=${token}`;
   const mailOptions = {
     from: "thinkailabs111@gmail.com",
     to: email,
@@ -1554,7 +1554,7 @@ app.post("/api/projects", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    const link = `http://13.235.16.113/project?token=${token}`;
+    const link = `${process.env.UI_ADDRESS}/project?token=${token}`;
     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
     await sendEmail(projectManager, "New Project Created", emailText);

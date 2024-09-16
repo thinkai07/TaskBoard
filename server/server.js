@@ -1322,7 +1322,6 @@ app.post("/resetPassword", async (req, res) => {
 
     // Check if the user already has a password set
     if (user.password) {
-      // Compare new password with the current hashed password
       const isMatch = await bcrypt.compare(newPassword, user.password);
       if (isMatch) {
         return res.status(400).json({ message: "New password must be different from the old password" });
@@ -1341,10 +1340,11 @@ app.post("/resetPassword", async (req, res) => {
     res.status(200).json({ message: "Password reset successfully", user });
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      res.status(401).json({ message: "Token has expired" });
+      return res.status(401).json({ message: "Token has expired" });
     } else {
-      console.error(error);
-      res.status(500).json({ message: "Error resetting password" });
+      // Improved error logging
+      console.error("Error resetting password:", error.message, error.stack);
+      return res.status(500).json({ message: "Error resetting password" });
     }
   }
 });
@@ -2638,6 +2638,105 @@ app.put("/api/cards/:cardId/move", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error moving card" });
   }
 });
+
+
+app.put("/api/tasks/:taskId/cards/:cardId/reorder", authenticateToken, async (req, res) => {
+  const { taskId, cardId } = req.params;
+  const { newIndex, oldIndex, movedBy, movedDate } = req.body;
+
+  try {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const cardIndex = task.card.indexOf(cardId);
+    if (cardIndex === -1) {
+      return res.status(404).json({ message: "Card not found in task" });
+    }
+
+    // Remove card from the old index
+    task.card.splice(oldIndex, 1);
+    // Insert card at the new index
+    task.card.splice(newIndex, 0, cardId);
+    await task.save();
+
+    // Log activity
+    const movedByUser = await User.findOne({ email: movedBy });
+    const newActivity = new Activity({
+      commentBy: movedByUser.username,
+      comment: `Card reordered within ${task.name}`,
+      card: cardId,
+    });
+    await newActivity.save();
+
+    res.status(200).json({ message: "Card reordered successfully", task });
+  } catch (error) {
+    console.error("Error reordering card:", error);
+    res.status(500).json({ message: "Error reordering card" });
+  }
+});
+
+const handleCardMove = async (card, source, destination) => {
+  // Optimistically update the UI
+  const updatedBoard = moveCard(boardData, source, destination);
+  setBoardData(updatedBoard);
+
+  const movedBy = await fetchUserEmail();
+
+  try {
+    // Check if the card is being moved within the same column (reordering)
+    if (source.fromColumnId === destination.toColumnId) {
+      const response = await axios.put(
+        `${server}/api/tasks/${source.fromColumnId}/cards/${card.id}/reorder`,
+        {
+          oldIndex: source.fromPosition,
+          newIndex: destination.toPosition,
+          movedBy,
+          movedDate: new Date().toISOString(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          }
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error("Failed to reorder card");
+      }
+    } else {
+      // Moving card to a different column
+      const response = await axios.put(
+        `${server}/api/cards/${card.id}/move`,
+        {
+          sourceTaskId: source.fromColumnId,
+          destinationTaskId: destination.toColumnId,
+          sourceIndex: source.fromPosition,
+          destinationIndex: destination.toPosition,
+          movedBy,
+          movedDate: new Date().toISOString(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          }
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error("Failed to move card");
+      }
+    }
+
+    // Refetch the board data to ensure frontend and backend are in sync
+    await fetchTasks();
+  } catch (error) {
+    console.error("Error moving/reordering card:", error);
+    // Revert the frontend state if the backend update fails
+    setBoardData(boardData);
+  }
+};
 
 //in page to put comments
 app.put("/api/tasks/:taskId/cards/:cardId",
@@ -4102,6 +4201,7 @@ app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, 
     res.status(500).json({ message: "Error searching project team users" });
   }
 });
+
 
 
 app.get("/api/projects/:projectId/teams",

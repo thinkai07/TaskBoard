@@ -11,6 +11,7 @@ const TimesheetDetails = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const { Option } = Select;
+    const [startDate, setStartDate] = useState(null);
     const [timesheetData, setTimesheetData] = useState({
         id: null,
         employeeName: '',
@@ -70,6 +71,20 @@ const TimesheetDetails = () => {
     }, [form, timesheetId]);
 
     const handleAddRow = () => {
+        // Check if the last row is incomplete
+        const lastRow = tableData[tableData.length - 1];
+        
+        if (lastRow) {
+            const { day, taskName, startTime, endTime, totalhoursworked } = lastRow;
+            
+            // Validate required fields (you can modify based on your requirements)
+            if (!day || !taskName || !startTime || !endTime || !totalhoursworked) {
+                message.warning('Please fill in all details of the previous row before adding a new row.');
+                return; // Exit if validation fails
+            }
+        }
+        
+        // If all required fields are filled, add a new row
         const newRow = {
             key: tableData.length,
             day: '',
@@ -84,6 +99,7 @@ const TimesheetDetails = () => {
         };
         setTableData([...tableData, newRow]);
     };
+    
 
     const handleSaveDraft = async () => {
         try {
@@ -306,6 +322,16 @@ const TimesheetDetails = () => {
         // Final submission logic if needed
     };
 
+
+    const handleStartDateChange = (date) => {
+        setStartDate(date);
+    };
+
+    // Disable end date that is before the selected start date
+    const disabledEndDate = (current) => {
+        return startDate ? current && current < moment(startDate).endOf('day') : false;
+    };
+
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Enter Timesheet</h1>
@@ -355,27 +381,37 @@ const TimesheetDetails = () => {
                     </Col>
                 </Row>
                 <Row gutter={16}>
-                    <Col span={12}>
-                        <Form.Item
-                            label="Week Start Date"
-                            name="weekStartDate"
-                            rules={[{ required: true, message: 'Please select week start date!' }]}
+                <Col span={12}>
+                    <Form.Item
+                        label="Week Start Date"
+                        name="weekStartDate"
+                        rules={[{ required: true, message: 'Please select week start date!' }]}
+                        style={{ width: '100%' }}
+                    >
+                        <DatePicker
+                            disabled={isFormDisabled}
+                            placeholder="Select Week Start Date"
                             style={{ width: '100%' }}
-                        >
-                            <DatePicker disabled={isFormDisabled} placeholder="Select Week Start Date" style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            label="Week End Date"
-                            name="weekEndDate"
-                            rules={[{ required: true, message: 'Please select week end date!' }]}
+                            onChange={handleStartDateChange}
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={12}>
+                    <Form.Item
+                        label="Week End Date"
+                        name="weekEndDate"
+                        rules={[{ required: true, message: 'Please select week end date!' }]}
+                        style={{ width: '100%' }}
+                    >
+                        <DatePicker
+                            disabled={isFormDisabled}
+                            placeholder="Select Week End Date"
                             style={{ width: '100%' }}
-                        >
-                            <DatePicker disabled={isFormDisabled} placeholder="Select Week End Date" style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                </Row>
+                            disabledDate={disabledEndDate}
+                        />
+                    </Form.Item>
+                </Col>
+            </Row>
 
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>

@@ -1,3 +1,4 @@
+// //teammemberspage.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -80,9 +81,9 @@ const TeamMembersPage = () => {
       setNewMemberUsername("");
       setUsernameSuggestions([]);
       setAddMemberError(false);
-      notification.success({
-        message: "Team member added successfully",
-      });
+      // notification.success({
+      //   message: "Team member added successfully",
+      // });
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -99,7 +100,31 @@ const TeamMembersPage = () => {
     setSelectedUserId(null);
   };
 
+  //   try {
+  //     await axios.delete(
+  //       `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //         data: { removedBy: localStorage.getItem("userId") },
+  //       }
+  //     );
+  //     setMembers((prevMembers) =>
+  //       prevMembers.filter((member) => member.id !== selectedUserId)
+  //     );
+  //     closeModal();
+  //     notification.success({
+  //       message: "Team member deleted successfully",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error deleting member:", error);
+  //   }
+  // };
   const handleDeleteMember = async () => {
+    // Close the modal immediately when delete is clicked
+    closeModal();
+    
     try {
       await axios.delete(
         `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
@@ -110,17 +135,20 @@ const TeamMembersPage = () => {
           data: { removedBy: localStorage.getItem("userId") },
         }
       );
+  
+      // Remove the member from the list after successful deletion
       setMembers((prevMembers) =>
         prevMembers.filter((member) => member.id !== selectedUserId)
       );
-      closeModal();
-      notification.success({
-        message: "Team member deleted successfully",
-      });
+  
+      // notification.success({
+      //   message: "Team member deleted successfully",
+      // });
     } catch (error) {
       console.error("Error deleting member:", error);
     }
   };
+  
 
   if (loading) {
     return (
@@ -180,7 +208,7 @@ const TeamMembersPage = () => {
 
       {usernameSuggestions.length > 0 && newMemberUsername.length > 0 && (
         <div className="relative">
-          <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
+          <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-xl shadow-lg max-h-60 overflow-auto">
             {usernameSuggestions
               .filter((user) => user.status === "VERIFIED") // Filter out unverified users
               .map((user) => (
@@ -232,3 +260,4 @@ const TeamMembersPage = () => {
 };
 
 export default TeamMembersPage;
+

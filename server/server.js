@@ -4746,7 +4746,7 @@ const executeBackgroundJob = async () => {
 
 setInterval(executeBackgroundJob, 5000);
 
-server.listen(port, () => {
+server.listen(port, host="0.0.0.0", () => {
   console.log(`Server is running on port ${port}`);
 });
 

@@ -204,7 +204,7 @@ function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    const newSocket = io("http://13.235.16.113:5000");
+    const newSocket = io(`${server}`);
     setSocket(newSocket);
   }, []);
 

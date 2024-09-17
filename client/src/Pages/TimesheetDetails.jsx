@@ -1,10 +1,9 @@
-//timesheetdetails.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select } from 'antd';
+import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select, Modal } from 'antd';
 
 const TimesheetDetails = () => {
     const { timesheetId } = useParams();
@@ -23,7 +22,9 @@ const TimesheetDetails = () => {
     });
     const [tableData, setTableData] = useState([]);
     const [isFormDisabled, setIsFormDisabled] = useState(false);
-    const [submitDisabled, setSubmitDisabled] = useState(true); // Added to track button state
+    const [submitDisabled, setSubmitDisabled] = useState(true);
+    const [visible, setVisible] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState(null);
 
     useEffect(() => {
         const fetchTimesheetData = async () => {
@@ -33,8 +34,10 @@ const TimesheetDetails = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
+
                 if (response.data.success) {
                     const fetchedTimesheet = response.data.timesheet;
+
                     const newTimesheetData = {
                         id: fetchedTimesheet._id,
                         employeeName: fetchedTimesheet.employeeName,
@@ -44,21 +47,25 @@ const TimesheetDetails = () => {
                         weekStartDate: moment(fetchedTimesheet.weekStartDate),
                         weekEndDate: moment(fetchedTimesheet.weekEndDate),
                     };
+
                     setTimesheetData(newTimesheetData);
                     form.setFieldsValue(newTimesheetData);
 
-                    setTableData(fetchedTimesheet.days.map((day, index) => ({
-                        key: index,
-                        day: day.dayOfWeek,
-                        taskName: day.tasks[0].taskName,
-                        taskDescription: day.tasks[0].taskDescription,
-                        startTime: day.tasks[0].startTime,
-                        endTime: day.tasks[0].endTime,
-                        breakHours: day.tasks[0].breakHours,
-                        totalhoursworked: day.tasks[0].totalhoursworked,
-                        notes: day.tasks[0].notes,
-                        isEditable: false,
-                    })));
+                    setTableData(fetchedTimesheet.days.flatMap((day, dayIndex) =>
+                        day.tasks.map((task, taskIndex) => ({
+                            key: `${dayIndex}-${taskIndex}`,
+                            taskId: task._id,
+                            day: day.dayOfWeek,
+                            taskName: task.taskName,
+                            taskDescription: task.taskDescription,
+                            startTime: task.startTime,
+                            endTime: task.endTime,
+                            breakHours: task.breakHours,
+                            totalhoursworked: task.totalhoursworked,
+                            notes: task.notes,
+                            isEditable: false,
+                        }))
+                    ));
                 }
             } catch (error) {
                 console.error('Error fetching timesheet:', error);
@@ -71,7 +78,6 @@ const TimesheetDetails = () => {
     }, [form, timesheetId]);
 
     const handleAddRow = () => {
-        // Check if the last row is incomplete
         const lastRow = tableData[tableData.length - 1];
         
         if (lastRow) {
@@ -83,10 +89,10 @@ const TimesheetDetails = () => {
                 return; // Exit if validation fails
             }
         }
-        
-        // If all required fields are filled, add a new row
+
         const newRow = {
-            key: tableData.length,
+            key: `new-${tableData.length}`,
+            taskId: null,
             day: '',
             taskName: '',
             taskDescription: '',
@@ -97,9 +103,39 @@ const TimesheetDetails = () => {
             notes: '',
             isEditable: true,
         };
+
         setTableData([...tableData, newRow]);
     };
-    
+
+    const showModal = (taskId) => {
+        console.log("Setting taskToDelete:", taskId);
+        setTaskToDelete(taskId);
+        setVisible(true);
+    };
+
+    const handleOk = async () => {
+        console.log("Deleting task with ID:", taskToDelete);
+        try {
+            await axios.delete(`${server}/api/timesheet/${timesheetId}/task/${taskToDelete}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            message.success('Task deleted successfully');
+            setTableData(tableData.filter(row => row.taskId !== taskToDelete));
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            message.error('Failed to delete task');
+        } finally {
+            setVisible(false);
+            setTaskToDelete(null);
+        }
+    };
+
+    const handleCancel = () => {
+        setVisible(false);
+        setTaskToDelete(null);
+    };
 
     const handleSaveDraft = async () => {
         try {
@@ -109,7 +145,7 @@ const TimesheetDetails = () => {
                 isEditable: false,
             }));
             setTableData(updatedData);
-
+    
             const timesheetPayload = {
                 employeeName: formValues.employeeName,
                 employeeID: formValues.employeeId,
@@ -117,25 +153,28 @@ const TimesheetDetails = () => {
                 teamLeadName: formValues.teamLead,
                 weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
                 weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
-                days: updatedData.map((row) => ({
-                    dayOfWeek: row.day,
-                    tasks: [
-                        {
-                            taskName: row.taskName,
-                            taskDescription: row.taskDescription,
-                            startTime: row.startTime,
-                            endTime: row.endTime,
-                            breakHours: row.breakHours,
-                            totalhoursworked: row.totalhoursworked,
-                            notes: row.notes,
-                        },
-                    ],
-                })),
+                days: updatedData.reduce((acc, row) => {
+                    const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
+                    const task = {
+                        taskName: row.taskName,
+                        taskDescription: row.taskDescription,
+                        startTime: row.startTime,
+                        endTime: row.endTime,
+                        breakHours: row.breakHours,
+                        totalhoursworked: row.totalhoursworked,
+                        notes: row.notes,
+                    };
+                    if (dayIndex === -1) {
+                        acc.push({ dayOfWeek: row.day, tasks: [task] });
+                    } else {
+                        acc[dayIndex].tasks.push(task);
+                    }
+                    return acc;
+                }, []),
             };
-
+    
             let response;
             if (timesheetId === 'new') {
-                // Create new timesheet
                 response = await axios.post(
                     `${server}/api/timesheet`,
                     timesheetPayload,
@@ -145,9 +184,9 @@ const TimesheetDetails = () => {
                         },
                     }
                 );
-                navigate(`/timesheetdetails/${response.data.timesheetId}`);
+                const timesheetId = response.data.timesheet._id;
+                navigate(`/timesheetdetails/${timesheetId}`);
             } else {
-                // Update existing timesheet
                 response = await axios.put(
                     `${server}/api/timesheet/${timesheetId}`,
                     timesheetPayload,
@@ -158,29 +197,80 @@ const TimesheetDetails = () => {
                     }
                 );
             }
-
+    
             if (response.data.message === "Timesheet submitted successfully" || response.data.message === "Timesheet updated successfully") {
                 message.success('Timesheet saved successfully');
                 setIsFormDisabled(true);
+            } else {
+                message.error('Failed to save timesheet');
             }
         } catch (error) {
             console.error('Error saving timesheet:', error);
             message.error('Failed to save timesheet');
         }
     };
-
+    
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
         setTableData(newData);
     };
 
+    const handleEditSave = async (record) => {
+        const index = tableData.findIndex(item => item.key === record.key);
+        const updatedData = [...tableData];
+    
+        if (record.isEditable) {
+            // Save changes
+            try {
+                const taskData = {
+                    dayOfWeek: record.day,
+                    taskName: record.taskName,
+                    taskDescription: record.taskDescription,
+                    startTime: record.startTime,
+                    endTime: record.endTime,
+                    breakHours: record.breakHours,
+                    totalhoursworked: record.totalhoursworked,
+                    notes: record.notes,
+                };
+    
+                const response = await axios.put(
+                    `${server}/api/timesheet/${timesheetId}/task/${record.taskId || ''}`,
+                    taskData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+    
+                if (response.data.message === "Task updated successfully" || response.data.message === "Task created successfully") {
+                    message.success(response.data.message);
+                    updatedData[index] = {
+                        ...updatedData[index],
+                        isEditable: false,
+                        taskId: response.data.taskId || updatedData[index].taskId,
+                    };
+                    setTableData(updatedData);
+                } else {
+                    message.error('Failed to update/create task');
+                }
+            } catch (error) {
+                console.error('Error updating/creating task:', error);
+                message.error('Failed to update/create task');
+            }
+        } else {
+            // Enter edit mode
+            updatedData[index].isEditable = true;
+            setTableData(updatedData);
+        }
+    };
+
+
     useEffect(() => {
-        // Check if all days from Monday to Friday are present
         const requiredDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         const addedDays = tableData.map(row => row.day);
         const allDaysAdded = requiredDays.every(day => addedDays.includes(day));
-
         setSubmitDisabled(!allDaysAdded);
     }, [tableData]);
 
@@ -237,7 +327,6 @@ const TimesheetDetails = () => {
                     <span>{text}</span>
                 ),
         },
-
         {
             title: 'Start Time',
             dataIndex: 'startTime',
@@ -315,6 +404,28 @@ const TimesheetDetails = () => {
                     <span>{text}</span>
                 ),
         },
+        {
+            title: 'Action',
+            key: 'action',
+            render: (text, record) => (
+                <div>
+                    <Button
+                        type="primary"
+                        onClick={() => handleEditSave(record)}
+                        style={{ marginRight: '8px' }}
+                    >
+                        {record.isEditable ? 'Save' : 'Edit'}
+                    </Button>
+                    <Button
+                        type="danger"
+                        onClick={() => showModal(record.taskId)}
+                        style={{ color: 'red' }}
+                    >
+                        Delete
+                    </Button>
+                </div>
+            ),
+        },
     ];
 
     const handleSubmit = (values) => {
@@ -334,6 +445,16 @@ const TimesheetDetails = () => {
 
     return (
         <div className="p-4">
+            <Modal
+                title="Confirm Deletion"
+                visible={visible}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                okText="Yes"
+                cancelText="No"
+            >
+                <p>Are you sure you want to delete this task?</p>
+            </Modal>
             <h1 className="text-2xl font-bold mb-4">Enter Timesheet</h1>
             <Form form={form} onFinish={handleSubmit} layout="vertical" initialValues={timesheetData}>
                 <Row gutter={16}>

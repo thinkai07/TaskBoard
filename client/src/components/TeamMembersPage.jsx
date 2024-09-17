@@ -1,4 +1,3 @@
-// //teammemberspage.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -20,27 +19,29 @@ const TeamMembersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await axios.get(
-          `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setMembers(response.data.users || []);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        setLoading(false);
-      }
-    };
+  // Extract fetchMembers to be reused
+  const fetchMembers = async () => {
+    setLoading(true); // Set loading to true before fetching
+    try {
+      const response = await axios.get(
+        `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setMembers(response.data.users || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMembers();
-  }, [members]);
+  }, []); // Empty dependency array to run once when component mounts
 
   const handleUsernameChange = async (event) => {
     setNewMemberUsername(event.target.value);
@@ -81,9 +82,10 @@ const TeamMembersPage = () => {
       setNewMemberUsername("");
       setUsernameSuggestions([]);
       setAddMemberError(false);
-      // notification.success({
-      //   message: "Team member added successfully",
-      // });
+
+      // Fetch the updated list of members
+      fetchMembers();
+      
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -100,27 +102,6 @@ const TeamMembersPage = () => {
     setSelectedUserId(null);
   };
 
-  //   try {
-  //     await axios.delete(
-  //       `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //         },
-  //         data: { removedBy: localStorage.getItem("userId") },
-  //       }
-  //     );
-  //     setMembers((prevMembers) =>
-  //       prevMembers.filter((member) => member.id !== selectedUserId)
-  //     );
-  //     closeModal();
-  //     notification.success({
-  //       message: "Team member deleted successfully",
-  //     });
-  //   } catch (error) {
-  //     console.error("Error deleting member:", error);
-  //   }
-  // };
   const handleDeleteMember = async () => {
     // Close the modal immediately when delete is clicked
     closeModal();
@@ -140,15 +121,14 @@ const TeamMembersPage = () => {
       setMembers((prevMembers) =>
         prevMembers.filter((member) => member.id !== selectedUserId)
       );
-  
-      // notification.success({
-      //   message: "Team member deleted successfully",
-      // });
+
+      // Fetch the updated list of members
+      fetchMembers();
+      
     } catch (error) {
       console.error("Error deleting member:", error);
     }
   };
-  
 
   if (loading) {
     return (
@@ -260,4 +240,3 @@ const TeamMembersPage = () => {
 };
 
 export default TeamMembersPage;
-

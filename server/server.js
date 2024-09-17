@@ -1109,48 +1109,170 @@ app.post("/api/timesheet", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
-// Update timesheet
-app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
-  try {
-    const timesheetId = req.params.id;
-    const userId = req.user._id;
-    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
 
-    // Find the timesheet by ID and user ID
+app.put("/api/timesheet/:timesheetId/task/:taskId?", authenticateToken, async (req, res) => {
+  try {
+    const { timesheetId, taskId } = req.params;
+    const userId = req.user._id;
+    const { dayOfWeek, taskName, taskDescription, startTime, endTime, breakHours, totalhoursworked, notes } = req.body;
+
+    if (!timesheetId || timesheetId === 'undefined') {
+      return res.status(400).json({ message: "Invalid timesheet ID" });
+    }
+
+    // Find the timesheet by ID and ensure it belongs to the user
     const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
 
     if (!timesheet) {
       return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
     }
+    if (taskId) {
+      // Update existing task
+      let taskFound = false;
+      timesheet.days = timesheet.days.map(day => {
+        day.tasks = day.tasks.map(task => {
+          if (task._id.toString() === taskId) {
+            // Update the task details
+            task.taskName = taskName;
+            task.taskDescription = taskDescription;
+            task.startTime = startTime;
+            task.endTime = endTime;
+            task.breakHours = breakHours;
+            task.totalhoursworked = totalhoursworked;
+            task.notes = notes;
+            taskFound = true;
+          }
+          return task;
+        });
+        return day;
+      });
 
-    // Update timesheet fields
-    timesheet.employeeName = employeeName;
-    timesheet.employeeID = employeeID;
-    timesheet.department = department;
-    timesheet.teamLeadName = teamLeadName;
-    timesheet.weekStartDate = new Date(weekStartDate);
-    timesheet.weekEndDate = new Date(weekEndDate);
-    timesheet.days = days.map(day => ({
-      dayOfWeek: day.dayOfWeek,
-      tasks: day.tasks.map(task => ({
-        taskName: task.taskName,
-        taskDescription: task.taskDescription,
-        startTime: task.startTime,
-        endTime: task.endTime,
-        breakHours: task.breakHours,
-        totalhoursworked: task.totalhoursworked,
-        notes: task.notes
-      }))
-    }));
+      if (!taskFound) {
+        return res.status(404).json({ message: "Task not found in the timesheet" });
+      }
 
-    // Save the updated timesheet
-    const updatedTimesheet = await timesheet.save();
-    res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+      const updatedTimesheet = await timesheet.save();
+      res.status(200).json({ message: "Task updated successfully", timesheet: updatedTimesheet });
+    } else {
+      // Create new task
+      const dayIndex = timesheet.days.findIndex(day => day.dayOfWeek === dayOfWeek);
+      
+      if (dayIndex === -1) {
+        // If the day doesn't exist, create a new day
+        timesheet.days.push({
+          dayOfWeek,
+          tasks: [{
+            taskName,
+            taskDescription,
+            startTime,
+            endTime,
+            breakHours,
+            totalhoursworked,
+            notes
+          }]
+        });
+      } else {
+        // If the day exists, add the new task to it
+        timesheet.days[dayIndex].tasks.push({
+          taskName,
+          taskDescription,
+          startTime,
+          endTime,
+          breakHours,
+          totalhoursworked,
+          notes
+        });
+      }
+
+      const updatedTimesheet = await timesheet.save();
+      const newTask = updatedTimesheet.days.find(day => day.dayOfWeek === dayOfWeek).tasks.slice(-1)[0];
+      res.status(201).json({ message: "Task created successfully", taskId: newTask._id, timesheet: updatedTimesheet });
+    }
   } catch (error) {
-    console.error("Error updating timesheet:", error);
+    console.error("Error updating/creating task in timesheet:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
+
+
+
+
+//delete api
+app.delete("/api/timesheet/:timesheetId/task/:taskId", authenticateToken, async (req, res) => {
+  try {
+    const { timesheetId, taskId } = req.params;
+    const userId = req.user._id;
+
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to delete from it" });
+    }
+
+    // Find and remove the task
+    const dayToUpdate = timesheet.days.find(day =>
+      day.tasks.some(task => task._id.toString() === taskId)
+    );
+
+    if (dayToUpdate) {
+      dayToUpdate.tasks = dayToUpdate.tasks.filter(task => task._id.toString() !== taskId);
+      await timesheet.save();
+      return res.status(200).json({ message: "Task deleted successfully" });
+    }
+
+    res.status(404).json({ message: "Task not found" });
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+
+
+
+// Update timesheet
+// app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
+//   try {
+//     const timesheetId = req.params.id;
+//     const userId = req.user._id;
+//     const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+
+//     // Find the timesheet by ID and user ID
+//     const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+//     if (!timesheet) {
+//       return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
+//     }
+
+//     // Update timesheet fields
+//     timesheet.employeeName = employeeName;
+//     timesheet.employeeID = employeeID;
+//     timesheet.department = department;
+//     timesheet.teamLeadName = teamLeadName;
+//     timesheet.weekStartDate = new Date(weekStartDate);
+//     timesheet.weekEndDate = new Date(weekEndDate);
+//     timesheet.days = days.map(day => ({
+//       dayOfWeek: day.dayOfWeek,
+//       tasks: day.tasks.map(task => ({
+//         taskName: task.taskName,
+//         taskDescription: task.taskDescription,
+//         startTime: task.startTime,
+//         endTime: task.endTime,
+//         breakHours: task.breakHours,
+//         totalhoursworked: task.totalhoursworked,
+//         notes: task.notes
+//       }))
+//     }));
+
+//     // Save the updated timesheet
+//     const updatedTimesheet = await timesheet.save();
+//     res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+//   } catch (error) {
+//     console.error("Error updating timesheet:", error);
+//     res.status(500).json({ message: "Internal server error", error: error.message });
+//   }
+// });
 
 
 // Secret Key for JWT

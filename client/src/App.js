@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Projects from './components/Projects';
-import KanbanBoard from './components/KanbanBoard';
+import Tasks from './components/KanbanBoard';
 import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import RegistrationPage from './components/RegistrationPage';
 import AdminPanel from './components/AdminPanel';
 import Organization from './components/Organization';
 import ResetPassword from './components/ResetPassword';
+import KanbanBoard from './components/KanbanBoard';
 import SuccessPage from './components/SuccessPage';
 import Calendar from './components/Calendar';
 import AuditLog from './components/Auditlog';
@@ -63,41 +64,39 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Only "/" is used for both login and overview */}
-        <Route 
-          path="/" 
-          element={isLoggedIn ? 
-            <Navigate to="/overview" /> : 
-            <LoginPage onLogin={handleLogin} />
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? (
+              <Layout isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout}>
+                <Overview />
+              </Layout>
+            ) : (
+              <LoginPage onLogin={handleLogin} />
+            )
           }
         />
-
-        {/* Registration, Forgot Password, and Reset Password */}
-        <Route path="/register" element={<RegistrationPage />} />
-        <Route path="/organization" element={<Organization />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/success" element={<SuccessPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-forgot-password" element={<ResetForgotPassword />} />
-
-        {/* Protected Routes */}
-        {isLoggedIn && (
-          <Route
-            path="/*"
-            element={
+        <Route path='/register' element={<RegistrationPage />} />
+        <Route path='/Organization' element={<Organization />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/success' element={<SuccessPage />} />
+        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
+        <Route path="/forgot-password" element={<ResetForgotPassword />} />
+        <Route
+          path="/*"
+          element={
+            isLoggedIn ? (
               <Layout isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout}>
                 <Routes>
-                  {/* Use exact for the overview page */}
-                  <Route path="/overview" element={<Overview />} />
-                  <Route path="/projects" element={<Projects />} />
+                  <Route path="projects" element={<Projects />} />
                   <Route path="/projects/:projectId/tasks" element={<KanbanBoard user={user} />} />
-                  <Route path="/members" element={<AdminPanel />} />
-                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path='/members' element={<AdminPanel />} />
+                  <Route path='/calendar' element={<Calendar />} />
                   <Route path="/projects/:projectId/view" element={<KanbanBoard user={user} />} />
-                  <Route path="/auditlog" element={<AuditLog />} />
-                  <Route path="/teamsorg" element={<Teamsorg />} />
+                  <Route path="/Auditlog" element={<AuditLog />} />
+                  <Route path="/Teamsorg" element={<Teamsorg />} />
                   <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
-                  <Route path="/rules" element={<RulesButton />} />
+                  <Route path="/Rules" element={<RulesButton />} />
                   <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails />} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
                   <Route path="/statussheet" element={<StatusSheet />} />
@@ -105,14 +104,11 @@ const App = () => {
                   <Route path="/timesheetdetails/:timesheetId" element={<TimesheetDetails />} />
                 </Routes>
               </Layout>
-            }
-          />
-        )}
-
-        {/* Redirect to login if not logged in */}
-        {!isLoggedIn && (
-          <Route path="*" element={<Navigate to="/" />} />
-        )}
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
       </Routes>
     </Router>
   );

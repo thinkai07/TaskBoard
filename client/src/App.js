@@ -26,33 +26,33 @@ import TimesheetDetails from './Pages/TimesheetDetails';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('token') !== null;
+    return localStorage.getItem("token") !== null;
   });
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
     setUser(null);
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       setIsLoggedIn(true);
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
@@ -100,8 +100,10 @@ const App = () => {
                   <Route path="/calendar/:organizationId/:date" element={<CalendarDateDetails />} />
                   <Route path="/rename-card/:columnId/cards/:cardId" element={<RenameCardPage />} />
                   <Route path="/statussheet" element={<StatusSheet />} />
-                  <Route path='/timesheet' element={<Timesheet />} />
+                  <Route path="/timesheet" element={<Timesheet />} />
                   <Route path="/timesheetdetails/:timesheetId" element={<TimesheetDetails />} />
+                  {/* Catch-all route for authenticated users */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>
             ) : (

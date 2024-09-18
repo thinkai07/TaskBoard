@@ -383,7 +383,7 @@ const Overview = () => {
                 <option value="">Select a user</option>
                 {users.map((user) => (
                   <option key={user._id} value={user._id}>
-                    {user.username}
+                    {user.name}
                   </option>
                 ))}
               </select>

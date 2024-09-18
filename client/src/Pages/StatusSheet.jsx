@@ -416,7 +416,7 @@ const StatusSheet = () => {
         <Menu onClick={(e) => handleUserSelect(e.key)}>
             {users.map((user) => (
                 <Menu.Item key={user._id}>
-                    {user.username}
+                    {user.name}
                 </Menu.Item>
             ))}
         </Menu>

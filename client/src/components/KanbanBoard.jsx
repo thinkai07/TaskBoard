@@ -211,7 +211,7 @@ function KanbanBoard() {
   useEffect(() => {
     if (socket) {
       socket.on("connection", () => {
-        console.log("connected");
+        // console.log("connected");
       });
     }
   }, [socket]);
@@ -312,11 +312,11 @@ function KanbanBoard() {
       });
 
       socket.on("cardMoved", ({ cardId, sourceTaskId, destinationTaskId }) => {
-        console.log("Card moved event received:", {
-          cardId,
-          sourceTaskId,
-          destinationTaskId,
-        });
+        // console.log("Card moved event received:", {
+        //   cardId,
+        //   sourceTaskId,
+        //   destinationTaskId,
+        // });
         setBoardData((prevState) => {
           if (!prevState || !prevState.columns) {
             console.error("Invalid board state:", prevState);
@@ -554,7 +554,7 @@ function KanbanBoard() {
       );
 
       setBgUrl(bgUrl);
-      console.log(bgUrl);
+      // console.log(bgUrl);
       setBoardData({ columns });
 
       if (bgUrl && bgUrl.raw) {
@@ -579,7 +579,7 @@ function KanbanBoard() {
   }
 
   useEffect(() => {
-    console.log("Current bgUrl:", bgUrl);
+    // console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
 
   const handleCloseModal = () => {
@@ -603,7 +603,7 @@ function KanbanBoard() {
     createdBy,
     dueDate
   ) => {
-    console.log("openRenameCardModal called with:", cardId, currentComments);
+    // console.log("openRenameCardModal called with:", cardId, currentComments);
 
     setSelectedColumnId(columnId);
     setSelectedCardId(cardId);
@@ -1222,7 +1222,7 @@ function KanbanBoard() {
   };
 
   const openModal = (columnId, type) => {
-    console.log(columnId);
+    // console.log(columnId);
     setSelectedColumnId(columnId);
     setModalType(type);
     setModalVisible(true);
@@ -1251,7 +1251,7 @@ function KanbanBoard() {
 
         const project = await response.json();
         setProjectName(project.name);
-        console.log(project.projectManager);
+        // console.log(project.projectManager);
         setProjectManager(project.projectManger);
       } catch (error) {
         console.error("Error fetching project details:", error);
@@ -1441,7 +1441,7 @@ function KanbanBoard() {
         }
       );
       setTasks(response.data.tasks);
-      console.log("tasks1 done");
+      // console.log("tasks1 done");
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }

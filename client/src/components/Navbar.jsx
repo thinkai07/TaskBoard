@@ -255,7 +255,7 @@ const Navbar = ({ user, onLogout, onSelectBackground }) => {
         setOrganizationId(response.data.organizationId);
         setOrganizationName(response.data.organizationName);
         setUserName(response.data.username)
-        console.log("username", response.data.username);
+        // console.log("username", response.data.username);
       } catch (error) {
         console.error("Error fetching user role:", error);
       }

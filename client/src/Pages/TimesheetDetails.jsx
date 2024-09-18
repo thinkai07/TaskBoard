@@ -1,11 +1,14 @@
+//TimesheetDetails
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select, Modal } from 'antd';
+import useTokenValidation from '../components/UseTockenValidation';
 
 const TimesheetDetails = () => {
+    useTokenValidation();
     const { timesheetId } = useParams();
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -153,6 +156,7 @@ const TimesheetDetails = () => {
                 teamLeadName: formValues.teamLead,
                 weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
                 weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
+                status:"pending",
                 days: updatedData.reduce((acc, row) => {
                     const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
                     const task = {
@@ -234,15 +238,30 @@ const TimesheetDetails = () => {
                     notes: record.notes,
                 };
     
-                const response = await axios.put(
-                    `${server}/api/timesheet/${timesheetId}/task/${record.taskId || ''}`,
-                    taskData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        },
-                    }
-                );
+                let response;
+                if (record.taskId) {
+                    // If taskId exists, update the task
+                    response = await axios.put(
+                        `${server}/api/timesheet/${timesheetId}/task/${record.taskId}`,
+                        taskData,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                            },
+                        }
+                    );
+                } else {
+                    // Else, create the task if taskId is null (new row)
+                    response = await axios.post(
+                        `${server}/api/timesheet/${timesheetId}/task`,
+                        taskData,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                            },
+                        }
+                    );
+                }
     
                 if (response.data.message === "Task updated successfully" || response.data.message === "Task created successfully") {
                     message.success(response.data.message);
@@ -265,6 +284,7 @@ const TimesheetDetails = () => {
             setTableData(updatedData);
         }
     };
+
 
 
     useEffect(() => {
@@ -427,10 +447,175 @@ const TimesheetDetails = () => {
             ),
         },
     ];
-
-    const handleSubmit = (values) => {
-        console.log('Submitted values:', values);
-        // Final submission logic if needed
+    //     try {
+    //         const formValues = await form.validateFields();
+    //         const updatedData = tableData.map((row) => ({
+    //             ...row,
+    //             isEditable: false,
+    //         }));
+    //         setTableData(updatedData);
+    
+    //         const timesheetPayload = {
+    //             employeeName: formValues.employeeName,
+    //             employeeID: formValues.employeeId,
+    //             department: formValues.department,
+    //             teamLeadName: formValues.teamLead,
+    //             weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
+    //             weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
+    //             status: "inprogress",  // Status set to "inprogress"
+    //             days: updatedData.reduce((acc, row) => {
+    //                 const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
+    //                 const task = {
+    //                     taskName: row.taskName,
+    //                     taskDescription: row.taskDescription,
+    //                     startTime: row.startTime,
+    //                     endTime: row.endTime,
+    //                     breakHours: row.breakHours,
+    //                     totalhoursworked: row.totalhoursworked,
+    //                     notes: row.notes,
+    //                 };
+    //                 if (dayIndex === -1) {
+    //                     acc.push({ dayOfWeek: row.day, tasks: [task] });
+    //                 } else {
+    //                     acc[dayIndex].tasks.push(task);
+    //                 }
+    //                 return acc;
+    //             }, []),
+    //         };
+    
+    //         let response;
+    //         if (timesheetId === 'new') {
+    //             response = await axios.post(
+    //                 `${server}/api/timesheet`,  // Use the new endpoint for submission
+    //                 timesheetPayload,
+    //                 {
+    //                     headers: {
+    //                         Authorization: `Bearer ${localStorage.getItem('token')}`,
+    //                     },
+    //                 }
+    //             );
+    //             const timesheetId = response.data.timesheet._id;
+    //             navigate(`/timesheetdetails/${timesheetId}`);
+    //         } else {
+    //             response = await axios.put(
+    //                 `${server}/api/timesheet/${timesheetId}`,  // Update existing timesheet
+    //                 timesheetPayload,
+    //                 {
+    //                     headers: {
+    //                         Authorization: `Bearer ${localStorage.getItem('token')}`,
+    //                     },
+    //                 }
+    //             );
+    //         }
+    
+    //         if (response.data.message === "Timesheet submitted successfully with 'inprogress' status" || response.data.message === "Timesheet updated successfully") {
+    //             message.success('Timesheet submitted successfully');
+    //             setIsFormDisabled(true);
+    //         } else {
+    //             message.error('Failed to submit timesheet');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error submitting timesheet:', error);
+    //         message.error('Failed to submit timesheet');
+    //     }
+    // };
+    const handleSubmit = async () => {
+        try {
+            const formValues = await form.validateFields();
+            const updatedData = tableData.map((row) => ({
+                ...row,
+                isEditable: false,
+            }));
+            setTableData(updatedData);
+    
+            const timesheetPayload = {
+                employeeName: formValues.employeeName,
+                employeeID: formValues.employeeId,
+                department: formValues.department,
+                teamLeadName: formValues.teamLead,
+                weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
+                weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
+                days: updatedData.reduce((acc, row) => {
+                    const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
+                    const task = {
+                        taskName: row.taskName,
+                        taskDescription: row.taskDescription,
+                        startTime: row.startTime,
+                        endTime: row.endTime,
+                        breakHours: row.breakHours,
+                        totalhoursworked: row.totalhoursworked,
+                        notes: row.notes,
+                    };
+                    if (dayIndex === -1) {
+                        acc.push({ dayOfWeek: row.day, tasks: [task] });
+                    } else {
+                        acc[dayIndex].tasks.push(task);
+                    }
+                    return acc;
+                }, []),
+            };
+    
+            let response;
+            if (timesheetId === 'new') {
+                // Create a new timesheet
+                response = await axios.post(
+                    `${server}/api/timesheet`,
+                    timesheetPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+                const newTimesheetId = response.data.timesheet._id;
+                
+                // Submit the newly created timesheet
+                await axios.post(
+                    `${server}/api/timesheet/${newTimesheetId}/submit`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+                
+                navigate(`/timesheetdetails/${newTimesheetId}`);
+            } else {
+                // Update existing timesheet
+                await axios.put(
+                    `${server}/api/timesheet/${timesheetId}`,
+                    timesheetPayload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+                
+                // Submit the updated timesheet
+                response = await axios.post(
+                    `${server}/api/timesheet/${timesheetId}/submit`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    }
+                );
+            }
+    
+            if (response.data.message === "Timesheet submitted successfully") {
+                message.success('Timesheet submitted successfully with "Inprogress" status');
+                setIsFormDisabled(true);
+                setTimesheetData(prevData => ({...prevData, status: 'inprogress'}));
+            } else {
+                message.error('Failed to submit timesheet');
+            }
+        } catch (error) {
+            console.error('Error submitting timesheet:', error);
+            message.error('Failed to submit timesheet');
+        }
     };
 
 
@@ -544,11 +729,19 @@ const TimesheetDetails = () => {
                         >
                             Add Row
                         </Button>
-                        <Button
+                        {/* <Button
                             type="primary"
-                            onClick={handleSaveDraft}
+                            onClick={handleSubmit}
                             disabled={submitDisabled || isFormDisabled}
                             style={{ marginRight: '8px' }} // Add margin here
+                        >
+                            Submit
+                        </Button> */}
+                         <Button
+                            type="primary"
+                            onClick={handleSubmit}
+                            disabled={submitDisabled || isFormDisabled || timesheetData.status === 'inprogress'}
+                            style={{ marginRight: '8px' }}
                         >
                             Submit
                         </Button>

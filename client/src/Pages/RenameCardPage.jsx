@@ -130,7 +130,7 @@ const RenameCardPage = () => {
                 });
 
                 // Log or use the projectManager variable if needed
-                console.log("Project Manager:", projectManager);
+                // console.log("Project Manager:", projectManager);
             } else {
                 console.error("Card not found");
             }
@@ -366,7 +366,7 @@ const RenameCardPage = () => {
     };
 
     useEffect(() => {
-        console.log("Card Data State:", cardData);
+        // console.log("Card Data State:", cardData);
     }, [cardData]);
 
     const handleSaveComment = async () => {

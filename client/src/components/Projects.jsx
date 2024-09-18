@@ -524,11 +524,10 @@ const Projects = () => {
     //  }
   };
 
-
   const handleProjectManagerChange = async (value) => {
     setNewProject((prev) => ({ ...prev, projectManager: value }));
     setProjectManagerError(false);
-
+  
     if (value) {
       try {
         const response = await axios.get(`${server}/api/users/search`, {
@@ -543,7 +542,7 @@ const Projects = () => {
             username: user.username, // Fetch the username
             email: user.email,
           }));
-
+          
           setEmailSuggestions(suggestions); // Set username and email as suggestions
           setProjectManagerError(false);
         } else {

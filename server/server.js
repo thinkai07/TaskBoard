@@ -303,14 +303,31 @@ const taskSchema = new Schema(
   }
 );
 
+
 // User schema
-// User schema
+// const userSchema = new Schema({
+//   id: String,
+//   name: String,
+//   email: String,
+//   username: String, // New field
+//   employeeId: String, // New field
+//   password: String,
+//   role: { type: String },
+//   organization: { type: Schema.Types.ObjectId, ref: "Organization" },
+//   createdAt: { type: Date, default: Date.now },
+//   updatedAt: { type: Date, default: Date.now },
+//   status: { type: String, default: "UNVERIFY" },
+// });
+
 const userSchema = new Schema({
   id: String,
   name: String,
   email: String,
-  username: String, // New field
-  employeeId: String, // New field
+  username: String,
+  employeeId: String,
+  employeeName: String,  // New field
+  department: String,  // New field
+  teamLead: String,  // New field
   password: String,
   role: { type: String },
   organization: { type: Schema.Types.ObjectId, ref: "Organization" },
@@ -398,7 +415,7 @@ const timesheetSchema = new Schema({
         {
           taskName: { type: String, required: true },
           taskDescription: { type: String },
-          startTime: { type: String, required: true }, 
+          startTime: { type: String, required: true },
           endTime: { type: String, required: true },
           breakHours: { type: Number, default: 0 },
           totalhoursworked: { type: Number, default: 0 },
@@ -762,7 +779,7 @@ app.get("/api/users/search", authenticateToken, async (req, res) => {
   }
 });
 
-// Fetch users for an organization
+//Fetch users for an organization
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const users = await User.find({ organization: req.user.organizationId });
@@ -772,6 +789,11 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching users" });
   }
 });
+
+
+
+
+
 
 app.get("/api/cards/user/:userId", async (req, res) => {
   try {
@@ -824,7 +846,7 @@ app.get("/api/cards/user/:userId", async (req, res) => {
 app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
-      "name email role"
+      "name email role employeeId department teamLead username"
     );
     if (!user) {
       return res
@@ -838,6 +860,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 // Delete user
 app.delete("/api/deleteUser/:id",
@@ -972,8 +995,9 @@ app.delete("/api/deleteUser/:id",
 //   }
 // });
 
+
+
 // Login route
-// // Login route
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -1048,28 +1072,28 @@ app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
 // GET API to fetch all timesheets for the authenticated user
 app.get("/api/timesheets", authenticateToken, async (req, res) => {
   try {
-      const userId = req.user._id;
+    const userId = req.user._id;
 
-      // Fetch user information to check role
-      const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
+    // Fetch user information to check role
+    const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
 
-      if (!user) {
-          return res.status(404).json({ success: false, message: "User not found" });
-      }
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-      // Check if user is an ADMIN
-      if (user.role === 'ADMIN') {
-          // Fetch all timesheets
-          const timesheets = await Timesheet.find({});
-          return res.status(200).json({ success: true, timesheets });
-      } else {
-          // Fetch timesheets associated with the authenticated user
-          const timesheets = await Timesheet.find({ user: userId });
-          return res.status(200).json({ success: true, timesheets });
-      }
+    // Check if user is an ADMIN
+    if (user.role === 'ADMIN') {
+      // Fetch all timesheets
+      const timesheets = await Timesheet.find({});
+      return res.status(200).json({ success: true, timesheets });
+    } else {
+      // Fetch timesheets associated with the authenticated user
+      const timesheets = await Timesheet.find({ user: userId });
+      return res.status(200).json({ success: true, timesheets });
+    }
   } catch (error) {
-      console.error("Error fetching timesheets:", error);
-      res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error("Error fetching timesheets:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 // create timesheet
@@ -1156,7 +1180,7 @@ app.put("/api/timesheet/:timesheetId/task/:taskId?", authenticateToken, async (r
     } else {
       // Create new task
       const dayIndex = timesheet.days.findIndex(day => day.dayOfWeek === dayOfWeek);
-      
+
       if (dayIndex === -1) {
         // If the day doesn't exist, create a new day
         timesheet.days.push({
@@ -1328,7 +1352,7 @@ app.get("/api/role", authenticateToken, async (req, res) => {
       role: user.role,
       organizationId: user.organization,
       organizationName: organization.name, // Include the organization name in the response
-      username:user.username
+      username: user.username
     });
   } catch (error) {
     console.error("Error:", error);
@@ -1338,25 +1362,101 @@ app.get("/api/role", authenticateToken, async (req, res) => {
 
 // Add user
 
+// app.post("/api/addUser",
+//   authenticateToken,
+//   authorizeRoles("ADMIN"),
+//   async (req, res) => {
+//     const { name, email, username, employeeId, role } = req.body; // Include new fields
+//     try {
+//       if (!name || !email || !role || !username || !employeeId) { // Check new fields
+//         return res.status(400).json({ message: "All fields are required" });
+//       }
+//       const newUser = new User({
+//         name,
+//         email,
+//         username, // New field
+//         employeeId, // New field
+//         role: "USER",
+//         organization: req.user.organizationId,
+//         status: "UNVERIFY",
+//       });
+//       // Find the organization by ID
+//       const organization = await Organization.findById(req.user.organizationId);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       await newUser.save();
+
+//       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
+//         expiresIn: "3d",
+//       });
+//       const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+
+//       sendResetEmail(email, resetLink);
+
+//       // Add the user to the GitHub organization
+//       try {
+//         const githubResponse = await axios.put(
+//           `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
+//           {
+//             role: "member",
+//           },
+//           {
+//             headers: {
+//               Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//               "Content-Type": "application/json",
+//               Accept: "application/vnd.github.v3+json",
+//             },
+//           }
+//         );
+
+//         // console.log("GitHub membership response:", githubResponse.data);
+//       } catch (error) {
+//         console.error(
+//           "Error adding user to GitHub organization:",
+//           error.response ? error.response.data : error.message
+//         );
+//         return res.status(500).json({
+//           message: "User added to the organization but not to GitHub",
+//           user: newUser,
+//         });
+//       }
+
+//       res.status(201).json({
+//         message: "User added successfully and added to GitHub",
+//         user: newUser,
+//       });
+//     } catch (error) {
+//       console.error("Error adding user:", error);
+//       res.status(500).json({ message: "Error adding user" });
+//     }
+//   }
+// );
+
 app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
-    const { name, email, username, employeeId, role } = req.body; // Include new fields
+    const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body; // Include new fields
     try {
-      if (!name || !email || !role || !username || !employeeId) { // Check new fields
+      if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) { // Check new fields
         return res.status(400).json({ message: "All fields are required" });
       }
+
       const newUser = new User({
         name,
         email,
-        username, // New field
-        employeeId, // New field
+        username,
+        employeeId,
+        employeeName,  // New field
+        department,  // New field
+        teamLead,  // New field
         role: "USER",
         organization: req.user.organizationId,
         status: "UNVERIFY",
       });
-      // Find the organization by ID
+
       const organization = await Organization.findById(req.user.organizationId);
       if (!organization) {
         return res.status(404).json({ message: "Organization not found" });
@@ -1400,7 +1500,7 @@ app.post("/api/addUser",
       }
 
       res.status(201).json({
-        message: "User added successfully and added to GitHub",
+        message: "User added successfully",
         user: newUser,
       });
     } catch (error) {
@@ -1557,8 +1657,8 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
-  } 
-}); 
+  }
+});
 
 
 //projects
@@ -1693,7 +1793,7 @@ app.post("/api/projects", async (req, res) => {
       .toLowerCase();
     let githubResponse;
     try {
-      
+
       githubResponse = await axios.post(
         `https://api.github.com/orgs/${organization.name}/repos`,
         {
@@ -1790,7 +1890,7 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      
+
       const { bgUrl } = req.body;
 
       // const result = await cloudinary.uploader.upload(bgUrl, {
@@ -2099,7 +2199,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
           },
         }
       );
-     
+
     } catch (error) {
       console.error(
         "Error deleting GitHub repository:",
@@ -2162,7 +2262,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
-        taskId:newTask._id,
+        taskId: newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -2617,11 +2717,11 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     });
     await newNotification.save();
 
-     // Send an email to the assigned user
-     const emailSubject = `You have been assigned a new task: "${name}"`;
-     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
-     sendEmail(assignedTo, emailSubject, emailText);
- 
+    // Send an email to the assigned user
+    const emailSubject = `You have been assigned a new task: "${name}"`;
+    const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+    sendEmail(assignedTo, emailSubject, emailText);
+
 
     io.emit("cardCreated", { taskId, card: newCard });
 
@@ -2640,7 +2740,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 app.post("/api/notifications", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.body;
-   
+
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -2648,7 +2748,7 @@ app.post("/api/notifications", authenticateToken, async (req, res) => {
 
     // Fetch notifications for the specified userId
     const notifications = await Notification.find({ userId }, "message");
-    
+
 
     res.status(200).json({ notifications });
   } catch (error) {
@@ -3063,7 +3163,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "activities",
           model: "Activity",
-          
+
         },
         {
           path: "taskLogs", // Populate task logs for each card
@@ -3176,7 +3276,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       }))
     );
 
-   
+
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -3698,7 +3798,7 @@ app.delete("/api/projects/:projectId/teams/:teamName/users",
 
       team.users.splice(userIndex, 1);
       await team.save();
-      
+
       res
         .status(200)
         .json({ message: "User removed from team successfully", removedBy });
@@ -3767,7 +3867,7 @@ app.post("/api/organizations/:organizationId/teams",
       // Update the team with the GitHub slug
       team.slug = githubTeamResponse.data.slug;
       await team.save();
-     
+
       res.status(200).json({
         message: "Team created successfully",
         team,
@@ -4020,7 +4120,7 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
 
 
 
-app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,
+app.get("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
 
@@ -4128,7 +4228,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
       );
 
       // console.log("GitHub team membership deleted:", githubTeamResponse.data);
-     
+
 
       res.status(200).json({
         message: "User removed from team successfully in MongoDB and GitHub",
@@ -4649,13 +4749,13 @@ const executeBackgroundJob = async () => {
     const rules = await Rule.find({ trigger: 'Card Move' });
 
     for (const rule of rules) {
-    
+
 
       // Fetch the project by ID
       const project = await Project.findById(rule.projectId);
       if (!project) {
-  
-        continue; 
+
+        continue;
       }
 
       // Fetch all cards associated with the project
@@ -4666,7 +4766,7 @@ const executeBackgroundJob = async () => {
         const user = await User.findOne({ email: card.updatedBy });
         if (!user) {
           console.error(`User with email ${card.updatedBy} not found.`);
-          continue; 
+          continue;
         }
 
         // Check the createdByCondition
@@ -4678,7 +4778,7 @@ const executeBackgroundJob = async () => {
         } else if (rule.createdByCondition === 'by anyone except me') {
           if (rule.createdBy.includes(user._id.toString())) {
             // console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
-            continue; 
+            continue;
           }
         }
 
@@ -4717,7 +4817,7 @@ const executeBackgroundJob = async () => {
 
 setInterval(executeBackgroundJob, 5000);
 
-server.listen(port, host="0.0.0.0", () => {
+server.listen(port, host = "0.0.0.0", () => {
   console.log(`Server is running on port ${port}`);
 });
 

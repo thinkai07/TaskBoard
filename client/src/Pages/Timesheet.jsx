@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Table, Button, Dropdown, Menu, DatePicker, AutoComplete, Input } from 'antd';
+import { Table, Button, Dropdown, Menu, DatePicker, AutoComplete, Input, message } from 'antd';
 import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, SearchOutlined } from '@ant-design/icons';
 import { server } from '../constant';
 import useTokenValidation from '../components/UseTockenValidation';
@@ -38,8 +38,36 @@ const Timesheet = () => {
         fetchTimesheetIds();
     }, []);
 
-    const handleAddTimesheet = () => {
-        navigate('/timesheetdetails/new');
+    // const handleAddTimesheet = () => {
+    //     navigate('/timesheetdetails/new');
+    // };
+    const handleAddTimesheet = async () => {
+        try {
+            // Fetch logged-in user data
+            const response = await axios.get(`${server}/api/user`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+
+            if (response.data.success) {
+                const userData = response.data.user;
+                navigate('/timesheetdetails/new', {
+                    state: {
+                        employeeName: userData.name,
+                        employeeId: userData.employeeId,
+                        department: userData.department,
+                        teamLead: userData.teamLead
+                    }
+                });
+            } else {
+                console.error('Failed to fetch user data');
+                message.error('Failed to fetch user data');
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            message.error('Error fetching user data');
+        }
     };
 
     const handleSort = (field, order) => {
@@ -108,7 +136,7 @@ const Timesheet = () => {
         if (value) {
             // Filter data based on the input and show suggestions
             const options = timesheetIds
-                .filter(item => 
+                .filter(item =>
                     item._id.includes(value) || item.employeeName.includes(value)
                 )
                 .map(item => ({
@@ -241,3 +269,13 @@ const Timesheet = () => {
 };
 
 export default Timesheet;
+
+
+
+
+
+
+
+
+
+

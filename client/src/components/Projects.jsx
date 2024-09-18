@@ -560,36 +560,7 @@ const Projects = () => {
     //  }
   };
 
-  const handleProjectManagerChange = async (value) => {
-    setNewProject((prev) => ({ ...prev, projectManager: value }));
-    setProjectManagerError(false);
-
-    if (value) {
-      try {
-        const response = await axios.get(`${server}/api/users/search`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          params: { email: value, organizationId: organizationId },
-        });
-
-        if (response.data.users.length > 0) {
-          setEmailSuggestions(response.data.users);
-          setProjectManagerError(false);
-        } else {
-          setEmailSuggestions([]);
-          setProjectManagerError(true);
-        }
-      } catch (error) {
-        console.error("Error fetching user emails:", error);
-        setEmailSuggestions([]);
-        setProjectManagerError(true);
-      }
-    } else {
-      setEmailSuggestions([]);
-      setProjectManagerError(false);
-    }
-  };
+  
 
   const isValidEmail = (email) => {
     const re =

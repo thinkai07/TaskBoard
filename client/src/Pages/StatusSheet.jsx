@@ -1,52 +1,16 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form } from 'antd';
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { server } from '../constant';
-
+import useTokenValidation from '../components/UseTockenValidation';
 
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const StatusSheet = () => {
+    useTokenValidation();
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
@@ -145,9 +109,6 @@ const StatusSheet = () => {
             console.error("Error fetching cards:", error);
         }
     };
-
-
-
 
     // Fetch tasks based on selected project
     const fetchProjectTasks = async (projectId) => {
@@ -274,14 +235,96 @@ const StatusSheet = () => {
             console.error('Error updating status:', error);
         }
     };
-    // Table columns definition
+    // // Table columns definition
+    // const columns = [
+    //     {
+    //         title: 'Project Name',
+    //         dataIndex: 'projectName',
+    //         key: 'projectName',
+    //         render: (text) => (
+    //             <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         ),
+    //     },
+    //     {
+    //         title: 'Column Name',
+    //         dataIndex: 'columnName',
+    //         key: 'columnName',
+    //         render: (text) => (
+    //             <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         )
+    //     },
+    //     {
+    //         title: 'Assigned Date',
+    //         dataIndex: 'assignedDate',
+    //         key: 'assignedDate',
+    //         render: (text) => (
+    //             <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         )
+    //     },
+    //     {
+    //         title: 'Task Name',
+    //         dataIndex: 'taskName',
+    //         key: 'taskName',
+    //         render: (text) => (
+    //             <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         )
+    //     },
+    //     {
+    //         title: 'Estimated Hours',
+    //         dataIndex: 'estimatedHours',
+    //         key: 'estimatedHours',
+    //         render: (text) => (
+    //             <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         )
+    //     },
+    //     {
+    //         title: 'Utilized Hours',
+    //         dataIndex: 'utilizedHours',
+    //         key: 'utilizedHours',
+    //         render: (text) =>
+    //         (
+    //             <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+    //                 {text}
+    //             </div>
+    //         )
+    //     },
+    //     {
+    //         title: 'Status',
+    //         dataIndex: 'status',
+    //         key: 'status',
+    //         render: (status, record) => (
+    //             <Select
+    //                 defaultValue={status}
+    //                 style={{ width: 120 }}
+    //                 onChange={(value) => handleChangeStatus(record.key, value)}
+    //                 disabled={userRole !== 'ADMIN'} // Disable for non-admin users
+    //             >
+    //                 <Option value="inprogress">In Progress</Option>
+    //                 <Option value="completed">Completed</Option>
+    //                 <Option value="pending">Pending</Option>
+    //             </Select>
+    //         ),
+    //     }
+    // ];
     const columns = [
         {
             title: 'Project Name',
             dataIndex: 'projectName',
             key: 'projectName',
+            sorter: (a, b) => a.projectName.localeCompare(b.projectName), // Sort alphabetically
+            sortDirections: ['ascend', 'descend'], // Add ascending and descending options
             render: (text) => (
-                <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
                     {text}
                 </div>
             ),
@@ -290,70 +333,81 @@ const StatusSheet = () => {
             title: 'Column Name',
             dataIndex: 'columnName',
             key: 'columnName',
+            sorter: (a, b) => a.columnName.localeCompare(b.columnName),
+            sortDirections: ['ascend', 'descend'],
             render: (text) => (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap' }}>
                     {text}
                 </div>
-            )
+            ),
         },
         {
             title: 'Assigned Date',
             dataIndex: 'assignedDate',
             key: 'assignedDate',
+            sorter: (a, b) => new Date(a.assignedDate) - new Date(b.assignedDate), // Sort by date
+            sortDirections: ['ascend', 'descend'],
             render: (text) => (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap' }}>
                     {text}
                 </div>
-            )
+            ),
         },
         {
             title: 'Task Name',
             dataIndex: 'taskName',
             key: 'taskName',
+            sorter: (a, b) => a.taskName.localeCompare(b.taskName),
+            sortDirections: ['ascend', 'descend'],
             render: (text) => (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap' ,scrollbarWidth:'none'}}>
                     {text}
                 </div>
-            )
+            ),
         },
         {
             title: 'Estimated Hours',
             dataIndex: 'estimatedHours',
             key: 'estimatedHours',
+            sorter: (a, b) => a.estimatedHours - b.estimatedHours, // Sort numerically
+            sortDirections: ['ascend', 'descend'],
             render: (text) => (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap' }}>
                     {text}
                 </div>
-            )
+            ),
         },
         {
             title: 'Utilized Hours',
             dataIndex: 'utilizedHours',
             key: 'utilizedHours',
-            render: (text) =>
-            (
-                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
+            sorter: (a, b) => a.utilizedHours - b.utilizedHours,
+            sortDirections: ['ascend', 'descend'],
+            render: (text) => (
+                <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap',scrollbarWidth:'none' }}>
                     {text}
                 </div>
-            )
+            ),
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            sorter: (a, b) => a.status.localeCompare(b.status),
+            sortDirections: ['ascend', 'descend'],
             render: (status, record) => (
                 <Select
                     defaultValue={status}
                     style={{ width: 120 }}
                     onChange={(value) => handleChangeStatus(record.key, value)}
-                    disabled={userRole !== 'ADMIN'} // Disable for non-admin users
+                    disabled={userRole !== 'ADMIN'}
                 >
                     <Option value="inprogress">In Progress</Option>
                     <Option value="completed">Completed</Option>
                     <Option value="pending">Pending</Option>
                 </Select>
             ),
-        }
+        },
     ];
 
 
@@ -370,19 +424,6 @@ const StatusSheet = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            {/* Dropdown for selecting users */}
-            {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                {selectedUser && (
-                    <Button style={{ marginRight: '10px' }} type="primary" onClick={() => setIsModalVisible(true)}>
-                        <PlusOutlined /> Add Task
-                    </Button>
-                )}
-                <Dropdown overlay={userMenu}>
-                    <Button>
-                        {selectedUserName || 'Select User'} <DownOutlined />
-                    </Button>
-                </Dropdown>
-            </div> */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
                 {selectedUser && (
                     <Button style={{ marginRight: '10px' }} type="primary" onClick={() => setIsModalVisible(true)}>
@@ -428,9 +469,8 @@ const StatusSheet = () => {
                             </Select>
                         </Form.Item>
 
-
                         <Form.Item
-                            label="Select Task"
+                            label="Select Column"
                             name="task"
                             style={{ flex: 1 }}
                             rules={[{ required: true, message: 'Please select a task' }]}
@@ -448,7 +488,7 @@ const StatusSheet = () => {
 
                     {/* Row 2: Card Title and Assigned Email */}
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <Form.Item label="Card Title" name="title" style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the task title' }]}>
+                        <Form.Item label="Task title" name="title" style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the task title' }]}>
                             <Input placeholder="Enter task title" />
                         </Form.Item>
 
@@ -485,23 +525,3 @@ const StatusSheet = () => {
 };
 
 export default StatusSheet;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

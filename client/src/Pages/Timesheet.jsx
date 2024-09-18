@@ -210,6 +210,18 @@ const Timesheet = () => {
             key: 'weekEndDate',
             render: (date) => new Date(date).toLocaleDateString('en-IN'),
         },
+        {
+            title: (
+                <span>
+                    Status
+                    <Dropdown overlay={createMenu('status')} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
+            dataIndex: 'status',
+            key: 'status',
+        },
     ];
 
     return (

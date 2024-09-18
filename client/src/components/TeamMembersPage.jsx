@@ -241,8 +241,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import useTokenValidation from "./UseTockenValidation";
 
 const TeamMembersPage = () => {
+  useTokenValidation();
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
 
@@ -254,27 +256,29 @@ const TeamMembersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await axios.get(
-          `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setMembers(response.data.users || []);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        setLoading(false);
-      }
-    };
+  // Extract fetchMembers to be reused
+  const fetchMembers = async () => {
+    setLoading(true); // Set loading to true before fetching
+    try {
+      const response = await axios.get(
+        `${server}/api/organizations/${organizationId}/teams/${teamId}/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setMembers(response.data.users || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMembers();
-  }, [organizationId, teamId, members]);
+  }, []); // Empty dependency array to run once when component mounts
 
   const handleUsernameChange = async (event) => {
     setNewMemberUsername(event.target.value);
@@ -315,9 +319,10 @@ const TeamMembersPage = () => {
       setNewMemberUsername("");
       setUsernameSuggestions([]);
       setAddMemberError(false);
-      notification.success({
-        message: "Team member added successfully",
-      });
+
+      // Fetch the updated list of members
+      fetchMembers();
+      
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -335,6 +340,9 @@ const TeamMembersPage = () => {
   };
 
   const handleDeleteMember = async () => {
+    // Close the modal immediately when delete is clicked
+    closeModal();
+    
     try {
       await axios.delete(
         `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
@@ -345,13 +353,15 @@ const TeamMembersPage = () => {
           data: { removedBy: localStorage.getItem("userId") },
         }
       );
+  
+      // Remove the member from the list after successful deletion
       setMembers((prevMembers) =>
         prevMembers.filter((member) => member.id !== selectedUserId)
       );
-      closeModal();
-      notification.success({
-        message: "Team member deleted successfully",
-      });
+
+      // Fetch the updated list of members
+      fetchMembers();
+      
     } catch (error) {
       console.error("Error deleting member:", error);
     }
@@ -415,7 +425,7 @@ const TeamMembersPage = () => {
 
       {usernameSuggestions.length > 0 && newMemberUsername.length > 0 && (
         <div className="relative">
-          <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-3xl shadow-lg max-h-60 overflow-auto">
+          <ul className="absolute z-10 w-96 bg-white border border-gray-300 mt-1 rounded-xl shadow-lg max-h-60 overflow-auto">
             {usernameSuggestions
               .filter((user) => user.status === "VERIFIED") // Filter out unverified users
               .map((user) => (

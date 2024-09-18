@@ -32,7 +32,7 @@ const RenameCardPage = () => {
     // State for storing card details
     const [cardData, setCardData] = useState({
         projectName: "",
-        projectManager:"",
+        projectManager: "",
         name: "",
         description: "",
         projectName: "",
@@ -67,7 +67,8 @@ const RenameCardPage = () => {
     const [userProfile, setUserProfile] = useState({ name: "", avatar: "" });
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [userRole, setUserRole] = useState("");
- 
+    const [tempDescription, setTempDescription] = useState(""); //added
+
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -106,17 +107,17 @@ const RenameCardPage = () => {
                     },
                 }
             );
-    
+
             // Destructure taskName and cards from the response
             const { taskName, cards } = response.data;
-    
+
             // Find the specific card by `cardId` within the cards array
             const cardData = cards.find((card) => card.id === cardId);
-    
+
             if (cardData) {
                 // Extract projectManager from cardData
                 const projectManager = cardData.project.projectManager;
-    
+
                 // Set the card data state with the necessary details
                 setCardData({
                     ...cardData,
@@ -127,7 +128,7 @@ const RenameCardPage = () => {
                     projectManager, // Include projectManager
                     organization: cardData.project.organization, // Include organizationId
                 });
-    
+
                 // Log or use the projectManager variable if needed
                 console.log("Project Manager:", projectManager);
             } else {
@@ -137,9 +138,9 @@ const RenameCardPage = () => {
             console.error("Error fetching card details:", error);
         }
     };
-    
-     
-   
+
+
+
 
     useEffect(() => {
         fetchCardDetails();
@@ -232,8 +233,72 @@ const RenameCardPage = () => {
         }
     };
 
+    // const handleRenameCardDescription = async () => {
+    //     const trimmedDescription = cardData.description.trim();
+    //     if (!trimmedDescription) {
+    //         setRenameCardErrors((prev) => ({
+    //             ...prev,
+    //             description: "Please enter a card description",
+    //         }));
+    //         return;
+    //     }
+
+    //     try {
+    //         const updatedBy = await fetchUserEmail(); // Get the email from fetchUserEmail
+
+    //         const response = await fetch(
+    //             `${server}/api/tasks/${columnId}/cards/${cardId}`,
+    //             {
+    //                 method: "PUT",
+    //                 headers: {
+    //                     "Content-Type": "application/json",
+    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //                 },
+    //                 body: JSON.stringify({
+    //                     description: trimmedDescription,
+    //                     updatedBy: updatedBy, // Save the email in the updatedBy field
+    //                     updatedDate: new Date().toISOString(),
+    //                 }),
+    //             }
+    //         );
+    //         fetchCardDetails();
+
+    //         if (!response.ok) {
+    //             throw new Error("Failed to rename card description");
+    //         }
+
+    //         // Update local state
+    //         setBoardData((prevState) => {
+    //             const updatedColumns = prevState.columns.map((column) => {
+    //                 if (column.id === columnId) {
+    //                     return {
+    //                         ...column,
+    //                         cards: column.cards.map((card) =>
+    //                             card.id === cardId
+    //                                 ? {
+    //                                     ...card,
+    //                                     description: trimmedDescription,
+    //                                 }
+    //                                 : card
+    //                         ),
+    //                     };
+    //                 }
+    //                 return column;
+    //             });
+
+    //             return { ...prevState, columns: updatedColumns };
+    //         });
+
+    //         setRenameCardErrors((prev) => ({ ...prev, description: "" }));
+    //         setIsEditingDescription(false);
+    //     } catch (error) {
+    //         console.error("Error renaming card description:", error);
+    //     }
+    // };
+
+
     const handleRenameCardDescription = async () => {
-        const trimmedDescription = cardData.description.trim();
+        const trimmedDescription = tempDescription.trim();
         if (!trimmedDescription) {
             setRenameCardErrors((prev) => ({
                 ...prev,
@@ -243,7 +308,7 @@ const RenameCardPage = () => {
         }
 
         try {
-            const updatedBy = await fetchUserEmail(); // Get the email from fetchUserEmail
+            const updatedBy = await fetchUserEmail();
 
             const response = await fetch(
                 `${server}/api/tasks/${columnId}/cards/${cardId}`,
@@ -255,44 +320,38 @@ const RenameCardPage = () => {
                     },
                     body: JSON.stringify({
                         description: trimmedDescription,
-                        updatedBy: updatedBy, // Save the email in the updatedBy field
+                        updatedBy: updatedBy,
                         updatedDate: new Date().toISOString(),
                     }),
                 }
             );
-            fetchCardDetails();
 
             if (!response.ok) {
                 throw new Error("Failed to rename card description");
             }
 
             // Update local state
-            setBoardData((prevState) => {
-                const updatedColumns = prevState.columns.map((column) => {
-                    if (column.id === columnId) {
-                        return {
-                            ...column,
-                            cards: column.cards.map((card) =>
-                                card.id === cardId
-                                    ? {
-                                        ...card,
-                                        description: trimmedDescription,
-                                    }
-                                    : card
-                            ),
-                        };
-                    }
-                    return column;
-                });
-
-                return { ...prevState, columns: updatedColumns };
-            });
+            setCardData((prevState) => ({
+                ...prevState,
+                description: trimmedDescription,
+            }));
 
             setRenameCardErrors((prev) => ({ ...prev, description: "" }));
             setIsEditingDescription(false);
+            fetchCardDetails(); // Refresh card details
         } catch (error) {
             console.error("Error renaming card description:", error);
         }
+    };
+
+    //added
+    const handleDescriptionChange = (e) => {
+        setTempDescription(e.target.value);
+    };
+
+    const handleCancelDescription = () => {
+        setTempDescription(cardData.description);
+        setIsEditingDescription(false);
     };
 
     const handleTitleBlur = () => {
@@ -382,7 +441,7 @@ const RenameCardPage = () => {
     };
 
     const canDeleteCard = userRole === "ADMIN" || userEmail === cardData.projectManager;
-    
+
     const items = [
         {
             key: "1",
@@ -614,7 +673,7 @@ const RenameCardPage = () => {
                     </div>
 
 
-                    <div className="  items-center ml-8 ">
+                    {/* <div className="  items-center ml-8 ">
 
                         {isEditingDescription ? (
                             <>
@@ -638,6 +697,39 @@ const RenameCardPage = () => {
                         ) : (
                             <Text
                                 onDoubleClick={() => setIsEditingDescription(true)}
+                                className="cursor-pointer"
+                            >
+                                {cardData.description || 'No Description'}
+                            </Text>
+                        )}
+                        {renameCardErrors.description && <Text type="danger">{renameCardErrors.description}</Text>}
+                    </div> */}
+
+                    <div className="items-center ml-8 ">
+                        {isEditingDescription ? (
+                            <>
+                                <TextArea
+                                    value={tempDescription}
+                                    onChange={handleDescriptionChange}
+                                    className="border-gray-300 rounded-xl px-4 py-2 w-full font-semibold"
+                                    placeholder="Card Description"
+                                    autoFocus
+                                />
+                                <div className="flex justify-end mt-4">
+                                    <Button onClick={handleCancelDescription} className="mr-2">
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleRenameCardDescription} type="primary">
+                                        Save
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <Text
+                                onClick={() => {
+                                    setIsEditingDescription(true);
+                                    setTempDescription(cardData.description);
+                                }}
                                 className="cursor-pointer"
                             >
                                 {cardData.description || 'No Description'}
@@ -694,16 +786,16 @@ const RenameCardPage = () => {
                                 </Text>
                             </div>
                             <div className="mb-4">
-                            {canDeleteCard && (
-    <Button
-        type="primary"
-        danger
-        icon={<DeleteOutlined />}
-        onClick={handleDeleteCard}
-    >
-        Delete Card
-    </Button>
-)}
+                                {canDeleteCard && (
+                                    <Button
+                                        type="primary"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={handleDeleteCard}
+                                    >
+                                        Delete Card
+                                    </Button>
+                                )}
                             </div>
                             <Modal
                                 title="Confirm Delete"

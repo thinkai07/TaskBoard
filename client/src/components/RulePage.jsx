@@ -393,12 +393,12 @@ function RulesButton({ tasks }) {
                     isSelected={selectedTrigger === "Card Move"}
                     onClick={() => handleTriggerSelect("Card Move")}
                   />
-                  <TriggerOption
+                  {/* <TriggerOption
                     icon={PlusCircleOutlined}
                     label="Card Changes"
                     isSelected={selectedTrigger === "Card Changes"}
                     onClick={() => handleTriggerSelect("Card Changes")}
-                  />
+                  /> */}
                 </Space>
                 {selectedTrigger === "Card Move" && (
                   <Card size="small" className="mt-4">
@@ -467,20 +467,20 @@ function RulesButton({ tasks }) {
                 >
                   Move to List
                 </Button>
-                <Button
+                {/* <Button
                   className="custom-button"
                   icon={<CheckSquareOutlined />}
                   onClick={() => handleActionSelect("Complete Task")}
                 >
                   Complete Task
-                </Button>
-                <Button
+                </Button> */}
+                {/* <Button
                   className="custom-button"
                   icon={<DeleteOutlined />}
                   onClick={() => handleActionSelect("Delete Task")}
                 >
                   Delete Task
-                </Button>
+                </Button> */}
               </Space>
             </Space>
 

@@ -3,8 +3,10 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Popover, Input, message } from "antd";
 import axios from "axios";
 import { server } from "../constant";
+import useTokenValidation from "../components/UseTockenValidation";
 
 const CalendarDateDetails = () => {
+    useTokenValidation();
     const location = useLocation();
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
@@ -13,8 +15,30 @@ const CalendarDateDetails = () => {
     const [logHoursVisible, setLogHoursVisible] = useState(false);
     const [loggedHours, setLoggedHours] = useState("");
     const [userEmail, setUserEmail] = useState("");
+    const [userRole, setUserRole] = useState("");
     const [error, setError] = useState(false);
-    const { organizationId, date } = useParams(); // Get date from URL
+    const { organizationId, date } = useParams();
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.get(`${server}/api/user`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                if (response.data.success) {
+                    setUserEmail(response.data.user.email);
+                    setUserRole(response.data.user.role);
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                message.error("Failed to fetch user data");
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -30,7 +54,6 @@ const CalendarDateDetails = () => {
                     }
                 );
                 setEvents(response.data);
-                console.log("projectid", response.data);
             } catch (error) {
                 console.error("Error fetching events:", error);
             }
@@ -49,31 +72,9 @@ const CalendarDateDetails = () => {
         }
     }, [events, date]);
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get(`${server}/api/user`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                });
-                if (response.data.success) {
-                    setUserEmail(response.data.user.email);
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-                message.error("Failed to fetch user data");
-            }
-        };
-
-        fetchUserData();
-    }, []);
-
     const handleViewProjectTasks = (projectId) => {
         navigate(`/projects/${projectId}/view`);
     };
-
-
 
     const handleStartLogging = (cardId) => {
         setActiveCardId(cardId);
@@ -90,17 +91,14 @@ const CalendarDateDetails = () => {
         if (activeCardId && loggedHours) {
             const activeEvent = filteredEvents.find(event => event.cardId === activeCardId);
     
-            // Calculate the total hours after logging the new hours
             const totalHours = activeEvent.utilizedHours + parseFloat(loggedHours);
     
-            // Check if total utilized hours exceed estimated hours
             if (totalHours > activeEvent.estimatedHours) {
                 message.error("Logged hours exceed the estimated hours.");
                 return;
             }
     
             try {
-                // Log the hours and update the status if necessary
                 const response = await axios.post(
                     `${server}/api/log-hours`,
                     {
@@ -117,7 +115,6 @@ const CalendarDateDetails = () => {
                     }
                 );
     
-                // Update the local state to reflect the new status and utilized hours
                 const updatedEvents = filteredEvents.map(event =>
                     event.cardId === activeCardId
                         ? {
@@ -141,8 +138,6 @@ const CalendarDateDetails = () => {
             }
         }
     };
-    
-    
 
     const logHoursContent = (
         <div>
@@ -191,7 +186,6 @@ const CalendarDateDetails = () => {
                 </div>
             ),
         },
-
         {
             title: "Assigned To", dataIndex: "assignedTo", key: "assignedTo",
             render: (text) => (
@@ -214,22 +208,23 @@ const CalendarDateDetails = () => {
             key: "action",
             render: (_, record) => (
                 <>
-                    <Popover
-                        content={<div style={{ width: '250px' }}>{logHoursContent}</div>}
-                        title="Log Hours"
-                        trigger="click"
-                        visible={logHoursVisible && activeCardId === record.cardId}
-                        onVisibleChange={(visible) => !visible && setLogHoursVisible(false)}
-                    >
-                        <Button
-                            type="primary"
-                            onClick={() => handleStartLogging(record.cardId)}
-                            style={{ backgroundColor: 'green' }}
+                   
+                        <Popover
+                            content={<div style={{ width: '250px' }}>{logHoursContent}</div>}
+                            title="Log Hours"
+                            trigger="click"
+                            visible={logHoursVisible && activeCardId === record.cardId}
+                            onVisibleChange={(visible) => !visible && setLogHoursVisible(false)}
                         >
-                            Start
-                        </Button>
-                    </Popover>
-
+                            <Button
+                                type="primary"
+                                onClick={() => handleStartLogging(record.cardId)}
+                                style={{ backgroundColor: 'green' }}
+                            >
+                                Start
+                            </Button>
+                        </Popover>
+                    
                     <Button
                         type="primary"
                         onClick={() => handleViewProjectTasks(record.projectId)}

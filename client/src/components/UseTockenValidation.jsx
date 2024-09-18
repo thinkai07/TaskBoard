@@ -13,7 +13,7 @@ const useTokenValidation = () => {
         const token = localStorage.getItem('token');
         if (!token) {
           // No token found, navigate to login page
-          navigate('/login');
+          navigate('/');
           return;
         }
         
@@ -30,7 +30,7 @@ const useTokenValidation = () => {
         } catch (error) {
           console.error('Error:', error);
           localStorage.removeItem('token');
-          navigate('/login');
+          navigate('/');
         }
       };
 
@@ -49,7 +49,7 @@ const useTokenValidation = () => {
 
   useEffect(() => {
     // Start token validation after user logs in and navigates away from the login page
-    if (location.pathname !== '/login') {
+    if (location.pathname !== '/') {
       setIsLoggedIn(true);
     }
   }, [location]);

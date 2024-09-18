@@ -3810,16 +3810,19 @@ app.delete("/api/organizations/:organizationId/teams/:teamId",
     const { organizationId, teamId } = req.params;
 
     try {
+      // Find the organization
       const organization = await Organization.findById(organizationId);
       if (!organization) {
         return res.status(404).json({ message: "Organization not found" });
       }
 
+      // Find the team
       const team = await Team.findById(teamId);
       if (!team) {
         return res.status(404).json({ message: "Team not found" });
       }
 
+      // Check if the team is part of the organization
       const teamIndex = organization.teams.indexOf(teamId);
       if (teamIndex === -1) {
         return res
@@ -3831,12 +3834,15 @@ app.delete("/api/organizations/:organizationId/teams/:teamId",
       organization.teams.splice(teamIndex, 1);
       await organization.save();
 
-      // Delete the team
+      // Delete the team from MongoDB
       await Team.findByIdAndDelete(teamId);
+
+      // Format team name for GitHub API
+      const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
 
       // Delete the team from the GitHub organization
       const githubTeamResponse = await axios.delete(
-        `https://api.github.com/orgs/${organization.name}/teams/${team.name}`,
+        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}`,
         {
           headers: {
             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
@@ -3845,19 +3851,21 @@ app.delete("/api/organizations/:organizationId/teams/:teamId",
         }
       );
 
-      
+      console.log("GitHub team deleted:", githubTeamResponse.data);
 
-      res
-        .status(200)
-        .json({ message: "Team deleted successfully from MongoDB and GitHub" });
+      res.status(200).json({
+        message: "Team deleted successfully from MongoDB and GitHub",
+      });
     } catch (error) {
-      console.error("Error deleting team:", error);
-      res
-        .status(500)
-        .json({ message: "Error deleting team", error: error.message });
+      console.error("Error deleting team:", error.response ? error.response.data : error.message);
+      res.status(500).json({
+        message: "Error deleting team",
+        error: error.message,
+      });
     }
   }
 );
+
 // Edit team inside organization
 app.put("/api/organizations/:organizationId/teams/:teamId",
   authenticateToken,
@@ -3866,11 +3874,13 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
     const { teamName } = req.body;
 
     try {
+      // Find the organization
       const organization = await Organization.findById(organizationId);
       if (!organization) {
         return res.status(404).json({ message: "Organization not found" });
       }
 
+      // Find the team
       const team = await Team.findById(teamId);
       if (!team) {
         return res.status(404).json({ message: "Team not found" });
@@ -3880,9 +3890,13 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
       team.name = teamName;
       await team.save();
 
+      // Format old and new team names for GitHub API
+      const oldTeamSlug = oldTeamName.replace(/\s+/g, '-').toLowerCase();
+      const newTeamSlug = teamName.replace(/\s+/g, '-').toLowerCase();
+
       // Update the team name in the GitHub organization
       const githubTeamResponse = await axios.patch(
-        `https://api.github.com/orgs/${organization.name}/teams/${oldTeamName}`,
+        `https://api.github.com/orgs/${organization.name}/teams/${oldTeamSlug}`,
         {
           name: teamName,
         },
@@ -3894,7 +3908,7 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
         }
       );
 
-     
+      console.log("GitHub team updated:", githubTeamResponse.data);
 
       res.status(200).json({
         message: "Team updated successfully",
@@ -3902,13 +3916,15 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
         githubTeam: githubTeamResponse.data,
       });
     } catch (error) {
-      console.error("Error updating team:", error);
-      res
-        .status(500)
-        .json({ message: "Error updating team", error: error.message });
+      console.error("Error updating team:", error.response ? error.response.data : error.message);
+      res.status(500).json({
+        message: "Error updating team",
+        error: error.message,
+      });
     }
   }
 );
+
 
 
 

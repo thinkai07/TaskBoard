@@ -5,8 +5,10 @@ import axios from 'axios';
 import { Table, Button, Dropdown, Menu, DatePicker, AutoComplete, Input } from 'antd';
 import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, SearchOutlined } from '@ant-design/icons';
 import { server } from '../constant';
+import useTokenValidation from '../components/UseTockenValidation';
 
 const Timesheet = () => {
+    useTokenValidation();
     const navigate = useNavigate();
     const [timesheetIds, setTimesheetIds] = useState([]);
     const [sortedData, setSortedData] = useState([]);
@@ -207,6 +209,18 @@ const Timesheet = () => {
             dataIndex: 'weekEndDate',
             key: 'weekEndDate',
             render: (date) => new Date(date).toLocaleDateString('en-IN'),
+        },
+        {
+            title: (
+                <span>
+                    Status
+                    <Dropdown overlay={createMenu('status')} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
+            dataIndex: 'status',
+            key: 'status',
         },
     ];
 

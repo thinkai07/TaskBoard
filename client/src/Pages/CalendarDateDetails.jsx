@@ -3,8 +3,10 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Popover, Input, message } from "antd";
 import axios from "axios";
 import { server } from "../constant";
+import useTokenValidation from "../components/UseTockenValidation";
 
 const CalendarDateDetails = () => {
+    useTokenValidation();
     const location = useLocation();
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);

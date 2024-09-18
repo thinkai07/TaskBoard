@@ -13,4 +13,4 @@ services:
       context: ./client
     container_name: taskboard_frontend
     ports:
-      - 6091:80
+      - 6091:3000

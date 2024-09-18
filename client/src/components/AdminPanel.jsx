@@ -330,11 +330,3 @@ const [teamLead, setTeamLead] = useState("");
 export default AdminPanel;
 
 
-
-
-
-
-
-
-
-

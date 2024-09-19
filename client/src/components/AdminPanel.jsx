@@ -161,6 +161,18 @@ const [teamLead, setTeamLead] = useState("");
   };
 
   const columns = [
+
+    {
+      title: "Employee ID",
+      dataIndex: "employeeId",  // New column for employeeId
+      key: "employeeId",
+    },
+    {
+      title: "Username",
+      dataIndex: "username",  // New column for username
+      key: "username",
+    },
+   
     {
       title: "Git username",
       dataIndex: "name",
@@ -171,16 +183,7 @@ const [teamLead, setTeamLead] = useState("");
       dataIndex: "email",
       key: "email",
     },
-    {
-      title: "Username",
-      dataIndex: "username",  // New column for username
-      key: "username",
-    },
-    {
-      title: "Employee ID",
-      dataIndex: "employeeId",  // New column for employeeId
-      key: "employeeId",
-    },
+    
     {
       title: "Role",
       dataIndex: "role",
@@ -193,20 +196,20 @@ const [teamLead, setTeamLead] = useState("");
     },
     ...(userRole === "ADMIN"
       ? [
-          {
-            title: "Actions",
-            key: "actions",
-            render: (text, record) => (
-              <Button
-                type="primary"
-                danger
-                onClick={() => confirmDeleteUser(record._id)}
-              >
-                Delete
-              </Button>
-            ),
-          },
-        ]
+        {
+          title: "Actions",
+          key: "actions",
+          render: (text, record) => (
+            <Button
+              type="primary"
+              danger
+              onClick={() => confirmDeleteUser(record._id)}
+            >
+              Delete
+            </Button>
+          ),
+        },
+      ]
       : []),
   ];
 
@@ -325,3 +328,5 @@ const [teamLead, setTeamLead] = useState("");
 };
 
 export default AdminPanel;
+
+

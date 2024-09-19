@@ -6,7 +6,7 @@ import { server } from '../constant';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
-const ResetForgotPassword= () => {
+const ResetForgotPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +49,7 @@ const ResetForgotPassword= () => {
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred. Please try again.');
     }
-    
+
   };
 
 
@@ -61,15 +61,15 @@ const ResetForgotPassword= () => {
             <h1 className="text-4xl font-semibold mb-6 text-gray-700 text-center">Reset Your Password</h1>
           </div>
           {error && (
-  <div className="text-red-500 px-4 py-3 rounded mb-6">
-    <p>{error}</p>
-  </div>
-)}
-{success && (
-  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-    <p>{success}</p>
-  </div>
-)}
+            <div className="text-red-500 px-4 py-3 rounded mb-6">
+              <p>{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+              <p>{success}</p>
+            </div>
+          )}
           <h1 className="text-3xl mb-2">Hello,</h1>
           <h1 className="text-3xl font-semibold mb-6 text-blue-500">Welcome!</h1>
           <form onSubmit={handleReset}>

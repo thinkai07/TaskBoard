@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate,useLocation  } from 'react-router-dom';
 import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select, Modal } from 'antd';
 import useTokenValidation from '../components/UseTockenValidation';
 
@@ -11,6 +11,7 @@ const TimesheetDetails = () => {
     useTokenValidation();
     const { timesheetId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [form] = Form.useForm();
     const { Option } = Select;
     const [startDate, setStartDate] = useState(null);
@@ -29,56 +30,95 @@ const TimesheetDetails = () => {
     const [visible, setVisible] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
 
+    // useEffect(() => {
+    //     const fetchTimesheetData = async () => {
+    //         try {
+    //             const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem('token')}`,
+    //                 },
+    //             });
+
+    //             if (response.data.success) {
+    //                 const fetchedTimesheet = response.data.timesheet;
+
+    //                 const newTimesheetData = {
+    //                     id: fetchedTimesheet._id,
+    //                     employeeName: fetchedTimesheet.employeeName,
+    //                     employeeId: fetchedTimesheet.employeeID,
+    //                     department: fetchedTimesheet.department,
+    //                     teamLead: fetchedTimesheet.teamLeadName,
+    //                     weekStartDate: moment(fetchedTimesheet.weekStartDate),
+    //                     weekEndDate: moment(fetchedTimesheet.weekEndDate),
+    //                 };
+
+    //                 setTimesheetData(newTimesheetData);
+    //                 form.setFieldsValue(newTimesheetData);
+
+    //                 setTableData(fetchedTimesheet.days.flatMap((day, dayIndex) =>
+    //                     day.tasks.map((task, taskIndex) => ({
+    //                         key: `${dayIndex}-${taskIndex}`,
+    //                         taskId: task._id,
+    //                         day: day.dayOfWeek,
+    //                         taskName: task.taskName,
+    //                         taskDescription: task.taskDescription,
+    //                         startTime: task.startTime,
+    //                         endTime: task.endTime,
+    //                         breakHours: task.breakHours,
+    //                         totalhoursworked: task.totalhoursworked,
+    //                         notes: task.notes,
+    //                         isEditable: false,
+    //                     }))
+    //                 ));
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching timesheet:', error);
+    //         }
+    //     };
+
+    //     if (timesheetId !== 'new') {
+    //         fetchTimesheetData();
+    //     }
+    // }, [form, timesheetId]);
+    
     useEffect(() => {
         const fetchTimesheetData = async () => {
-            try {
-                const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    },
-                });
-
-                if (response.data.success) {
-                    const fetchedTimesheet = response.data.timesheet;
-
-                    const newTimesheetData = {
-                        id: fetchedTimesheet._id,
-                        employeeName: fetchedTimesheet.employeeName,
-                        employeeId: fetchedTimesheet.employeeID,
-                        department: fetchedTimesheet.department,
-                        teamLead: fetchedTimesheet.teamLeadName,
-                        weekStartDate: moment(fetchedTimesheet.weekStartDate),
-                        weekEndDate: moment(fetchedTimesheet.weekEndDate),
-                    };
-
-                    setTimesheetData(newTimesheetData);
-                    form.setFieldsValue(newTimesheetData);
-
-                    setTableData(fetchedTimesheet.days.flatMap((day, dayIndex) =>
-                        day.tasks.map((task, taskIndex) => ({
-                            key: `${dayIndex}-${taskIndex}`,
-                            taskId: task._id,
-                            day: day.dayOfWeek,
-                            taskName: task.taskName,
-                            taskDescription: task.taskDescription,
-                            startTime: task.startTime,
-                            endTime: task.endTime,
-                            breakHours: task.breakHours,
-                            totalhoursworked: task.totalhoursworked,
-                            notes: task.notes,
-                            isEditable: false,
-                        }))
-                    ));
+            if (timesheetId === 'new') {
+                // For a new timesheet, use the data passed from the Timesheet component
+                if (location.state) {
+                    const { employeeName, employeeId, department, teamLead } = location.state;
+                    setTimesheetData(prevData => ({
+                        ...prevData,
+                        employeeName,
+                        employeeId,
+                        department,
+                        teamLead,
+                    }));
+                    form.setFieldsValue({ employeeName, employeeId, department, teamLead });
                 }
-            } catch (error) {
-                console.error('Error fetching timesheet:', error);
+            } else {
+                // Existing logic for fetching timesheet data
+                try {
+                    const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                    });
+
+                    if (response.data.success) {
+                        const fetchedTimesheet = response.data.timesheet;
+                        // ... existing logic for setting fetched timesheet data
+                    }
+                } catch (error) {
+                    console.error('Error fetching timesheet:', error);
+                }
             }
         };
 
-        if (timesheetId !== 'new') {
-            fetchTimesheetData();
-        }
-    }, [form, timesheetId]);
+        fetchTimesheetData();
+    }, [form, timesheetId, location.state]);
+
+   
 
     const handleAddRow = () => {
         const lastRow = tableData[tableData.length - 1];
@@ -284,7 +324,7 @@ const TimesheetDetails = () => {
             setTableData(updatedData);
         }
     };
-
+    
 
 
     useEffect(() => {

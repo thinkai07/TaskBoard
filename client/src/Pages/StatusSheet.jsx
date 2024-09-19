@@ -91,7 +91,7 @@ const StatusSheet = () => {
                 status: card.status || "N/A",
             }));
 
-            console.log("Modified data for table:", modifiedData); // Log the modified data for debugging
+            // console.log("Modified data for table:", modifiedData); // Log the modified data for debugging
 
             setDataSource(modifiedData); // Update table with the modified cards data
 
@@ -230,7 +230,7 @@ const StatusSheet = () => {
             }
 
             const data = await response.json();
-            console.log('Status updated successfully:', data);
+            // console.log('Status updated successfully:', data);
         } catch (error) {
             console.error('Error updating status:', error);
         }

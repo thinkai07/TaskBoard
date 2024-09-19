@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { server } from '../constant';
 import moment from 'moment';
-import { useParams, useNavigate,useLocation  } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, Row, Col, Button, DatePicker, Table, message, TimePicker, Select, Modal } from 'antd';
 import useTokenValidation from '../components/UseTockenValidation';
 
@@ -11,10 +11,10 @@ const TimesheetDetails = () => {
     useTokenValidation();
     const { timesheetId } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
     const [form] = Form.useForm();
     const { Option } = Select;
     const [startDate, setStartDate] = useState(null);
+    const [newRowKey, setNewRowKey] = useState(null);
     const [timesheetData, setTimesheetData] = useState({
         id: null,
         employeeName: '',
@@ -29,112 +29,68 @@ const TimesheetDetails = () => {
     const [submitDisabled, setSubmitDisabled] = useState(true);
     const [visible, setVisible] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
+    const [isDraftSaved, setIsDraftSaved] = useState(true);
 
-    // useEffect(() => {
-    //     const fetchTimesheetData = async () => {
-    //         try {
-    //             const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem('token')}`,
-    //                 },
-    //             });
-
-    //             if (response.data.success) {
-    //                 const fetchedTimesheet = response.data.timesheet;
-
-    //                 const newTimesheetData = {
-    //                     id: fetchedTimesheet._id,
-    //                     employeeName: fetchedTimesheet.employeeName,
-    //                     employeeId: fetchedTimesheet.employeeID,
-    //                     department: fetchedTimesheet.department,
-    //                     teamLead: fetchedTimesheet.teamLeadName,
-    //                     weekStartDate: moment(fetchedTimesheet.weekStartDate),
-    //                     weekEndDate: moment(fetchedTimesheet.weekEndDate),
-    //                 };
-
-    //                 setTimesheetData(newTimesheetData);
-    //                 form.setFieldsValue(newTimesheetData);
-
-    //                 setTableData(fetchedTimesheet.days.flatMap((day, dayIndex) =>
-    //                     day.tasks.map((task, taskIndex) => ({
-    //                         key: `${dayIndex}-${taskIndex}`,
-    //                         taskId: task._id,
-    //                         day: day.dayOfWeek,
-    //                         taskName: task.taskName,
-    //                         taskDescription: task.taskDescription,
-    //                         startTime: task.startTime,
-    //                         endTime: task.endTime,
-    //                         breakHours: task.breakHours,
-    //                         totalhoursworked: task.totalhoursworked,
-    //                         notes: task.notes,
-    //                         isEditable: false,
-    //                     }))
-    //                 ));
-    //             }
-    //         } catch (error) {
-    //             console.error('Error fetching timesheet:', error);
-    //         }
-    //     };
-
-    //     if (timesheetId !== 'new') {
-    //         fetchTimesheetData();
-    //     }
-    // }, [form, timesheetId]);
-    
     useEffect(() => {
         const fetchTimesheetData = async () => {
-            if (timesheetId === 'new') {
-                // For a new timesheet, use the data passed from the Timesheet component
-                if (location.state) {
-                    const { employeeName, employeeId, department, teamLead } = location.state;
-                    setTimesheetData(prevData => ({
-                        ...prevData,
-                        employeeName,
-                        employeeId,
-                        department,
-                        teamLead,
-                    }));
-                    form.setFieldsValue({ employeeName, employeeId, department, teamLead });
-                }
-            } else {
-                // Existing logic for fetching timesheet data
-                try {
-                    const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        },
-                    });
+            try {
+                const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
 
-                    if (response.data.success) {
-                        const fetchedTimesheet = response.data.timesheet;
-                        // ... existing logic for setting fetched timesheet data
-                    }
-                } catch (error) {
-                    console.error('Error fetching timesheet:', error);
+                if (response.data.success) {
+                    const fetchedTimesheet = response.data.timesheet;
+
+                    const newTimesheetData = {
+                        id: fetchedTimesheet._id,
+                        employeeName: fetchedTimesheet.employeeName,
+                        employeeId: fetchedTimesheet.employeeID,
+                        department: fetchedTimesheet.department,
+                        teamLead: fetchedTimesheet.teamLeadName,
+                        weekStartDate: moment(fetchedTimesheet.weekStartDate),
+                        weekEndDate: moment(fetchedTimesheet.weekEndDate),
+                    };
+
+                    setTimesheetData(newTimesheetData);
+                    form.setFieldsValue(newTimesheetData);
+
+                    setTableData(fetchedTimesheet.days.flatMap((day, dayIndex) =>
+                        day.tasks.map((task, taskIndex) => ({
+                            key: `${dayIndex}-${taskIndex}`,
+                            taskId: task._id,
+                            day: day.dayOfWeek,
+                            taskName: task.taskName,
+                            taskDescription: task.taskDescription,
+                            startTime: task.startTime,
+                            endTime: task.endTime,
+                            breakHours: task.breakHours,
+                            totalhoursworked: task.totalhoursworked,
+                            notes: task.notes,
+                            isEditable: false,
+                        }))
+                    ));
                 }
+            } catch (error) {
+                console.error('Error fetching timesheet:', error);
             }
         };
 
-        fetchTimesheetData();
-    }, [form, timesheetId, location.state]);
-
-   
+        if (timesheetId !== 'new') {
+            fetchTimesheetData();
+        }
+    }, [form, timesheetId]);
 
     const handleAddRow = () => {
-        const lastRow = tableData[tableData.length - 1];
-        
-        if (lastRow) {
-            const { day, taskName, startTime, endTime, totalhoursworked } = lastRow;
-            
-            // Validate required fields (you can modify based on your requirements)
-            if (!day || !taskName || !startTime || !endTime || !totalhoursworked) {
-                message.warning('Please fill in all details of the previous row before adding a new row.');
-                return; // Exit if validation fails
-            }
+        if (!isDraftSaved) {
+            message.warning('Please save the draft before adding a new row.');
+            return;
         }
 
+        const newKey = `new-${Date.now()}`;
         const newRow = {
-            key: `new-${tableData.length}`,
+            key: newKey,
             taskId: null,
             day: '',
             taskName: '',
@@ -148,8 +104,9 @@ const TimesheetDetails = () => {
         };
 
         setTableData([...tableData, newRow]);
+        setNewRowKey(newKey);
+        setIsDraftSaved(false);
     };
-
     const showModal = (taskId) => {
         console.log("Setting taskToDelete:", taskId);
         setTaskToDelete(taskId);
@@ -180,6 +137,7 @@ const TimesheetDetails = () => {
         setTaskToDelete(null);
     };
 
+
     const handleSaveDraft = async () => {
         try {
             const formValues = await form.validateFields();
@@ -188,7 +146,9 @@ const TimesheetDetails = () => {
                 isEditable: false,
             }));
             setTableData(updatedData);
-    
+            setNewRowKey(null);
+            setIsDraftSaved(true);
+
             const timesheetPayload = {
                 employeeName: formValues.employeeName,
                 employeeID: formValues.employeeId,
@@ -196,7 +156,7 @@ const TimesheetDetails = () => {
                 teamLeadName: formValues.teamLead,
                 weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
                 weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
-                status:"pending",
+                status: "pending",
                 days: updatedData.reduce((acc, row) => {
                     const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
                     const task = {
@@ -216,7 +176,7 @@ const TimesheetDetails = () => {
                     return acc;
                 }, []),
             };
-    
+
             let response;
             if (timesheetId === 'new') {
                 response = await axios.post(
@@ -228,8 +188,8 @@ const TimesheetDetails = () => {
                         },
                     }
                 );
-                const timesheetId = response.data.timesheet._id;
-                navigate(`/timesheetdetails/${timesheetId}`);
+                const newTimesheetId = response.data.timesheet._id;
+                navigate(`/timesheetdetails/${newTimesheetId}`);
             } else {
                 response = await axios.put(
                     `${server}/api/timesheet/${timesheetId}`,
@@ -241,7 +201,7 @@ const TimesheetDetails = () => {
                     }
                 );
             }
-    
+
             if (response.data.message === "Timesheet submitted successfully" || response.data.message === "Timesheet updated successfully") {
                 message.success('Timesheet saved successfully');
                 setIsFormDisabled(true);
@@ -253,17 +213,18 @@ const TimesheetDetails = () => {
             message.error('Failed to save timesheet');
         }
     };
-    
+
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
         setTableData(newData);
     };
 
+
     const handleEditSave = async (record) => {
         const index = tableData.findIndex(item => item.key === record.key);
         const updatedData = [...tableData];
-    
+
         if (record.isEditable) {
             // Save changes
             try {
@@ -277,7 +238,7 @@ const TimesheetDetails = () => {
                     totalhoursworked: record.totalhoursworked,
                     notes: record.notes,
                 };
-    
+
                 let response;
                 if (record.taskId) {
                     // If taskId exists, update the task
@@ -302,7 +263,7 @@ const TimesheetDetails = () => {
                         }
                     );
                 }
-    
+
                 if (response.data.message === "Task updated successfully" || response.data.message === "Task created successfully") {
                     message.success(response.data.message);
                     updatedData[index] = {
@@ -311,6 +272,10 @@ const TimesheetDetails = () => {
                         taskId: response.data.taskId || updatedData[index].taskId,
                     };
                     setTableData(updatedData);
+                    if (record.key === newRowKey) {
+                        setNewRowKey(null);
+                        setIsDraftSaved(true);
+                    }
                 } else {
                     message.error('Failed to update/create task');
                 }
@@ -324,7 +289,6 @@ const TimesheetDetails = () => {
             setTableData(updatedData);
         }
     };
-    
 
 
     useEffect(() => {
@@ -464,101 +428,38 @@ const TimesheetDetails = () => {
                     <span>{text}</span>
                 ),
         },
+
         {
             title: 'Action',
             key: 'action',
             render: (text, record) => (
                 <div>
-                    <Button
-                        type="primary"
-                        onClick={() => handleEditSave(record)}
-                        style={{ marginRight: '8px' }}
-                    >
-                        {record.isEditable ? 'Save' : 'Edit'}
-                    </Button>
-                    <Button
-                        type="danger"
-                        onClick={() => showModal(record.taskId)}
-                        style={{ color: 'red' }}
-                    >
-                        Delete
-                    </Button>
+                    {isDraftSaved && record.key !== newRowKey && (
+                        <>
+                            <Button
+                                type="primary"
+                                onClick={() => handleEditSave(record)}
+                                style={{ marginRight: '8px' }}
+                            >
+                                {record.isEditable ? 'Save' : 'Edit'}
+                            </Button>
+                            {!record.isEditable && (
+                                <Button
+                                    type="danger"
+                                    onClick={() => showModal(record.taskId)}
+                                    style={{ color: 'red' }}
+                                >
+                                    Delete
+                                </Button>
+                            )}
+                        </>
+                    )}
                 </div>
             ),
         },
     ];
-    //     try {
-    //         const formValues = await form.validateFields();
-    //         const updatedData = tableData.map((row) => ({
-    //             ...row,
-    //             isEditable: false,
-    //         }));
-    //         setTableData(updatedData);
-    
-    //         const timesheetPayload = {
-    //             employeeName: formValues.employeeName,
-    //             employeeID: formValues.employeeId,
-    //             department: formValues.department,
-    //             teamLeadName: formValues.teamLead,
-    //             weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
-    //             weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
-    //             status: "inprogress",  // Status set to "inprogress"
-    //             days: updatedData.reduce((acc, row) => {
-    //                 const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
-    //                 const task = {
-    //                     taskName: row.taskName,
-    //                     taskDescription: row.taskDescription,
-    //                     startTime: row.startTime,
-    //                     endTime: row.endTime,
-    //                     breakHours: row.breakHours,
-    //                     totalhoursworked: row.totalhoursworked,
-    //                     notes: row.notes,
-    //                 };
-    //                 if (dayIndex === -1) {
-    //                     acc.push({ dayOfWeek: row.day, tasks: [task] });
-    //                 } else {
-    //                     acc[dayIndex].tasks.push(task);
-    //                 }
-    //                 return acc;
-    //             }, []),
-    //         };
-    
-    //         let response;
-    //         if (timesheetId === 'new') {
-    //             response = await axios.post(
-    //                 `${server}/api/timesheet`,  // Use the new endpoint for submission
-    //                 timesheetPayload,
-    //                 {
-    //                     headers: {
-    //                         Authorization: `Bearer ${localStorage.getItem('token')}`,
-    //                     },
-    //                 }
-    //             );
-    //             const timesheetId = response.data.timesheet._id;
-    //             navigate(`/timesheetdetails/${timesheetId}`);
-    //         } else {
-    //             response = await axios.put(
-    //                 `${server}/api/timesheet/${timesheetId}`,  // Update existing timesheet
-    //                 timesheetPayload,
-    //                 {
-    //                     headers: {
-    //                         Authorization: `Bearer ${localStorage.getItem('token')}`,
-    //                     },
-    //                 }
-    //             );
-    //         }
-    
-    //         if (response.data.message === "Timesheet submitted successfully with 'inprogress' status" || response.data.message === "Timesheet updated successfully") {
-    //             message.success('Timesheet submitted successfully');
-    //             setIsFormDisabled(true);
-    //         } else {
-    //             message.error('Failed to submit timesheet');
-    //         }
-    //     } catch (error) {
-    //         console.error('Error submitting timesheet:', error);
-    //         message.error('Failed to submit timesheet');
-    //     }
-    // };
+
+
     const handleSubmit = async () => {
         try {
             const formValues = await form.validateFields();
@@ -567,7 +468,7 @@ const TimesheetDetails = () => {
                 isEditable: false,
             }));
             setTableData(updatedData);
-    
+
             const timesheetPayload = {
                 employeeName: formValues.employeeName,
                 employeeID: formValues.employeeId,
@@ -594,7 +495,7 @@ const TimesheetDetails = () => {
                     return acc;
                 }, []),
             };
-    
+
             let response;
             if (timesheetId === 'new') {
                 // Create a new timesheet
@@ -608,7 +509,7 @@ const TimesheetDetails = () => {
                     }
                 );
                 const newTimesheetId = response.data.timesheet._id;
-                
+
                 // Submit the newly created timesheet
                 await axios.post(
                     `${server}/api/timesheet/${newTimesheetId}/submit`,
@@ -619,7 +520,7 @@ const TimesheetDetails = () => {
                         },
                     }
                 );
-                
+
                 navigate(`/timesheetdetails/${newTimesheetId}`);
             } else {
                 // Update existing timesheet
@@ -632,7 +533,7 @@ const TimesheetDetails = () => {
                         },
                     }
                 );
-                
+
                 // Submit the updated timesheet
                 response = await axios.post(
                     `${server}/api/timesheet/${timesheetId}/submit`,
@@ -644,11 +545,11 @@ const TimesheetDetails = () => {
                     }
                 );
             }
-    
+
             if (response.data.message === "Timesheet submitted successfully") {
                 message.success('Timesheet submitted successfully with "Inprogress" status');
                 setIsFormDisabled(true);
-                setTimesheetData(prevData => ({...prevData, status: 'inprogress'}));
+                setTimesheetData(prevData => ({ ...prevData, status: 'inprogress' }));
             } else {
                 message.error('Failed to submit timesheet');
             }
@@ -727,37 +628,37 @@ const TimesheetDetails = () => {
                     </Col>
                 </Row>
                 <Row gutter={16}>
-                <Col span={12}>
-                    <Form.Item
-                        label="Week Start Date"
-                        name="weekStartDate"
-                        rules={[{ required: true, message: 'Please select week start date!' }]}
-                        style={{ width: '100%' }}
-                    >
-                        <DatePicker
-                            disabled={isFormDisabled}
-                            placeholder="Select Week Start Date"
+                    <Col span={12}>
+                        <Form.Item
+                            label="Week Start Date"
+                            name="weekStartDate"
+                            rules={[{ required: true, message: 'Please select week start date!' }]}
                             style={{ width: '100%' }}
-                            onChange={handleStartDateChange}
-                        />
-                    </Form.Item>
-                </Col>
-                <Col span={12}>
-                    <Form.Item
-                        label="Week End Date"
-                        name="weekEndDate"
-                        rules={[{ required: true, message: 'Please select week end date!' }]}
-                        style={{ width: '100%' }}
-                    >
-                        <DatePicker
-                            disabled={isFormDisabled}
-                            placeholder="Select Week End Date"
+                        >
+                            <DatePicker
+                                disabled={isFormDisabled}
+                                placeholder="Select Week Start Date"
+                                style={{ width: '100%' }}
+                                onChange={handleStartDateChange}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label="Week End Date"
+                            name="weekEndDate"
+                            rules={[{ required: true, message: 'Please select week end date!' }]}
                             style={{ width: '100%' }}
-                            disabledDate={disabledEndDate}
-                        />
-                    </Form.Item>
-                </Col>
-            </Row>
+                        >
+                            <DatePicker
+                                disabled={isFormDisabled}
+                                placeholder="Select Week End Date"
+                                style={{ width: '100%' }}
+                                disabledDate={disabledEndDate}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
 
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>
@@ -766,18 +667,11 @@ const TimesheetDetails = () => {
                             htmlType="button"
                             onClick={handleAddRow}
                             style={{ marginRight: '8px', backgroundColor: 'green' }}
+                            disabled={!isDraftSaved}
                         >
                             Add Row
                         </Button>
-                        {/* <Button
-                            type="primary"
-                            onClick={handleSubmit}
-                            disabled={submitDisabled || isFormDisabled}
-                            style={{ marginRight: '8px' }} // Add margin here
-                        >
-                            Submit
-                        </Button> */}
-                         <Button
+                        <Button
                             type="primary"
                             onClick={handleSubmit}
                             disabled={submitDisabled || isFormDisabled || timesheetData.status === 'inprogress'}
@@ -785,7 +679,12 @@ const TimesheetDetails = () => {
                         >
                             Submit
                         </Button>
-                        <Button type="default" htmlType="button" onClick={handleSaveDraft}>
+                        <Button
+                            type="default"
+                            htmlType="button"
+                            onClick={handleSaveDraft}
+                            disabled={isDraftSaved}
+                        >
                             Save Draft
                         </Button>
                     </Col>

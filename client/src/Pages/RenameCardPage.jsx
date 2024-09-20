@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { server } from "../constant";
 import { CloseOutlined, CommentOutlined, DeleteOutlined } from "@ant-design/icons";
-import useTokenValidation from "../components/UseTockenValidation";
+
 import { AppWindow } from "lucide-react";
 
 import { AlignRight, Captions, History, Clock, SquareChartGantt } from 'lucide-react';
@@ -23,7 +23,7 @@ const initialBoard = {
     columns: [],
 };
 const RenameCardPage = () => {
-    useTokenValidation();
+   
     const { columnId, cardId } = useParams();
     const { Text, Title } = Typography; // Correct import from Typography
     const { TextArea } = Input;

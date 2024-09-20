@@ -3,14 +3,14 @@ import axios from 'axios';
 import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form } from 'antd';
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { server } from '../constant';
-import useTokenValidation from '../components/UseTockenValidation';
+import moment from 'moment';
 
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const StatusSheet = () => {
-    useTokenValidation();
+   
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
@@ -410,6 +410,22 @@ const StatusSheet = () => {
         },
     ];
 
+    const disabledDate = (current) => {
+        // Disable dates before today
+        return current && current < moment().startOf('day');
+      };
+      // Custom validation to ensure end date is after the start date
+  const validateDateRange = (rule, value) => {
+    if (!value || value.length !== 2) {
+      return Promise.reject('Please select the date range');
+    }
+    const [start, end] = value;
+    if (end.isBefore(start)) {
+      return Promise.reject('End date cannot be before start date');
+    }
+    return Promise.resolve();
+  };
+
 
     // User selection dropdown menu
     const userMenu = (
@@ -499,9 +515,19 @@ const StatusSheet = () => {
 
                     {/* Row 3: Start Date - End Date and Estimated Hours */}
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <Form.Item label="Start Date - End Date" name="dateRange" style={{ flex: 1 }} rules={[{ required: true, message: 'Please select the date range' }]}>
-                            <RangePicker />
-                        </Form.Item>
+                    <Form.Item
+        label="Start Date - End Date"
+        name="dateRange"
+        style={{ flex: 1 }}
+        rules={[
+          { required: true, message: 'Please select the date range' },
+          { validator: validateDateRange }
+        ]}
+      >
+        <RangePicker 
+          disabledDate={disabledDate} // Disable past dates
+        />
+      </Form.Item>
 
                         <Form.Item label="Estimated Hours" name="estimatedHours" style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the estimated hours' }]}>
                             <Input placeholder="Enter estimated hours" />

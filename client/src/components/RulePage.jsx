@@ -25,7 +25,7 @@ import {
 } from "antd";
 import { server } from "../constant";
 import { useParams } from "react-router-dom";
-import useTokenValidation from "./UseTockenValidation";
+
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -55,7 +55,7 @@ const ActionOption = ({ icon: Icon, label, onClick }) => (
 );
 
 function RulesButton({ tasks }) {
-  useTokenValidation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [showRulesUI, setShowRulesUI] = useState(false);
   const [showTriggers, setShowTriggers] = useState(false);

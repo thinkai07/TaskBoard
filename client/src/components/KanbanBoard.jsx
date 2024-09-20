@@ -19,7 +19,7 @@ import { server } from "../constant";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../components/Style.css";
-import useTokenValidation from "./UseTockenValidation";
+
 import { RxActivityLog } from "react-icons/rx";
 import { notification } from "antd";
 import { MdOutlineContentCopy } from "react-icons/md";
@@ -45,7 +45,7 @@ const initialBoard = {
 };
 
 function KanbanBoard() {
-  useTokenValidation();
+ 
   const [boardData, setBoardData] = useState(initialBoard);
   const [socket, setSocket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);

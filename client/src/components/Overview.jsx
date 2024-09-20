@@ -16,12 +16,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { server } from '../constant';
-import useTokenValidation from './UseTockenValidation';
+
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Overview = () => {
-  useTokenValidation();
+ 
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState(null);
   const [overviewData, setOverviewData] = useState({

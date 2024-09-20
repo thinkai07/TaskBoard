@@ -6,10 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import useTokenValidation from "./UseTockenValidation";
+
 
 const TeamMembersPage = () => {
-  useTokenValidation();
+ 
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
 

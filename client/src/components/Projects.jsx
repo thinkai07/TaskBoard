@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { server } from "../constant";
-import useTokenValidation from "./UseTockenValidation";
+
 import { BsThreeDotsVertical as EllipsisVertical } from "react-icons/bs";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -32,7 +32,7 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const Projects = () => {
-  useTokenValidation();
+ 
   const [cards, setCards] = useState([]);
   const [showTooltipIndex, setShowTooltipIndex] = useState(null);
   const [editableCard, setEditableCard] = useState(null);
@@ -51,6 +51,7 @@ const Projects = () => {
     description: false,
     email: false,
     startDate: false,
+    projectManager:false,
   });
   const [projectManager, setProjectManager] = useState("");
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -239,6 +240,7 @@ const Projects = () => {
       description: false,
       email: false,
       startDate: false,
+      projectManager:false,
     });
   };
 
@@ -258,7 +260,7 @@ const Projects = () => {
       !newProject.projectManager ||
       !isValidEmail(newProject.projectManager)
     ) {
-      newErrors.email = true;
+      newErrors.projectManager = true;
       hasError = true;
     }
     if (!newProject.startDate) {
@@ -770,9 +772,9 @@ const Projects = () => {
           </div>
           <div>
             <Select
-              className="w-full"
-              placeholder="Select a Project Manager"
-              value={newProject.projectManager.length > 0 ? newProject.projectManager : null}
+           className={`w-full ${newCardErrors.projectManager ? "border-red-500" : ""}`}
+           placeholder="Select a Project Manager"
+           value={newProject.projectManager.length > 0 ? newProject.projectManager : null}
               onChange={handleProjectManagerChange}
               onSearch={handleProjectManagerChange}
               onDropdownVisibleChange={handleDropdownVisibleChange} // Fetch suggestions when dropdown is visible
@@ -790,9 +792,9 @@ const Projects = () => {
               ))}
             </Select>
 
-            {/* {newCardErrors.email && (
-    <p className="text-red-500">Valid Project Manager email is required</p>
-  )} */}
+            {newCardErrors.projectManager && (
+    <p className="text-red-500">Project Manager is required</p>
+  )}
           </div>
 
           <div>

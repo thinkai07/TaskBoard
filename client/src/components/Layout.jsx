@@ -2,10 +2,10 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import useTokenValidation from "./UseTockenValidation";
+
 
 const Layout = ({ children, user, onLogout }) => {
-  useTokenValidation();
+
 
   return (
     <div className="flex h-screen overflow-hidden">

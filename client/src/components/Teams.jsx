@@ -31,7 +31,7 @@ const Teams = () => {
                 });
                 setUser({ role: response.data.role, email: response.data.email });
                 fetchProjects(response.data.organizationId);
-                console.log(response.data.email)
+                // console.log(response.data.email)
 
             } catch (error) {
                 console.error("Error fetching user role:", error);

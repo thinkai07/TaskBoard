@@ -313,6 +313,11 @@ const userSchema = new Schema({
   employeeName: String,  // New field
   department: String,  // New field
   teamLead: String,  // New field
+  username: String,
+  employeeId: String,
+  employeeName: String,  // New field
+  department: String,  // New field
+  teamLead: String,  // New field
   password: String,
   role: { type: String },
   organization: { type: Schema.Types.ObjectId, ref: "Organization" },
@@ -320,6 +325,7 @@ const userSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
   status: { type: String, default: "UNVERIFY" },
 });
+
 
 // Audit log schema
 const auditLogSchema = new Schema(
@@ -401,7 +407,7 @@ const timesheetSchema = new Schema({
         {
           taskName: { type: String, required: true },
           taskDescription: { type: String },
-          startTime: { type: String, required: true }, 
+          startTime: { type: String, required: true },
           endTime: { type: String, required: true },
           breakHours: { type: Number, default: 0 },
           totalhoursworked: { type: Number, default: 0 },
@@ -765,7 +771,7 @@ app.get("/api/users/search", authenticateToken, async (req, res) => {
   }
 });
 
-// Fetch users for an organization
+//Fetch users for an organization
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const users = await User.find({ organization: req.user.organizationId });
@@ -775,6 +781,11 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Error fetching users" });
   }
 });
+
+
+
+
+
 
 app.get("/api/cards/user/:userId", async (req, res) => {
   try {
@@ -828,6 +839,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
       "name email role employeeId department teamLead username"
+      "name email role employeeId department teamLead username"
     );
     if (!user) {
       return res
@@ -841,6 +853,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 // Delete user
 app.delete("/api/deleteUser/:id",
@@ -975,8 +988,9 @@ app.delete("/api/deleteUser/:id",
 //   }
 // });
 
+
+
 // Login route
-// // Login route
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -1048,37 +1062,63 @@ app.get("/api/timesheets/:id", authenticateToken, async (req, res) => {
   }
 });
 
+
+app.post("/api/timesheet/:id/submit", authenticateToken, async (req, res) => {
+  try {
+    const timesheetId = req.params.id;
+    const userId = req.user._id;
+
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to submit it" });
+    }
+
+    // Update status to "inprogress"
+    timesheet.status = "inprogress";
+
+    // Save the updated timesheet
+    const updatedTimesheet = await timesheet.save();
+    res.status(200).json({ message: "Timesheet submitted successfully", timesheet: updatedTimesheet });
+  } catch (error) {
+    console.error("Error submitting timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
 // GET API to fetch all timesheets for the authenticated user
 app.get("/api/timesheets", authenticateToken, async (req, res) => {
   try {
-      const userId = req.user._id;
+    const userId = req.user._id;
 
-      // Fetch user information to check role
-      const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
+    // Fetch user information to check role
+    const user = await User.findById(userId).select('role'); // Assuming role is stored in the User model
 
-      if (!user) {
-          return res.status(404).json({ success: false, message: "User not found" });
-      }
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-      // Check if user is an ADMIN
-      if (user.role === 'ADMIN') {
-          // Fetch all timesheets
-          const timesheets = await Timesheet.find({});
-          return res.status(200).json({ success: true, timesheets });
-      } else {
-          // Fetch timesheets associated with the authenticated user
-          const timesheets = await Timesheet.find({ user: userId });
-          return res.status(200).json({ success: true, timesheets });
-      }
+    // Check if user is an ADMIN
+    if (user.role === 'ADMIN') {
+      // Fetch all timesheets
+      const timesheets = await Timesheet.find({});
+      return res.status(200).json({ success: true, timesheets });
+    } else {
+      // Fetch timesheets associated with the authenticated user
+      const timesheets = await Timesheet.find({ user: userId });
+      return res.status(200).json({ success: true, timesheets });
+    }
   } catch (error) {
-      console.error("Error fetching timesheets:", error);
-      res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error("Error fetching timesheets:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 
 // create timesheet
 app.post("/api/timesheet", authenticateToken, async (req, res) => {
   try {
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days ,status} = req.body;
     const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days ,status} = req.body;
     const userId = req.user._id; // Assuming authenticateToken sets the user in req.user
 
@@ -1090,13 +1130,17 @@ app.post("/api/timesheet", authenticateToken, async (req, res) => {
       department,
       teamLeadName,
       weekStartDate: new Date(weekStartDate),  // Ensure dates are in proper format
+      weekStartDate: new Date(weekStartDate),  // Ensure dates are in proper format
       weekEndDate: new Date(weekEndDate),
       status,
+      status,
       days: days.map(day => ({
+        dayOfWeek: day.dayOfWeek,  // This should match the 'day' field in your form data
         dayOfWeek: day.dayOfWeek,  // This should match the 'day' field in your form data
         tasks: day.tasks.map(task => ({
           taskName: task.taskName,
           taskDescription: task.taskDescription,
+          startTime: task.startTime,  // Ensure times are saved as strings or Date objects
           startTime: task.startTime,  // Ensure times are saved as strings or Date objects
           endTime: task.endTime,
           breakHours: task.breakHours,
@@ -1118,15 +1162,11 @@ app.post("/api/timesheet", authenticateToken, async (req, res) => {
 
 app.put("/api/timesheet/:timesheetId/task/:taskId?", authenticateToken, async (req, res) => {
   try {
-    const { timesheetId, taskId } = req.params;
+    const timesheetId = req.params.id;
     const userId = req.user._id;
-    const { dayOfWeek, taskName, taskDescription, startTime, endTime, breakHours, totalhoursworked, notes } = req.body;
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
 
-    if (!timesheetId || timesheetId === 'undefined') {
-      return res.status(400).json({ message: "Invalid timesheet ID" });
-    }
-
-    // Find the timesheet by ID and ensure it belongs to the user
+    // Find the timesheet by ID and user ID
     const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
 
     if (!timesheet) {
@@ -1273,7 +1313,52 @@ app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
   }
 });
 
+app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
+  try {
+    const timesheetId = req.params.id;
+    const userId = req.user._id;
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days, status } = req.body;
 
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
+    }
+
+    // Update timesheet fields
+    timesheet.employeeName = employeeName;
+    timesheet.employeeID = employeeID;
+    timesheet.department = department;
+    timesheet.teamLeadName = teamLeadName;
+    timesheet.weekStartDate = new Date(weekStartDate);
+    timesheet.weekEndDate = new Date(weekEndDate);
+    timesheet.days = days.map(day => ({
+      dayOfWeek: day.dayOfWeek,
+      tasks: day.tasks.map(task => ({
+        taskName: task.taskName,
+        taskDescription: task.taskDescription,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        breakHours: task.breakHours,
+        totalhoursworked: task.totalhoursworked,
+        notes: task.notes
+      }))
+    }));
+
+    // Update status if provided
+    if (status) {
+      timesheet.status = status;
+    }
+
+    // Save the updated timesheet
+    const updatedTimesheet = await timesheet.save();
+    res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+  } catch (error) {
+    console.error("Error updating timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
 
 
 //delete api
@@ -1310,48 +1395,53 @@ app.delete("/api/timesheet/:timesheetId/task/:taskId", authenticateToken, async 
 
 
 
-// Update timesheet
-// app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
-//   try {
-//     const timesheetId = req.params.id;
-//     const userId = req.user._id;
-//     const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+app.put("/api/timesheet/:id", authenticateToken, async (req, res) => {
+  try {
+    const timesheetId = req.params.id;
+    const userId = req.user._id;
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days, status } = req.body;
 
-//     // Find the timesheet by ID and user ID
-//     const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
+    // Find the timesheet by ID and user ID
+    const timesheet = await Timesheet.findOne({ _id: timesheetId, user: userId });
 
-//     if (!timesheet) {
-//       return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
-//     }
+    if (!timesheet) {
+      return res.status(404).json({ message: "Timesheet not found or you don't have permission to update it" });
+    }
 
-//     // Update timesheet fields
-//     timesheet.employeeName = employeeName;
-//     timesheet.employeeID = employeeID;
-//     timesheet.department = department;
-//     timesheet.teamLeadName = teamLeadName;
-//     timesheet.weekStartDate = new Date(weekStartDate);
-//     timesheet.weekEndDate = new Date(weekEndDate);
-//     timesheet.days = days.map(day => ({
-//       dayOfWeek: day.dayOfWeek,
-//       tasks: day.tasks.map(task => ({
-//         taskName: task.taskName,
-//         taskDescription: task.taskDescription,
-//         startTime: task.startTime,
-//         endTime: task.endTime,
-//         breakHours: task.breakHours,
-//         totalhoursworked: task.totalhoursworked,
-//         notes: task.notes
-//       }))
-//     }));
+    // Update timesheet fields
+    timesheet.employeeName = employeeName;
+    timesheet.employeeID = employeeID;
+    timesheet.department = department;
+    timesheet.teamLeadName = teamLeadName;
+    timesheet.weekStartDate = new Date(weekStartDate);
+    timesheet.weekEndDate = new Date(weekEndDate);
+    timesheet.days = days.map(day => ({
+      dayOfWeek: day.dayOfWeek,
+      tasks: day.tasks.map(task => ({
+        taskName: task.taskName,
+        taskDescription: task.taskDescription,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        breakHours: task.breakHours,
+        totalhoursworked: task.totalhoursworked,
+        notes: task.notes
+      }))
+    }));
 
-//     // Save the updated timesheet
-//     const updatedTimesheet = await timesheet.save();
-//     res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
-//   } catch (error) {
-//     console.error("Error updating timesheet:", error);
-//     res.status(500).json({ message: "Internal server error", error: error.message });
-//   }
-// });
+    // Update status if provided
+    if (status) {
+      timesheet.status = status;
+    }
+
+    // Save the updated timesheet
+    const updatedTimesheet = await timesheet.save();
+    res.status(200).json({ message: "Timesheet updated successfully", timesheet: updatedTimesheet });
+  } catch (error) {
+    console.error("Error updating timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
 
 
 // Secret Key for JWT
@@ -1407,7 +1497,7 @@ app.get("/api/role", authenticateToken, async (req, res) => {
       role: user.role,
       organizationId: user.organization,
       organizationName: organization.name, // Include the organization name in the response
-      username:user.username
+      username: user.username
     });
   } catch (error) {
     console.error("Error:", error);
@@ -1416,16 +1506,18 @@ app.get("/api/role", authenticateToken, async (req, res) => {
 });
 
 // Add user
-
 app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
     const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body; // Include new fields
+    const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body; // Include new fields
     try {
+      if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) { // Check new fields
       if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) { // Check new fields
         return res.status(400).json({ message: "All fields are required" });
       }
+      
       
       const newUser = new User({
         name,
@@ -1435,10 +1527,16 @@ app.post("/api/addUser",
         employeeName,  // New field
         department,  // New field
         teamLead,  // New field
+        username,
+        employeeId,
+        employeeName,  // New field
+        department,  // New field
+        teamLead,  // New field
         role: "USER",
         organization: req.user.organizationId,
         status: "UNVERIFY",
       });
+
 
       const organization = await Organization.findById(req.user.organizationId);
       if (!organization) {
@@ -1454,6 +1552,8 @@ app.post("/api/addUser",
 
       sendResetEmail(email, resetLink);
 
+       // Add the user to the GitHub organization
+       try {
        // Add the user to the GitHub organization
        try {
         const githubResponse = await axios.put(
@@ -1484,6 +1584,7 @@ app.post("/api/addUser",
 
       res.status(201).json({
         message: "User added successfully",
+        message: "User added successfully",
         user: newUser,
       });
     } catch (error) {
@@ -1492,6 +1593,9 @@ app.post("/api/addUser",
     }
   }
 );
+
+
+
 
 const sendResetEmail = (email, link) => {
   const mailOptions = {
@@ -1640,8 +1744,8 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
-  } 
-}); 
+  }
+});
 
 
 //projects
@@ -1776,7 +1880,7 @@ app.post("/api/projects", async (req, res) => {
       .toLowerCase();
     let githubResponse;
     try {
-      
+
       githubResponse = await axios.post(
         `https://api.github.com/orgs/${organization.name}/repos`,
         {
@@ -1873,7 +1977,7 @@ app.put("/api/projects/:projectId/bgImage", authenticateToken,
   async (req, res) => {
     try {
       const projectId = req.params.projectId;
-      
+
       const { bgUrl } = req.body;
 
       // const result = await cloudinary.uploader.upload(bgUrl, {
@@ -2182,7 +2286,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
           },
         }
       );
-     
+
     } catch (error) {
       console.error(
         "Error deleting GitHub repository:",
@@ -2245,7 +2349,7 @@ app.post("/api/projects/:projectId/tasks",
         entityId: newTask._id,
         actionType: "create",
         actionDate: new Date(),
-        taskId:newTask._id,
+        taskId: newTask._id,
         performedBy: createdByUser.name,
         projectId,
         changes: [
@@ -2700,11 +2804,11 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
     });
     await newNotification.save();
 
-     // Send an email to the assigned user
-     const emailSubject = `You have been assigned a new task: "${name}"`;
-     const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
-     sendEmail(assignedTo, emailSubject, emailText);
- 
+    // Send an email to the assigned user
+    const emailSubject = `You have been assigned a new task: "${name}"`;
+    const emailText = `Hello ${assignedUser.name},\n\nYou have been assigned to a new card with the task ID ${uniqueId} on the task "${name}" in Project "${project.name}".\n\nBest regards,\nThe Team`;
+    sendEmail(assignedTo, emailSubject, emailText);
+
 
     io.emit("cardCreated", { taskId, card: newCard });
 
@@ -2723,7 +2827,7 @@ app.post("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
 app.post("/api/notifications", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.body;
-   
+
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -2731,7 +2835,7 @@ app.post("/api/notifications", authenticateToken, async (req, res) => {
 
     // Fetch notifications for the specified userId
     const notifications = await Notification.find({ userId }, "message");
-    
+
 
     res.status(200).json({ notifications });
   } catch (error) {
@@ -3146,7 +3250,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
         {
           path: "activities",
           model: "Activity",
-          
+
         },
         {
           path: "taskLogs", // Populate task logs for each card
@@ -3259,7 +3363,7 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
       }))
     );
 
-   
+
 
     // Include the task name in the response
     res.status(200).json({ taskName: task.name, cards });
@@ -3781,7 +3885,7 @@ app.delete("/api/projects/:projectId/teams/:teamName/users",
 
       team.users.splice(userIndex, 1);
       await team.save();
-      
+
       res
         .status(200)
         .json({ message: "User removed from team successfully", removedBy });
@@ -3850,7 +3954,7 @@ app.post("/api/organizations/:organizationId/teams",
       // Update the team with the GitHub slug
       team.slug = githubTeamResponse.data.slug;
       await team.save();
-     
+
       res.status(200).json({
         message: "Team created successfully",
         team,
@@ -4103,7 +4207,7 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
 
 
 
-app.get("/api/organizations/:organizationId/teams/:teamId/users",authenticateToken,
+app.get("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
 
@@ -4211,7 +4315,7 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
       );
 
       // console.log("GitHub team membership deleted:", githubTeamResponse.data);
-     
+
 
       res.status(200).json({
         message: "User removed from team successfully in MongoDB and GitHub",
@@ -4732,13 +4836,13 @@ const executeBackgroundJob = async () => {
     const rules = await Rule.find({ trigger: 'Card Move' });
 
     for (const rule of rules) {
-    
+
 
       // Fetch the project by ID
       const project = await Project.findById(rule.projectId);
       if (!project) {
-  
-        continue; 
+
+        continue;
       }
 
       // Fetch all cards associated with the project
@@ -4749,7 +4853,7 @@ const executeBackgroundJob = async () => {
         const user = await User.findOne({ email: card.updatedBy });
         if (!user) {
           console.error(`User with email ${card.updatedBy} not found.`);
-          continue; 
+          continue;
         }
 
         // Check the createdByCondition
@@ -4761,7 +4865,7 @@ const executeBackgroundJob = async () => {
         } else if (rule.createdByCondition === 'by anyone except me') {
           if (rule.createdBy.includes(user._id.toString())) {
             // console.log(`Skipping card ${card._id} as it was updated by the excluded user.`);
-            continue; 
+            continue;
           }
         }
 
@@ -4800,7 +4904,7 @@ const executeBackgroundJob = async () => {
 
 setInterval(executeBackgroundJob, 5000);
 
-server.listen(port, host="0.0.0.0", () => {
+server.listen(port, host = "0.0.0.0", () => {
   console.log(`Server is running on port ${port}`);
 });
 

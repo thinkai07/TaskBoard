@@ -57,7 +57,7 @@ const Organization = () => {
         userPassword: password,
       });
 
-      console.log(response.data);
+      // console.log(response.data);
       // Show confirmation popup
       setShowPopup(true);
     } catch (error) {

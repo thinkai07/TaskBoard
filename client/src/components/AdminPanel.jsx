@@ -23,6 +23,9 @@ const AdminPanel = () => {
   const [employeeName, setEmployeeName] = useState("");
 const [department, setDepartment] = useState("");
 const [teamLead, setTeamLead] = useState("");
+  const [employeeName, setEmployeeName] = useState("");
+const [department, setDepartment] = useState("");
+const [teamLead, setTeamLead] = useState("");
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState("");
   const [userIdToDelete, setUserIdToDelete] = useState(null);
@@ -70,9 +73,13 @@ const [teamLead, setTeamLead] = useState("");
   
     if (!name.trim() || !username.trim() || !employeeId.trim() || !employeeName.trim() || !department.trim() || !teamLead.trim()) {
       setError("Please fill out all the fields.");
+  
+    if (!name.trim() || !username.trim() || !employeeId.trim() || !employeeName.trim() || !department.trim() || !teamLead.trim()) {
+      setError("Please fill out all the fields.");
       setLoading(false);
       return;
     }
+  
   
     if (!validateEmail(email.trim())) {
       setError("Please enter a valid email address.");
@@ -80,11 +87,13 @@ const [teamLead, setTeamLead] = useState("");
       return;
     }
   
+  
     if (data.some((user) => user.email === email.trim())) {
       setError("Email is already registered.");
       setLoading(false);
       return;
     }
+  
   
     try {
       const response = await axios.post(
@@ -98,17 +107,28 @@ const [teamLead, setTeamLead] = useState("");
           employeeName,  // Send employeeName
           department,  // Send department
           teamLead,  // Send teamLead
+          username,
+          employeeId,
+          employeeName,  // Send employeeName
+          department,  // Send department
+          teamLead,  // Send teamLead
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
   
+  
       setData([...data, response.data.user]);
       setFilteredData([...data, response.data.user]);
       setName("");
       setEmail("");
       setRole("user");
+      setUsername("");
+      setEmployeeId("");
+      setEmployeeName("");  // Reset employeeName
+      setDepartment("");  // Reset department
+      setTeamLead("");  // Reset teamLead
       setUsername("");
       setEmployeeId("");
       setEmployeeName("");  // Reset employeeName
@@ -123,6 +143,7 @@ const [teamLead, setTeamLead] = useState("");
       setLoading(false);
     }
   };
+  
   
 
   const confirmDeleteUser = (userId) => {
@@ -196,20 +217,20 @@ const [teamLead, setTeamLead] = useState("");
     },
     ...(userRole === "ADMIN"
       ? [
-          {
-            title: "Actions",
-            key: "actions",
-            render: (text, record) => (
-              <Button
-                type="primary"
-                danger
-                onClick={() => confirmDeleteUser(record._id)}
-              >
-                Delete
-              </Button>
-            ),
-          },
-        ]
+        {
+          title: "Actions",
+          key: "actions",
+          render: (text, record) => (
+            <Button
+              type="primary"
+              danger
+              onClick={() => confirmDeleteUser(record._id)}
+            >
+              Delete
+            </Button>
+          ),
+        },
+      ]
       : []),
   ];
 
@@ -257,6 +278,58 @@ const [teamLead, setTeamLead] = useState("");
         loading={loading}
         className="p-2"
       />
+
+<Modal
+  title="Add User"
+  visible={isModalOpen}
+  onOk={handleAddUser}
+  onCancel={() => setIsModalOpen(false)}
+  confirmLoading={loading}
+>
+  {error && <div className="mb-4 text-red-600">{error}</div>}
+  <Input
+    placeholder="Git Username"
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Email"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Username"
+    value={username}
+    onChange={(e) => setUsername(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Employee ID"
+    value={employeeId}
+    onChange={(e) => setEmployeeId(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Employee Name"
+    value={employeeName}  // New input for employeeName
+    onChange={(e) => setEmployeeName(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Department"
+    value={department}  // New input for department
+    onChange={(e) => setDepartment(e.target.value)}
+    className="mb-4"
+  />
+  <Input
+    placeholder="Team Lead"
+    value={teamLead}  // New input for teamLead
+    onChange={(e) => setTeamLead(e.target.value)}
+    className="mb-4"
+  />
+</Modal>
 
 <Modal
   title="Add User"

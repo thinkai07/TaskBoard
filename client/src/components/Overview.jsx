@@ -52,7 +52,7 @@ const Overview = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        console.log("Role and Organization ID Response:", response.data);
+        // console.log("Role and Organization ID Response:", response.data);
         setUserRole(response.data.role);
         setOrganizationId(response.data.organizationId);
       } catch (error) {
@@ -68,7 +68,7 @@ const Overview = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
         .then(response => {
-          console.log("Overview Data Response:", response.data);
+          // console.log("Overview Data Response:", response.data);
           setOverviewData(response.data);
         })
         .catch(error => {
@@ -83,7 +83,7 @@ const Overview = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
         .then(response => {
-          console.log("Users Data Response:", response.data);
+          // console.log("Users Data Response:", response.data);
           setUsers(response.data.users);
         })
         .catch(error => {

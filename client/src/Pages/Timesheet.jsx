@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Table, Button, Dropdown, Menu, DatePicker, AutoComplete, Input, message } from 'antd';
+import { Table, Button, Dropdown, Menu, DatePicker, AutoComplete, Input, message } from 'antd';
 import { FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, SearchOutlined } from '@ant-design/icons';
 import { server } from '../constant';
 
@@ -137,6 +138,7 @@ const Timesheet = () => {
             // Filter data based on the input and show suggestions
             const options = timesheetIds
                 .filter(item =>
+                .filter(item =>
                     item._id.includes(value) || item.employeeName.includes(value)
                 )
                 .map(item => ({
@@ -237,6 +239,18 @@ const Timesheet = () => {
             dataIndex: 'weekEndDate',
             key: 'weekEndDate',
             render: (date) => new Date(date).toLocaleDateString('en-IN'),
+        },
+        {
+            title: (
+                <span>
+                    Status
+                    <Dropdown overlay={createMenu('status')} trigger={['click']}>
+                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+                    </Dropdown>
+                </span>
+            ),
+            dataIndex: 'status',
+            key: 'status',
         },
         {
             title: (

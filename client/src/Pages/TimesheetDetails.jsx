@@ -1,5 +1,4 @@
 //TimesheetDetails
-//TimesheetDetails
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { server } from '../constant';
@@ -17,7 +16,6 @@ const TimesheetDetails = () => {
     const { Option } = Select;
     const [startDate, setStartDate] = useState(null);
     const [newRowKey, setNewRowKey] = useState(null);
-    const [newRowKey, setNewRowKey] = useState(null);
     const [timesheetData, setTimesheetData] = useState({
         id: null,
         employeeName: '',
@@ -32,7 +30,6 @@ const TimesheetDetails = () => {
     const [submitDisabled, setSubmitDisabled] = useState(true);
     const [visible, setVisible] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
-    const [isDraftSaved, setIsDraftSaved] = useState(true);
     const [isDraftSaved, setIsDraftSaved] = useState(true);
 
     useEffect(() => {
@@ -114,14 +111,7 @@ const TimesheetDetails = () => {
         }
 
         const newKey = `new-${Date.now()}`;
-        if (!isDraftSaved) {
-            message.warning('Please save the draft before adding a new row.');
-            return;
-        }
-
-        const newKey = `new-${Date.now()}`;
         const newRow = {
-            key: newKey,
             key: newKey,
             taskId: null,
             day: '',
@@ -136,8 +126,6 @@ const TimesheetDetails = () => {
         };
 
         setTableData([...tableData, newRow]);
-        setNewRowKey(newKey);
-        setIsDraftSaved(false);
         setNewRowKey(newKey);
         setIsDraftSaved(false);
     };
@@ -191,9 +179,6 @@ const TimesheetDetails = () => {
             setNewRowKey(null);
             setIsDraftSaved(true);
 
-            setNewRowKey(null);
-            setIsDraftSaved(true);
-
             const timesheetPayload = {
                 employeeName: formValues.employeeName,
                 employeeID: formValues.employeeId,
@@ -201,7 +186,6 @@ const TimesheetDetails = () => {
                 teamLeadName: formValues.teamLead,
                 weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
                 weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
-                status: "pending",
                 status: "pending",
                 days: updatedData.reduce((acc, row) => {
                     const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
@@ -223,7 +207,6 @@ const TimesheetDetails = () => {
                 }, []),
             };
 
-
             let response;
             if (timesheetId === 'new') {
                 response = await axios.post(
@@ -235,8 +218,6 @@ const TimesheetDetails = () => {
                         },
                     }
                 );
-                const newTimesheetId = response.data.timesheet._id;
-                navigate(`/timesheetdetails/${newTimesheetId}`);
                 const newTimesheetId = response.data.timesheet._id;
                 navigate(`/timesheetdetails/${newTimesheetId}`);
             } else {
@@ -251,7 +232,6 @@ const TimesheetDetails = () => {
                 );
             }
 
-
             if (response.data.message === "Timesheet submitted successfully" || response.data.message === "Timesheet updated successfully") {
                 message.success('Timesheet saved successfully');
                 setIsFormDisabled(true);
@@ -264,7 +244,6 @@ const TimesheetDetails = () => {
         }
     };
 
-
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
@@ -272,11 +251,9 @@ const TimesheetDetails = () => {
     };
 
 
-
     const handleEditSave = async (record) => {
         const index = tableData.findIndex(item => item.key === record.key);
         const updatedData = [...tableData];
-
 
         if (record.isEditable) {
             // Save changes
@@ -317,32 +294,6 @@ const TimesheetDetails = () => {
                     );
                 }
 
-
-                let response;
-                if (record.taskId) {
-                    // If taskId exists, update the task
-                    response = await axios.put(
-                        `${server}/api/timesheet/${timesheetId}/task/${record.taskId}`,
-                        taskData,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem('token')}`,
-                            },
-                        }
-                    );
-                } else {
-                    // Else, create the task if taskId is null (new row)
-                    response = await axios.post(
-                        `${server}/api/timesheet/${timesheetId}/task`,
-                        taskData,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem('token')}`,
-                            },
-                        }
-                    );
-                }
-
                 if (response.data.message === "Task updated successfully" || response.data.message === "Task created successfully") {
                     message.success(response.data.message);
                     updatedData[index] = {
@@ -351,10 +302,6 @@ const TimesheetDetails = () => {
                         taskId: response.data.taskId || updatedData[index].taskId,
                     };
                     setTableData(updatedData);
-                    if (record.key === newRowKey) {
-                        setNewRowKey(null);
-                        setIsDraftSaved(true);
-                    }
                     if (record.key === newRowKey) {
                         setNewRowKey(null);
                         setIsDraftSaved(true);
@@ -748,16 +695,15 @@ const TimesheetDetails = () => {
                             label="Week Start Date"
                             name="weekStartDate"
                             rules={[{ required: true, message: 'Please select week start date!' }]}
-                           
+                            style={{ width: '100%' }}
                         >
-                           
-                        </Form.Item>
-                        <DatePicker
+                            <DatePicker
                                 disabled={isFormDisabled}
                                 placeholder="Select Week Start Date"
-                                style={{ width: '100%' , marginTop:'-100px'}}
+                                style={{ width: '100%' }}
                                 onChange={handleStartDateChange}
                             />
+                        </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
@@ -784,7 +730,6 @@ const TimesheetDetails = () => {
                             onClick={handleAddRow}
                             style={{ marginRight: '8px', backgroundColor: 'green' }}
                             disabled={!isDraftSaved}
-                            disabled={!isDraftSaved}
                         >
                             Add Row
                         </Button>
@@ -793,18 +738,9 @@ const TimesheetDetails = () => {
                             onClick={handleSubmit}
                             disabled={submitDisabled || isFormDisabled || timesheetData.status === 'inprogress'}
                             style={{ marginRight: '8px' }}
-                            onClick={handleSubmit}
-                            disabled={submitDisabled || isFormDisabled || timesheetData.status === 'inprogress'}
-                            style={{ marginRight: '8px' }}
                         >
                             Submit
                         </Button>
-                        <Button
-                            type="default"
-                            htmlType="button"
-                            onClick={handleSaveDraft}
-                            disabled={isDraftSaved}
-                        >
                         <Button
                             type="default"
                             htmlType="button"

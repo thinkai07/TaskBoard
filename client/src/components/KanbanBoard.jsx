@@ -39,13 +39,14 @@ import { Drawer, Typography, Progress, List, Avatar, Tabs } from "antd";
 import { CloseOutlined, CommentOutlined } from "@ant-design/icons";
 
 import { FastAverageColor } from 'fast-average-color';
+import useTokenValidation from "./UseTockenValidation";
 
 const initialBoard = {
   columns: [],
 };
 
 function KanbanBoard() {
- 
+ useTokenValidation();
   const [boardData, setBoardData] = useState(initialBoard);
   const [socket, setSocket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);

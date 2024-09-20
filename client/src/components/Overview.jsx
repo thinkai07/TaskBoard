@@ -16,12 +16,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { server } from '../constant';
-
+import useTokenValidation from './UseTockenValidation';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Overview = () => {
- 
+  useTokenValidation();
   const [userRole, setUserRole] = useState("");
   const [organizationId, setOrganizationId] = useState(null);
   const [overviewData, setOverviewData] = useState({
@@ -272,19 +272,21 @@ const Overview = () => {
   };
 
 
-  if (!overviewData.projects.length) {
+  if (overviewData.projects.length === 0) {
     return (
       <div style={{
         display: 'flex',
-        justifyContent: 'center', // Center horizontally
-        alignItems: 'center', // Center vertically
-        height: '100vh' // Full height of the viewport
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
-        <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: '10px' }} />
-        Loading...
+        <h2 style={{ color: '#4a5568', fontSize: '24px', fontWeight: '600' }}>
+          In the organization, there are no projects.
+        </h2>
       </div>
     );
   }
+  
 
 
   return (
@@ -292,79 +294,88 @@ const Overview = () => {
       <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
         {/* First Column - 4 Cards */}
         <div style={{ flex: 0.65 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '24px',
-                  padding: '10px',
-                  textAlign: 'center',
-                  width: '60%',
-                  height: '140px',
-                }}
-              >
-                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-                  Total Projects
-                </h3>
-                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-                  +{overviewData.totalProjects}
-                </p>
-              </div>
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '24px',
-                  padding: '10px',
-                  textAlign: 'center',
-                  width: '60%',
-                  height: '140px',
-                }}
-              >
-                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-                  Total Members
-                </h3>
-                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-                  +{overviewData.totalMembers}
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '24px',
-                  padding: '10px',
-                  textAlign: 'center',
-                  width: '60%',
-                  height: '140px',
-                }}
-              >
-                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
-                  Total Tasks
-                </h3>
-                <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
-                  +{overviewData.totalCards}
-                </p>
-              </div>
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '24px',
-                  padding: '10px',
-                  textAlign: 'center',
-                  width: '60%',
-                  height: '140px',
-                }}
-              >
-                <Pie data={data} options={options} />
-              </div>
-            </div>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+    <div
+      style={{
+        backgroundColor: 'white',
+        boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+        borderRadius: '24px',
+        padding: '10px',
+        textAlign: 'center',
+        width: '48%', // Adjusted to ensure both cards have the same width
+        minWidth: '240px', // Prevent cards from collapsing below a certain width
+        height: '140px',
+        flexGrow: 1, // Prevent collapse
+      }}
+    >
+      <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+        Total Projects
+      </h3>
+      <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+        +{overviewData.totalProjects}
+      </p>
+    </div>
+    <div
+      style={{
+        backgroundColor: 'white',
+        boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+        borderRadius: '24px',
+        padding: '10px',
+        textAlign: 'center',
+        width: '48%', // Same width as the first card
+        minWidth: '240px',
+        height: '140px',
+        flexGrow: 1,
+      }}
+    >
+      <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+        Total Members
+      </h3>
+      <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+        +{overviewData.totalMembers}
+      </p>
+    </div>
+  </div>
+  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+    <div
+      style={{
+        backgroundColor: 'white',
+        boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+        borderRadius: '24px',
+        padding: '10px',
+        textAlign: 'center',
+        width: '48%',
+        minWidth: '240px',
+        height: '140px',
+        flexGrow: 1,
+      }}
+    >
+      <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#4a5568' }}>
+        Total Tasks
+      </h3>
+      <p style={{ marginTop: '16px', fontSize: '36px', fontWeight: '700', color: '#3b82f6' }}>
+        +{overviewData.totalCards}
+      </p>
+    </div>
+    <div
+      style={{
+        backgroundColor: 'white',
+        boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+        borderRadius: '24px',
+        padding: '10px',
+        textAlign: 'center',
+        width: '48%',
+        minWidth: '240px',
+        height: '140px',
+        flexGrow: 1,
+      }}
+    >
+      <Pie data={data} options={options} />
+    </div>
+  </div>
+</div>
+
         </div>
 
         {/* Second Column - User Details, Doughnut Chart, Bar Plot */}

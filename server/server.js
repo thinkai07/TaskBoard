@@ -839,7 +839,7 @@ app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findOne({ email: req.user.email }).select(
       "name email role employeeId department teamLead username"
-      "name email role employeeId department teamLead username"
+    
     );
     if (!user) {
       return res
@@ -1118,7 +1118,7 @@ app.get("/api/timesheets", authenticateToken, async (req, res) => {
 // create timesheet
 app.post("/api/timesheet", authenticateToken, async (req, res) => {
   try {
-    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days ,status} = req.body;
+   
     const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days ,status} = req.body;
     const userId = req.user._id; // Assuming authenticateToken sets the user in req.user
 
@@ -1510,52 +1510,48 @@ app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
-    const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body; // Include new fields
-    const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body; // Include new fields
+    
+    const { name, email, username, employeeId, employeeName, department, teamLead, role } = req.body;
     try {
-      if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) { // Check new fields
-      if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) { // Check new fields
+      // Validate if all fields are present
+      if (!name || !email || !role || !username || !employeeId || !employeeName || !department || !teamLead) {
         return res.status(400).json({ message: "All fields are required" });
       }
       
-      
+      // Create a new user object
       const newUser = new User({
         name,
         email,
         username,
         employeeId,
-        employeeName,  // New field
-        department,  // New field
-        teamLead,  // New field
-        username,
-        employeeId,
-        employeeName,  // New field
-        department,  // New field
-        teamLead,  // New field
-        role: "USER",
+        employeeName,
+        department,
+        teamLead,
+        role: "USER", // Default to 'USER'
         organization: req.user.organizationId,
-        status: "UNVERIFY",
+        status: "UNVERIFY", // User needs to verify their account
       });
 
-
+      // Fetch organization details
       const organization = await Organization.findById(req.user.organizationId);
       if (!organization) {
         return res.status(404).json({ message: "Organization not found" });
       }
 
+      // Save the new user to the database
       await newUser.save();
 
+      // Generate a token for resetting the password
       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
         expiresIn: "3d",
       });
-      const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+      const resetLink = `${process.env.UI_ADDRESS}/reset-password?token=${token}`;
 
+      // Send reset email with the token
       sendResetEmail(email, resetLink);
 
-       // Add the user to the GitHub organization
-       try {
-       // Add the user to the GitHub organization
-       try {
+      // Add the user to the GitHub organization
+      try {
         const githubResponse = await axios.put(
           `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
           {
@@ -1569,8 +1565,7 @@ app.post("/api/addUser",
             },
           }
         );
-
-        // console.log("GitHub membership response:", githubResponse.data);
+        console.log("GitHub membership response:", githubResponse.data);
       } catch (error) {
         console.error(
           "Error adding user to GitHub organization:",
@@ -1582,18 +1577,18 @@ app.post("/api/addUser",
         });
       }
 
+      // Respond with success
       res.status(201).json({
-        message: "User added successfully",
         message: "User added successfully",
         user: newUser,
       });
+
     } catch (error) {
       console.error("Error adding user:", error);
       res.status(500).json({ message: "Error adding user" });
     }
   }
 );
-
 
 
 
@@ -1688,7 +1683,7 @@ app.post("/api/forgot-password", async (req, res) => {
     await user.save();
 
     // Create the reset link using the JWT token
-    const resetLink = `http://localhost:3000/forgot-password?token=${resetToken}`;
+    const resetLink = `${process.env.UI_ADDRESS}/forgot-password?token=${resetToken}`;
 
     // Set up email options
     const mailOptions = {

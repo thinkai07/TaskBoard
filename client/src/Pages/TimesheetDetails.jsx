@@ -836,11 +836,11 @@ const disabledStartDate = (current) => {
                         >
                             Save Draft
                         </Button>
-                        {(canApprove && userRole==='ADMIN')  &&(
+                        {userRole==='ADMIN'  &&(
                         <Button
                             type="primary"
                             onClick={handleApprove}
-                            style={{ backgroundColor: 'blue' }}
+                            style={{ marginLeft: '10px', backgroundColor: 'blue' }}
                         >
                             Approve
                         </Button>

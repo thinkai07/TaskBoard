@@ -651,7 +651,7 @@ function KanbanBoard() {
     const dueDate = e.target.dueDate.value;
     const estimatedHoursInput = e.target.estimatedHours.value.trim();
     const estimatedHours = parseFloat(estimatedHoursInput);
-
+  
     if (
       !cardTitle ||
       !cardDescription ||
@@ -670,10 +670,10 @@ function KanbanBoard() {
       });
       return;
     }
-
+  
     try {
       const createdBy = await fetchUserEmail();
-
+  
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -684,11 +684,11 @@ function KanbanBoard() {
           },
         }
       );
-
+  
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
-
+  
       const { users } = await searchResponse.json();
       if (users.length === 0) {
         notification.warning({
@@ -696,7 +696,7 @@ function KanbanBoard() {
         });
         return;
       }
-
+  
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -716,25 +716,27 @@ function KanbanBoard() {
           }),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-
-      // Clear fields only after successful card addition
+  
+      // Clear fields and close the modal after successful card addition
       setTitle("");
-      setEmail("");
+      setEmail(""); // Clear email
+      setUsername(""); // Clear username
       setStartDate("");
       setEndDate("");
       setEstimatedHours("");
       setDescription("");
-      e.target.title.value = "";
-      e.target.description.value = "";
-      e.target.estimatedHours.value = "";
-
-      setModalVisible(false);
-
-      await fetchTasks();
+      setEmailSuggestions([]); // Clear suggestions
+  
+      e.target.reset(); // Reset the form
+  
+      setModalVisible(false); // Close the modal
+  
+      await fetchTasks(); // Fetch the updated tasks
+  
       notification.success({
         message: "Task added Successfully",
       });
@@ -743,6 +745,7 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+  
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;

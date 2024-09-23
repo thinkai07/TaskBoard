@@ -584,25 +584,25 @@ const Projects = () => {
       throw error;
     }
   };
-  if (!cards.length) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <FontAwesomeIcon
-          icon={faSpinner}
-          spin
-          style={{ marginRight: "10px" }}
-        />
-        Loading...
-      </div>
-    );
-  }
+  // if (!cards.length) {
+  //   return (
+  //     <div
+  //       style={{
+  //         display: "flex",
+  //         justifyContent: "center",
+  //         alignItems: "center",
+  //         height: "100vh",
+  //       }}
+  //     >
+  //       <FontAwesomeIcon
+  //         icon={faSpinner}
+  //         spin
+  //         style={{ marginRight: "10px" }}
+  //       />
+  //       Loading...
+  //     </div>
+  //   );
+  // }
   const filterTeams = (input, option) => {
     return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
   };
@@ -680,12 +680,12 @@ const Projects = () => {
               >
                 Start Date: {dayjs(card.startDate).format("DD/MM/YYYY")}
               </p>
-              <Tooltip title={card.projectManager}>
+              <Tooltip title={card.projectManagerName}>
                 <div
                   className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-full text-xs"
                   style={{ color: card.textColor }}
                 >
-                  {card.projectManager.charAt(0).toUpperCase()}
+                  {card.projectManagerName.charAt(0).toUpperCase()}
                 </div>
               </Tooltip>
             </div>

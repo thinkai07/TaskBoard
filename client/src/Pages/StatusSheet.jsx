@@ -509,7 +509,7 @@ const StatusSheet = () => {
                         </Form.Item>
 
                         <Form.Item label="Assigned (Email)" name="assignedEmail" style={{ flex: 1 }} rules={[{ required: true, message: 'Please enter the assigned email' }]}>
-                            <Input placeholder="Enter email" />
+                            <Input placeholder="Enter email"  disabled/>
                         </Form.Item>
                     </div>
 

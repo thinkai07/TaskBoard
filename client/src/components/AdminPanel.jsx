@@ -20,7 +20,7 @@ const AdminPanel = () => {
   const [username, setUsername] = useState("");  // New state for username
   const [employeeId, setEmployeeId] = useState("");  // New state for employeeId
   const [loading, setLoading] = useState(false);
-  const [employeeName, setEmployeeName] = useState("");
+  // const [employeeName, setEmployeeName] = useState("");
 const [department, setDepartment] = useState("");
 const [teamLead, setTeamLead] = useState("");
   const [error, setError] = useState(null);
@@ -34,7 +34,7 @@ const [teamLead, setTeamLead] = useState("");
     setRole("user");
     setUsername("");
     setEmployeeId("");
-    setEmployeeName("");
+    //setEmployeeName("");
     setDepartment("");
     setTeamLead("");
     setError(null);
@@ -78,7 +78,7 @@ const [teamLead, setTeamLead] = useState("");
     setLoading(true);
     setError(null);
   
-    if (!name.trim() || !username.trim() || !employeeId.trim() || !employeeName.trim() || !department.trim() || !teamLead.trim()) {
+    if (!name.trim() || !username.trim() || !employeeId.trim()  || !department.trim() || !teamLead.trim()) {
       setError("Please fill out all the fields.");
       setLoading(false);
       return;
@@ -105,7 +105,7 @@ const [teamLead, setTeamLead] = useState("");
           role,
           username,
           employeeId,
-          employeeName,  // Send employeeName
+         // employeeName,  // Send employeeName
           department,  // Send department
           teamLead,  // Send teamLead
         },
@@ -121,7 +121,7 @@ const [teamLead, setTeamLead] = useState("");
       setRole("user");
       setUsername("");
       setEmployeeId("");
-      setEmployeeName("");  // Reset employeeName
+      //setEmployeeName("");  // Reset employeeName
       setDepartment("");  // Reset department
       setTeamLead("");  // Reset teamLead
       setIsModalOpen(false);
@@ -178,7 +178,7 @@ const [teamLead, setTeamLead] = useState("");
       key: "employeeId",
     },
     {
-      title: "Username",
+      title: "Employee Name",
       dataIndex: "username",  // New column for username
       key: "username",
     },
@@ -292,7 +292,7 @@ const [teamLead, setTeamLead] = useState("");
     className="mb-4"
   />
   <Input
-    placeholder="Username"
+    placeholder="Employee name"
     value={username}
     onChange={(e) => setUsername(e.target.value)}
     className="mb-4"
@@ -303,12 +303,12 @@ const [teamLead, setTeamLead] = useState("");
     onChange={(e) => setEmployeeId(e.target.value)}
     className="mb-4"
   />
-  <Input
+  {/* <Input
     placeholder="Employee Name"
     value={employeeName}  // New input for employeeName
     onChange={(e) => setEmployeeName(e.target.value)}
     className="mb-4"
-  />
+  /> */}
   <Input
     placeholder="Department"
     value={department}  // New input for department

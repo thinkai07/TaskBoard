@@ -239,17 +239,16 @@ const Timesheet = () => {
             render: (date) => new Date(date).toLocaleDateString('en-IN'),
         },
         {
-            title: (
-                <span>
-                    Status
-                    <Dropdown overlay={createMenu('status')} trigger={['click']}>
-                        <FilterOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
-                    </Dropdown>
-                </span>
-            ),
+            title: 'Status',
             dataIndex: 'status',
             key: 'status',
-        },
+            filters: [
+                { text: 'Pending', value: 'Pending' },
+                { text: 'In Progress', value: 'In Progress' },
+                { text: 'Approved', value: 'Approved' }
+            ],
+            onFilter: (value, record) => record.status === value,
+        }
     ];
 
     return (

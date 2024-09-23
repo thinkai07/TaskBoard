@@ -148,7 +148,7 @@ const AuditLog = () => {
     //     (record.taskName || record.cardName || `#${record.entityId.slice(-6)}`),
     // },
     {
-      title: "Task Name",
+      title: "Column Name",
       dataIndex: "taskName",
       key: "taskName",
       render: (_, record) => (
@@ -168,7 +168,7 @@ const AuditLog = () => {
     //     (record.cardName || `#${record.entityId.slice(-6)}`),
     // },
     {
-      title: "Card Name",
+      title: "Task Name",
       dataIndex: "cardName",
       key: "cardName",
       render: (_, record) => (

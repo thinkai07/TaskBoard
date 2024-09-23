@@ -15,6 +15,8 @@ const TimesheetDetails = () => {
     const location = useLocation();
     const { Option } = Select;
     const [startDate, setStartDate] = useState(null);
+    const [canApprove, setCanApprove] = useState(false);
+    const [userRole, setUserRole] = useState(null);
     const [newRowKey, setNewRowKey] = useState(null);
     const [timesheetData, setTimesheetData] = useState({
         id: null,
@@ -33,10 +35,31 @@ const TimesheetDetails = () => {
     const [isDraftSaved, setIsDraftSaved] = useState(true);
 
     useEffect(() => {
+        const fetchUserRole = async () => {
+          try {
+            const response = await axios.get(`${server}/api/role`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+    
+            setUserRole(response.data.role);
+          } catch (error) {
+            console.error("Error fetching user role:", error);
+          }
+        };
+    
+        fetchUserRole();
+      }, []);
+
+    useEffect(() => {
         const fetchTimesheetData = async () => {
             try {
+                console.log('Fetching timesheet data for ID:', timesheetId);
+                
                 // Check if it's a new timesheet
                 if (timesheetId === 'new') {
+                    console.log('Creating new timesheet');
                     if (location.state) {
                         // Use the data passed from the Timesheet component for a new timesheet
                         const { employeeName, employeeId, department, teamLead } = location.state;
@@ -46,11 +69,14 @@ const TimesheetDetails = () => {
                             employeeId,
                             department,
                             teamLead,
+                            status: 'draft',
                         }));
                         form.setFieldsValue({ employeeName, employeeId, department, teamLead });
                     }
+                    setCanApprove(false);
                 } else {
                     // Fetching data for an existing timesheet
+                    console.log('Fetching existing timesheet');
                     const response = await axios.get(`${server}/api/timesheets/${timesheetId}`, {
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -59,6 +85,7 @@ const TimesheetDetails = () => {
 
                     if (response.data.success) {
                         const fetchedTimesheet = response.data.timesheet;
+                        console.log('Fetched timesheet:', fetchedTimesheet);
 
                         // Populate the form and state with fetched timesheet data
                         const newTimesheetData = {
@@ -69,6 +96,7 @@ const TimesheetDetails = () => {
                             teamLead: fetchedTimesheet.teamLeadName,
                             weekStartDate: moment(fetchedTimesheet.weekStartDate),
                             weekEndDate: moment(fetchedTimesheet.weekEndDate),
+                            status: fetchedTimesheet.status,
                         };
 
                         setTimesheetData(newTimesheetData);
@@ -92,18 +120,55 @@ const TimesheetDetails = () => {
                                 }))
                             )
                         );
+
+                        // Set canApprove based on the timesheet status
+                        const canApproveStatus = fetchedTimesheet.status === 'inprogress';
+                        console.log('Setting canApprove to:', canApproveStatus);
+                        setCanApprove(canApproveStatus);
+
+                        // // Set form disabled state based on the timesheet status
+                        // setIsFormDisabled(fetchedTimesheet.status !== 'draft');
+
+                        // // Set submit button disabled state
+                        // setSubmitDisabled(fetchedTimesheet.status !== 'draft');
+
+                        // Set isDraftSaved based on the timesheet status
+                        setIsDraftSaved(fetchedTimesheet.status !== 'draft');
                     }
                 }
             } catch (error) {
                 console.error('Error fetching timesheet:', error);
+                message.error('Failed to fetch timesheet data');
             }
         };
 
-        // Trigger data fetching when form or timesheetId changes
         fetchTimesheetData();
     }, [form, timesheetId, location.state]);
+    const handleApprove = async () => {
+        try {
+            const response = await axios.post(
+                `${server}/api/timesheet/${timesheetId}/approve`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                }
+            );
 
-
+            if (response.data.message === "Timesheet approved successfully") {
+                message.success('Timesheet approved successfully');
+                setTimesheetData(prevData => ({ ...prevData, status: 'approved' }));
+                setCanApprove(false);
+            } else {
+                message.error('Failed to approve timesheet');
+            }
+        } catch (error) {
+            console.error('Error approving timesheet:', error);
+            message.error('Failed to approve timesheet');
+        }
+    };
+    
     const handleAddRow = () => {
         if (!isDraftSaved) {
             message.warning('Please save the draft before adding a new row.');
@@ -129,6 +194,7 @@ const TimesheetDetails = () => {
         setNewRowKey(newKey);
         setIsDraftSaved(false);
     };
+    
     const showModal = (taskId) => {
         console.log("Setting taskToDelete:", taskId);
         setTaskToDelete(taskId);
@@ -171,6 +237,21 @@ const TimesheetDetails = () => {
     const handleSaveDraft = async () => {
         try {
             const formValues = await form.validateFields();
+            const errorMessages = [];
+
+            tableData.forEach((row, index) => {
+                if (!row.taskName || !row.startTime || !row.endTime || !row.breakHours || !row.totalhoursworked || !row.notes) {
+                    errorMessages.push(`Please enter all the fields`);
+                }
+            });
+
+            // If there are any error messages, display them and return
+
+            if (errorMessages.length > 0) {
+                message.error(errorMessages.join(' '));
+                return;
+            }
+
             const updatedData = tableData.map((row) => ({
                 ...row,
                 isEditable: false,
@@ -186,7 +267,7 @@ const TimesheetDetails = () => {
                 teamLeadName: formValues.teamLead,
                 weekStartDate: formValues.weekStartDate.format('YYYY-MM-DD'),
                 weekEndDate: formValues.weekEndDate.format('YYYY-MM-DD'),
-                status: "pending",
+                status: "Pending",
                 days: updatedData.reduce((acc, row) => {
                     const dayIndex = acc.findIndex(day => day.dayOfWeek === row.day);
                     const task = {
@@ -604,15 +685,15 @@ const TimesheetDetails = () => {
     };
 
 
-  // Function to handle start date change and set end date
-  const handleStartDateChange = (date) => {
+    // Function to handle start date change and set end date
+const handleStartDateChange = (date) => {
     if (date) {
       const selectedDate = date.toDate(); // Convert moment object to JS Date
 
       // Find the Monday of the week (Week Start Date)
       const startOfWeek = new Date(selectedDate);
       startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 1); // Monday
-      
+
       // Find the Friday of the week (Week End Date)
       const endOfWeek = new Date(selectedDate);
       endOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 5); // Friday
@@ -627,9 +708,14 @@ const TimesheetDetails = () => {
     }
   };
 
+  // Disable weekends (Saturday and Sunday) for the start date picker
+const disabledStartDate = (current) => {
+    // Disable past dates and weekends (Saturday=6, Sunday=0)
+    return current && (current.day() === 0 || current.day() === 6);
+  };
+
   // Disable end date picker (it will always be auto-calculated)
   const disabledEndDate = () => true;
-
 
     return (
         <div className="p-4">
@@ -690,37 +776,38 @@ const TimesheetDetails = () => {
                     </Col>
                 </Row>
                 <Row gutter={16}>
-                    <Col span={12}>
-                        <Form.Item
-                            label="Week Start Date"
-                            name="weekStartDate"
-                            rules={[{ required: true, message: 'Please select week start date!' }]}
-                            style={{ width: '100%' }}
-                        >
-                            <DatePicker
-                                disabled={isFormDisabled}
-                                placeholder="Select Week Start Date"
-                                style={{ width: '100%' }}
-                                onChange={handleStartDateChange}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            label="Week End Date"
-                            name="weekEndDate"
-                            rules={[{ required: true, message: 'Please select week end date!' }]}
-                            style={{ width: '100%' }}
-                        >
-                            <DatePicker
-                                disabled={isFormDisabled}
-                                placeholder="Select Week End Date"
-                                style={{ width: '100%' }}
-                                disabledDate={disabledEndDate}
-                            />
-                        </Form.Item>
-                    </Col>
-                </Row>
+    <Col span={12}>
+      <Form.Item
+        label="Week Start Date"
+        name="weekStartDate"
+        rules={[{ required: true, message: 'Please select week start date!' }]}
+        style={{ width: '100%' }}
+      >
+        <DatePicker
+          disabled={isFormDisabled}
+          placeholder="Select Week Start Date"
+          style={{ width: '100%' }}
+          onChange={handleStartDateChange}
+          disabledDate={disabledStartDate} // Disable weekends for start date
+        />
+      </Form.Item>
+    </Col>
+    <Col span={12}>
+      <Form.Item
+        label="Week End Date"
+        name="weekEndDate"
+        rules={[{ required: true, message: 'Please select week end date!' }]}
+        style={{ width: '100%' }}
+      >
+        <DatePicker
+          disabled={isFormDisabled}
+          placeholder="Select Week End Date"
+          style={{ width: '100%' }}
+          disabledDate={disabledEndDate} // End date is auto-calculated
+        />
+      </Form.Item>
+    </Col>
+  </Row>
 
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>
@@ -729,7 +816,7 @@ const TimesheetDetails = () => {
                             htmlType="button"
                             onClick={handleAddRow}
                             style={{ marginRight: '8px', backgroundColor: 'green' }}
-                            disabled={!isDraftSaved}
+                            disabled={!isDraftSaved || timesheetData.status === 'inprogress'}
                         >
                             Add Row
                         </Button>
@@ -749,9 +836,17 @@ const TimesheetDetails = () => {
                         >
                             Save Draft
                         </Button>
+                        {(canApprove && userRole==='ADMIN')  &&(
+                        <Button
+                            type="primary"
+                            onClick={handleApprove}
+                            style={{ backgroundColor: 'blue' }}
+                        >
+                            Approve
+                        </Button>
+                    )}
                     </Col>
                 </Row>
-
             </Form>
 
             <Table

@@ -171,7 +171,7 @@ const CalendarDateDetails = () => {
             ),
         },
         {
-            title: "Task Name", dataIndex: "taskName", key: "taskName",
+            title: "Column Name", dataIndex: "taskName", key: "taskName",
             render: (text) => (
                 <div style={{ maxWidth: '100px', overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
                     {text}
@@ -179,7 +179,7 @@ const CalendarDateDetails = () => {
             ),
         },
         {
-            title: "Column Name", dataIndex: "cardName", key: "cardName",
+            title: "Task Name", dataIndex: "cardName", key: "cardName",
             render: (text) => (
                 <div style={{ maxWidth: '150px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
                     <span className="truncate">{text}</span>

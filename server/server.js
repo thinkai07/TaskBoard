@@ -4092,6 +4092,50 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
   }
 );
 
+app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+  const { username } = req.query;
+
+  try {
+    const project = await Project.findById(projectId).populate({
+      path: "teams",
+      populate: {
+        path: "users.user",
+        model: "User",
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const matchingUsers = [];
+    project.teams.forEach((team) => {
+      team.users.forEach((user) => {
+        if (!username || user.user.username.toLowerCase().includes(username.toLowerCase())) {
+          matchingUsers.push({
+            name: user.user.name,
+            email: user.user.email,
+            username: user.user.username,
+            role: user.role,
+            team: team.name,
+          });
+        }
+      });
+    });
+
+    if (matchingUsers.length === 0) {
+      return res.status(404).json({
+        message: "No users found within the project teams with the given username",
+      });
+    }
+
+    res.status(200).json({ users: matchingUsers });
+  } catch (error) {
+    console.error("Error searching project team users:", error);
+    res.status(500).json({ message: "Error searching project team users" });
+  }
+});
 
 
 app.get("/api/organizations/:organizationId/teams/:teamId/users", authenticateToken,

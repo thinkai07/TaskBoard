@@ -16,8 +16,13 @@ const TimesheetDetails = () => {
     const { Option } = Select;
     const [startDate, setStartDate] = useState(null);
     const [canApprove, setCanApprove] = useState(false);
+    const [formKey, setFormKey] = useState(0);
+    const [tableKey, setTableKey] = useState(0);
+    const [reloadTrigger, setReloadTrigger] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [newRowKey, setNewRowKey] = useState(null);
+    const [username, setUsername] = useState('');
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const [timesheetData, setTimesheetData] = useState({
         id: null,
         employeeName: '',
@@ -26,6 +31,7 @@ const TimesheetDetails = () => {
         teamLead: '',
         weekStartDate: null,
         weekEndDate: null,
+        status: ''
     });
     const [tableData, setTableData] = useState([]);
     const [isFormDisabled, setIsFormDisabled] = useState(false);
@@ -33,30 +39,47 @@ const TimesheetDetails = () => {
     const [visible, setVisible] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
     const [isDraftSaved, setIsDraftSaved] = useState(true);
+    const [allDaysAdded, setAllDaysAdded] = useState(false);
+    
+    
+    const isStatus = ( timesheetData.status==='Pending' || timesheetData.status==='In Progress' || timesheetData.status ==='Approved');
+
+    // New function to check if all required days are present
+    const checkAllDaysAdded = (data) => {
+        const requiredDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const addedDays = data.map(row => row.day);
+        return requiredDays.every(day => addedDays.includes(day));
+    };
+
+    useEffect(() => {
+        setAllDaysAdded(checkAllDaysAdded(tableData));
+        setSubmitDisabled(!allDaysAdded || !isDraftSaved);
+    }, [tableData, isDraftSaved, allDaysAdded]);
+
 
     useEffect(() => {
         const fetchUserRole = async () => {
-          try {
-            const response = await axios.get(`${server}/api/role`, {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            });
-    
-            setUserRole(response.data.role);
-          } catch (error) {
-            console.error("Error fetching user role:", error);
-          }
+            try {
+                const response = await axios.get(`${server}/api/role`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                setUsername(response.data.username)
+                setUserRole(response.data.role);
+            } catch (error) {
+                console.error("Error fetching user role:", error);
+            }
         };
-    
+
         fetchUserRole();
-      }, []);
+    }, []);
 
     useEffect(() => {
         const fetchTimesheetData = async () => {
             try {
                 console.log('Fetching timesheet data for ID:', timesheetId);
-                
+
                 // Check if it's a new timesheet
                 if (timesheetId === 'new') {
                     console.log('Creating new timesheet');
@@ -122,18 +145,12 @@ const TimesheetDetails = () => {
                         );
 
                         // Set canApprove based on the timesheet status
-                        const canApproveStatus = fetchedTimesheet.status === 'inprogress';
+                        const canApproveStatus = fetchedTimesheet.status === 'In Progress';
                         console.log('Setting canApprove to:', canApproveStatus);
                         setCanApprove(canApproveStatus);
-
-                        // // Set form disabled state based on the timesheet status
-                        // setIsFormDisabled(fetchedTimesheet.status !== 'draft');
-
-                        // // Set submit button disabled state
-                        // setSubmitDisabled(fetchedTimesheet.status !== 'draft');
-
                         // Set isDraftSaved based on the timesheet status
                         setIsDraftSaved(fetchedTimesheet.status !== 'draft');
+                        setIsSubmitted(fetchedTimesheet.status === 'In Progress' || fetchedTimesheet.status === 'Approved');
                     }
                 }
             } catch (error) {
@@ -143,7 +160,7 @@ const TimesheetDetails = () => {
         };
 
         fetchTimesheetData();
-    }, [form, timesheetId, location.state]);
+    }, [form, timesheetId, location.state, reloadTrigger]);
     const handleApprove = async () => {
         try {
             const response = await axios.post(
@@ -158,7 +175,7 @@ const TimesheetDetails = () => {
 
             if (response.data.message === "Timesheet approved successfully") {
                 message.success('Timesheet approved successfully');
-                setTimesheetData(prevData => ({ ...prevData, status: 'approved' }));
+                setTimesheetData(prevData => ({ ...prevData, status: 'Approved' }));
                 setCanApprove(false);
             } else {
                 message.error('Failed to approve timesheet');
@@ -168,7 +185,7 @@ const TimesheetDetails = () => {
             message.error('Failed to approve timesheet');
         }
     };
-    
+
     const handleAddRow = () => {
         if (!isDraftSaved) {
             message.warning('Please save the draft before adding a new row.');
@@ -194,7 +211,7 @@ const TimesheetDetails = () => {
         setNewRowKey(newKey);
         setIsDraftSaved(false);
     };
-    
+
     const showModal = (taskId) => {
         console.log("Setting taskToDelete:", taskId);
         setTaskToDelete(taskId);
@@ -232,8 +249,6 @@ const TimesheetDetails = () => {
             setIsDraftSaved(true);
         }
     };
-
-
     const handleSaveDraft = async () => {
         try {
             const formValues = await form.validateFields();
@@ -245,8 +260,6 @@ const TimesheetDetails = () => {
                 }
             });
 
-            // If there are any error messages, display them and return
-
             if (errorMessages.length > 0) {
                 message.error(errorMessages.join(' '));
                 return;
@@ -256,9 +269,6 @@ const TimesheetDetails = () => {
                 ...row,
                 isEditable: false,
             }));
-            setTableData(updatedData);
-            setNewRowKey(null);
-            setIsDraftSaved(true);
 
             const timesheetPayload = {
                 employeeName: formValues.employeeName,
@@ -315,7 +325,28 @@ const TimesheetDetails = () => {
 
             if (response.data.message === "Timesheet submitted successfully" || response.data.message === "Timesheet updated successfully") {
                 message.success('Timesheet saved successfully');
-                setIsFormDisabled(true);
+
+                // Update all relevant states
+                setTimesheetData({
+                    ...timesheetData,
+                    ...timesheetPayload,
+                    status: 'Pending'
+                });
+                setTableData(updatedData);
+                setIsDraftSaved(true);
+                setNewRowKey(null);
+                setIsFormDisabled(false);
+                setSubmitDisabled(false);
+
+                // Force re-render of form and table
+                setFormKey(prevKey => prevKey + 1);
+                setTableKey(prevKey => prevKey + 1);
+
+                // Re-evaluate if all days are added
+                setAllDaysAdded(checkAllDaysAdded(updatedData));
+
+                // Force a re-fetch of data
+                setReloadTrigger(prev => !prev);
             } else {
                 message.error('Failed to save timesheet');
             }
@@ -324,14 +355,11 @@ const TimesheetDetails = () => {
             message.error('Failed to save timesheet');
         }
     };
-
     const handleRowChange = (index, key, value) => {
         const newData = [...tableData];
         newData[index][key] = value;
         setTableData(newData);
     };
-
-
     const handleEditSave = async (record) => {
         const index = tableData.findIndex(item => item.key === record.key);
         const updatedData = [...tableData];
@@ -444,7 +472,7 @@ const TimesheetDetails = () => {
                         placeholder="Enter task name"
                     />
                 ) : (
-                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap',scrollbarWidth:'none' }}>
+                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
                         {text}
                     </div>
                 ),
@@ -461,7 +489,7 @@ const TimesheetDetails = () => {
                         placeholder="Enter task description"
                     />
                 ) : (
-                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap',scrollbarWidth:'none' }}>
+                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
                         {text}
                     </div>
                 ),
@@ -540,49 +568,53 @@ const TimesheetDetails = () => {
                         placeholder="Enter notes"
                     />
                 ) : (
-                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap',scrollbarWidth:'none' }}>
+                    <div style={{ maxWidth: '100px', overflow: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
                         {text}
                     </div>
                 ),
         },
-    {
-        title: 'Action',
-        key: 'action',
-        render: (text, record) => (
-            <div>
-                {isDraftSaved && record.key !== newRowKey && (
-                    <>
+        {
+            title: 'Action',
+            key: 'action',
+            render: (text, record) => (
+                <div>
+                    {isDraftSaved && record.key !== newRowKey && (
+                        <>
+                            <Button
+                                type="primary"
+                                onClick={() => handleEditSave(record)}
+                                style={{ marginRight: '8px' }}
+                                disabled={isSubmitted}
+
+
+                            >
+                                {record.isEditable ? 'Save' : 'Edit'}
+                            </Button>
+                            {!record.isEditable && (
+                                <Button
+                                    type="danger"
+                                    onClick={() => showModal(record.taskId)}
+                                    style={{ color: 'red' }}
+                                    disabled={isSubmitted}
+                                >
+                                    Delete
+                                </Button>
+                            )}
+                        </>
+                    )}
+                    {record.key === newRowKey && (
                         <Button
-                            type="primary"
-                            onClick={() => handleEditSave(record)}
+                            type="default"
+                            onClick={handleCancelNewRow}
                             style={{ marginRight: '8px' }}
                         >
-                            {record.isEditable ? 'Save' : 'Edit'}
+                            Cancel
                         </Button>
-                        {!record.isEditable && (
-                            <Button
-                                type="danger"
-                                onClick={() => showModal(record.taskId)}
-                                style={{ color: 'red' }}
-                            >
-                                Delete
-                            </Button>
-                        )}
-                    </>
-                )}
-                {record.key === newRowKey && (
-                    <Button
-                        type="default"
-                        onClick={handleCancelNewRow}
-                        style={{ marginRight: '8px' }}
-                    >
-                        Cancel
-                    </Button>
-                )}
-            </div>
-        ),
-    },
-];
+                    )}
+                </div>
+            ),
+        },
+    ];
 
 
     const handleSubmit = async () => {
@@ -685,37 +717,36 @@ const TimesheetDetails = () => {
     };
 
 
-    // Function to handle start date change and set end date
-const handleStartDateChange = (date) => {
-    if (date) {
-      const selectedDate = date.toDate(); // Convert moment object to JS Date
+    // // // Function to handle start date change and set end date
+    const handleStartDateChange = (date) => {
+        if (date) {
+            const selectedDate = date.clone(); // Keep it as a moment object
 
-      // Find the Monday of the week (Week Start Date)
-      const startOfWeek = new Date(selectedDate);
-      startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 1); // Monday
+            // Find the Monday of the week (Week Start Date)
+            const startOfWeek = selectedDate.clone().day(1); // Monday as start of the week
 
-      // Find the Friday of the week (Week End Date)
-      const endOfWeek = new Date(selectedDate);
-      endOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 5); // Friday
+            // Find the Friday of the week (Week End Date)
+            const endOfWeek = selectedDate.clone().day(5); // Friday as end of the week
 
-      // Set the start and end dates in the form
-      form.setFieldsValue({
-        weekStartDate: moment(startOfWeek),
-        weekEndDate: moment(endOfWeek),
-      });
-    } else {
-      form.resetFields(['weekStartDate', 'weekEndDate']);
-    }
-  };
+            // Set the start and end dates in the form
+            form.setFieldsValue({
+                weekStartDate: startOfWeek,
+                weekEndDate: endOfWeek,
+            });
+        } else {
+            form.resetFields(['weekStartDate', 'weekEndDate']);
+        }
+    };
 
-  // Disable weekends (Saturday and Sunday) for the start date picker
-const disabledStartDate = (current) => {
-    // Disable past dates and weekends (Saturday=6, Sunday=0)
-    return current && (current.day() === 0 || current.day() === 6);
-  };
 
-  // Disable end date picker (it will always be auto-calculated)
-  const disabledEndDate = () => true;
+    // Disable weekends (Saturday and Sunday) for the start date picker
+    const disabledStartDate = (current) => {
+        // Disable past dates and weekends (Saturday=6, Sunday=0)
+        return current && (current.day() === 0 || current.day() === 6);
+    };
+
+    // Disable end date picker (it will always be auto-calculated)
+    const disabledEndDate = () => true;
 
     return (
         <div className="p-4">
@@ -739,7 +770,7 @@ const disabledStartDate = (current) => {
                             rules={[{ required: true, message: 'Please enter employee name!' }]}
                             style={{ width: '100%' }}
                         >
-                            <Input disabled={isFormDisabled} placeholder="Enter Employee Name" />
+                            <Input disabled={isFormDisabled || isStatus} placeholder="Enter Employee Name" />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -749,7 +780,7 @@ const disabledStartDate = (current) => {
                             rules={[{ required: true, message: 'Please enter employee ID!' }]}
                             style={{ width: '100%' }}
                         >
-                            <Input disabled={isFormDisabled} placeholder="Enter Employee ID" />
+                            <Input disabled={isFormDisabled || isStatus} placeholder="Enter Employee ID" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -761,7 +792,7 @@ const disabledStartDate = (current) => {
                             rules={[{ required: true, message: 'Please enter department!' }]}
                             style={{ width: '100%' }}
                         >
-                            <Input disabled={isFormDisabled} placeholder="Enter Department" />
+                            <Input disabled={isFormDisabled || isStatus} placeholder="Enter Department" />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -771,90 +802,98 @@ const disabledStartDate = (current) => {
                             rules={[{ required: true, message: 'Please enter team lead name!' }]}
                             style={{ width: '100%' }}
                         >
-                            <Input disabled={isFormDisabled} placeholder="Enter Team Lead Name" />
+                            <Input disabled={isFormDisabled || isStatus} placeholder="Enter Team Lead Name" />
                         </Form.Item>
                     </Col>
                 </Row>
                 <Row gutter={16}>
-    <Col span={12}>
-      <Form.Item
-        label="Week Start Date"
-        name="weekStartDate"
-        rules={[{ required: true, message: 'Please select week start date!' }]}
-        style={{ width: '100%' }}
-      >
-        <DatePicker
-          disabled={isFormDisabled}
-          placeholder="Select Week Start Date"
-          style={{ width: '100%' }}
-          onChange={handleStartDateChange}
-          disabledDate={disabledStartDate} // Disable weekends for start date
-        />
-      </Form.Item>
-    </Col>
-    <Col span={12}>
-      <Form.Item
-        label="Week End Date"
-        name="weekEndDate"
-        rules={[{ required: true, message: 'Please select week end date!' }]}
-        style={{ width: '100%' }}
-      >
-        <DatePicker
-          disabled={isFormDisabled}
-          placeholder="Select Week End Date"
-          style={{ width: '100%' }}
-          disabledDate={disabledEndDate} // End date is auto-calculated
-        />
-      </Form.Item>
-    </Col>
-  </Row>
+                    <Col span={12}>
+                        <Form.Item
+                            label="Week Start Date"
+                            name="weekStartDate"
+                            rules={[{ required: true, message: 'Please select week start date!' }]}
+                            style={{ width: '100%' }}
+                        >
+                            <DatePicker
+                                disabled={isFormDisabled || isStatus}
+                                placeholder="Select Week Start Date"
+                                style={{ width: '100%' }}
+                                onChange={handleStartDateChange}
+                                disabledDate={disabledStartDate} // Disable weekends for start date
+                                format="YYYY-MM-DD" // Define date format for the DatePicker
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label="Week End Date"
+                            name="weekEndDate"
+                            rules={[{ required: true, message: 'Please select week end date!' }]}
+                            style={{ width: '100%' }}
+                        >
+                            <DatePicker
+                                disabled={isFormDisabled || isStatus}
+                                placeholder="Select Week End Date"
+                                style={{ width: '100%' }}
+                                disabledDate={disabledEndDate} // End date is auto-calculated
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
 
                 <Row gutter={16}>
                     <Col span={24} style={{ textAlign: 'right' }}>
-                        <Button
-                            type="primary"
-                            htmlType="button"
-                            onClick={handleAddRow}
-                            style={{ marginRight: '8px', backgroundColor: 'green' }}
-                            disabled={!isDraftSaved || timesheetData.status === 'inprogress'}
-                        >
-                            Add Row
-                        </Button>
-                        <Button
-                            type="primary"
-                            onClick={handleSubmit}
-                            disabled={submitDisabled || isFormDisabled || timesheetData.status === 'inprogress'}
-                            style={{ marginRight: '8px' }}
-                        >
-                            Submit
-                        </Button>
-                        <Button
-                            type="default"
-                            htmlType="button"
-                            onClick={handleSaveDraft}
-                            disabled={isDraftSaved}
-                        >
-                            Save Draft
-                        </Button>
-                        {userRole==='ADMIN'  &&(
-                        <Button
-                            type="primary"
-                            onClick={handleApprove}
-                            style={{ marginLeft: '10px', backgroundColor: 'blue' }}
-                        >
-                            Approve
-                        </Button>
-                    )}
+                        {timesheetData.employeeName === username && (
+                            <Button
+                                type="primary"
+                                htmlType="button"
+                                onClick={handleAddRow}
+                                style={{ marginRight: '8px', backgroundColor: 'green' }}
+                                disabled={!isDraftSaved || timesheetData.status === 'In Progress' || timesheetData.status === 'Approved'}
+                            >
+                                Add Row
+                            </Button>
+                        )}
+                        {timesheetData.employeeName === username && (
+                            <Button
+                                type="primary"
+                                onClick={handleSubmit}
+                                disabled={submitDisabled || isFormDisabled || timesheetData.status === 'In Progress' || timesheetData.status === 'Approved'}
+                                style={{ marginRight: '8px' }}
+                            >
+                                Submit
+                            </Button>
+                        )}
+                        {timesheetData.employeeName === username && (
+                            <Button
+                                type="default"
+                                htmlType="button"
+                                onClick={handleSaveDraft}
+                                disabled={isDraftSaved}
+                            >
+                                Save Draft
+                            </Button>
+                        )}
+                        {userRole === 'ADMIN' && (
+                            <Button
+                                type="primary"
+                                onClick={handleApprove}
+                                style={{ marginLeft: '10px', backgroundColor: 'blue' }}
+                                disabled={timesheetData.status === 'Approved' || timesheetData.status === 'Pending'}
+                            >
+                                Approve
+                            </Button>
+                        )}
                     </Col>
                 </Row>
             </Form>
-
             <Table
                 dataSource={tableData}
                 columns={columns}
                 pagination={false}
                 style={{ marginTop: '20px' }}
                 rowKey="key"
+                key={tableKey}
             />
         </div>
     );

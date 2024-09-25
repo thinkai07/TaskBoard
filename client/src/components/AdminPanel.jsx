@@ -78,7 +78,7 @@ const [teamLead, setTeamLead] = useState("");
     setLoading(true);
     setError(null);
   
-    if (!name.trim() || !username.trim() || !employeeId.trim()  || !department.trim() || !teamLead.trim()) {
+    if ( !username.trim() || !employeeId.trim()  || !department.trim() || !teamLead.trim()) {
       setError("Please fill out all the fields.");
       setLoading(false);
       return;

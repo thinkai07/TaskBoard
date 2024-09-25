@@ -300,11 +300,9 @@ const TeamsPage = () => {
                     </div>
                 ))}
                 {isAddingTeam && (
-                    <div className="w-1/4 p-4">
-                        <Card className="rounded-3xl border border-gray-300 shadow-lg overflow-hidden">
-                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="teamName">
-                                Team Name
-                            </label>
+                    <div className="w-1/4 p-2">
+                        <Card className=" border border-gray-300 shadow-lg overflow-hidden">
+                           
                             <input
                                 type="text"
                                 id="teamName"

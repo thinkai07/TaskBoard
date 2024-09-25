@@ -850,8 +850,6 @@ app.get("/api/user", authenticateToken, async (req, res) => {
   }
 });
 
-
-// Delete user
 app.delete("/api/deleteUser/:id",
   authenticateToken,
   authorizeRoles("ADMIN"),
@@ -871,46 +869,42 @@ app.delete("/api/deleteUser/:id",
         return res.status(404).json({ message: "Organization not found" });
       }
 
-      // Attempt to remove the user from the GitHub organization
-      try {
-        const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
+      // Conditionally make the GitHub API call if user.name is available
+      if (user.name) {
+        try {
+          const githubUsername = user.name; // Assuming 'name' is used for GitHub
 
-        const githubResponse = await axios.delete(
-          `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-              Accept: "application/vnd.github.v3+json",
-            },
-          }
-        );
+          const githubResponse = await axios.delete(
+            `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
 
-        // console.log(
-        //   "GitHub membership deletion response:",
-        //   githubResponse.data
-        // );
-        // console.log(
-        //   "GitHub membership deletion response:",
-        //   githubResponse.data
-        // );
-      } catch (error) {
-        console.error(
-          "Error removing user from GitHub organization:",
-          error.response ? error.response.data : error.message
-        );
-        // Optionally, decide whether to proceed with deleting the user from the database if GitHub deletion fails
-        return res.status(500).json({
-          message:
-            "User deletion failed on GitHub but proceeded in the database",
-        });
+          // console.log("GitHub membership deletion response:", githubResponse.data);
+        } catch (error) {
+          console.error(
+            "Error removing user from GitHub organization:",
+            error.response ? error.response.data : error.message
+          );
+          // Optionally proceed with database deletion if GitHub deletion fails
+          return res.status(500).json({
+            message:
+              "User deletion failed on GitHub but proceeded in the database",
+          });
+        }
       }
 
       // Delete the user from the database
       await User.findByIdAndDelete(userId);
 
       res.status(200).json({
-        message: "User deleted successfully from both database and GitHub",
+        message: "User deleted successfully from both database" +
+                 (user.name ? " and GitHub" : ""),
       });
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -918,6 +912,75 @@ app.delete("/api/deleteUser/:id",
     }
   }
 );
+
+
+// Delete user
+// app.delete("/api/deleteUser/:id",
+//   authenticateToken,
+//   authorizeRoles("ADMIN"),
+//   async (req, res) => {
+//     try {
+//       const userId = req.params.id;
+
+//       // Find the user in the database before deleting to get the email or GitHub username
+//       const user = await User.findById(userId);
+//       if (!user) {
+//         return res.status(404).json({ message: "User not found" });
+//       }
+
+//       // Find the organization associated with the user
+//       const organization = await Organization.findById(user.organization);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       // Attempt to remove the user from the GitHub organization
+//       try {
+//         const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
+
+//         const githubResponse = await axios.delete(
+//           `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
+//           {
+//             headers: {
+//               Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//               "Content-Type": "application/json",
+//               Accept: "application/vnd.github.v3+json",
+//             },
+//           }
+//         );
+
+//         // console.log(
+//         //   "GitHub membership deletion response:",
+//         //   githubResponse.data
+//         // );
+//         // console.log(
+//         //   "GitHub membership deletion response:",
+//         //   githubResponse.data
+//         // );
+//       } catch (error) {
+//         console.error(
+//           "Error removing user from GitHub organization:",
+//           error.response ? error.response.data : error.message
+//         );
+//         // Optionally, decide whether to proceed with deleting the user from the database if GitHub deletion fails
+//         return res.status(500).json({
+//           message:
+//             "User deletion failed on GitHub but proceeded in the database",
+//         });
+//       }
+
+//       // Delete the user from the database
+//       await User.findByIdAndDelete(userId);
+
+//       res.status(200).json({
+//         message: "User deleted successfully from both database and GitHub",
+//       });
+//     } catch (error) {
+//       console.error("Error deleting user:", error);
+//       res.status(500).json({ message: "Error deleting user" });
+//     }
+//   }
+// );
 
 // Function to delete user from both database and GitHub
 // const deleteUser = async (userId) => {
@@ -1382,25 +1445,108 @@ app.get("/api/role", authenticateToken, async (req, res) => {
 });
 
 // Add user
+// app.post("/api/addUser",
+//   authenticateToken,
+//   authorizeRoles("ADMIN"),
+//   async (req, res) => {
+    
+//     const { name, email, username, employeeId,department, teamLead, role } = req.body;
+//     try {
+//       // Validate if all fields are present
+//       if (!name || !email || !role || !username || !employeeId  || !department || !teamLead) {
+//         return res.status(400).json({ message: "All fields are required" });
+//       }
+      
+//       // Create a new user object
+//       const newUser = new User({
+//         name,
+//         email,
+//         username,
+//         employeeId,
+//        // employeeName,
+//         department,
+//         teamLead,
+//         role: "USER", // Default to 'USER'
+//         organization: req.user.organizationId,
+//         status: "UNVERIFY", // User needs to verify their account
+//       });
+
+//       // Fetch organization details
+//       const organization = await Organization.findById(req.user.organizationId);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       // Save the new user to the database
+//       await newUser.save();
+
+//       // Generate a token for resetting the password
+//       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
+//         expiresIn: "3d",
+//       });
+//       const resetLink = `${process.env.UI_ADDRESS}/reset-password?token=${token}`;
+
+//       // Send reset email with the token
+//       sendResetEmail(email, resetLink);
+
+//       // Add the user to the GitHub organization
+//       try {
+//         const githubResponse = await axios.put(
+//           `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
+//           {
+//             role: "member",
+//           },
+//           {
+//             headers: {
+//               Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//               "Content-Type": "application/json",
+//               Accept: "application/vnd.github.v3+json",
+//             },
+//           }
+//         );
+//         console.log("GitHub membership response:", githubResponse.data);
+//       } catch (error) {
+//         console.error(
+//           "Error adding user to GitHub organization:",
+//           error.response ? error.response.data : error.message
+//         );
+//         return res.status(500).json({
+//           message: "User added to the organization but not to GitHub",
+//           user: newUser,
+//         });
+//       }
+
+//       // Respond with success
+//       res.status(201).json({
+//         message: "User added successfully",
+//         user: newUser,
+//       });
+
+//     } catch (error) {
+//       console.error("Error adding user:", error);
+//       res.status(500).json({ message: "Error adding user" });
+//     }
+//   }
+// );
+
 app.post("/api/addUser",
   authenticateToken,
   authorizeRoles("ADMIN"),
   async (req, res) => {
-    
-    const { name, email, username, employeeId,department, teamLead, role } = req.body;
+    const { name, email, username, employeeId, department, teamLead, role } = req.body;
+
     try {
-      // Validate if all fields are present
-      if (!name || !email || !role || !username || !employeeId  || !department || !teamLead) {
-        return res.status(400).json({ message: "All fields are required" });
+      // Validate if required fields (excluding name) are present
+      if (!email || !role || !username || !employeeId || !department || !teamLead) {
+        return res.status(400).json({ message: "Required fields are missing" });
       }
-      
-      // Create a new user object
+
+      // Create a new user object (name is optional)
       const newUser = new User({
-        name,
+        name: name || "", // Default to an empty string if name is not provided
         email,
         username,
         employeeId,
-       // employeeName,
         department,
         teamLead,
         role: "USER", // Default to 'USER'
@@ -1426,31 +1572,33 @@ app.post("/api/addUser",
       // Send reset email with the token
       sendResetEmail(email, resetLink);
 
-      // Add the user to the GitHub organization
-      try {
-        const githubResponse = await axios.put(
-          `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
-          {
-            role: "member",
-          },
-          {
-            headers: {
-              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-              Accept: "application/vnd.github.v3+json",
+      // Conditionally add the user to the GitHub organization if `name` is provided
+      if (name) {
+        try {
+          const githubResponse = await axios.put(
+            `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
+            {
+              role: "member",
             },
-          }
-        );
-        console.log("GitHub membership response:", githubResponse.data);
-      } catch (error) {
-        console.error(
-          "Error adding user to GitHub organization:",
-          error.response ? error.response.data : error.message
-        );
-        return res.status(500).json({
-          message: "User added to the organization but not to GitHub",
-          user: newUser,
-        });
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
+          console.log("GitHub membership response:", githubResponse.data);
+        } catch (error) {
+          console.error(
+            "Error adding user to GitHub organization:",
+            error.response ? error.response.data : error.message
+          );
+          return res.status(500).json({
+            message: "User added to the organization but not to GitHub",
+            user: newUser,
+          });
+        }
       }
 
       // Respond with success
@@ -3999,9 +4147,6 @@ app.put("/api/organizations/:organizationId/teams/:teamId",
   }
 );
 
-
-
-
 app.post("/api/organizations/:organizationId/teams/:teamId/users",
   authenticateToken,
   async (req, res) => {
@@ -4045,7 +4190,7 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
       if (user.status === "UNVERIFY") {
         return res.status(400).json({
           message:
-            "This user email is not verified. Please verify the email before adding into team.",
+            "This user's email is not verified. Please verify the email before adding to the team.",
         });
       }
 
@@ -4061,28 +4206,45 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
       team.users.push({ user: user._id, role: role || "USER" });
       await team.save();
 
-      // Format team name for GitHub API
-      const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+      // Conditionally add the user to the GitHub team if username is provided
+      if (user.name) {
+        // Format team name for GitHub API
+        const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
 
-      // Add the user to the GitHub team
-      const githubTeamResponse = await axios.put(
-        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
-        {},
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
+        try {
+          // Add the user to the GitHub team
+          const githubTeamResponse = await axios.put(
+            `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
+            {},
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          res.status(200).json({
+            message:
+              "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
+            team,
+            githubTeam: githubTeamResponse.data,
+          });
+        } catch (error) {
+          console.error("Error adding user to GitHub team:", error);
+          return res.status(500).json({
+            message:
+              "User added to team in MongoDB but failed to add to GitHub team.",
+            error: error.message,
+          });
         }
-      );
-
-
-      res.status(200).json({
-        message:
-          "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
-        team,
-        githubTeam: githubTeamResponse.data,
-      });
+      } else {
+        // If no username, skip GitHub team addition and only add to MongoDB
+        res.status(200).json({
+          message: "User added to team successfully in MongoDB.",
+          team,
+        });
+      }
     } catch (error) {
       console.error("Error adding user to team:", error);
       res
@@ -4091,6 +4253,98 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
     }
   }
 );
+
+
+
+// app.post("/api/organizations/:organizationId/teams/:teamId/users",
+//   authenticateToken,
+//   async (req, res) => {
+//     const { organizationId, teamId } = req.params;
+//     const { username, role } = req.body;
+
+//     try {
+//       // Find the organization
+//       const organization = await Organization.findById(organizationId);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       // Find the team
+//       const team = await Team.findById(teamId);
+//       if (!team) {
+//         return res.status(404).json({ message: "Team not found" });
+//       }
+
+//       // Check if the team belongs to the organization
+//       if (!organization.teams.includes(team._id)) {
+//         return res
+//           .status(400)
+//           .json({ message: "Team does not belong to this organization" });
+//       }
+
+//       // Find the user
+//       const user = await User.findOne({ username });
+//       if (!user) {
+//         return res.status(404).json({ message: "User not found" });
+//       }
+
+//       // Check if the user has an 'ADMIN' role
+//       if (user.role === "ADMIN") {
+//         return res
+//           .status(400)
+//           .json({ message: "Admin users cannot be added to teams" });
+//       }
+
+//       // Check if the user status is 'unverify'
+//       if (user.status === "UNVERIFY") {
+//         return res.status(400).json({
+//           message:
+//             "This user email is not verified. Please verify the email before adding into team.",
+//         });
+//       }
+
+//       // Check if the user is already in the team
+//       const userInTeam = team.users.find(
+//         (u) => u.user.toString() === user._id.toString()
+//       );
+//       if (userInTeam) {
+//         return res.status(400).json({ message: "User is already in the team" });
+//       }
+
+//       // Add the user to the team in MongoDB
+//       team.users.push({ user: user._id, role: role || "USER" });
+//       await team.save();
+
+//       // Format team name for GitHub API
+//       const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+
+//       // Add the user to the GitHub team
+//       const githubTeamResponse = await axios.put(
+//         `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
+//         {},
+//         {
+//           headers: {
+//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+
+//       res.status(200).json({
+//         message:
+//           "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
+//         team,
+//         githubTeam: githubTeamResponse.data,
+//       });
+//     } catch (error) {
+//       console.error("Error adding user to team:", error);
+//       res
+//         .status(500)
+//         .json({ message: "Error adding user to team", error: error.message });
+//     }
+//   }
+// );
 
 app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
   const { projectId } = req.params;
@@ -4231,25 +4485,40 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Format team name for GitHub API (replace spaces with hyphens and make lowercase)
-      const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+      // Conditionally make the GitHub API call if user.name is available
+      if (user.name) {
+        // Format team name for GitHub API (replace spaces with hyphens and make lowercase)
+        const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
 
-      // Remove the user from the GitHub team
-      const githubTeamResponse = await axios.delete(
-        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
+        try {
+          // Remove the user from the GitHub team
+          const githubTeamResponse = await axios.delete(
+            `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          // console.log("GitHub team membership deleted:", githubTeamResponse.data);
+        } catch (error) {
+          console.error(
+            "Error removing user from GitHub team:",
+            error.response ? error.response.data : error.message
+          );
+          return res.status(500).json({
+            message: "User removed from team in MongoDB but not from GitHub",
+            removedBy,
+            error: error.message,
+          });
         }
-      );
-
-      // console.log("GitHub team membership deleted:", githubTeamResponse.data);
-
+      }
 
       res.status(200).json({
-        message: "User removed from team successfully in MongoDB and GitHub",
+        message: "User removed from team successfully in MongoDB" +
+                 (user.name ? " and GitHub" : ""),
         removedBy,
       });
     } catch (error) {
@@ -4264,6 +4533,89 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
     }
   }
 );
+
+
+// app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
+//   authenticateToken,
+//   async (req, res) => {
+//     const { organizationId, teamId, userId } = req.params;
+//     const { removedBy } = req.body;
+
+//     try {
+//       // Find the organization
+//       const organization = await Organization.findById(organizationId);
+//       if (!organization) {
+//         return res.status(404).json({ message: "Organization not found" });
+//       }
+
+//       // Find the team
+//       const team = await Team.findById(teamId);
+//       if (!team) {
+//         return res.status(404).json({ message: "Team not found" });
+//       }
+
+//       // Check if the team belongs to the organization
+//       if (!organization.teams.includes(team._id)) {
+//         return res
+//           .status(400)
+//           .json({ message: "Team does not belong to this organization" });
+//       }
+
+//       // Find the user in the team
+//       const userIndex = team.users.findIndex(
+//         (u) => u.user.toString() === userId
+//       );
+//       if (userIndex === -1) {
+//         return res.status(404).json({ message: "User not found in the team" });
+//       }
+
+//       // Remove the user from the team in MongoDB
+//       team.users.splice(userIndex, 1);
+
+//       // Add removal information
+//       team.removedBy = removedBy;
+//       team.removedDate = new Date();
+//       await team.save();
+
+//       // Find the user in MongoDB
+//       const user = await User.findById(userId);
+//       if (!user) {
+//         return res.status(404).json({ message: "User not found" });
+//       }
+
+//       // Format team name for GitHub API (replace spaces with hyphens and make lowercase)
+//       const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+
+//       // Remove the user from the GitHub team
+//       const githubTeamResponse = await axios.delete(
+//         `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
+//         {
+//           headers: {
+//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+//       // console.log("GitHub team membership deleted:", githubTeamResponse.data);
+
+
+//       res.status(200).json({
+//         message: "User removed from team successfully in MongoDB and GitHub",
+//         removedBy,
+//       });
+//     } catch (error) {
+//       console.error(
+//         "Error removing user from team:",
+//         error.response ? error.response.data : error.message
+//       );
+//       res.status(500).json({
+//         message: "Error removing user from team",
+//         error: error.message,
+//       });
+//     }
+//   }
+// );
 
 
 app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {

@@ -580,7 +580,7 @@ function KanbanBoard() {
   }
 
   useEffect(() => {
-    console.log("Current bgUrl:", bgUrl);
+    // console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
 
   const handleCloseModal = () => {
@@ -839,9 +839,9 @@ function KanbanBoard() {
   
 
   useEffect(() => {
-    if (projectId) {
-      fetchTasks();
-    }
+    // if (projectId) {
+    //   fetchTasks();
+    // }
 
     const updateContainerWidth = () => {
       if (containerRef.current) {
@@ -865,17 +865,17 @@ function KanbanBoard() {
   }, [newColumnModalVisible, modalVisible]);
 
   // Polling function
-  const pollForUpdates = async () => {
-    await fetchTasks();
-  };
+  // const pollForUpdates = async () => {
+  //   await fetchTasks();
+  // };
 
   // Set up polling
-  useEffect(() => {
-    const intervalId = setInterval(pollForUpdates, 5000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(pollForUpdates, 5000);
 
     // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   const handleCardMove = async (card, source, destination) => {
     // Optimistically update the UI
@@ -1288,32 +1288,32 @@ function KanbanBoard() {
     setModalType(null);
   };
 
-  useEffect(() => {
-    async function fetchProjectDetails() {
-      try {
-        const response = await fetch(`${server}/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+  // useEffect(() => {
+  //   async function fetchProjectDetails() {
+  //     try {
+  //       const response = await fetch(`${server}/api/projects/${projectId}`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch project details");
-        }
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch project details");
+  //       }
 
-        const project = await response.json();
-        setProjectName(project.name);
-        console.log(project.projectManager);
-        setProjectManager(project.projectManger);
-      } catch (error) {
-        console.error("Error fetching project details:", error);
-      }
-    }
+  //       const project = await response.json();
+  //       setProjectName(project.name);
+  //       console.log(project.projectManager);
+  //       setProjectManager(project.projectManger);
+  //     } catch (error) {
+  //       console.error("Error fetching project details:", error);
+  //     }
+  //   }
 
-    fetchProjectDetails();
-  }, [server, projectId]); // Dependencies for useEffect
+  //   fetchProjectDetails();
+  // }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
     try {

@@ -4,6 +4,8 @@ import Board, { moveCard, moveColumn } from "@lourenci/react-kanban";
 import io from "socket.io-client";
 import { Dropdown, Menu } from "antd"; //added
 import { InfoCircleOutlined } from "@ant-design/icons";
+import * as XLSX from 'xlsx';
+import { DownloadOutlined } from '@ant-design/icons';
 import { DownOutlined } from "@ant-design/icons"; //added
 import {
   BsClockHistory,
@@ -46,6 +48,7 @@ const initialBoard = {
 
 function KanbanBoard() {
   useTokenValidation();
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
   const [boardData, setBoardData] = useState(initialBoard);
   const [socket, setSocket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -102,7 +105,6 @@ function KanbanBoard() {
   const [titleError, setTitleError] = useState("");
   const [emailError, setemailError] = useState("");
   const [startDateError, setstartDateError] = useState("");
-  // const [endDate,setendDate] = useState('');
   const [assignDate, setAssignDate] = useState("");
   const [repoName, setRepoName] = useState("");
   const [repository, setRepository] = useState("");
@@ -183,6 +185,25 @@ function KanbanBoard() {
   //added
   const handleBackgroundChangeClick = () => {
     setShowBackgroundChange(true);
+  };
+
+  const handleExport = () => {
+    // Prepare the data for export
+    const exportData = boardData.columns.flatMap(column => 
+      column.cards.map(card => ({
+        'Column Name': column.title,
+        'Card Title': card.title,
+        'Status': card.status
+      }))
+    );
+
+    // Create a new workbook and add the data
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    XLSX.utils.book_append_sheet(wb, ws, "KanbanData");
+
+    // Save the file
+    XLSX.writeFile(wb, "kanban_export.xlsx");
   };
 
   useEffect(() => {
@@ -633,7 +654,16 @@ function KanbanBoard() {
     if (document.forms[0]) {
       document.forms[0].reset();
     }
-    setEmail("");
+    // Clear fields and close the modal after successful card addition
+    setTitle("");
+    setEmail(""); // Clear email
+    setUsername(""); // Clear username
+    setStartDate("");
+    setEndDate("");
+    setEstimatedHours("");
+    setDescription("");
+    setEmailSuggestions([]); // Clear suggestions
+
 
     // Close the modal
     setModalVisible(false);
@@ -651,7 +681,7 @@ function KanbanBoard() {
     const dueDate = e.target.dueDate.value;
     const estimatedHoursInput = e.target.estimatedHours.value.trim();
     const estimatedHours = parseFloat(estimatedHoursInput);
-
+  
     if (
       !cardTitle ||
       !cardDescription ||
@@ -670,10 +700,10 @@ function KanbanBoard() {
       });
       return;
     }
-
+  
     try {
       const createdBy = await fetchUserEmail();
-
+  
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
         {
@@ -684,11 +714,11 @@ function KanbanBoard() {
           },
         }
       );
-
+  
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
-
+  
       const { users } = await searchResponse.json();
       if (users.length === 0) {
         notification.warning({
@@ -696,7 +726,7 @@ function KanbanBoard() {
         });
         return;
       }
-
+  
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
         {
@@ -716,25 +746,27 @@ function KanbanBoard() {
           }),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
-
-      // Clear fields only after successful card addition
+  
+      // Clear fields and close the modal after successful card addition
       setTitle("");
-      setEmail("");
+      setEmail(""); // Clear email
+      setUsername(""); // Clear username
       setStartDate("");
       setEndDate("");
       setEstimatedHours("");
       setDescription("");
-      e.target.title.value = "";
-      e.target.description.value = "";
-      e.target.estimatedHours.value = "";
-
-      setModalVisible(false);
-
-      await fetchTasks();
+      setEmailSuggestions([]); // Clear suggestions
+  
+      e.target.reset(); // Reset the form
+  
+      setModalVisible(false); // Close the modal
+  
+      await fetchTasks(); // Fetch the updated tasks
+  
       notification.success({
         message: "Task added Successfully",
       });
@@ -743,6 +775,7 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+  
 
   const handleEmailChange = async (e) => {
     const emailInput = e.target.value;
@@ -783,6 +816,47 @@ function KanbanBoard() {
       setEmailSuggestions([]);
     }
   };
+
+  const handleUsernameChange = async (e) => {
+    const usernameInput = e.target.value;
+    setUsername(usernameInput);
+  
+    if (!usernameInput) {
+      setUsernameSuggestions([]);
+      return;
+    }
+  
+    try {
+      const response = await fetch(
+        `${server}/api/projects/${projectId}/users/search?username=${usernameInput}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch username suggestions");
+      }
+  
+      const { users } = await response.json();
+  
+      // Filter out duplicate usernames
+      const uniqueUsers = users.filter(
+        (user, index, self) =>
+          index === self.findIndex((t) => t.username === user.username)
+      );
+  
+      setUsernameSuggestions(uniqueUsers);
+    } catch (error) {
+      console.error("Error fetching username suggestions:", error);
+      setUsernameSuggestions([]);
+    }
+  };
+  
 
   useEffect(() => {
     if (projectId) {
@@ -1556,18 +1630,6 @@ function KanbanBoard() {
                     width: "100%",
                   }}
                 />
-                {/* <Button
-                  type="text"
-                  icon={<InfoCircleOutlined />}
-                  onClick={showAboutModal}
-                  style={{
-                    display: "flex",
-                    fontSize: 15,
-                    justifyItems: "left",
-                  }}
-                >
-                  About
-                </Button> */}
                 <button
                   type="button"
                   className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
@@ -1583,6 +1645,22 @@ function KanbanBoard() {
                   <InfoCircleOutlined style={{ fontSize: 20 }} />
                   About
                 </button>
+
+                <button
+            type="button"
+            className="flex flex-row justify-left items-center gap-2 p-2 rounded-md border-color-black-400 hover:bg-gray-200"
+            onClick={handleExport}
+            style={{
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              fontSize: 15,
+            }}
+          >
+            <DownloadOutlined style={{ fontSize: 20 }} />
+            Export to Excel
+          </button>
               </Space>
             </Drawer>
 
@@ -1655,12 +1733,7 @@ function KanbanBoard() {
                   padding: "0.5rem",
                   backgroundColor: "#F7FAFC",
 
-                  // marginBottom: "0.5rem",
-                  // padding: "0.5rem",
-
                   backgroundColor: "#ededed",
-
-                  // borderRadius: "20px",
                 }}
                 onDoubleClick={() => {
                   setEditingColumnId(id);
@@ -1776,34 +1849,34 @@ function KanbanBoard() {
                     Assigned (Username)
                   </label>
                   <input
-                    type="text"
-                    value={username} // Show the selected username
-                    onChange={handleEmailChange}
-                    placeholder="Enter username"
-                    className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  {emailError && (
-                    <p className="text-red-500 text-sm mt-1">{emailError}</p>
-                  )}
-                  {emailSuggestions.length > 0 && (
-                    <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
-                      {emailSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.email}
-                          onClick={() => {
-                            setUsername(suggestion.username); // Set the username for display
-                            setEmail(suggestion.email); // Keep the email internally
-                            setEmailSuggestions([]); // Clear suggestions after selection
-                          }}
-                          className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
-                        >
-                          {suggestion.username}{" "}
-                          {/* Display only the username */}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+  type="text"
+  value={username} // Show the selected username
+  onChange={handleUsernameChange} // Updated function to handle username changes
+  placeholder="Enter username"
+  className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+  required
+/>
+{emailError && ( // This can be renamed to usernameError for clarity if necessary
+  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+)}
+{usernameSuggestions.length > 0 && ( // Changed from emailSuggestions to usernameSuggestions
+  <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+    {usernameSuggestions.map((suggestion) => (
+      <li
+        key={suggestion.username} // Using username as key now
+        onClick={() => {
+          setUsername(suggestion.username); // Set the selected username
+          setEmail(suggestion.email); // Keep the associated email internally if needed
+          setUsernameSuggestions([]); // Clear suggestions after selection
+        }}
+        className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+      >
+        {suggestion.username} {/* Display only the username */}
+      </li>
+    ))}
+  </ul>
+)}
+
                 </div>
               </div>
 

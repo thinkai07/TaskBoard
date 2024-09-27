@@ -1638,7 +1638,6 @@ const sendEmail = (email, subject, text) => {
   });
 };
 
-//create projects
 app.post("/api/projects", async (req, res) => {
   const {
     organizationId,
@@ -1652,23 +1651,18 @@ app.post("/api/projects", async (req, res) => {
   } = req.body;
 
   try {
-    // console.log("Received request to create project:", req.body);
-
     const organization = await Organization.findById(organizationId);
     if (!organization) {
-      // console.log("Organization not found");
       return res.status(404).json({ message: "Organization not found" });
     }
 
     const projectManagerUser = await User.findOne({ email: projectManager });
     if (!projectManagerUser) {
-      // console.log("Project manager not found");
       return res.status(404).json({ message: "Project manager not found" });
     }
 
     const createProjectUser = await User.findOne({ email: createdBy });
     if (!createProjectUser) {
-      // console.log("Creator not found");
       return res.status(404).json({ message: "Creator not found" });
     }
 
@@ -1677,18 +1671,17 @@ app.post("/api/projects", async (req, res) => {
     if (teams && teams.length > 0) {
       const existingTeams = await Team.find({ _id: { $in: teams } });
       if (existingTeams.length !== teams.length) {
-        // console.log("Some teams not found");
         return res.status(404).json({ message: "Some teams not found" });
       }
-      teamNames = existingTeams.map((team) => team.slug); // Ensure you use the 'slug' if GitHub API needs the slug
+      teamNames = existingTeams.map((team) => team.slug); // Using team slug for GitHub API
     }
-    // console.log("Team names:", teamNames); // Add a log to check team names
 
+    // Create the project in MongoDB
     const newProject = new Project({
       name,
       description,
       projectManager,
-      projectManagerName: projectManagerUser.username, // Store the name here
+      projectManagerName: projectManagerUser.username,
       organization: organization._id,
       teams: teams || [],
       tasks: [],
@@ -1696,11 +1689,10 @@ app.post("/api/projects", async (req, res) => {
       createdBy,
       bgUrl: bgUrl || null,
       repository: "", // Initialize repository field
-      repoName: "", // Initialize repoName field
+      repoName: "",   // Initialize repoName field
     });
 
     await newProject.save();
-    // console.log("New project created:", newProject);
 
     const auditLog = new AuditLog({
       entityType: "Project",
@@ -1712,12 +1704,9 @@ app.post("/api/projects", async (req, res) => {
     });
 
     await auditLog.save();
-    // console.log("Audit log created:", auditLog);
-    // console.log("Audit log created:", auditLog);
 
     organization.projects.push(newProject._id);
     await organization.save();
-    // console.log("Organization updated with new project");
 
     // Update teams with the new project
     if (teams && teams.length > 0) {
@@ -1725,9 +1714,64 @@ app.post("/api/projects", async (req, res) => {
         { _id: { $in: teams } },
         { $push: { projects: newProject._id } }
       );
-      // console.log("Teams updated with new project");
     }
 
+    // Try to create GitHub repository, but continue if it fails
+    let githubResponse = null;
+    let repoName = `${organization.name}-${newProject.name}-repo`.replace(/\s+/g, "-").toLowerCase();
+
+    try {
+      githubResponse = await axios.post(
+        `https://api.github.com/orgs/${organization.name}/repos`,
+        {
+          name: repoName,
+          private: true,
+          description: `Repository for ${organization.name} project ${newProject.name}`,
+        },
+        {
+          headers: {
+            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Update project with repository info if GitHub creation was successful
+      newProject.repository = githubResponse.data.html_url;
+      newProject.repoName = repoName;
+      await newProject.save();
+    } catch (error) {
+      console.error(
+        "GitHub repository creation failed, but project will continue:",
+        error.response ? error.response.data : error.message
+      );
+    }
+
+    // Attempt to assign team(s) to the GitHub repository, if GitHub creation was successful
+    if (githubResponse && teamNames.length > 0) {
+      for (const teamName of teamNames) {
+        try {
+          await axios.put(
+            `https://api.github.com/orgs/${organization.name}/teams/${teamName}/repos/${organization.name}/${repoName}`,
+            { permission: "push" }, // 'push' gives write access
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
+        } catch (error) {
+          console.error(
+            `Error assigning team ${teamName} to GitHub repository:`,
+            error.response ? error.response.data : error.message
+          );
+        }
+      }
+    }
+
+    // Send notification email to the project manager
     const token = jwt.sign(
       {
         projectId: newProject._id,
@@ -1743,104 +1787,21 @@ app.post("/api/projects", async (req, res) => {
     const emailText = `Dear Project Manager,\n\nA new project has been created.\n\nProject Name: ${name}\nDescription: ${description}\n\nPlease click the following link to view the project details: ${link}\n\nBest Regards,\nTeam`;
 
     await sendEmail(projectManager, "New Project Created", emailText);
-    // console.log("Email sent to project manager");
-
-    // Create GitHub repository
-    const repoName = `${organization.name}-${newProject.name}-repo`
-      .replace(/\s+/g, "-")
-      .toLowerCase();
-    let githubResponse;
-    try {
-
-      githubResponse = await axios.post(
-        `https://api.github.com/orgs/${organization.name}/repos`,
-        {
-          name: repoName,
-          private: true,
-          description: `Repository for ${organization.name} project ${newProject.name}`,
-        },
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      // console.log("GitHub repository created:", githubResponse.data);
-
-      // Update project with repository info
-      newProject.repository = githubResponse.data.html_url;
-      newProject.repoName = repoName;
-      await newProject.save();
-      // console.log(
-      //   "Project repository URL and repo name updated:",
-      //   newProject.repository,
-      //   newProject.repoName
-      // );
-      // console.log(
-      //   "Project repository URL and repo name updated:",
-      //   newProject.repository,
-      //   newProject.repoName
-      // );
-    } catch (error) {
-      console.error(
-        "Error creating GitHub repository:",
-        error.response ? error.response.data : error.message
-      );
-      return res.status(500).json({
-        message: "Error creating GitHub repository",
-        error: error.message,
-      });
-    }
-
-    // Assign team to the repository
-    if (teamNames && teamNames.length > 0) {
-      for (const teamName of teamNames) {
-        try {
-          const teamAssignResponse = await axios.put(
-            `https://api.github.com/orgs/${organization.name}/teams/${teamName}/repos/${organization.name}/${repoName}`,
-            { permission: "push" }, // 'push' gives write access, you can change to 'admin' for admin access
-            {
-              headers: {
-                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-                Accept: "application/vnd.github.v3+json",
-              },
-            }
-          );
-          // console.log(
-          //   `Team ${teamName} assigned to GitHub repository:`,
-          //   teamAssignResponse.data
-          // );
-        } catch (error) {
-          console.error(
-            `Error assigning team ${teamName} to GitHub repository:`,
-            error.response ? error.response.data : error.message
-          );
-          return res.status(500).json({
-            message: `Error assigning team ${teamName} to GitHub repository`,
-            error: error.message,
-          });
-        }
-      }
-    }
 
     res.status(201).json({
-      message:
-        "Project created, email sent to project manager, GitHub repository created, and team assigned",
+      message: "Project created successfully. GitHub creation is optional.",
       project: newProject,
       projectManagerStatus: projectManagerUser.status,
-      repository: githubResponse.data,
-      repoName, // Include repo name in the response
-      teamNames, // Include team names in the response
+      repository: githubResponse ? githubResponse.data : null, // Include GitHub response only if it exists
+      repoName: githubResponse ? repoName : null, // Include repoName only if GitHub was created
+      teamNames, // Include team names
     });
   } catch (error) {
     console.error("Error creating project:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating project", error: error.message });
+    res.status(500).json({ message: "Error creating project", error: error.message });
   }
 });
+
 
 
 
@@ -2013,7 +1974,7 @@ app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    // Update the GitHub repository name if the project name has changed
+    // Check if the project name has changed and update GitHub repository if needed
     if (oldProject.name !== name) {
       const oldRepoName = `${organization.name}-${oldProject.name}-repo`
         .replace(/\s+/g, "-")
@@ -2023,7 +1984,7 @@ app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
         .toLowerCase();
 
       try {
-        // Update the GitHub repository name
+        // Attempt to update the GitHub repository name
         await axios.patch(
           `https://api.github.com/repos/${organization.name}/${oldRepoName}`,
           { name: newRepoName },
@@ -2044,50 +2005,50 @@ app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
           "Error updating GitHub repository:",
           error.response ? error.response.data : error.message
         );
-        return res.status(500).json({
-          message: "Error updating GitHub repository",
-          error: error.message,
-        });
+        // Proceed without stopping project update if GitHub repository update fails
       }
     }
 
-    // Update the project document
-    oldProject.name = name;
-    oldProject.description = description;
-    oldProject.updatedBy = updatedBy;
-    const updatedProject = await oldProject.save();
-
-    // Prepare changes array for audit log
+    // Update the project document with new details
     const changes = [];
+    
     if (oldProject.name !== name) {
       changes.push({
         field: "name",
         oldValue: oldProject.name,
         newValue: name,
       });
+      oldProject.name = name;
     }
+
     if (oldProject.description !== description) {
       changes.push({
         field: "description",
         oldValue: oldProject.description,
         newValue: description,
       });
+      oldProject.description = description;
     }
 
-    // Create a new audit log entry
-    const newAuditLog = new AuditLog({
-      entityType: "Project",
-      entityId: projectId,
-      actionType: "update",
-      actionDate: new Date(),
-      performedBy: updatedByUser.username,
-      changes: changes,
-    });
+    oldProject.updatedBy = updatedBy;
+    const updatedProject = await oldProject.save();
 
-    await newAuditLog.save();
+    // Create an audit log entry to record changes
+    if (changes.length > 0) {
+      const auditLog = new AuditLog({
+        entityType: "Project",
+        entityId: projectId,
+        actionType: "update",
+        actionDate: new Date(),
+        performedBy: updatedByUser.username,
+        changes: changes,
+      });
 
-    // Check if the project name has changed and send an email if it has
-    if (oldProject.name !== name) {
+      await auditLog.save();
+    }
+
+    // Send email notification if the project name has changed
+    if (changes.some(change => change.field === 'name')) {
       const projectManager = oldProject.projectManager;
       const emailText = `Dear Project Manager,\n\nThe project name has been changed.\n\nOld Project Name: ${oldProject.name}\nNew Project Name: ${name}\n\nBest Regards,\nTeam`;
       sendEmail(projectManager, "Project Name Changed", emailText);
@@ -2099,9 +2060,10 @@ app.put("/api/projects/:projectId", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating project:", error);
-    res.status(500).json({ message: "Error updating project" });
+    res.status(500).json({ message: "Error updating project", error: error.message });
   }
 });
+
 
 projectSchema.pre("findOneAndDelete", async function (next) {
   const projectId = this.getQuery()["_id"];
@@ -2150,9 +2112,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
     await Project.findByIdAndDelete(projectId);
 
     // Construct the repository name
-    const organization = await Organization.findById(
-      deletedProject.organization
-    );
+    const organization = await Organization.findById(deletedProject.organization);
     if (!organization) {
       return res.status(404).json({ message: "Organization not found" });
     }
@@ -2161,7 +2121,7 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
       .replace(/\s+/g, "-")
       .toLowerCase();
 
-    // Attempt to delete the GitHub repository
+    // Attempt to delete the GitHub repository, but continue if it fails
     try {
       await axios.delete(
         `https://api.github.com/repos/${organization.name}/${repoName}`,
@@ -2173,27 +2133,24 @@ app.delete("/api/projects/:projectId", authenticateToken, async (req, res) => {
           },
         }
       );
+      console.log("GitHub repository deleted successfully");
     } catch (error) {
       console.error(
-        "Error deleting GitHub repository:",
+        "GitHub repository deletion failed:",
         error.response ? error.response.data : error.message
       );
-      return res.status(500).json({
-        message: "Error deleting GitHub repository",
-        error: error.message,
-      });
+      // Proceed with project deletion even if GitHub deletion fails
     }
 
     res.status(200).json({
-      message: "Project and associated GitHub repository deleted successfully",
+      message: "Project deleted successfully. GitHub repository deletion was attempted, if applicable.",
     });
   } catch (error) {
     console.error("Error deleting project:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting project", error: error.message });
+    res.status(500).json({ message: "Error deleting project", error: error.message });
   }
 });
+
 
 
 //tasks
@@ -3787,74 +3744,87 @@ app.delete("/api/projects/:projectId/teams/:teamName/users",
 
 // Create a team inside an organization and a GitHub organization
 
-app.post("/api/organizations/:organizationId/teams",
-  authenticateToken,
-  async (req, res) => {
-    const { organizationId } = req.params;
-    const { teamName, addedBy } = req.body;
+app.post("/api/organizations/:organizationId/teams", authenticateToken, async (req, res) => {
+  const { organizationId } = req.params;
+  const { teamName, addedBy } = req.body;
 
-    try {
-      const organization = await Organization.findById(organizationId).populate(
-        "teams"
-      );
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
-      }
+  try {
+    // Fetch the organization by ID
+    const organization = await Organization.findById(organizationId).populate("teams");
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
 
-      let team = organization.teams.find((team) => team.name === teamName);
-      if (team) {
-        return res
-          .status(400)
-          .json({ message: "Team with this name already exists" });
-      }
+    // Check if the team with the same name already exists
+    let team = organization.teams.find((team) => team.name === teamName);
+    if (team) {
+      return res.status(400).json({ message: "Team with this name already exists" });
+    }
 
-      team = new Team({
-        name: teamName,
-        users: [],
-        addedBy,
-        addedDate: new Date(),
-      });
+    // Create a new team
+    team = new Team({
+      name: teamName,
+      users: [],
+      addedBy,
+      addedDate: new Date(),
+    });
 
-      // Save the team to get an ID before updating with GitHub slug
-      await team.save();
+    // Save the team to get an ID before GitHub slug update
+    await team.save();
 
-      organization.teams.push(team._id);
-      await organization.save();
+    // Add the team ID to the organization's teams list and save
+    organization.teams.push(team._id);
+    await organization.save();
 
-      // Create a team in the GitHub organization
-      const githubTeamResponse = await axios.post(
-        `https://api.github.com/orgs/${organization.name}/teams`,
-        {
-          name: teamName,
-          privacy: "closed",
-        },
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
+    // Attempt to create the team on GitHub if `teamName` is provided
+    if (teamName) {
+      try {
+        const githubTeamResponse = await axios.post(
+          `https://api.github.com/orgs/${organization.name}/teams`,
+          {
+            name: teamName,
+            privacy: "closed",
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      // console.log("GitHub team created:", githubTeamResponse.data);
+        // Update the team with the GitHub slug
+        team.slug = githubTeamResponse.data.slug;
+        await team.save();
 
-      // Update the team with the GitHub slug
-      team.slug = githubTeamResponse.data.slug;
-      await team.save();
+        res.status(200).json({
+          message: "Team created successfully, including GitHub team",
+          team,
+          githubTeam: githubTeamResponse.data,
+        });
+      } catch (error) {
+        console.error("Error creating GitHub team:", error.response ? error.response.data : error.message);
 
+        // Return success for team creation, but with a warning about GitHub failure
+        res.status(200).json({
+          message: "Team created successfully, but GitHub team creation failed",
+          team,
+          githubError: error.message,
+        });
+      }
+    } else {
+      // If no `teamName` is provided, just create the team without GitHub
       res.status(200).json({
         message: "Team created successfully",
         team,
-        githubTeam: githubTeamResponse.data,
       });
-    } catch (error) {
-      console.error("Error creating team:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating team", error: error.message });
     }
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).json({ message: "Error creating team", error: error.message });
   }
-);
+});
+
 app.get("/api/organizations/:organizationId/teams",
   authenticateToken,
   async (req, res) => {
@@ -3878,126 +3848,114 @@ app.get("/api/organizations/:organizationId/teams",
   }
 );
 // Delete team inside organization
-app.delete("/api/organizations/:organizationId/teams/:teamId",
-  authenticateToken,
-  async (req, res) => {
-    const { organizationId, teamId } = req.params;
+// Delete team inside organization
+app.delete("/api/organizations/:organizationId/teams/:teamId", authenticateToken, async (req, res) => {
+  const { organizationId, teamId } = req.params;
 
-    try {
-      // Find the organization
-      const organization = await Organization.findById(organizationId);
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
-      }
+  try {
+    // Find the organization
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
 
-      // Find the team
-      const team = await Team.findById(teamId);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
-      }
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
 
-      // Check if the team is part of the organization
-      const teamIndex = organization.teams.indexOf(teamId);
-      if (teamIndex === -1) {
-        return res
-          .status(404)
-          .json({ message: "Team not found in this organization" });
-      }
+    // Check if the team is part of the organization
+    const teamIndex = organization.teams.indexOf(teamId);
+    if (teamIndex === -1) {
+      return res.status(404).json({ message: "Team not found in this organization" });
+    }
 
-      // Remove the team from the organization
-      organization.teams.splice(teamIndex, 1);
-      await organization.save();
+    // Remove the team from the organization
+    organization.teams.splice(teamIndex, 1);
+    await organization.save();
 
-      // Delete the team from MongoDB
-      await Team.findByIdAndDelete(teamId);
+    // Delete the team from MongoDB
+    await Team.findByIdAndDelete(teamId);
 
-      // Format team name for GitHub API
+    // Attempt to delete the team from GitHub if team name exists
+    if (team.name) {
       const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
 
-      // Delete the team from the GitHub organization
-      const githubTeamResponse = await axios.delete(
-        `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}`,
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("GitHub team deleted:", githubTeamResponse.data);
-
-      res.status(200).json({
-        message: "Team deleted successfully from MongoDB and GitHub",
-      });
-    } catch (error) {
-      console.error("Error deleting team:", error.response ? error.response.data : error.message);
-      res.status(500).json({
-        message: "Error deleting team",
-        error: error.message,
-      });
+      try {
+        const githubTeamResponse = await axios.delete(
+          `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}`,
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("GitHub team deleted:", githubTeamResponse.data);
+      } catch (error) {
+        console.error("Error deleting GitHub team:", error.response ? error.response.data : error.message);
+      }
     }
+
+    res.status(200).json({ message: "Team deleted successfully from MongoDB (GitHub deletion attempted if applicable)" });
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    res.status(500).json({ message: "Error deleting team", error: error.message });
   }
-);
+});
 
 // Edit team inside organization
-app.put("/api/organizations/:organizationId/teams/:teamId",
-  authenticateToken,
-  async (req, res) => {
-    const { organizationId, teamId } = req.params;
-    const { teamName } = req.body;
+app.put("/api/organizations/:organizationId/teams/:teamId", authenticateToken, async (req, res) => {
+  const { organizationId, teamId } = req.params;
+  const { teamName } = req.body;
 
-    try {
-      // Find the organization
-      const organization = await Organization.findById(organizationId);
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
-      }
+  try {
+    // Find the organization
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
 
-      // Find the team
-      const team = await Team.findById(teamId);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
-      }
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
 
-      const oldTeamName = team.name;
-      team.name = teamName;
-      await team.save();
+    const oldTeamName = team.name;
+    team.name = teamName;
+    await team.save();
 
-      // Format old and new team names for GitHub API
+    // Attempt to update the team on GitHub if team name exists
+    if (oldTeamName) {
       const oldTeamSlug = oldTeamName.replace(/\s+/g, '-').toLowerCase();
       const newTeamSlug = teamName.replace(/\s+/g, '-').toLowerCase();
 
-      // Update the team name in the GitHub organization
-      const githubTeamResponse = await axios.patch(
-        `https://api.github.com/orgs/${organization.name}/teams/${oldTeamSlug}`,
-        {
-          name: teamName,
-        },
-        {
-          headers: {
-            Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("GitHub team updated:", githubTeamResponse.data);
-
-      res.status(200).json({
-        message: "Team updated successfully",
-        team,
-        githubTeam: githubTeamResponse.data,
-      });
-    } catch (error) {
-      console.error("Error updating team:", error.response ? error.response.data : error.message);
-      res.status(500).json({
-        message: "Error updating team",
-        error: error.message,
-      });
+      try {
+        const githubTeamResponse = await axios.patch(
+          `https://api.github.com/orgs/${organization.name}/teams/${oldTeamSlug}`,
+          { name: teamName },
+          {
+            headers: {
+              Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("GitHub team updated:", githubTeamResponse.data);
+      } catch (error) {
+        console.error("Error updating GitHub team:", error.response ? error.response.data : error.message);
+      }
     }
+
+    res.status(200).json({ message: "Team updated successfully in MongoDB (GitHub update attempted if applicable)", team });
+  } catch (error) {
+    console.error("Error updating team:", error);
+    res.status(500).json({ message: "Error updating team", error: error.message });
   }
-);
+});
+
 
 
 

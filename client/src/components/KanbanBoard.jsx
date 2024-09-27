@@ -48,7 +48,7 @@ const initialBoard = {
 
 function KanbanBoard() {
   useTokenValidation();
-  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
+ 
   const [usernameSuggestions, setUsernameSuggestions] = useState([]);
   const [boardData, setBoardData] = useState(initialBoard);
   const [socket, setSocket] = useState(null);
@@ -1907,7 +1907,7 @@ function KanbanBoard() {
     ))}
   </ul>
 )}
-
+ <input
   type="text"
   value={username} // Show the selected username
   onChange={handleUsernameChange} // Updated function to handle username changes

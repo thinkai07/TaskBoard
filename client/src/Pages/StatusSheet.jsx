@@ -440,20 +440,29 @@ const StatusSheet = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                {selectedUser && (
-                    <Button style={{ marginRight: '10px' }} type="primary" onClick={() => setIsModalVisible(true)}>
-                        <PlusOutlined /> Add Task
-                    </Button>
-                )}
+           <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: "10px",
+        }}
+      >
+        {userRole === "ADMIN" && selectedUser && (
+          <Button
+            style={{ marginRight: "10px" }}
+            type="primary"
+            onClick={() => setIsModalVisible(true)}
+          >
+            <PlusOutlined /> Add Task
+          </Button>
+        )}
 
-                   <Dropdown overlay={userMenu}>
-                    <Button style={{ width: '160px' }}>
-                        {selectedUserName || 'Select User'} <DownOutlined />
-                    </Button>
-                </Dropdown>
-
-            </div>
+        <Dropdown overlay={userMenu}>
+          <Button style={{ width: "160px" }}>
+            {selectedUserName || "Select User"} <DownOutlined />
+          </Button>
+        </Dropdown>
+      </div>
 
             {/* Table */}
             <div

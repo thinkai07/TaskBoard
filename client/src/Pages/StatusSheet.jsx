@@ -128,7 +128,7 @@ const StatusSheet = () => {
     const handleUserSelect = (userId) => {
         const selectedUser = users.find(user => user._id === userId);
         setSelectedUser(userId);
-        setSelectedUserName(selectedUser.name); // Update user name
+        setSelectedUserName(selectedUser.username); // Update user name
         setAssignedEmail(selectedUser.email); // Store selected user's email
         fetchUserCards(userId); // Fetch cards for the selected user
 

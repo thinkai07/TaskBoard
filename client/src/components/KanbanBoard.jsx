@@ -49,6 +49,7 @@ const initialBoard = {
 function KanbanBoard() {
   useTokenValidation();
   const [usernameSuggestions, setUsernameSuggestions] = useState([]);
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
   const [boardData, setBoardData] = useState(initialBoard);
   const [socket, setSocket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -600,7 +601,7 @@ function KanbanBoard() {
   }
 
   useEffect(() => {
-    console.log("Current bgUrl:", bgUrl);
+    // console.log("Current bgUrl:", bgUrl);
   }, [bgUrl]);
 
   const handleCloseModal = () => {
@@ -664,6 +665,16 @@ function KanbanBoard() {
     setDescription("");
     setEmailSuggestions([]); // Clear suggestions
 
+    // Clear fields and close the modal after successful card addition
+    setTitle("");
+    setEmail(""); // Clear email
+    setUsername(""); // Clear username
+    setStartDate("");
+    setEndDate("");
+    setEstimatedHours("");
+    setDescription("");
+    setEmailSuggestions([]); // Clear suggestions
+
 
     // Close the modal
     setModalVisible(false);
@@ -681,6 +692,7 @@ function KanbanBoard() {
     const dueDate = e.target.dueDate.value;
     const estimatedHoursInput = e.target.estimatedHours.value.trim();
     const estimatedHours = parseFloat(estimatedHoursInput);
+  
   
     if (
       !cardTitle ||
@@ -701,8 +713,10 @@ function KanbanBoard() {
       return;
     }
   
+  
     try {
       const createdBy = await fetchUserEmail();
+  
   
       const searchResponse = await fetch(
         `${server}/api/projects/${projectId}/users/search?email=${email}`,
@@ -715,9 +729,11 @@ function KanbanBoard() {
         }
       );
   
+  
       if (!searchResponse.ok) {
         throw new Error("User is not part of the project");
       }
+  
   
       const { users } = await searchResponse.json();
       if (users.length === 0) {
@@ -726,6 +742,7 @@ function KanbanBoard() {
         });
         return;
       }
+  
   
       const response = await fetch(
         `${server}/api/tasks/${selectedColumnId}/cards`,
@@ -747,18 +764,31 @@ function KanbanBoard() {
         }
       );
   
+  
       if (!response.ok) {
         throw new Error("Failed to add card");
       }
   
       // Clear fields and close the modal after successful card addition
+  
+      // Clear fields and close the modal after successful card addition
       setTitle("");
+      setEmail(""); // Clear email
+      setUsername(""); // Clear username
       setEmail(""); // Clear email
       setUsername(""); // Clear username
       setStartDate("");
       setEndDate("");
       setEstimatedHours("");
       setDescription("");
+      setEmailSuggestions([]); // Clear suggestions
+  
+      e.target.reset(); // Reset the form
+  
+      setModalVisible(false); // Close the modal
+  
+      await fetchTasks(); // Fetch the updated tasks
+  
       setEmailSuggestions([]); // Clear suggestions
   
       e.target.reset(); // Reset the form
@@ -775,6 +805,7 @@ function KanbanBoard() {
       alert(error.message);
     }
   };
+  
   
 
   const handleEmailChange = async (e) => {
@@ -885,17 +916,17 @@ function KanbanBoard() {
   }, [newColumnModalVisible, modalVisible]);
 
   // Polling function
-  const pollForUpdates = async () => {
-    await fetchTasks();
-  };
+  // const pollForUpdates = async () => {
+  //   await fetchTasks();
+  // };
 
   // Set up polling
-  useEffect(() => {
-    const intervalId = setInterval(pollForUpdates, 5000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(pollForUpdates, 5000);
 
     // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   const handleCardMove = async (card, source, destination) => {
     // Optimistically update the UI
@@ -1308,32 +1339,32 @@ function KanbanBoard() {
     setModalType(null);
   };
 
-  useEffect(() => {
-    async function fetchProjectDetails() {
-      try {
-        const response = await fetch(`${server}/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+  // useEffect(() => {
+  //   async function fetchProjectDetails() {
+  //     try {
+  //       const response = await fetch(`${server}/api/projects/${projectId}`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch project details");
-        }
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch project details");
+  //       }
 
-        const project = await response.json();
-        setProjectName(project.name);
-        console.log(project.projectManager);
-        setProjectManager(project.projectManger);
-      } catch (error) {
-        console.error("Error fetching project details:", error);
-      }
-    }
+  //       const project = await response.json();
+  //       setProjectName(project.name);
+  //       console.log(project.projectManager);
+  //       setProjectManager(project.projectManger);
+  //     } catch (error) {
+  //       console.error("Error fetching project details:", error);
+  //     }
+  //   }
 
-    fetchProjectDetails();
-  }, [server, projectId]); // Dependencies for useEffect
+  //   fetchProjectDetails();
+  // }, [server, projectId]); // Dependencies for useEffect
 
   async function handleChangeStatus(cardId, newStatus) {
     try {
@@ -1849,6 +1880,34 @@ function KanbanBoard() {
                     Assigned (Username)
                   </label>
                   <input
+  type="text"
+  value={username} // Show the selected username
+  onChange={handleUsernameChange} // Updated function to handle username changes
+  placeholder="Enter username"
+  className="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+  required
+/>
+{emailError && ( // This can be renamed to usernameError for clarity if necessary
+  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+)}
+{usernameSuggestions.length > 0 && ( // Changed from emailSuggestions to usernameSuggestions
+  <ul className="absolute bg-white border border-gray-300 rounded-md mt-2 w-80 z-10">
+    {usernameSuggestions.map((suggestion) => (
+      <li
+        key={suggestion.username} // Using username as key now
+        onClick={() => {
+          setUsername(suggestion.username); // Set the selected username
+          setEmail(suggestion.email); // Keep the associated email internally if needed
+          setUsernameSuggestions([]); // Clear suggestions after selection
+        }}
+        className="p-2 hover:bg-gray-200 rounded-md cursor-pointer"
+      >
+        {suggestion.username} {/* Display only the username */}
+      </li>
+    ))}
+  </ul>
+)}
+
   type="text"
   value={username} // Show the selected username
   onChange={handleUsernameChange} // Updated function to handle username changes

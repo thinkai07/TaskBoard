@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form } from 'antd';
+import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form,notification } from 'antd';
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
 import { server } from '../constant';
 import moment from 'moment';
@@ -395,18 +395,36 @@ const StatusSheet = () => {
             key: 'status',
             sorter: (a, b) => a.status.localeCompare(b.status),
             sortDirections: ['ascend', 'descend'],
-            render: (status, record) => (
-                <Select
-                    defaultValue={status}
-                    style={{ width: 120 }}
-                    onChange={(value) => handleChangeStatus(record.key, value)}
-                    disabled={userRole !== 'ADMIN'}
-                >
-                    <Option value="inprogress">In Progress</Option>
-                    <Option value="completed">Completed</Option>
-                    <Option value="pending">Pending</Option>
-                </Select>
-            ),
+            render: (status, record) => {
+                return (
+                    <Select
+                        value={status} // Keep the current status value
+                        style={{ width: 120 }}
+                        onChange={(value) => {
+                            // Check if the user is selecting 'inprogress' or 'completed' and if utilizedHours is invalid
+                            if (
+                                (value === 'inprogress' || value === 'completed') &&
+                                (record.utilizedHours === 0 || record.utilizedHours === undefined || record.utilizedHours === "N/A")
+                            ) {
+                                notification.warning({
+                                    message: 'Utilized hours are required',
+                                    description: 'You cannot set the status to In Progress or Completed without valid utilized hours.',
+                                });
+                                return; // Stop here, don't apply the new status
+                            }
+
+                            // If utilizedHours are valid or another status is selected, change the status
+                            handleChangeStatus(record.key, value, record.utilizedHours);
+                        }}
+                        disabled={userRole !== 'ADMIN'}
+                    >
+                        <Option value="pending">Pending</Option>
+                        <Option value="inprogress">In Progress</Option>
+                        <Option value="completed">Completed</Option>
+                    </Select>
+                );
+            }
+
         },
     ];
 

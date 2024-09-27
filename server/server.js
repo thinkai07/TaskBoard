@@ -1050,6 +1050,7 @@ app.delete("/api/deleteUser/:id",
 
 
 // Login route
+
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -4210,99 +4211,112 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
         .json({ message: "Error adding user to team", error: error.message });
     }
   }
+);app.post("/api/organizations/:organizationId/teams/:teamId/users",
+  authenticateToken,
+  async (req, res) => {
+    const { organizationId, teamId } = req.params;
+    const { username, role } = req.body;
+
+    try {
+      // Find the organization
+      const organization = await Organization.findById(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Find the team
+      const team = await Team.findById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+
+      // Check if the team belongs to the organization
+      if (!organization.teams.includes(team._id)) {
+        return res
+          .status(400)
+          .json({ message: "Team does not belong to this organization" });
+      }
+
+      // Find the user
+      const user = await User.findOne({ username });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if the user has an 'ADMIN' role
+      if (user.role === "ADMIN") {
+        return res
+          .status(400)
+          .json({ message: "Admin users cannot be added to teams" });
+      }
+
+      // Check if the user status is 'unverify'
+      if (user.status === "UNVERIFY") {
+        return res.status(400).json({
+          message:
+            "This user's email is not verified. Please verify the email before adding to the team.",
+        });
+      }
+
+      // Check if the user is already in the team
+      const userInTeam = team.users.find(
+        (u) => u.user.toString() === user._id.toString()
+      );
+      if (userInTeam) {
+        return res.status(400).json({ message: "User is already in the team" });
+      }
+
+      // Add the user to the team in MongoDB
+      team.users.push({ user: user._id, role: role || "USER" });
+      await team.save();
+
+      // Conditionally add the user to the GitHub team if username is provided
+      if (user.name) {
+        // Format team name for GitHub API
+        const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
+
+        try {
+          // Add the user to the GitHub team
+          const githubTeamResponse = await axios.put(
+            `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
+            {},
+            {
+              headers: {
+                Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          res.status(200).json({
+            message:
+              "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
+            team,
+            githubTeam: githubTeamResponse.data,
+          });
+        } catch (error) {
+          console.error("Error adding user to GitHub team:", error);
+          return res.status(500).json({
+            message:
+              "User added to team in MongoDB but failed to add to GitHub team.",
+            error: error.message,
+          });
+        }
+      } else {
+        // If no username, skip GitHub team addition and only add to MongoDB
+        res.status(200).json({
+          message: "User added to team successfully in MongoDB.",
+          team,
+        });
+      }
+    } catch (error) {
+      console.error("Error adding user to team:", error);
+      res
+        .status(500)
+        .json({ message: "Error adding user to team", error: error.message });
+    }
+  }
 );
-
-
-
-// app.post("/api/organizations/:organizationId/teams/:teamId/users",
-//   authenticateToken,
-//   async (req, res) => {
-//     const { organizationId, teamId } = req.params;
-//     const { username, role } = req.body;
-
-//     try {
-//       // Find the organization
-//       const organization = await Organization.findById(organizationId);
-//       if (!organization) {
-//         return res.status(404).json({ message: "Organization not found" });
-//       }
-
-//       // Find the team
-//       const team = await Team.findById(teamId);
-//       if (!team) {
-//         return res.status(404).json({ message: "Team not found" });
-//       }
-
-//       // Check if the team belongs to the organization
-//       if (!organization.teams.includes(team._id)) {
-//         return res
-//           .status(400)
-//           .json({ message: "Team does not belong to this organization" });
-//       }
-
-//       // Find the user
-//       const user = await User.findOne({ username });
-//       if (!user) {
-//         return res.status(404).json({ message: "User not found" });
-//       }
-
-//       // Check if the user has an 'ADMIN' role
-//       if (user.role === "ADMIN") {
-//         return res
-//           .status(400)
-//           .json({ message: "Admin users cannot be added to teams" });
-//       }
-
-//       // Check if the user status is 'unverify'
-//       if (user.status === "UNVERIFY") {
-//         return res.status(400).json({
-//           message:
-//             "This user email is not verified. Please verify the email before adding into team.",
-//         });
-//       }
-
-//       // Check if the user is already in the team
-//       const userInTeam = team.users.find(
-//         (u) => u.user.toString() === user._id.toString()
-//       );
-//       if (userInTeam) {
-//         return res.status(400).json({ message: "User is already in the team" });
-//       }
-
-//       // Add the user to the team in MongoDB
-//       team.users.push({ user: user._id, role: role || "USER" });
-//       await team.save();
-
-//       // Format team name for GitHub API
-//       const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
-
-//       // Add the user to the GitHub team
-//       const githubTeamResponse = await axios.put(
-//         `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
-//         {},
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//           },
-//         }
-//       );
-
-
-//       res.status(200).json({
-//         message:
-//           "User added to team successfully in MongoDB and GitHub. Invitation email sent.",
-//         team,
-//         githubTeam: githubTeamResponse.data,
-//       });
-//     } catch (error) {
-//       console.error("Error adding user to team:", error);
-//       res
-//         .status(500)
-//         .json({ message: "Error adding user to team", error: error.message });
-//     }
-//   }
-// );
 
 app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
   const { projectId } = req.params;

@@ -280,7 +280,7 @@ const [teamLead, setTeamLead] = useState("");
 >
   {error && <div className="mb-4 text-red-600">{error}</div>}
   <Input
-    placeholder="Git Username"
+    placeholder="Git Username(optional)"
     value={name}
     onChange={(e) => setName(e.target.value)}
     className="mb-4"

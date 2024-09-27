@@ -18,7 +18,7 @@ const TeamsPage = () => {
     const [loading, setLoading] = useState(true);
     const [editingTeamId, setEditingTeamId] = useState(null);
     const [editingTeamName, setEditingTeamName] = useState("");
-
+   const [userRole, setUserRole] = useState(null);
 
 
     const navigate = useNavigate();
@@ -32,6 +32,7 @@ const TeamsPage = () => {
                     },
                 });
                 setOrganizationId(response.data.organizationId);
+                setUserRole(response.data.role);
             } catch (error) {
                 console.error("Error fetching user role and organization:", error);
             }
@@ -196,7 +197,8 @@ const TeamsPage = () => {
     return (
         <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 p-6">
             <div className="flex justify-between items-center mb-6">
-                <Button
+                {userRole==='ADMIN' &&(
+                    <Button
                     type="primary"
                     className="bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition"
                     onClick={handleAddTeam}
@@ -204,6 +206,7 @@ const TeamsPage = () => {
                 >
                     <FaPlus className="inline mr-2" /> Create Team
                 </Button>
+                )}
             </div>
             <div className="flex flex-wrap justify-start mx-12">
                 {teams.map((team) => (
@@ -240,21 +243,26 @@ const TeamsPage = () => {
                                 <div className="flex justify-between" onClick={(e) => e.stopPropagation()}> {/* Prevent navigation when clicking on buttons */}
                                     {editingTeamId === team._id ? (
                                         <>
-                                            <button
+                                            {userRole==='ADMIN' &&(
+                                                <button
                                                 onClick={() => handleSaveUpdatedTeam(team._id)}
                                                 className="text-green-500 hover:text-green-600 transition"
                                             >
                                                 <FaSave className="inline mr-2" /> Save
                                             </button>
+                                            )}
+                                              {userRole==='ADMIN' &&(
                                             <button
                                                 onClick={handleCancelUpdateTeam}
                                                 className="text-gray-500 hover:text-gray-600 transition"
                                             >
                                                 <FaTimes className="inline mr-2" /> Cancel
                                             </button>
+                                              )}
                                         </>
                                     ) : (
                                         <>
+                                          {userRole==='ADMIN' &&(
                                             <Button type="text"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -264,6 +272,7 @@ const TeamsPage = () => {
                                             >
                                                 <BsFillPencilFill className="inline " /> Edit
                                             </Button>
+                                          )}
                                             {/* <Button type="text"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -273,6 +282,7 @@ const TeamsPage = () => {
                                             >
                                                 <FaTrash className="inline mr-2 " /> Delete
                                             </Button> */}
+                                              {userRole==='ADMIN' &&(
                                             <Button
                                                 onClick={() => handleDeleteTeam(team._id)}
                                                 className="border border-red-500 text-red-500 bg-transparent"
@@ -292,6 +302,7 @@ const TeamsPage = () => {
                                             >
                                                 <FaTrash className="inline mr-2 " /> Delete
                                             </Button>
+                                              )}
                                         </>
                                     )}
                                 </div>

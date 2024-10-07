@@ -416,6 +416,70 @@ const timesheetSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+
+const projectNewSchema = new Schema({
+  id: {
+    type: String,
+    unique: true,
+    default: () => new mongoose.Types.ObjectId().toString(), // Generates a unique ID
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  users: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
+});
+
+
+
+const TaskDetailsSchema = new Schema({
+  id: {
+    type: String,
+    unique: true,
+    default: function () {
+      return generateHashId({
+        assignedTo: this.assignedTo,
+        assignedDate: this.assignedDate,
+        estimatedHours: this.estimatedHours
+      });
+    }
+  },
+  assignedTo: { type: String, required: true },   
+  assignedDate: { type: Date, required: true },   
+  estimatedHours: { type: Number, required: true },
+});
+
+const TasksSchema = new Schema({
+  id: {
+    type: String,
+    unique: true,
+    default: function () {
+      return generateHashId({
+        name: this.name,
+        assignedBy: this.assignedBy,
+        projectId: this.projectId
+      });
+    }
+  },
+  name: { type: String, required: true },        
+  assignedBy: { type: String, required: true },
+  status:{type:String}  ,
+  projectId: { type: String, required: true },     
+  TaskId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'TaskDetails',                         
+    required: true 
+  }        
+}); 
+
+
+
 // Creating models
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
@@ -430,6 +494,9 @@ const Notification = mongoose.model("Notification", NotificationSchema);
 const Rule = mongoose.model("Rule", ruleSchema);
 const Tasklogs = mongoose.model("Tasklogs", taskLogSchema);
 const Timesheet = mongoose.model("Timesheet", timesheetSchema);
+const NewProject = mongoose.model("NewProject", projectNewSchema);
+const TaskDetails=mongoose.model("TaskDetails",TaskDetailsSchema);
+const NewTasks=mongoose.model("NewTasks", TasksSchema)
 module.exports = {
   User,
   Task,
@@ -443,7 +510,10 @@ module.exports = {
   Notification,
   Rule,
   Tasklogs,
-  Timesheet
+  Timesheet,
+  NewProject,
+  TaskDetails,
+  NewTasks
 };
 
 const tempOrganizationSchema = new Schema({
@@ -502,6 +572,402 @@ const sendRegistrationEmail = (email, name, token) => {
     }
   });
 };
+
+async function updateProjectIds() {
+  const projects = await Project.find({ id: null });
+  for (let project of projects) {
+    project.id = new mongoose.Types.ObjectId().toString(); // Or any unique generation logic
+    await project.save();
+  }
+}
+
+updateProjectIds().then(() => console.log('Updated projects with null id')).catch(console.error);
+
+
+app.post('/projects', async (req, res) => {
+  const { name, organizationId } = req.body;
+
+  if (!name || !organizationId) {
+    return res.status(400).json({ message: 'Project name and organization ID are required.' });
+  }
+
+  try {
+    // Fetch users based on the organization ID
+    const users = await User.find({ organization: organizationId });
+
+    // Create a new project with a unique id
+    const newProject = new NewProject({
+      name,
+      users: users.map(user => user._id),
+      organization: organizationId,
+      // id: 'someUniqueId' // Optionally, you can set a custom unique id here
+    });
+
+    // Save the project to the database
+    await newProject.save();
+
+    // Return the newly created project
+    return res.status(201).json(newProject);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while creating the project.' });
+  }
+});
+
+app.get('/api/:organizationId/projects', async (req, res) => {
+  const { organizationId } = req.params;
+
+  if (!organizationId) {
+    return res.status(400).json({ message: 'Organization ID is required.' });
+  }
+
+  try {
+    // Fetch projects that belong to the given organization ID
+    const projects = await NewProject.find({ organization: organizationId });
+
+    if (projects.length === 0) {
+      return res.status(404).json({ message: 'No projects found for this organization.' });
+    }
+
+    // Return the projects
+    return res.status(200).json(projects);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while fetching the projects.' });
+  }
+});
+
+
+function generateHashId(data) {
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(data));
+
+  // Get the hash in hexadecimal format
+  const hexHash = hash.digest('hex');
+
+  // Extract only digits from the hexadecimal hash
+  const numericHash = hexHash.replace(/[^0-9]/g, '');
+
+
+  // Ensure it has at least 10 digits
+  return numericHash.length >= 10
+    ? numericHash.substring(0, 10)
+    : numericHash.padEnd(10, '0'); // Pad with zeros if less than 10 digits
+}
+
+async function safeCreate(Model, data, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const doc = new Model(data);
+      await doc.save();
+      return doc;
+    } catch (error) {
+      if (error.code === 11000 && attempt < maxRetries - 1) {
+        // If it's a duplicate key error and we haven't reached max retries,
+        // regenerate the id and try again
+        data.id = generateHashId(data);
+        continue;
+      }
+      throw error; // If it's not a duplicate key error or we've reached max retries, throw the error
+    }
+  }
+  throw new Error(`Failed to create document after ${maxRetries} attempts`);
+}
+
+// // Helper function to generate a unique 10-digit ID
+// function generateUniqueId() {
+//   return Math.random().toString(36).substring(2, 12);
+// }
+
+// // Function to update existing TaskDetails with null id
+// async function updateTaskDetailsIds() {
+//   const taskDetails = await TaskDetails.find({ id: null });
+//   for (let detail of taskDetails) {
+//     detail.id = generateUniqueId(); // Assign the generated ID
+//     await detail.save();
+//   }
+// }
+
+// // Function to update existing NewTasks with null id
+// async function updateNewTasksIds() {
+//   const tasks = await NewTasks.find({ id: null });
+//   for (let task of tasks) {
+//     task.id = generateUniqueId(); // Assign the generated ID
+//     await task.save();
+//   }
+// }
+
+// // Call these functions to update existing records
+// async function updateAllIds() {
+//   await updateTaskDetailsIds();
+//   await updateNewTasksIds();
+//   console.log('Updated all task details and tasks with null id');
+// }
+
+// updateAllIds().catch(console.error);
+
+
+app.post('/tasks-with-details', async (req, res) => {
+  try {
+    const { taskDetailsData, tasks } = req.body;
+
+    const savedTasksWithDetails = [];
+
+    for (const task of tasks) {
+      // Create a new TaskDetails for each task
+      const taskDetails = await safeCreate(TaskDetails, {
+        assignedTo: taskDetailsData.assignedTo,
+        assignedDate: taskDetailsData.assignedDate,
+        estimatedHours: taskDetailsData.estimatedHours,
+      });
+
+      // Create a new task with its own TaskDetails
+      const newTask = await safeCreate(NewTasks, {
+        name: task.taskName,
+        assignedBy: task.assignedBy,
+        projectId: task.projectId,
+        TaskId: taskDetails._id,
+        status: "Pending",
+      });
+
+      savedTasksWithDetails.push({ task: newTask, taskDetails });
+    }
+
+    res.status(201).json({ savedTasksWithDetails });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/tasks-with-details', async (req, res) => {
+  try {
+      const { assignedTo, assignedDate, status } = req.query; // Get the assignedTo email, assignedDate, and status from query params
+
+      // Build the query for TaskDetails
+      const taskDetailsQuery = { assignedTo };
+
+      if (assignedDate) {
+        const date = new Date(assignedDate);
+        taskDetailsQuery.assignedDate = { $eq: date }; 
+    }
+    
+
+      // Find TaskDetails with matching assignedTo and assignedDate if provided
+      const taskDetails = await TaskDetails.find(taskDetailsQuery);
+
+      // Get the IDs of the matching TaskDetails
+      const taskDetailIds = taskDetails.map(detail => detail._id);
+
+      // Build the query for NewTasks
+      const tasksQuery = { TaskId: { $in: taskDetailIds } };
+
+      // If status is provided, filter by that status
+      if (status) {
+          tasksQuery.status = status; // Add status filter
+      }
+
+      // Fetch tasks that have TaskId in the list of matching TaskDetails
+      const tasks = await NewTasks.find(tasksQuery).populate('TaskId');
+
+      // Map tasks to include user and project details
+      const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
+          const taskDetails = task.TaskId;
+
+          let assignedToUser = null;
+          if (taskDetails.assignedTo) {
+              assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
+          }
+
+          let assignedByUser = null;
+          if (task.assignedBy) {
+              assignedByUser = await User.findOne({ email: task.assignedBy });
+          }
+
+          const project = await NewProject.findById(task.projectId);
+
+          return {
+              ...task.toObject(),
+              TaskId: {
+                  ...taskDetails.toObject(),
+                  assignedTo: assignedToUser ? assignedToUser.username : null,
+              },
+              projectName: project ? project.name : null,
+              assignedBy: assignedByUser ? assignedByUser.username : null
+          };
+      }));
+
+      res.json(tasksWithUserAndProjectDetails);
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
+});
+
+
+// app.get('/tasks-with-details', async (req, res) => {
+//   try {
+//       const { assignedTo } = req.query; // Get the assignedTo email from query params
+
+//       // Find TaskDetails with matching assignedTo
+//       const taskDetails = await TaskDetails.find({ assignedTo });
+
+//       // Get the IDs of the matching TaskDetails
+//       const taskDetailIds = taskDetails.map(detail => detail._id);
+
+//       // Fetch tasks that have TaskId in the list of matching TaskDetails
+//       const tasks = await NewTasks.find({ TaskId: { $in: taskDetailIds } })
+//           .populate('TaskId');
+
+//       const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
+//           const taskDetails = task.TaskId;
+
+//           let assignedToUser = null;
+//           if (taskDetails.assignedTo) {
+//               assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
+//           }
+
+//           let assignedByUser = null;
+//           if (task.assignedBy) {
+//               assignedByUser = await User.findOne({ email: task.assignedBy });
+//           }
+
+//           const project = await NewProject.findById(task.projectId);
+
+//           return {
+//               ...task.toObject(),
+//               TaskId: {
+//                   ...taskDetails.toObject(),
+//                   assignedTo: assignedToUser ? assignedToUser.username : null,
+//               },
+//               projectName: project ? project.name : null,
+//               assignedBy: assignedByUser ? assignedByUser.username : null
+//           };
+//       }));
+
+//       res.json(tasksWithUserAndProjectDetails);
+//   } catch (err) {
+//       res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+
+
+
+// app.get('/tasks-with-details', async (req, res) => {
+//   try {
+//     // Fetch all tasks and populate the task details (TaskId)
+//     const tasks = await NewTasks.find()
+//       .populate('TaskId'); // Populate task details from TaskDetails
+
+//     // For each task, find the user by email (assignedTo in TaskDetails)
+//     const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
+//       const taskDetails = task.TaskId;
+
+//       // Initialize user as null for assignedTo
+//       let assignedToUser = null;
+//       if (taskDetails.assignedTo) { // Only find user if assignedTo is not null
+//         assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
+//       }
+
+//       // Initialize user as null for assignedBy
+//       let assignedByUser = null;
+//       if (task.assignedBy) { // Only find user if assignedBy is not null
+//         assignedByUser = await User.findOne({ email: task.assignedBy });
+//       }
+
+//       // Find project name based on projectId
+//       const project = await NewProject.findById(task.projectId); // Assuming projectId is an ObjectId
+
+//       // Construct the task object with user and project details
+//       return {
+//         ...task.toObject(),
+//         TaskId: {
+//           ...taskDetails.toObject(),
+//           assignedTo: assignedToUser ? assignedToUser.username : null, // Use username if found
+//         },
+//         projectName: project ? project.name : null, // Use project name if found
+//         assignedBy: assignedByUser ? assignedByUser.username : null // Add assignedBy username
+//       };
+//     }));
+
+//     // Send back the tasks with user and project details
+//     res.json(tasksWithUserAndProjectDetails);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+
+
+// Get a single task with task details by task ID
+app.get('/tasks-with-details/:id', async (req, res) => {
+  try {
+    // Fetch a single task and populate the task details
+    const task = await NewTasks.findById(req.params.id).populate('TaskId');
+    if (!task) return res.status(404).json({ error: "Task not found" });
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// Update Task and Task Details
+app.put('/tasks-with-details/:id', async (req, res) => {
+  try {
+    const { taskName, assignedBy, projectId, assignedTo, assignedDate, estimatedHours, status } = req.body;
+
+    // Find the task by ID
+    const task = await NewTasks.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: "Task not found" });
+
+    // Update the task fields if provided
+    if (taskName) task.name = taskName;
+    if (assignedBy) task.assignedBy = assignedBy;
+    if (projectId) task.projectId = projectId;
+    if (status) task.status = status; // Update status in task
+
+    // Find and update the TaskDetails by TaskId
+    const taskDetails = await TaskDetails.findById(task.TaskId);
+    if (!taskDetails) return res.status(404).json({ error: "Task details not found" });
+
+    // Update TaskDetails fields if provided
+    if (assignedTo) taskDetails.assignedTo = assignedTo;
+    if (assignedDate) taskDetails.assignedDate = assignedDate;
+    if (estimatedHours) taskDetails.estimatedHours = estimatedHours;
+    if (status) taskDetails.status = status; // Update status in task details
+
+    // Save both updates
+    await task.save();
+    await taskDetails.save();
+
+    res.json({ task, taskDetails });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete Task and Task Details
+app.delete('/tasks-with-details/:id', async (req, res) => {
+  try {
+    // Find the task by ID
+    const task = await NewTasks.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: "Task not found" });
+
+    // Delete the associated TaskDetails by TaskId
+    await TaskDetails.findByIdAndDelete(task.TaskId);
+
+    // Now delete the task itself
+    await task.remove();
+
+    res.json({ message: "Task and Task Details deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
 
 
 //reset password profile update
@@ -914,143 +1380,6 @@ app.delete("/api/deleteUser/:id",
 );
 
 
-// Delete user
-// app.delete("/api/deleteUser/:id",
-//   authenticateToken,
-//   authorizeRoles("ADMIN"),
-//   async (req, res) => {
-//     try {
-//       const userId = req.params.id;
-
-//       // Find the user in the database before deleting to get the email or GitHub username
-//       const user = await User.findById(userId);
-//       if (!user) {
-//         return res.status(404).json({ message: "User not found" });
-//       }
-
-//       // Find the organization associated with the user
-//       const organization = await Organization.findById(user.organization);
-//       if (!organization) {
-//         return res.status(404).json({ message: "Organization not found" });
-//       }
-
-//       // Attempt to remove the user from the GitHub organization
-//       try {
-//         const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
-
-//         const githubResponse = await axios.delete(
-//           `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-//           {
-//             headers: {
-//               Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//               "Content-Type": "application/json",
-//               Accept: "application/vnd.github.v3+json",
-//             },
-//           }
-//         );
-
-//         // console.log(
-//         //   "GitHub membership deletion response:",
-//         //   githubResponse.data
-//         // );
-//         // console.log(
-//         //   "GitHub membership deletion response:",
-//         //   githubResponse.data
-//         // );
-//       } catch (error) {
-//         console.error(
-//           "Error removing user from GitHub organization:",
-//           error.response ? error.response.data : error.message
-//         );
-//         // Optionally, decide whether to proceed with deleting the user from the database if GitHub deletion fails
-//         return res.status(500).json({
-//           message:
-//             "User deletion failed on GitHub but proceeded in the database",
-//         });
-//       }
-
-//       // Delete the user from the database
-//       await User.findByIdAndDelete(userId);
-
-//       res.status(200).json({
-//         message: "User deleted successfully from both database and GitHub",
-//       });
-//     } catch (error) {
-//       console.error("Error deleting user:", error);
-//       res.status(500).json({ message: "Error deleting user" });
-//     }
-//   }
-// );
-
-// Function to delete user from both database and GitHub
-// const deleteUser = async (userId) => {
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       console.log(`User not found: ${userId}`);
-//       return;
-//     }
-
-//     const organization = await Organization.findById(user.organization);
-//     if (!organization) {
-//       console.log(`Organization not found for user: ${userId}`);
-//       return;
-//     }
-
-//     try {
-//       const githubUsername = user.name; // Assuming 'name' is used; replace with GitHub username if stored separately
-
-//       const githubResponse = await axios.delete(
-//         `https://api.github.com/orgs/${organization.name}/memberships/${githubUsername}`,
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         }
-//       );
-
-//       console.log("GitHub membership deletion response:", githubResponse.data);
-//     } catch (error) {
-//       console.error(
-//         "Error removing user from GitHub organization:",
-//         error.response ? error.response.data : error.message
-//       );
-//       // Proceeding with database deletion even if GitHub deletion fails
-//     }
-
-//     await User.findByIdAndDelete(userId);
-//     console.log(`User ${userId} deleted successfully from both database and GitHub`);
-//   } catch (error) {
-//     console.error("Error deleting user:", error);
-//   }
-// };
-
-// // Schedule the job to run every minute
-// cron.schedule("* * * * *", async () => {
-//   console.log("Running scheduled job to delete unverified users...");
-
-//   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-//   try {
-//     const usersToDelete = await User.find({
-//       status: "UNVERIFY",
-//       createdAt: { $lt: fiveMinutesAgo },
-//     });
-
-//     for (const user of usersToDelete) {
-//       await deleteUser(user._id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching users for deletion:", error);
-//   }
-// });
-
-
-
-// Login route
-
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -1444,91 +1773,6 @@ app.get("/api/role", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-// Add user
-// app.post("/api/addUser",
-//   authenticateToken,
-//   authorizeRoles("ADMIN"),
-//   async (req, res) => {
-    
-//     const { name, email, username, employeeId,department, teamLead, role } = req.body;
-//     try {
-//       // Validate if all fields are present
-//       if (!name || !email || !role || !username || !employeeId  || !department || !teamLead) {
-//         return res.status(400).json({ message: "All fields are required" });
-//       }
-      
-//       // Create a new user object
-//       const newUser = new User({
-//         name,
-//         email,
-//         username,
-//         employeeId,
-//        // employeeName,
-//         department,
-//         teamLead,
-//         role: "USER", // Default to 'USER'
-//         organization: req.user.organizationId,
-//         status: "UNVERIFY", // User needs to verify their account
-//       });
-
-//       // Fetch organization details
-//       const organization = await Organization.findById(req.user.organizationId);
-//       if (!organization) {
-//         return res.status(404).json({ message: "Organization not found" });
-//       }
-
-//       // Save the new user to the database
-//       await newUser.save();
-
-//       // Generate a token for resetting the password
-//       const token = jwt.sign({ email, role, userId: newUser._id }, secretKey, {
-//         expiresIn: "3d",
-//       });
-//       const resetLink = `${process.env.UI_ADDRESS}/reset-password?token=${token}`;
-
-//       // Send reset email with the token
-//       sendResetEmail(email, resetLink);
-
-//       // Add the user to the GitHub organization
-//       try {
-//         const githubResponse = await axios.put(
-//           `https://api.github.com/orgs/${organization.name}/memberships/${name}`,
-//           {
-//             role: "member",
-//           },
-//           {
-//             headers: {
-//               Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//               "Content-Type": "application/json",
-//               Accept: "application/vnd.github.v3+json",
-//             },
-//           }
-//         );
-//         console.log("GitHub membership response:", githubResponse.data);
-//       } catch (error) {
-//         console.error(
-//           "Error adding user to GitHub organization:",
-//           error.response ? error.response.data : error.message
-//         );
-//         return res.status(500).json({
-//           message: "User added to the organization but not to GitHub",
-//           user: newUser,
-//         });
-//       }
-
-//       // Respond with success
-//       res.status(201).json({
-//         message: "User added successfully",
-//         user: newUser,
-//       });
-
-//     } catch (error) {
-//       console.error("Error adding user:", error);
-//       res.status(500).json({ message: "Error adding user" });
-//     }
-//   }
-// );
 
 app.post("/api/addUser",
   authenticateToken,
@@ -4211,7 +4455,8 @@ app.post("/api/organizations/:organizationId/teams/:teamId/users",
         .json({ message: "Error adding user to team", error: error.message });
     }
   }
-);app.post("/api/organizations/:organizationId/teams/:teamId/users",
+);
+app.post("/api/organizations/:organizationId/teams/:teamId/users",
   authenticateToken,
   async (req, res) => {
     const { organizationId, teamId } = req.params;
@@ -4505,89 +4750,6 @@ app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
     }
   }
 );
-
-
-// app.delete("/api/organizations/:organizationId/teams/:teamId/users/:userId",
-//   authenticateToken,
-//   async (req, res) => {
-//     const { organizationId, teamId, userId } = req.params;
-//     const { removedBy } = req.body;
-
-//     try {
-//       // Find the organization
-//       const organization = await Organization.findById(organizationId);
-//       if (!organization) {
-//         return res.status(404).json({ message: "Organization not found" });
-//       }
-
-//       // Find the team
-//       const team = await Team.findById(teamId);
-//       if (!team) {
-//         return res.status(404).json({ message: "Team not found" });
-//       }
-
-//       // Check if the team belongs to the organization
-//       if (!organization.teams.includes(team._id)) {
-//         return res
-//           .status(400)
-//           .json({ message: "Team does not belong to this organization" });
-//       }
-
-//       // Find the user in the team
-//       const userIndex = team.users.findIndex(
-//         (u) => u.user.toString() === userId
-//       );
-//       if (userIndex === -1) {
-//         return res.status(404).json({ message: "User not found in the team" });
-//       }
-
-//       // Remove the user from the team in MongoDB
-//       team.users.splice(userIndex, 1);
-
-//       // Add removal information
-//       team.removedBy = removedBy;
-//       team.removedDate = new Date();
-//       await team.save();
-
-//       // Find the user in MongoDB
-//       const user = await User.findById(userId);
-//       if (!user) {
-//         return res.status(404).json({ message: "User not found" });
-//       }
-
-//       // Format team name for GitHub API (replace spaces with hyphens and make lowercase)
-//       const teamSlug = team.name.replace(/\s+/g, '-').toLowerCase();
-
-//       // Remove the user from the GitHub team
-//       const githubTeamResponse = await axios.delete(
-//         `https://api.github.com/orgs/${organization.name}/teams/${teamSlug}/memberships/${user.name}`,
-//         {
-//           headers: {
-//             Authorization: `token ${GITHUB_PERSONAL_ACCESS_TOKEN}`,
-//             "Content-Type": "application/json",
-//           },
-//         }
-//       );
-
-//       // console.log("GitHub team membership deleted:", githubTeamResponse.data);
-
-
-//       res.status(200).json({
-//         message: "User removed from team successfully in MongoDB and GitHub",
-//         removedBy,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Error removing user from team:",
-//         error.response ? error.response.data : error.message
-//       );
-//       res.status(500).json({
-//         message: "Error removing user from team",
-//         error: error.message,
-//       });
-//     }
-//   }
-// );
 
 
 app.get("/api/projects/:projectId/users/search", authenticateToken, async (req, res) => {
@@ -5107,7 +5269,7 @@ const executeBackgroundJob = async () => {
         // Get the user ID based on the updatedBy email
         const user = await User.findOne({ email: card.updatedBy });
         if (!user) {
-          console.error(`User with email ${card.updatedBy} not found.`);
+          // console.error(`User with email ${card.updatedBy} not found.`);
           continue;
         }
 
@@ -5127,7 +5289,7 @@ const executeBackgroundJob = async () => {
         // Fetch the destination list by name
         const destinationList = await Task.findOne({ name: rule.actionDetails.get('moveToList'), project: rule.projectId });
         if (!destinationList) {
-          console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
+          //console.error(`Destination list ${rule.actionDetails.get('moveToList')} not found in project ${rule.projectId}.`);
           continue;
         }
 

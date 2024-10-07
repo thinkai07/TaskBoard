@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form, notification, message, } from "antd";
-import { DownOutlined, PlusOutlined, ExportOutlined,SearchOutlined } from "@ant-design/icons";
+import { DownOutlined, PlusOutlined, ExportOutlined, SearchOutlined, CalendarOutlined } from "@ant-design/icons";
 import { server } from "../constant";
 import moment from "moment";
 const { TextArea } = Input;
@@ -11,6 +11,7 @@ import * as XLSX from 'xlsx';
 
 const StatusSheet = () => {
     const [selectedUser, setSelectedUser] = useState(null);
+    const [modalStatus, setModalStatus] = useState("");
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [dataSource, setDataSource] = useState([]);
@@ -29,6 +30,7 @@ const StatusSheet = () => {
     const [searchValue, setSearchValue] = useState("");
     const [tableData, setTableData] = useState("");
     const [userEmail, setUserEmail] = useState("");
+    const [dateFilter, setDateFilter] = useState(null);
     const [isExportModalVisible, setIsExportModalVisible] = useState(false);
     const [selectedUsersForExport, setSelectedUsersForExport] = useState([]);
     const showExportModal = () => {
@@ -37,12 +39,14 @@ const StatusSheet = () => {
 
     const [assignedDate, setAssignedDate] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState("");
-    
+
     const handleDateChange = (date) => {
         setAssignedDate(date);
     };
-    
+
+
     const handleStatusChange = (status) => {
+        setModalStatus(status);
         setSelectedStatus(status);
     };
 
@@ -51,10 +55,12 @@ const StatusSheet = () => {
         task.taskId.toString().toLowerCase().includes(searchValue.toLowerCase())
     );
 
-
     const handleExportModalCancel = () => {
         setIsExportModalVisible(false);
         setSelectedUsersForExport([]);
+        setAssignedDate(null);
+        setModalStatus(""); // Clear the modal status when canceling
+        setSelectedStatus(""); // Clear the selected status if needed for filtering
     };
 
     const handleUserSelectForExport = (selectedUserIds) => {
@@ -70,14 +76,14 @@ const StatusSheet = () => {
                 const allUsersTasks = await Promise.all(
                     users.map(user => fetchTasksForUser(user.email))
                 );
-    
+
                 const workbook = XLSX.utils.book_new();
-    
+
                 allUsersTasks.forEach((userData, index) => {
                     const worksheet = createWorksheet(userData);
                     XLSX.utils.book_append_sheet(workbook, worksheet, users[index].username);
                 });
-    
+
                 const fileName = `all_users_tasks_${moment().format('YYYY-MM-DD')}.xlsx`;
                 XLSX.writeFile(workbook, fileName);
                 message.success("Exported tasks for all users successfully!");
@@ -94,15 +100,15 @@ const StatusSheet = () => {
                         return fetchTasksForUser(user.email);
                     })
                 );
-    
+
                 const workbook = XLSX.utils.book_new();
-    
+
                 selectedUsersTasks.forEach((userData, index) => {
                     const user = users.find(u => u._id === selectedUsersForExport[index]);
                     const worksheet = createWorksheet(userData);
                     XLSX.utils.book_append_sheet(workbook, worksheet, user.username);
                 });
-    
+
                 const fileName = `selected_users_tasks_${moment().format('YYYY-MM-DD')}.xlsx`;
                 XLSX.writeFile(workbook, fileName);
                 message.success("Exported tasks for selected users successfully!");
@@ -111,9 +117,15 @@ const StatusSheet = () => {
                 message.error("Failed to export tasks");
             }
         }
+
+        setSelectedUsersForExport([]);
+        setAssignedDate(null);
+        setModalStatus(""); // Clear the modal status field
+        setSelectedStatus(""); // Clear the selected status if needed for filtering
+
         handleExportModalCancel();
     };
-    
+
 
     const createWorksheet = (data) => {
         const worksheet = XLSX.utils.json_to_sheet(data);
@@ -138,24 +150,20 @@ const StatusSheet = () => {
         try {
             const params = {
                 assignedTo: userEmail,
-                assignedDate:assignedDate,
+                assignedDate: assignedDate,
             };
-    
-            // if (assignedDate) {
-            //     params.assignedDate = assignedDate;
-            // }
-            
+
             if (selectedStatus) {
                 params.status = selectedStatus; // Send selected status
             }
-    
+
             const response = await axios.get(`${server}/tasks-with-details`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 params,
             });
-    
+
             return response.data.map((task) => ({
                 taskId: task.id,
                 taskName: task.name,
@@ -171,10 +179,6 @@ const StatusSheet = () => {
             return [];
         }
     };
-    
-    
-
-
 
     // Fetch user role, organization ID, and createdBy email, then fetch users for the organization
     useEffect(() => {
@@ -261,8 +265,6 @@ const StatusSheet = () => {
         setSelectedProject(projectId);
     };
 
-
-
     const handleOk = async (values) => {
         try {
             const { assignedTo, estimatedHours, assignedDate } = values;
@@ -310,9 +312,6 @@ const StatusSheet = () => {
             );
         }
     };
-
-
-
     const fetchTasks = async (assignedEmail) => {
         try {
             const response = await axios.get(`${server}/tasks-with-details`, {
@@ -493,13 +492,60 @@ const StatusSheet = () => {
         {
             title: "Assigned Date",
             dataIndex: "assignedDate",
+            key: "assignedDate",
             sortDirections: ["ascend", "descend"],
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                    <DatePicker
+                        value={dateFilter}
+                        onChange={(date, dateString) => {
+                            setDateFilter(date);
+                            if (date) {
+                                setSelectedKeys([dateString]);
+                            } else {
+                                setSelectedKeys([]);
+                            }
+                        }}
+                        style={{ marginBottom: 8, display: 'block' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                confirm();
+                            }}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                clearFilters();
+                                setDateFilter(null);
+                            }}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Reset
+                        </Button>
+                    </div>
+                </div>
+            ),
+            onFilter: (value, record) => {
+                if (!dateFilter) return true;
+                const recordDate = moment(record.assignedDate).format('YYYY-MM-DD');
+                const filterDate = moment(value).format('YYYY-MM-DD');
+                return recordDate === filterDate;
+            },
             render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}
-                >
+                <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
                     {text}
                 </div>
+            ),
+            // Add a filtered icon indicator
+            filterIcon: filtered => (
+                <CalendarOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
             ),
         },
         {
@@ -521,8 +567,13 @@ const StatusSheet = () => {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            sorter: (a, b) => a.status.localeCompare(b.status),
-            sortDirections: ["ascend", "descend"],
+
+            filters: [
+                { text: "Pending", value: "Pending" },
+                { text: "In Progress", value: "inprogress" },
+                { text: "completed", value: "completed" },
+            ],
+            onFilter: (value, record) => record.status === value,
             render: (status, record) => {
                 return (
                     <Select
@@ -684,65 +735,68 @@ const StatusSheet = () => {
             </div>
 
             <Modal
-    title="Export Tasks"
-    visible={isExportModalVisible}
-    onCancel={handleExportModalCancel}
-    footer={[
-        <Button key="cancel" onClick={handleExportModalCancel}>
-            Cancel
-        </Button>,
-        <Button
-            key="export"
-            type="primary"
-            onClick={exportToExcel}
-        >
-            Export
-        </Button>,
-    ]}
->
-    <Form layout="vertical">
-        <Form.Item label="Select Users">
-            <Select
-                mode="multiple"
-                style={{ width: '100%' }}
-                placeholder="Select users to export (leave empty to export all)"
-                onChange={handleUserSelectForExport}
-                optionFilterProp="children"
+                title="Export Tasks"
+                visible={isExportModalVisible}
+                onCancel={handleExportModalCancel}
+                footer={[
+                    <Button key="cancel" onClick={handleExportModalCancel}>
+                        Cancel
+                    </Button>,
+                    <Button
+                        key="export"
+                        type="primary"
+                        onClick={exportToExcel}
+                    >
+                        Export
+                    </Button>,
+                ]}
             >
-                {users.map((user) => (
-                    <Option key={user._id} value={user._id}>
-                        {user.username}
-                    </Option>
-                ))}
-            </Select>
-        </Form.Item>
+                <Form layout="vertical">
+                    <Form.Item label="Select Users">
+                        <Select
+                            mode="multiple"
+                            style={{ width: '100%' }}
+                            placeholder="Select users to export (leave empty to export all)"
+                            onChange={handleUserSelectForExport}
+                            optionFilterProp="children"
+                            value={selectedUsersForExport}
+                        >
+                            {users.map((user) => (
+                                <Option key={user._id} value={user._id}>
+                                    {user.username}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
 
-        <Form.Item label="Assigned Date">
-            <DatePicker
-                style={{ width: '100%' }}
-                onChange={handleDateChange}
-                format="YYYY-MM-DD"
-            />
-        </Form.Item>
+                    <Form.Item label="Assigned Date">
+                        <DatePicker
+                            style={{ width: '100%' }}
+                            onChange={handleDateChange}
+                            format="YYYY-MM-DD"
+                            value={assignedDate}
+                        />
+                    </Form.Item>
 
-        <Form.Item label="Status">
-            <Select
-                style={{ width: '100%' }}
-                placeholder="Select status"
-                onChange={handleStatusChange}
-            >
-                <Option value="">All</Option> {/* Option for all statuses */}
-                <Option value="Pending">Pending</Option>
-                <Option value="inprogress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-            </Select>
-        </Form.Item>
-    </Form>
-</Modal>
+                    <Form.Item label="Status">
+                        <Select
+                            style={{ width: '100%' }}
+                            placeholder="Select status"
+                            onChange={handleStatusChange}
+                            value={modalStatus}
+                        >
+                            <Option value="">All</Option> {/* Option for all statuses */}
+                            <Option value="Pending">Pending</Option>
+                            <Option value="inprogress">In Progress</Option>
+                            <Option value="completed">Completed</Option>
+                        </Select>
+                    </Form.Item>
+                </Form>
+            </Modal>
 
 
             {/* Table */}
-            <div style={{ margin: "0 auto"}} className="dark">
+            <div style={{ margin: "0 auto" }} className="dark">
                 {selectedUser ? (
                     <Table dataSource={filteredData} columns={columns} />
                 ) : (

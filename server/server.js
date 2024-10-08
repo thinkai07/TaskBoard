@@ -1782,7 +1782,7 @@ app.post("/api/addUser",
 
     try {
       // Validate if required fields (excluding name) are present
-      if (!email || !role || !username || !employeeId || !department || !teamLead) {
+      if (!email || !role || !username || !department ) {
         return res.status(400).json({ message: "Required fields are missing" });
       }
 
@@ -1794,7 +1794,7 @@ app.post("/api/addUser",
         employeeId,
         department,
         teamLead,
-        role: "USER", // Default to 'USER'
+        role, // Default to 'USER'
         organization: req.user.organizationId,
         status: "UNVERIFY", // User needs to verify their account
       });

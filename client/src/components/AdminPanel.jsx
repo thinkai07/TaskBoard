@@ -16,13 +16,13 @@ const AdminPanel = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("");
   const [username, setUsername] = useState("");  // New state for username
   const [employeeId, setEmployeeId] = useState("");  // New state for employeeId
   const [loading, setLoading] = useState(false);
   // const [employeeName, setEmployeeName] = useState("");
-const [department, setDepartment] = useState("");
-const [teamLead, setTeamLead] = useState("");
+  const [department, setDepartment] = useState("");
+  const [teamLead, setTeamLead] = useState("");
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState("");
   const [userIdToDelete, setUserIdToDelete] = useState(null);
@@ -34,11 +34,12 @@ const [teamLead, setTeamLead] = useState("");
     setRole("user");
     setUsername("");
     setEmployeeId("");
+    setRole("");
     //setEmployeeName("");
     setDepartment("");
     setTeamLead("");
     setError(null);
-  }; 
+  };
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -78,8 +79,21 @@ const [teamLead, setTeamLead] = useState("");
     setLoading(true);
     setError(null);
   
-    if ( !username.trim() || !employeeId.trim()  || !department.trim() || !teamLead.trim()) {
-      setError("Please fill out all the fields.");
+    // Ensure only 'ADMIN' users can add new users
+    if (userRole !== "ADMIN") {
+      setError("Only users with the 'ADMIN' role can add new users.");
+      setLoading(false);
+      return;
+    }
+  
+    if (!role) {
+      setError("Please select a role for the user.");
+      setLoading(false);
+      return;
+    }
+  
+    if (!username.trim() || !department.trim() || !email.trim()) {
+      setError("Please fill out all the required fields.");
       setLoading(false);
       return;
     }
@@ -102,12 +116,12 @@ const [teamLead, setTeamLead] = useState("");
         {
           name,
           email: email.trim(),
-          role,
+          role, // The role of the user being added
           username,
           employeeId,
-         // employeeName,  // Send employeeName
-          department,  // Send department
-          teamLead,  // Send teamLead
+          department,
+          teamLead,
+        
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -116,14 +130,7 @@ const [teamLead, setTeamLead] = useState("");
   
       setData([...data, response.data.user]);
       setFilteredData([...data, response.data.user]);
-      setName("");
-      setEmail("");
-      setRole("user");
-      setUsername("");
-      setEmployeeId("");
-      //setEmployeeName("");  // Reset employeeName
-      setDepartment("");  // Reset department
-      setTeamLead("");  // Reset teamLead
+      clearFields();
       setIsModalOpen(false);
       message.success("User added successfully!");
     } catch (error) {
@@ -182,7 +189,7 @@ const [teamLead, setTeamLead] = useState("");
       dataIndex: "username",  // New column for username
       key: "username",
     },
-   
+
     {
       title: "Git username",
       dataIndex: "name",
@@ -193,7 +200,7 @@ const [teamLead, setTeamLead] = useState("");
       dataIndex: "email",
       key: "email",
     },
-    
+
     {
       title: "Role",
       dataIndex: "role",
@@ -268,60 +275,65 @@ const [teamLead, setTeamLead] = useState("");
         className="p-2"
       />
 
-<Modal
-  title="Add User"
-  visible={isModalOpen}
-  onOk={handleAddUser}
-  onCancel={() => {
-    setIsModalOpen(false);
-    clearFields();
-  }}
-  confirmLoading={loading}
->
-  {error && <div className="mb-4 text-red-600">{error}</div>}
-  <Input
-    placeholder="Git Username(optional)"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-    className="mb-4"
-  />
-  <Input
-    placeholder="Email"
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-    className="mb-4"
-  />
-  <Input
-    placeholder="Employee name"
-    value={username}
-    onChange={(e) => setUsername(e.target.value)}
-    className="mb-4"
-  />
-  <Input
-    placeholder="Employee ID"
-    value={employeeId}
-    onChange={(e) => setEmployeeId(e.target.value)}
-    className="mb-4"
-  />
-  {/* <Input
-    placeholder="Employee Name"
-    value={employeeName}  // New input for employeeName
-    onChange={(e) => setEmployeeName(e.target.value)}
-    className="mb-4"
-  /> */}
-  <Input
-    placeholder="Department"
-    value={department}  // New input for department
-    onChange={(e) => setDepartment(e.target.value)}
-    className="mb-4"
-  />
-  <Input
-    placeholder="Team Lead"
-    value={teamLead}  // New input for teamLead
-    onChange={(e) => setTeamLead(e.target.value)}
-    className="mb-4"
-  />
-</Modal>
+      <Modal
+        title="Add User"
+        visible={isModalOpen}
+        onOk={handleAddUser}
+        onCancel={() => {
+          setIsModalOpen(false);
+          clearFields();
+        }}
+        confirmLoading={loading}
+      >
+        {error && <div className="mb-4 text-red-600">{error}</div>}
+        <Input
+          placeholder="Git Username(optional)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Employee name"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Employee ID(Optional)"
+          value={employeeId}
+          onChange={(e) => setEmployeeId(e.target.value)}
+          className="mb-4"
+        />
+       
+        <Input
+          placeholder="Department"
+          value={department}  // New input for department
+          onChange={(e) => setDepartment(e.target.value)}
+          className="mb-4"
+        />
+        <Input
+          placeholder="Team Lead(optional)"
+          value={teamLead}  // New input for teamLead
+          onChange={(e) => setTeamLead(e.target.value)}
+          className="mb-4"
+        />
+        <Select
+          placeholder="Please select role"
+          value={role || undefined}
+          onChange={(value) => setRole(value)}
+          className="mb-4 w-full"
+          allowClear
+        >
+          <Option value="USER">User</Option>
+          <Option value="ADMIN">Admin</Option>
+        </Select>
+      </Modal>
 
 
       <Modal
@@ -341,4 +353,3 @@ const [teamLead, setTeamLead] = useState("");
 };
 
 export default AdminPanel;
-

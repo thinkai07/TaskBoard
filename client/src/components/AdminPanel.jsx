@@ -28,6 +28,7 @@ const AdminPanel = () => {
   const [userIdToDelete, setUserIdToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const { Option } = Select;
   const clearFields = () => {
     setName("");
     setEmail("");

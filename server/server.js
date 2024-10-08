@@ -712,37 +712,92 @@ app.post('/tasks-with-details', async (req, res) => {
 
 
 
+// app.get('/tasks-with-details', async (req, res) => {
+//   try {
+//       const { assignedTo, assignedDate, status } = req.query; // Get the assignedTo email, assignedDate, and status from query params
+
+//       // Build the query for TaskDetails
+//       const taskDetailsQuery = { assignedTo };
+
+//       if (assignedDate) {
+//         const date = new Date(assignedDate);
+//         taskDetailsQuery.assignedDate = { $eq: date }; 
+//     }
+    
+
+//       // Find TaskDetails with matching assignedTo and assignedDate if provided
+//       const taskDetails = await TaskDetails.find(taskDetailsQuery);
+
+//       // Get the IDs of the matching TaskDetails
+//       const taskDetailIds = taskDetails.map(detail => detail._id);
+
+//       // Build the query for NewTasks
+//       const tasksQuery = { TaskId: { $in: taskDetailIds } };
+
+//       // If status is provided, filter by that status
+//       if (status) {
+//           tasksQuery.status = status; // Add status filter
+//       }
+
+//       // Fetch tasks that have TaskId in the list of matching TaskDetails
+//       const tasks = await NewTasks.find(tasksQuery).populate('TaskId');
+
+//       // Map tasks to include user and project details
+//       const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
+//           const taskDetails = task.TaskId;
+
+//           let assignedToUser = null;
+//           if (taskDetails.assignedTo) {
+//               assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
+//           }
+
+//           let assignedByUser = null;
+//           if (task.assignedBy) {
+//               assignedByUser = await User.findOne({ email: task.assignedBy });
+//           }
+
+//           const project = await NewProject.findById(task.projectId);
+
+//           return {
+//               ...task.toObject(),
+//               TaskId: {
+//                   ...taskDetails.toObject(),
+//                   assignedTo: assignedToUser ? assignedToUser.username : null,
+//               },
+//               projectName: project ? project.name : null,
+//               assignedBy: assignedByUser ? assignedByUser.username : null
+//           };
+//       }));
+
+//       res.json(tasksWithUserAndProjectDetails);
+//   } catch (err) {
+//       res.status(500).json({ error: err.message });
+//   }
+// });
+
 app.get('/tasks-with-details', async (req, res) => {
   try {
-      const { assignedTo, assignedDate, status } = req.query; // Get the assignedTo email, assignedDate, and status from query params
+      const { assignedTo, assignedDate, status } = req.query;
 
-      // Build the query for TaskDetails
       const taskDetailsQuery = { assignedTo };
 
       if (assignedDate) {
-        const date = new Date(assignedDate);
-        taskDetailsQuery.assignedDate = { $eq: date }; 
-    }
-    
-
-      // Find TaskDetails with matching assignedTo and assignedDate if provided
-      const taskDetails = await TaskDetails.find(taskDetailsQuery);
-
-      // Get the IDs of the matching TaskDetails
-      const taskDetailIds = taskDetails.map(detail => detail._id);
-
-      // Build the query for NewTasks
-      const tasksQuery = { TaskId: { $in: taskDetailIds } };
-
-      // If status is provided, filter by that status
-      if (status) {
-          tasksQuery.status = status; // Add status filter
+          const date = new Date(assignedDate);
+          taskDetailsQuery.assignedDate = { $eq: date };
       }
 
-      // Fetch tasks that have TaskId in the list of matching TaskDetails
+      const taskDetails = await TaskDetails.find(taskDetailsQuery);
+
+      const taskDetailIds = taskDetails.map(detail => detail._id);
+
+      const tasksQuery = { TaskId: { $in: taskDetailIds } };
+
+      if (status) {
+          tasksQuery.status = status;
+      }
+
       const tasks = await NewTasks.find(tasksQuery).populate('TaskId');
 
-      // Map tasks to include user and project details
       const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
           const taskDetails = task.TaskId;
 
@@ -764,6 +819,7 @@ app.get('/tasks-with-details', async (req, res) => {
                   ...taskDetails.toObject(),
                   assignedTo: assignedToUser ? assignedToUser.username : null,
               },
+              taskDetailsId: taskDetails._id, // Add this line to include the TaskDetails ID
               projectName: project ? project.name : null,
               assignedBy: assignedByUser ? assignedByUser.username : null
           };
@@ -774,8 +830,6 @@ app.get('/tasks-with-details', async (req, res) => {
       res.status(500).json({ error: err.message });
   }
 });
-
-
 
 
 app.get('/tasks-with-details/:id', async (req, res) => {

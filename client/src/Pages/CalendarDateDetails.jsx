@@ -4,7 +4,6 @@ import { Button, Table, Popover, Input, message } from "antd";
 import axios from "axios";
 import { server } from "../constant";
 
-
 const CalendarDateDetails = () => {
    
     const location = useLocation();
@@ -83,7 +82,7 @@ const CalendarDateDetails = () => {
     };
 
     const handleLogHours = async () => {
-        if (loggedHours.trim() === "") {
+        if (loggedHours.trim() === "" || parseFloat(loggedHours) <= 0) {
             setError(true);
             return;
         }
@@ -139,20 +138,25 @@ const CalendarDateDetails = () => {
         }
     };
 
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        if (value === "" || (parseFloat(value) > 0 && !isNaN(parseFloat(value)))) {
+            setLoggedHours(value);
+            setError(false);
+        }
+    };
+
     const logHoursContent = (
         <div>
             <Input
                 placeholder="Enter hours"
                 value={loggedHours}
-                onChange={(e) => {
-                    setLoggedHours(e.target.value);
-                    setError(false);
-                }}
+                onChange={handleInputChange}
                 style={{ marginBottom: '10px' }}
             />
             {error && (
                 <div style={{ color: 'red', marginBottom: '10px' }}>
-                    Please enter the log hours.
+                    Please enter a valid number of hours greater than 0.
                 </div>
             )}
             <Button type="primary" onClick={handleLogHours}>
@@ -160,7 +164,7 @@ const CalendarDateDetails = () => {
             </Button>
         </div>
     );
-
+    
     const columns = [
         {
             title: "Project Name", dataIndex: "projectName", key: "projectName",

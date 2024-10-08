@@ -638,6 +638,8 @@ app.get('/api/:organizationId/projects', async (req, res) => {
 });
 
 
+
+
 function generateHashId(data) {
   const hash = crypto.createHash('sha256');
   hash.update(JSON.stringify(data));
@@ -674,39 +676,6 @@ async function safeCreate(Model, data, maxRetries = 5) {
   throw new Error(`Failed to create document after ${maxRetries} attempts`);
 }
 
-// // Helper function to generate a unique 10-digit ID
-// function generateUniqueId() {
-//   return Math.random().toString(36).substring(2, 12);
-// }
-
-// // Function to update existing TaskDetails with null id
-// async function updateTaskDetailsIds() {
-//   const taskDetails = await TaskDetails.find({ id: null });
-//   for (let detail of taskDetails) {
-//     detail.id = generateUniqueId(); // Assign the generated ID
-//     await detail.save();
-//   }
-// }
-
-// // Function to update existing NewTasks with null id
-// async function updateNewTasksIds() {
-//   const tasks = await NewTasks.find({ id: null });
-//   for (let task of tasks) {
-//     task.id = generateUniqueId(); // Assign the generated ID
-//     await task.save();
-//   }
-// }
-
-// // Call these functions to update existing records
-// async function updateAllIds() {
-//   await updateTaskDetailsIds();
-//   await updateNewTasksIds();
-//   console.log('Updated all task details and tasks with null id');
-// }
-
-// updateAllIds().catch(console.error);
-
-
 app.post('/tasks-with-details', async (req, res) => {
   try {
     const { taskDetailsData, tasks } = req.body;
@@ -738,6 +707,10 @@ app.post('/tasks-with-details', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+
+
+
 
 app.get('/tasks-with-details', async (req, res) => {
   try {
@@ -803,104 +776,8 @@ app.get('/tasks-with-details', async (req, res) => {
 });
 
 
-// app.get('/tasks-with-details', async (req, res) => {
-//   try {
-//       const { assignedTo } = req.query; // Get the assignedTo email from query params
-
-//       // Find TaskDetails with matching assignedTo
-//       const taskDetails = await TaskDetails.find({ assignedTo });
-
-//       // Get the IDs of the matching TaskDetails
-//       const taskDetailIds = taskDetails.map(detail => detail._id);
-
-//       // Fetch tasks that have TaskId in the list of matching TaskDetails
-//       const tasks = await NewTasks.find({ TaskId: { $in: taskDetailIds } })
-//           .populate('TaskId');
-
-//       const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
-//           const taskDetails = task.TaskId;
-
-//           let assignedToUser = null;
-//           if (taskDetails.assignedTo) {
-//               assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
-//           }
-
-//           let assignedByUser = null;
-//           if (task.assignedBy) {
-//               assignedByUser = await User.findOne({ email: task.assignedBy });
-//           }
-
-//           const project = await NewProject.findById(task.projectId);
-
-//           return {
-//               ...task.toObject(),
-//               TaskId: {
-//                   ...taskDetails.toObject(),
-//                   assignedTo: assignedToUser ? assignedToUser.username : null,
-//               },
-//               projectName: project ? project.name : null,
-//               assignedBy: assignedByUser ? assignedByUser.username : null
-//           };
-//       }));
-
-//       res.json(tasksWithUserAndProjectDetails);
-//   } catch (err) {
-//       res.status(500).json({ error: err.message });
-//   }
-// });
 
 
-
-
-
-// app.get('/tasks-with-details', async (req, res) => {
-//   try {
-//     // Fetch all tasks and populate the task details (TaskId)
-//     const tasks = await NewTasks.find()
-//       .populate('TaskId'); // Populate task details from TaskDetails
-
-//     // For each task, find the user by email (assignedTo in TaskDetails)
-//     const tasksWithUserAndProjectDetails = await Promise.all(tasks.map(async (task) => {
-//       const taskDetails = task.TaskId;
-
-//       // Initialize user as null for assignedTo
-//       let assignedToUser = null;
-//       if (taskDetails.assignedTo) { // Only find user if assignedTo is not null
-//         assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
-//       }
-
-//       // Initialize user as null for assignedBy
-//       let assignedByUser = null;
-//       if (task.assignedBy) { // Only find user if assignedBy is not null
-//         assignedByUser = await User.findOne({ email: task.assignedBy });
-//       }
-
-//       // Find project name based on projectId
-//       const project = await NewProject.findById(task.projectId); // Assuming projectId is an ObjectId
-
-//       // Construct the task object with user and project details
-//       return {
-//         ...task.toObject(),
-//         TaskId: {
-//           ...taskDetails.toObject(),
-//           assignedTo: assignedToUser ? assignedToUser.username : null, // Use username if found
-//         },
-//         projectName: project ? project.name : null, // Use project name if found
-//         assignedBy: assignedByUser ? assignedByUser.username : null // Add assignedBy username
-//       };
-//     }));
-
-//     // Send back the tasks with user and project details
-//     res.json(tasksWithUserAndProjectDetails);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-
-
-
-// Get a single task with task details by task ID
 app.get('/tasks-with-details/:id', async (req, res) => {
   try {
     // Fetch a single task and populate the task details

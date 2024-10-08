@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -8,12 +7,9 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Input, Button, Table, Modal, notification } from "antd";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-
-const TeamMembersPage = () => {
- 
+  const TeamMembersPage = () => {
   const location = useLocation();
   const { teamName, organizationId, teamId } = location.state || {};
-
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newMemberUsername, setNewMemberUsername] = useState("");
@@ -23,21 +19,21 @@ const TeamMembersPage = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
-    const fetchUserRoleAndOrganization = async () => {
-        try {
-            const response = await axios.get(`${server}/api/role`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-            });
-            
-            setUserRole(response.data.role);
-        } catch (error) {
-            console.error("Error fetching user role and organization:", error);
-        }
+  const fetchUserRoleAndOrganization = async () => {
+    try {
+      const response = await axios.get(`${server}/api/role`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      setUserRole(response.data.role);
+    } catch (error) {
+      console.error("Error fetching user role and organization:", error);
+    }
   };
   useEffect(() => {
-   fetchUserRoleAndOrganization();
+    fetchUserRoleAndOrganization();
   }, []);
 
   // Extract fetchMembers to be reused
@@ -106,7 +102,7 @@ const TeamMembersPage = () => {
 
       // Fetch the updated list of members
       fetchMembers();
-      
+
     } catch (error) {
       console.error("Error adding member:", error);
       setAddMemberError(true);
@@ -126,7 +122,7 @@ const TeamMembersPage = () => {
   const handleDeleteMember = async () => {
     // Close the modal immediately when delete is clicked
     closeModal();
-    
+
     try {
       await axios.delete(
         `${server}/api/organizations/${organizationId}/teams/${teamId}/users/${selectedUserId}`,
@@ -137,7 +133,7 @@ const TeamMembersPage = () => {
           data: { removedBy: localStorage.getItem("userId") },
         }
       );
-  
+
       // Remove the member from the list after successful deletion
       setMembers((prevMembers) =>
         prevMembers.filter((member) => member.id !== selectedUserId)
@@ -145,7 +141,7 @@ const TeamMembersPage = () => {
 
       // Fetch the updated list of members
       fetchMembers();
-      
+
     } catch (error) {
       console.error("Error deleting member:", error);
     }
@@ -170,23 +166,24 @@ const TeamMembersPage = () => {
       </div>
     );
   }
-
+  
   const columns = [
     {
       title: "Username",
       dataIndex: "username",
       key: "username",
     },
-    (userRole === 'ADMIN' ? [{
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Button onClick={() => openModal(record.id)} type="text" danger>
-          <FontAwesomeIcon icon={faTrash} />
-        </Button>
-      ),
-    }] : []),
-    
+    ...(userRole === "ADMIN" ? [
+      {
+        title: "Action",
+        key: "action",
+        render: (_, record) => (
+          <Button onClick={() => openModal(record.id)} type="text" danger>
+            <FontAwesomeIcon icon={faTrash} />
+          </Button>
+        ),
+      }
+    ] : [])
   ];
 
   return (
@@ -203,12 +200,12 @@ const TeamMembersPage = () => {
           onChange={handleUsernameChange}
           className={`w-96 ${addMemberError ? "border-red-500" : ""}`}
         />
-         {userRole==='ADMIN' &&(
-               <Button onClick={handleAddMember} type="primary">
-               Add
-             </Button>
-         )}
-   
+        {userRole === 'ADMIN' && (
+          <Button onClick={handleAddMember} type="primary">
+            Add
+          </Button>
+        )}
+
       </div>
 
       {usernameSuggestions.length > 0 && newMemberUsername.length > 0 && (
@@ -247,7 +244,7 @@ const TeamMembersPage = () => {
           <Button key="cancel" onClick={closeModal}>
             Cancel
           </Button>,
-          
+
           <Button
             key="delete"
             onClick={handleDeleteMember}
@@ -256,8 +253,6 @@ const TeamMembersPage = () => {
           >
             Delete
           </Button>
-          
-          
           ,
         ]}
         title="Delete Confirmation"

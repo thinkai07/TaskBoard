@@ -1821,7 +1821,7 @@ function KanbanBoard() {
       <DatePicker
         style={{ width: '100%' }}
         onChange={(date) => setExportDueDate(date)}
-        format="YYYY-MM-DD"
+        format="DD-MM-YYYY"   
       />
     </div>
 

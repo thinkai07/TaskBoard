@@ -87,13 +87,13 @@ const AdminPanel = () => {
       return;
     }
   
-    if (!role) {
-      setError("Please select a role for the user.");
-      setLoading(false);
-      return;
-    }
+    // if (!role) {
+    //   setError("Please select a role for the user.");
+    //   setLoading(false);
+    //   return;
+    // }
   
-    if (!username.trim() || !department.trim() || !email.trim()) {
+    if (!username.trim() || !department.trim() || !email.trim() || !role) {
       setError("Please fill out all the required fields.");
       setLoading(false);
       return;

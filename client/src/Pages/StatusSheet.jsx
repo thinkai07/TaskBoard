@@ -10,7 +10,6 @@ const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-
 const StatusSheet = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [modalStatus, setModalStatus] = useState("");
@@ -20,6 +19,7 @@ const StatusSheet = () => {
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showSubmitButton, setShowSubmitButton] = useState(false);
     const [newProjectName, setNewProjectName] = useState("");
     const [tasks, setTasks] = useState([]);
     const [userRole, setUserRole] = useState(null);
@@ -50,6 +50,24 @@ const StatusSheet = () => {
     const handleStatusChange = (status) => {
         setModalStatus(status);
         setSelectedStatus(status);
+    };
+
+    const resetModalState = () => {
+        // Store the current assignedTo value
+        const currentAssignedTo = form.getFieldValue('assignedTo');
+
+        // Reset all form fields
+        form.resetFields();
+
+        // Restore the assignedTo value
+        form.setFieldsValue({
+            assignedTo: currentAssignedTo
+        });
+
+        // Reset other state
+        setRows([]);
+        setShowSubmitButton(false);
+        setIsModalVisible(false);
     };
 
     // Filter tasks based on the search input
@@ -299,6 +317,7 @@ const StatusSheet = () => {
             );
 
             message.success("Tasks created successfully!");
+            resetModalState();
             form.resetFields(['estimatedHours', 'assignedDate']);
             resetFormExceptAssignedTo();
             setRows([]);
@@ -314,6 +333,35 @@ const StatusSheet = () => {
             );
         }
     };
+    // const fetchTasks = async (assignedEmail) => {
+    //     try {
+    //         const response = await axios.get(${server}/tasks-with-details, {
+    //             headers: {
+    //                 Authorization: Bearer ${localStorage.getItem("token")},
+    //             },
+    //             params: {
+    //                 assignedTo: assignedEmail, // Send selected user email as a query param
+    //             },
+    //         });
+
+    //         const formattedData = response.data.map((task) => ({
+    //             key: task._id,
+    //             taskId: task.id,
+    //             taskName: task.name,
+    //             projectName: task.projectName || "N/A",
+    //             assignedBy: task.assignedBy || "N/A",
+    //             assignedTo: task.TaskId?.assignedTo || "N/A", // This should now be the email
+    //             assignedDate: moment(task.TaskId?.assignedDate).format("YYYY-MM-DD"),
+    //             estimatedHours: task.TaskId?.estimatedHours || "N/A",
+    //             status: task.status,
+    //         }));
+
+    //         setDataSource(formattedData);
+    //     } catch (error) {
+    //         console.error("Error fetching tasks:", error);
+    //         message.error("Failed to fetch tasks");
+    //     }
+    // };
     const fetchTasks = async (assignedEmail) => {
         try {
             const response = await axios.get(`${server}/tasks-with-details`, {
@@ -321,17 +369,18 @@ const StatusSheet = () => {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 params: {
-                    assignedTo: assignedEmail, // Send selected user email as a query param
+                    assignedTo: assignedEmail,
                 },
             });
 
             const formattedData = response.data.map((task) => ({
                 key: task._id,
                 taskId: task.id,
+                taskDetailsId: task.taskDetailsId, // Add this line to include the TaskDetails ID
                 taskName: task.name,
                 projectName: task.projectName || "N/A",
                 assignedBy: task.assignedBy || "N/A",
-                assignedTo: task.TaskId?.assignedTo || "N/A", // This should now be the email
+                assignedTo: task.TaskId?.assignedTo || "N/A",
                 assignedDate: moment(task.TaskId?.assignedDate).format("YYYY-MM-DD"),
                 estimatedHours: task.TaskId?.estimatedHours || "N/A",
                 status: task.status,
@@ -343,7 +392,6 @@ const StatusSheet = () => {
             message.error("Failed to fetch tasks");
         }
     };
-
 
     useEffect(() => {
         if (selectedUser) {
@@ -418,16 +466,40 @@ const StatusSheet = () => {
 
 
     const columns = [
+        // {
+        //     title: "Task id",
+        //     dataIndex: "taskId",
+        //     key: "taskId",
+        //     sorter: (a, b) => a.projectName.localeCompare(b.projectName), // Sort alphabetically
+        //     sortDirections: ["ascend", "descend"], // Add ascending and descending options
+        //     render: (text) => (
+        //         <div
+        //             style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}
+        //         >
+        //             {text}
+        //         </div>
+        //     ),
+        // },
         {
-            title: "Task id",
+            title: "Task ID",
             dataIndex: "taskId",
             key: "taskId",
-            sorter: (a, b) => a.projectName.localeCompare(b.projectName), // Sort alphabetically
-            sortDirections: ["ascend", "descend"], // Add ascending and descending options
+            sorter: (a, b) => a.taskId.localeCompare(b.taskId),
+            sortDirections: ["ascend", "descend"],
             render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}
-                >
+                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
+                    {text}
+                </div>
+            ),
+        },
+        {
+            title: "TaskDetails ID",
+            dataIndex: "taskDetailsId",
+            key: "taskDetailsId",
+            sorter: (a, b) => a.taskDetailsId.localeCompare(b.taskDetailsId),
+            sortDirections: ["ascend", "descend"],
+            render: (text) => (
+                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
                     {text}
                 </div>
             ),
@@ -662,28 +734,33 @@ const StatusSheet = () => {
             .then(() => {
                 // Add a new row if the current one is valid
                 setRows([...rows, {}]);
+                setShowSubmitButton(true); // Enable submit button
             })
             .catch(() => {
             });
     };
 
     const handleCancelRow = (index) => {
-        // Reset the specific fields for the row
         form.resetFields([
             `projectName_${index}`,
             `taskName_${index}`,
             `assignedBy_${index}`,
         ]);
-        // Remove the row from the list
         const newRows = [...rows];
-        newRows.splice(index, 1); // Remove the row at the specific index
-        setRows(newRows); // Update the state with the new rows
-    };
+        newRows.splice(index, 1);
+        setRows(newRows);
 
+        // Disable submit button if all rows are removed
+        if (newRows.length === 0) {
+            setShowSubmitButton(false);
+        }
+    };
     const handleModalClose = () => {
         resetFormExceptAssignedTo();
         setRows([]);
         setIsModalVisible(false);
+        setShowSubmitButton(false); // Reset submit button visibility
+        resetModalState();
     };
 
     return (
@@ -719,14 +796,16 @@ const StatusSheet = () => {
                         </Button>
                     )}
 
-                    <Button
-                        style={{ marginRight: "10px" }}
-                        type="primary"
-                        onClick={showExportModal}
-                        icon={<ExportOutlined />}
-                    >
-                        Export Tasks
-                    </Button>
+                    {userRole === "ADMIN" && (
+                        <Button
+                            style={{ marginRight: "10px" }}
+                            type="primary"
+                            onClick={showExportModal}
+                            icon={<ExportOutlined />}
+                        >
+                            Export Tasks
+                        </Button>
+                    )}
 
                     <Dropdown overlay={userMenu}>
                         <Button style={{ width: "160px" }}>
@@ -834,8 +913,6 @@ const StatusSheet = () => {
                             label="Assigned To"
                             name="assignedTo"
                             rules={[{ required: true, message: 'Please enter the assigned email' }]}
-
-
                         >
                             <Input placeholder="Enter email" disabled />
                         </Form.Item>
@@ -844,10 +921,23 @@ const StatusSheet = () => {
                             name="estimatedHours"
                             rules={[
                                 { required: true, message: "Please enter the estimated hours" },
+                                {
+                                    validator: (_, value) => {
+                                        if (value && parseFloat(value) > 0) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('Estimated hours must be greater than 0'));
+                                    },
+                                },
                             ]}
                             className="w-full"
                         >
-                            <Input placeholder="Enter estimated hours" />
+                            <Input
+                                type="number"
+                                step="0.1"
+                                min="0.1"
+                                placeholder="Enter estimated hours"
+                            />
                         </Form.Item>
 
                         <Form.Item
@@ -954,11 +1044,18 @@ const StatusSheet = () => {
                     ))}
 
                     {/* Submit Button */}
-                    <Form.Item>
+                    {/* <Form.Item>
                         <Button type="primary" htmlType="submit" className="w-full">
                             Submit
                         </Button>
-                    </Form.Item>
+                    </Form.Item> */}
+                    {showSubmitButton && (
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit" className="w-full">
+                                Submit
+                            </Button>
+                        </Form.Item>
+                    )}
                 </Form>
             </Modal>
 

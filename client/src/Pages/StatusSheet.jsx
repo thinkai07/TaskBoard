@@ -463,6 +463,14 @@ const StatusSheet = () => {
         form.setFieldsValue({ assignedTo });
     };
 
+    const [inputValue, setInputValue] = useState(''); // Define inputValue state
+    // const [options, setOptions] = useState(users.map((user) => ({
+    //     label: user.username,
+    //     value: user.email,
+    // })));
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
+
 
 
     const columns = [
@@ -763,6 +771,12 @@ const StatusSheet = () => {
         resetModalState();
     };
 
+    const { Option } = Select;
+
+    const [options, setOptions] = useState(
+        users.map(user => ({ label: user.username, value: user.email }))
+    );
+
     return (
         <div style={{ padding: "20px" }}>
             <div
@@ -1020,18 +1034,51 @@ const StatusSheet = () => {
                             </Form.Item>
 
                             <Form.Item
-                                label="Assigned By"
-                                name={`assignedBy_${index}`}
-                                rules={[{ required: true, message: "Please select assigner" }]}
-                            >
-                                <Select placeholder="Select an assigner">
-                                    {users.map((user, userIndex) => (
-                                        <Option key={`${user.id}`} value={user.email}>
-                                            {user.username}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+    label="Assigned By"
+    name={`assignedBy_${index}`}
+    rules={[{ required: true, message: "Please select or enter the assigner" }]}
+>
+    <Select
+        placeholder="Select or enter an assigner"
+        dropdownRender={(menu) => (
+            <>
+                {menu}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px' }}>
+                    <Input
+                        placeholder="Type assigner name"
+                        style={{ flex: 1, marginRight: '8px' }}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                    />
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            if (inputValue) {
+                                const newOption = { label: inputValue, value: inputValue };
+                                const updatedOptions = [
+                                    ...users.map((user) => ({ label: user.username, value: user.email })),
+                                    newOption,
+                                ];
+                                setOptions(updatedOptions);
+                                form.setFieldValue(`assignedBy_${index}`, inputValue);
+                                setInputValue(''); // Clear the input after adding
+                            }
+                        }}
+                    >
+                        OK
+                    </Button>
+                </div>
+            </>
+        )}
+    >
+        {users.map((user) => (
+            <Select.Option key={user.id} value={user.email}>
+                {user.username}
+            </Select.Option>
+        ))}
+    </Select>
+</Form.Item>
+
 
                             <Button
                                 type="primary"

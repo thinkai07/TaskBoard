@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form, notification, message, } from "antd";
+import { Table, Dropdown, Menu, Select, Button, Modal, Input, DatePicker, Form, notification, message,Checkbox ,Collapse} from "antd";
 import { DownOutlined, PlusOutlined, ExportOutlined, SearchOutlined, CalendarOutlined } from "@ant-design/icons";
 import { server } from "../constant";
 import moment from "moment";
@@ -11,6 +11,7 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const StatusSheet = () => {
+    const { Panel } = Collapse;
     const [selectedUser, setSelectedUser] = useState(null);
     const [inputValue, setInputValue] = useState(''); // Define inputValue state
     const [modalStatus, setModalStatus] = useState("");
@@ -35,6 +36,7 @@ const StatusSheet = () => {
     const [userEmail, setUserEmail] = useState("");
     const [dateFilter, setDateFilter] = useState(null);
     const [isExportModalVisible, setIsExportModalVisible] = useState(false);
+    const [filteredData, setFilteredData] = useState([]);
     const [selectedUsersForExport, setSelectedUsersForExport] = useState([]);
     const showExportModal = () => {
         setIsExportModalVisible(true);
@@ -70,7 +72,6 @@ const StatusSheet = () => {
         setShowSubmitButton(false);
         setIsModalVisible(false);
     };
-
     // Fetch user role, organization ID, and projects
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -169,7 +170,6 @@ const StatusSheet = () => {
             );
         }
     };
-
     const fetchTasks = async (assignedEmail) => {
         try {
             const response = await axios.get(`${server}/tasks-with-details`, {
@@ -196,13 +196,27 @@ const StatusSheet = () => {
 
             const groupedData = groupDataByAssignedDate(formattedData);
             setDataSource(groupedData);
+            setFilteredData(groupedData);  //added
         } catch (error) {
             console.error("Error fetching tasks:", error);
             message.error("Failed to fetch tasks");
         }
     };
 
-    
+
+    //added
+    useEffect(() => {
+        if (dataSource.length > 0) {
+            const filtered = dataSource.map(dateGroup => ({
+                ...dateGroup,
+                tasks: dateGroup.tasks.filter(task =>
+                    task.taskId.toString().toLowerCase().includes(searchValue.toLowerCase())
+                )
+            })).filter(dateGroup => dateGroup.tasks.length > 0);
+            setFilteredData(filtered);
+        }
+    }, [searchValue, dataSource]);
+
     useEffect(() => {
         if (selectedUser) {
             fetchTasks(selectedUser.email);
@@ -233,39 +247,6 @@ const StatusSheet = () => {
     }, []);
 
     // // Handle status change
-    // const handleChangeStatus = async (taskId, newStatus) => {
-    //     try {
-    //         // Make the PUT request to update the status on the server
-    //         const response = await fetch(`${server}/tasks-with-details/${taskId}`, {
-    //             method: "PUT",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //                 Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //             },
-    //             body: JSON.stringify({ status: newStatus }), // Pass the new status
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error("Failed to update status");
-    //         }
-
-    //         const updatedTask = await response.json();
-
-    //         // Update the local state (dataSource) directly after status change
-    //         setDataSource((prevDataSource) =>
-    //             prevDataSource.map((task) =>
-    //                 task.key === taskId
-    //                     ? { ...task, status: newStatus }  // Update the status for the matching task
-    //                     : task // Keep other tasks unchanged
-    //             )
-    //         );
-
-    //         message.success("Task status updated successfully");
-    //     } catch (err) {
-    //         console.error(err.message);
-    //         message.error("Failed to update status");
-    //     }
-    // };
     const handleChangeStatus = async (taskId, newStatus) => {
         try {
             // Make the PUT request to update the status on the server
@@ -296,7 +277,16 @@ const StatusSheet = () => {
                 }))
             );
 
-            message.success("Task status updated successfully");
+            setFilteredData((prevFilteredData) =>
+                prevFilteredData.map((dateGroup) => ({
+                    ...dateGroup,
+                    tasks: dateGroup.tasks.map((task) =>
+                        task.key === taskId ? { ...task, status: newStatus } : task
+                    ),
+                }))
+            );
+
+            //message.success("Task status updated successfully");
         } catch (err) {
             console.error(err.message);
             message.error("Failed to update status");
@@ -308,7 +298,8 @@ const StatusSheet = () => {
         form.resetFields();
         form.setFieldsValue({ assignedTo });
     };
-   
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
     const groupDataByAssignedDate = (data) => {
         const groupedData = {};
         data.forEach(item => {
@@ -326,133 +317,41 @@ const StatusSheet = () => {
         return Object.values(groupedData);
     };
 
-    const columns = [
-        {
-            title: "Assigned Date",
-            dataIndex: "assignedDate",
-            key: "assignedDate",
-            sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
-                    {text}
-                </div>
-            ),
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <DatePicker
-                        value={dateFilter}
-                        onChange={(date, dateString) => {
-                            setDateFilter(date);
-                            if (date) {
-                                setSelectedKeys([dateString]);
-                            } else {
-                                setSelectedKeys([]);
-                            }
-                        }}
-                        style={{ marginBottom: 8, display: 'block' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                confirm();
-                            }}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                clearFilters();
-                                setDateFilter(null);
-                            }}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Reset
-                        </Button>
-                    </div>
-                </div>
-            ),
-            onFilter: (value, record) => {
-                if (!dateFilter) return true;
-                const recordDate = moment(record.assignedDate).format('YYYY-MM-DD');
-                const filterDate = moment(value).format('YYYY-MM-DD');
-                return recordDate === filterDate;
-            },
-            filterIcon: filtered => (
-                <CalendarOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-            ),
-        },
-        {
-            title: "Tasks",
-            dataIndex: "tasks",
-            key: "tasks",
-            align: "center", 
-            render: (tasks) => (
-                <Table
-                    dataSource={tasks}
-                    columns={[
-                        {
-                            title: "Task ID",
-                            dataIndex: "taskId",
-                            key: "taskId",
-                        },
-                        {
-                            title: "Task Name",
-                            dataIndex: "taskName",
-                            key: "taskName",
-                        },
-                        {
-                            title: "Project Name",
-                            dataIndex: "projectName",
-                            key: "projectName",
-                        },
-                        {
-                            title: "Assigned By",
-                            dataIndex: "assignedBy",
-                            key: "assignedBy",
-                        },
-                        {
-                            title: "Status",
-                            dataIndex: "status",
-                            key: "status",
-                            render: (status, record) => (
-                                <Select
-                                    value={status}
-                                    style={{ width: 120 }}
-                                    onChange={(value) => {
-                                        handleChangeStatus(record.key, value);
-                                    }}
-                                    disabled={userRole !== "ADMIN"}
-                                >
-                                    <Option value="pending">Pending</Option>
-                                    <Option value="inprogress">In Progress</Option>
-                                    <Option value="completed">Completed</Option>
-                                </Select>
-                            ),
-                        },
-                    ]}
-                    pagination={false}
-                />
-            ),
-        },
-        {
-            title: "Assigned To",
-            dataIndex: "assignedTo",
-            key: "assignedTo",
-        },
-        {
-            title: "Estimated Hours",
-            dataIndex: "estimatedHours",
-            key: "estimatedHours",
-            sorter: (a, b) => a.estimatedHours - b.estimatedHours,
-            sortDirections: ["ascend", "descend"],
-        },
-    ];
-
+    const handleChangeStatusForDate = async (tasks, newStatus) => {
+        try {
+            // Create an array of promises for each task to update their status
+            const updatePromises = tasks.map(task =>
+                fetch(`${server}/tasks-with-details/${task.key}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                })
+            );
+    
+            // Wait for all tasks to be updated
+            await Promise.all(updatePromises);
+    
+            // Update the local state (dataSource) for all tasks in the current date group
+            setDataSource((prevDataSource) =>
+                prevDataSource.map((dateGroup) => ({
+                    ...dateGroup,
+                    tasks: dateGroup.tasks.map((task) =>
+                        tasks.find((t) => t.key === task.key)
+                            ? { ...task, status: newStatus }
+                            : task
+                    ),
+                }))
+            );
+    
+            message.success("All tasks status updated successfully");
+        } catch (err) {
+            console.error(err.message);
+            message.error("Failed to update tasks status");
+        }
+    };
 
     const handleCreateProject = async () => {
         try {
@@ -670,27 +569,233 @@ const StatusSheet = () => {
 
             {/* Table */}
             <div style={{ margin: "0 auto" }} className="dark">
-                {selectedUser ? (
-        
-                    <Table
-                        dataSource={dataSource}
-                        columns={columns}
-                    />
-                ) : (
-                    <p
-                        style={{
-                            margin: "0 auto",
-                            maxWidth: "95%",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            height: "10vh",
-                        }}
-                    >
-                        Please select a user to view tasks.
-                    </p>
-                )}
-            </div>
+            {selectedUser ? (
+                <Table
+                dataSource={filteredData}
+                    //dataSource={dataSource}
+                    rowKey="assignedDate" // Ensure you have a unique key for each assigned date row
+                    columns={[
+                //         {
+                //             title: "Assigned Date",
+                //             dataIndex: "assignedDate",
+                //             key: "assignedDate",
+                //             sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
+                //             sortDirections: ["ascend", "descend"],
+                //             render: (text) => (
+                //                 <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
+                //                     {text}
+                //                 </div>
+                //             ),
+                //         },
+                //         {
+                //             title: "Tasks",
+                //             dataIndex: "tasks",
+                //             key: "tasks",
+                //             render: (tasks, record) => (
+                //                 <Collapse defaultActiveKey={[]} expandIconPosition="right">
+                //                     <Panel header={`Tasks (${tasks.length})`} key="1">
+                //                         <Table
+                //                             dataSource={tasks}
+                //                             rowKey="taskId" // Ensure you have a unique key for the tasks
+                //                             columns={[
+                //                                 {
+                //                                     title: "Task ID",
+                //                                     dataIndex: "taskId",
+                //                                     key: "taskId",
+                //                                 },
+                //                                 {
+                //                                     title: "Task Name",
+                //                                     dataIndex: "taskName",
+                //                                     key: "taskName",
+                //                                 },
+                //                                 {
+                //                                     title: "Project Name",
+                //                                     dataIndex: "projectName",
+                //                                     key: "projectName",
+                //                                 },
+                //                                 {
+                //                                     title: "Assigned By",
+                //                                     dataIndex: "assignedBy",
+                //                                     key: "assignedBy",
+                //                                 },
+                //                                 {
+                //                                     title: (
+                //                                         <div style={{ display: "flex", alignItems: "center" }}>
+                //                                             <span>Status</span>
+                //                                             <Checkbox
+                //                                                 style={{ marginLeft: 8 }}
+                //                                                 onChange={(e) => {
+                //                                                     if (e.target.checked) {
+                //                                                         // When checkbox is checked, change status of all tasks in this date group to 'Completed'
+                //                                                         tasks.forEach((task) => {
+                //                                                             handleChangeStatus(task.key, "completed");
+                //                                                         });
+                //                                                     }
+                //                                                 }}
+                //                                             />
+                //                                         </div>
+                //                                     ),
+                //                                     dataIndex: "status",
+                //                                     key: "status",
+                //                                     render: (status, task) => (
+                //                                         <Select
+                //                                             value={status}
+                //                                             style={{ width: 120 }}
+                //                                             onChange={(value) => {
+                //                                                 handleChangeStatus(task.key, value);
+                //                                             }}
+                //                                             disabled={userRole !== "ADMIN"}
+                //                                         >
+                //                                             <Option value="pending">Pending</Option>
+                //                                             <Option value="inprogress">In Progress</Option>
+                //                                             <Option value="completed">Completed</Option>
+                //                                         </Select>
+                //                                     ),
+                //                                 },
+                //                             ]}
+                //                             pagination={false}
+                //                         />
+                //                     </Panel>
+                //                 </Collapse>
+                //             ),
+                //         },
+                //         {
+                //             title: "Assigned To",
+                //             dataIndex: "assignedTo",
+                //             key: "assignedTo",
+                //         },
+                //         {
+                //             title: "Estimated Hours",
+                //             dataIndex: "estimatedHours",
+                //             key: "estimatedHours",
+                //             sorter: (a, b) => a.estimatedHours - b.estimatedHours,
+                //             sortDirections: ["ascend", "descend"],
+                //         },
+                //     ]}
+                // />
+                {
+                    title: "Assigned Date",
+                    dataIndex: "assignedDate",
+                    key: "assignedDate",
+                    width: "15%",
+                    sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
+                    sortDirections: ["ascend", "descend"],
+                    render: (text) => (
+                        <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
+                            {text}
+                        </div>
+                    ),
+                },
+                {
+                    title: "Tasks",
+                    dataIndex: "tasks",
+                    key: "tasks",
+                    width: "55%",
+                    render: (tasks, record) => (
+                        <div style={{ width: '100%' }}>
+                            <Collapse defaultActiveKey={[]} expandIconPosition="right">
+                                <Panel header={`Tasks (${tasks.length})`} key="1">
+                                    <Table
+                                        dataSource={tasks}
+                                        rowKey="taskId"
+                                        pagination={false}
+                                        columns={[
+                                            {
+                                                title: "Task ID",
+                                                dataIndex: "taskId",
+                                                key: "taskId",
+                                                width: "15%",
+                                            },
+                                            {
+                                                title: "Task Name",
+                                                dataIndex: "taskName",
+                                                key: "taskName",
+                                                width: "25%",
+                                            },
+                                            {
+                                                title: "Project Name",
+                                                dataIndex: "projectName",
+                                                key: "projectName",
+                                                width: "25%",
+                                            },
+                                            {
+                                                title: "Assigned By",
+                                                dataIndex: "assignedBy",
+                                                key: "assignedBy",
+                                                width: "15%",
+                                            },
+                                            {
+                                                title: (
+                                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                                        <span>Status</span>
+                                                        <Checkbox
+                                                            style={{ marginLeft: 8 }}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    tasks.forEach((task) => {
+                                                                        handleChangeStatus(task.key, "completed");
+                                                                    });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ),
+                                                dataIndex: "status",
+                                                key: "status",
+                                                width: "20%",
+                                                render: (status, task) => (
+                                                    <Select
+                                                        value={status}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            handleChangeStatus(task.key, value);
+                                                        }}
+                                                        disabled={userRole !== "ADMIN"}
+                                                    >
+                                                        <Option value="pending">Pending</Option>
+                                                        <Option value="inprogress">In Progress</Option>
+                                                        <Option value="completed">Completed</Option>
+                                                    </Select>
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                </Panel>
+                            </Collapse>
+                        </div>
+                    ),
+                },
+                {
+                    title: "Assigned To",
+                    dataIndex: "assignedTo",
+                    key: "assignedTo",
+                    width: "15%",
+                },
+                {
+                    title: "Estimated Hours",
+                    dataIndex: "estimatedHours",
+                    key: "estimatedHours",
+                    width: "15%",
+                    sorter: (a, b) => a.estimatedHours - b.estimatedHours,
+                    sortDirections: ["ascend", "descend"],
+                },
+            ]}
+        />
+            ) : (
+                <p
+                    style={{
+                        margin: "0 auto",
+                        maxWidth: "95%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "10vh",
+                    }}
+                >
+                    Please select a user to view tasks.
+                </p>
+            )}
+        </div>
             {/* Modal for adding new tasks */}
             <Modal
                 title="Add New Task"

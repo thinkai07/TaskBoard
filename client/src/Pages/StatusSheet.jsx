@@ -73,11 +73,6 @@ const StatusSheet = () => {
         setIsModalVisible(false);
     };
 
-    // // Filter tasks based on the search input
-    // const filteredData = dataSource.filter((task) =>
-    //     task.taskId.toString().toLowerCase().includes(searchValue.toLowerCase())
-    // );
-
     const handleExportModalCancel = () => {
         setIsExportModalVisible(false);
         setSelectedUsersForExport([]);
@@ -89,8 +84,6 @@ const StatusSheet = () => {
     const handleUserSelectForExport = (selectedUserIds) => {
         setSelectedUsersForExport(selectedUserIds);
     };
-
-
 
     const exportToExcel = async () => {
         if (selectedUsersForExport.length === 0) {
@@ -383,40 +376,6 @@ const StatusSheet = () => {
         }
     }, [searchValue, dataSource]);
 
-
-    // const fetchTasks = async (assignedEmail) => {
-    //     try {
-    //         const response = await axios.get(`${server}/tasks-with-details`, {
-    //             headers: {
-    //                 Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //             },
-    //             params: {
-    //                 assignedTo: assignedEmail,
-    //             },
-    //         });
-
-    //         const formattedData = response.data.map((task) => ({
-    //             key: task._id,
-    //             taskId: task.id,
-    //             taskDetailsId: task.taskDetailsId,
-    //             taskName: task.name,
-    //             projectName: task.projectName || "N/A",
-    //             assignedBy: task.assignedBy || "N/A",
-    //             assignedTo: task.TaskId?.assignedTo || "N/A",
-    //             assignedDate: moment(task.TaskId?.assignedDate).format("YYYY-MM-DD"),
-    //             estimatedHours: task.TaskId?.estimatedHours || "N/A",
-    //             status: task.status,
-    //         }));
-
-    //         const groupedData = groupDataByAssignedDate(formattedData);
-    //         setDataSource(groupedData);
-    //     } catch (error) {
-    //         console.error("Error fetching tasks:", error);
-    //         message.error("Failed to fetch tasks");
-    //     }
-    // };
-
-
     useEffect(() => {
         if (selectedUser) {
             fetchTasks(selectedUser.email);
@@ -552,107 +511,6 @@ const StatusSheet = () => {
             message.error("Failed to update tasks status");
         }
     };
-
-    // const columns = [
-    //     {
-    //         title: "Assigned Date",
-    //         dataIndex: "assignedDate",
-    //         key: "assignedDate",
-    //         sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
-    //         sortDirections: ["ascend", "descend"],
-    //         render: (text) => (
-    //             <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
-    //                 {text}
-    //             </div>
-    //         ),
-    //     },
-    //     {
-    //         title: (
-    //             <div style={{ display: "flex", alignItems: "center" }}>
-    //                 <span>Tasks</span>
-                   
-    //             </div>
-    //         ),
-    //         dataIndex: "tasks",
-    //         key: "tasks",
-    //         render: (tasks, record) => (
-    //             <Table
-    //                 dataSource={tasks}
-    //                 columns={[
-    //                     {
-    //                         title: "Task ID",
-    //                         dataIndex: "taskId",
-    //                         key: "taskId",
-    //                     },
-    //                     {
-    //                         title: "Task Name",
-    //                         dataIndex: "taskName",
-    //                         key: "taskName",
-    //                     },
-    //                     {
-    //                         title: "Project Name",
-    //                         dataIndex: "projectName",
-    //                         key: "projectName",
-    //                     },
-    //                     {
-    //                         title: "Assigned By",
-    //                         dataIndex: "assignedBy",
-    //                         key: "assignedBy",
-    //                     },
-    //                     {
-    //                         title: (
-    //                             <div style={{ display: "flex", alignItems: "center" }}>
-    //                                 <span>Status</span>
-    //                                 <Checkbox
-    //                                     style={{ marginLeft: 8 }}
-    //                                     onChange={(e) => {
-    //                                         if (e.target.checked) {
-    //                                             // When checkbox is checked, change status of all tasks in this date group to 'Completed'
-    //                                             tasks.forEach((task) => {
-    //                                                 handleChangeStatus(task.key, "completed");
-    //                                             });
-    //                                         }
-    //                                     }}
-    //                                 />
-    //                             </div>
-    //                         ),
-    //                         dataIndex: "status",
-    //                         key: "status",
-    //                         render: (status, task) => (
-    //                             <Select
-    //                                 value={status}
-    //                                 style={{ width: 120 }}
-    //                                 onChange={(value) => {
-    //                                     handleChangeStatus(task.key, value);
-    //                                 }}
-    //                                 disabled={userRole !== "ADMIN"}
-    //                             >
-    //                                 <Option value="pending">Pending</Option>
-    //                                 <Option value="inprogress">In Progress</Option>
-    //                                 <Option value="completed">Completed</Option>
-    //                             </Select>
-    //                         ),
-    //                     },
-    //                 ]}
-    //                 pagination={false}
-    //             />
-    //         ),
-    //     },
-    //     {
-    //         title: "Assigned To",
-    //         dataIndex: "assignedTo",
-    //         key: "assignedTo",
-    //     },
-    //     {
-    //         title: "Estimated Hours",
-    //         dataIndex: "estimatedHours",
-    //         key: "estimatedHours",
-    //         sorter: (a, b) => a.estimatedHours - b.estimatedHours,
-    //         sortDirections: ["ascend", "descend"],
-    //     },
-    // ];
-    
-
 
     const handleCreateProject = async () => {
         try {
@@ -876,104 +734,114 @@ const StatusSheet = () => {
                     //dataSource={dataSource}
                     rowKey="assignedDate" // Ensure you have a unique key for each assigned date row
                     columns={[
-                        {
-                            title: "Assigned Date",
-                            dataIndex: "assignedDate",
-                            key: "assignedDate",
-                            sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
-                            sortDirections: ["ascend", "descend"],
-                            render: (text) => (
-                                <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
-                                    {text}
-                                </div>
-                            ),
-                        },
-                        {
-                            title: "Tasks",
-                            dataIndex: "tasks",
-                            key: "tasks",
-                            render: (tasks, record) => (
-                                <Collapse defaultActiveKey={[]} expandIconPosition="right">
-                                    <Panel header={`Tasks (${tasks.length})`} key="1">
-                                        <Table
-                                            dataSource={tasks}
-                                            rowKey="taskId" // Ensure you have a unique key for the tasks
-                                            columns={[
-                                                {
-                                                    title: "Task ID",
-                                                    dataIndex: "taskId",
-                                                    key: "taskId",
-                                                },
-                                                {
-                                                    title: "Task Name",
-                                                    dataIndex: "taskName",
-                                                    key: "taskName",
-                                                },
-                                                {
-                                                    title: "Project Name",
-                                                    dataIndex: "projectName",
-                                                    key: "projectName",
-                                                },
-                                                {
-                                                    title: "Assigned By",
-                                                    dataIndex: "assignedBy",
-                                                    key: "assignedBy",
-                                                },
-                                                {
-                                                    title: (
-                                                        <div style={{ display: "flex", alignItems: "center" }}>
-                                                            <span>Status</span>
-                                                            <Checkbox
-                                                                style={{ marginLeft: 8 }}
-                                                                onChange={(e) => {
-                                                                    if (e.target.checked) {
-                                                                        // When checkbox is checked, change status of all tasks in this date group to 'Completed'
-                                                                        tasks.forEach((task) => {
-                                                                            handleChangeStatus(task.key, "completed");
-                                                                        });
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    ),
-                                                    dataIndex: "status",
-                                                    key: "status",
-                                                    render: (status, task) => (
-                                                        <Select
-                                                            value={status}
-                                                            style={{ width: 120 }}
-                                                            onChange={(value) => {
-                                                                handleChangeStatus(task.key, value);
+                {
+                    title: "Assigned Date",
+                    dataIndex: "assignedDate",
+                    key: "assignedDate",
+                    width: "15%",
+                    sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
+                    sortDirections: ["ascend", "descend"],
+                    render: (text) => (
+                        <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
+                            {text}
+                        </div>
+                    ),
+                },
+                {
+                    title: "Tasks",
+                    dataIndex: "tasks",
+                    key: "tasks",
+                    width: "55%",
+                    render: (tasks, record) => (
+                        <div style={{ width: '100%' }}>
+                            <Collapse defaultActiveKey={[]} expandIconPosition="right">
+                                <Panel header={`Tasks (${tasks.length})`} key="1">
+                                    <Table
+                                        dataSource={tasks}
+                                        rowKey="taskId"
+                                        pagination={false}
+                                        columns={[
+                                            {
+                                                title: "Task ID",
+                                                dataIndex: "taskId",
+                                                key: "taskId",
+                                                width: "15%",
+                                            },
+                                            {
+                                                title: "Task Name",
+                                                dataIndex: "taskName",
+                                                key: "taskName",
+                                                width: "25%",
+                                            },
+                                            {
+                                                title: "Project Name",
+                                                dataIndex: "projectName",
+                                                key: "projectName",
+                                                width: "25%",
+                                            },
+                                            {
+                                                title: "Assigned By",
+                                                dataIndex: "assignedBy",
+                                                key: "assignedBy",
+                                                width: "15%",
+                                            },
+                                            {
+                                                title: (
+                                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                                        <span>Status</span>
+                                                        <Checkbox
+                                                            style={{ marginLeft: 8 }}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    tasks.forEach((task) => {
+                                                                        handleChangeStatus(task.key, "completed");
+                                                                    });
+                                                                }
                                                             }}
-                                                            disabled={userRole !== "ADMIN"}
-                                                        >
-                                                            <Option value="pending">Pending</Option>
-                                                            <Option value="inprogress">In Progress</Option>
-                                                            <Option value="completed">Completed</Option>
-                                                        </Select>
-                                                    ),
-                                                },
-                                            ]}
-                                            pagination={false}
-                                        />
-                                    </Panel>
-                                </Collapse>
-                            ),
-                        },
-                        {
-                            title: "Assigned To",
-                            dataIndex: "assignedTo",
-                            key: "assignedTo",
-                        },
-                        {
-                            title: "Estimated Hours",
-                            dataIndex: "estimatedHours",
-                            key: "estimatedHours",
-                            sorter: (a, b) => a.estimatedHours - b.estimatedHours,
-                            sortDirections: ["ascend", "descend"],
-                        },
-                    ]}
-                />
+                                                        />
+                                                    </div>
+                                                ),
+                                                dataIndex: "status",
+                                                key: "status",
+                                                width: "20%",
+                                                render: (status, task) => (
+                                                    <Select
+                                                        value={status}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            handleChangeStatus(task.key, value);
+                                                        }}
+                                                        disabled={userRole !== "ADMIN"}
+                                                    >
+                                                        <Option value="pending">Pending</Option>
+                                                        <Option value="inprogress">In Progress</Option>
+                                                        <Option value="completed">Completed</Option>
+                                                    </Select>
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                </Panel>
+                            </Collapse>
+                        </div>
+                    ),
+                },
+                {
+                    title: "Assigned To",
+                    dataIndex: "assignedTo",
+                    key: "assignedTo",
+                    width: "15%",
+                },
+                {
+                    title: "Estimated Hours",
+                    dataIndex: "estimatedHours",
+                    key: "estimatedHours",
+                    width: "15%",
+                    sorter: (a, b) => a.estimatedHours - b.estimatedHours,
+                    sortDirections: ["ascend", "descend"],
+                },
+            ]}
+        />
             ) : (
                 <p
                     style={{

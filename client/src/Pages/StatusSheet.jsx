@@ -464,6 +464,31 @@ const StatusSheet = () => {
         form.setFieldsValue({ assignedTo });
     };
 
+    const [inputValue, setInputValue] = useState(''); // Define inputValue state
+    // const [options, setOptions] = useState(users.map((user) => ({
+    //     label: user.username,
+    //     value: user.email,
+    // })));
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const groupDataByTaskDetailsId = (data) => {
+        const groupedData = {};
+        data.forEach(item => {
+            if (!groupedData[item.taskDetailsId]) {
+                groupedData[item.taskDetailsId] = {
+                    ...item,
+                    tasks: [{ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy }]
+                };
+            } else {
+                groupedData[item.taskDetailsId].tasks.push({ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy });
+            }
+        });
+        return Object.values(groupedData);
+    };
+
+
+
 
 
     const columns = [

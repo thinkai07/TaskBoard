@@ -841,10 +841,10 @@ app.get('/tasks-with-details', async (req, res) => {
               assignedToUser = await User.findOne({ email: taskDetails.assignedTo });
           }
 
-          let assignedByUser = null;
-          if (task.assignedBy) {
-              assignedByUser = await User.findOne({ email: task.assignedBy });
-          }
+          // Try to find user based on task.assignedBy, if it exists
+          let assignedByUser = await User.findOne({ email: task.assignedBy });
+          // If no user found, just use the raw value from task.assignedBy
+          const assignedByText = assignedByUser ? assignedByUser.username : task.assignedBy;
 
           const project = await NewProject.findById(task.projectId);
 
@@ -856,7 +856,7 @@ app.get('/tasks-with-details', async (req, res) => {
               },
               taskDetailsId: taskDetails._id, // Add this line to include the TaskDetails ID
               projectName: project ? project.name : null,
-              assignedBy: assignedByUser ? assignedByUser.username : null
+              assignedBy: assignedByText // Display username if found, otherwise raw value
           };
       }));
 
@@ -865,6 +865,7 @@ app.get('/tasks-with-details', async (req, res) => {
       res.status(500).json({ error: err.message });
   }
 });
+
 
 
 app.get('/tasks-with-details/:id', async (req, res) => {

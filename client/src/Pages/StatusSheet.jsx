@@ -376,7 +376,7 @@ const StatusSheet = () => {
             const formattedData = response.data.map((task) => ({
                 key: task._id,
                 taskId: task.id,
-                taskDetailsId: task.taskDetailsId, // Add this line to include the TaskDetails ID
+                taskDetailsId: task.taskDetailsId,
                 taskName: task.name,
                 projectName: task.projectName || "N/A",
                 assignedBy: task.assignedBy || "N/A",
@@ -386,7 +386,8 @@ const StatusSheet = () => {
                 status: task.status,
             }));
 
-            setDataSource(formattedData);
+            const groupedData = groupDataByTaskDetailsId(formattedData);
+            setDataSource(groupedData);
         } catch (error) {
             console.error("Error fetching tasks:", error);
             message.error("Failed to fetch tasks");
@@ -463,35 +464,27 @@ const StatusSheet = () => {
         form.setFieldsValue({ assignedTo });
     };
 
+    const groupDataByTaskDetailsId = (data) => {
+        const groupedData = {};
+        data.forEach(item => {
+            if (!groupedData[item.taskDetailsId]) {
+                groupedData[item.taskDetailsId] = {
+                    ...item,
+                    tasks: [{ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy }]
+                };
+            } else {
+                groupedData[item.taskDetailsId].tasks.push({ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy });
+            }
+        });
+        return Object.values(groupedData);
+    };
 
 
+
+ 
+    
+    
     const columns = [
-        // {
-        //     title: "Task id",
-        //     dataIndex: "taskId",
-        //     key: "taskId",
-        //     sorter: (a, b) => a.projectName.localeCompare(b.projectName), // Sort alphabetically
-        //     sortDirections: ["ascend", "descend"], // Add ascending and descending options
-        //     render: (text) => (
-        //         <div
-        //             style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}
-        //         >
-        //             {text}
-        //         </div>
-        //     ),
-        // },
-        {
-            title: "Task ID",
-            dataIndex: "taskId",
-            key: "taskId",
-            sorter: (a, b) => a.taskId.localeCompare(b.taskId),
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
-                    {text}
-                </div>
-            ),
-        },
         {
             title: "TaskDetails ID",
             dataIndex: "taskDetailsId",
@@ -505,63 +498,44 @@ const StatusSheet = () => {
             ),
         },
         {
-            title: "Project name",
-            dataIndex: "projectName",
-            key: "projectName",
-            sorter: (a, b) => new Date(a.assignedDate) - new Date(b.assignedDate), // Sort by date
+            title: "Tasks",
+            dataIndex: "tasks",
+            key: "tasks",
+            sorter: (a, b) => a.taskId.localeCompare(b.taskId),
             sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}
-                >
-                    {text}
-                </div>
-            ),
-        },
-        {
-            title: "Task Name",
-            dataIndex: "taskName",
-            key: "taskName",
-            sorter: (a, b) => a.taskName.localeCompare(b.taskName),
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div
-                    style={{
-                        maxWidth: "100px",
-                        overflow: "auto",
-                        whiteSpace: "nowrap",
-                        scrollbarWidth: "none",
-                    }}
-                >
-                    {text}
-                </div>
-            ),
-        },
-        {
-            title: "Assigned By",
-            dataIndex: "assignedBy",
-            key: "assignedBy",
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}
-                >
-                    {text}
-                </div>
+            render: (tasks) => (
+                <Table
+                    dataSource={tasks}
+                    columns={[
+                        {
+                            title: "Task ID",
+                            dataIndex: "taskId",
+                            key: "taskId",
+                        },
+                        {
+                            title: "Task Name",
+                            dataIndex: "taskName",
+                            key: "taskName",
+                        },
+                        {
+                            title: "Project Name",
+                            dataIndex: "projectName",
+                            key: "projectName",
+                        },
+                        {
+                            title: "Assigned By",
+                            dataIndex: "assignedBy",
+                            key: "assignedBy",
+                        },
+                    ]}
+                    pagination={false}
+                />
             ),
         },
         {
             title: "Assigned To",
             dataIndex: "assignedTo",
             key: "assignedTo",
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}
-                >
-                    {text}
-                </div>
-            ),
         },
         {
             title: "Assigned Date",
@@ -628,15 +602,7 @@ const StatusSheet = () => {
             key: "estimatedHours",
             sorter: (a, b) => a.estimatedHours - b.estimatedHours, // Sort numerically
             sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}
-                >
-                    {text}
-                </div>
-            ),
         },
-
         {
             title: "Status",
             dataIndex: "status",
@@ -668,6 +634,9 @@ const StatusSheet = () => {
         },
     ];
 
+
+
+    
     const handleCreateProject = async () => {
         try {
             setLoading(true);
@@ -879,7 +848,11 @@ const StatusSheet = () => {
             {/* Table */}
             <div style={{ margin: "0 auto" }} className="dark">
                 {selectedUser ? (
-                    <Table dataSource={filteredData} columns={columns} />
+                    // <Table dataSource={filteredData} columns={columns} />
+                    <Table 
+                    dataSource={dataSource} 
+                    columns={columns}
+                />
                 ) : (
                     <p
                         style={{

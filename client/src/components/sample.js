@@ -38,11 +38,15 @@ const StatusSheet = () => {
     const showExportModal = () => {
         setIsExportModalVisible(true);
     };
+
     const [assignedDate, setAssignedDate] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState("");
+
     const handleDateChange = (date) => {
         setAssignedDate(date);
     };
+
+
     const handleStatusChange = (status) => {
         setModalStatus(status);
         setSelectedStatus(status);
@@ -204,6 +208,7 @@ const StatusSheet = () => {
             );
         }
     };
+
     const fetchTasks = async (assignedEmail) => {
         try {
             const response = await axios.get(`${server}/tasks-with-details`, {
@@ -211,17 +216,18 @@ const StatusSheet = () => {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 params: {
-                    assignedTo: assignedEmail, // Send selected user email as a query param
+                    assignedTo: assignedEmail,
                 },
             });
 
             const formattedData = response.data.map((task) => ({
                 key: task._id,
                 taskId: task.id,
+                taskDetailsId: task.taskDetailsId, // Add this line to include the TaskDetails ID
                 taskName: task.name,
                 projectName: task.projectName || "N/A",
                 assignedBy: task.assignedBy || "N/A",
-                assignedTo: task.TaskId?.assignedTo || "N/A", // This should now be the email
+                assignedTo: task.TaskId?.assignedTo || "N/A",
                 assignedDate: moment(task.TaskId?.assignedDate).format("YYYY-MM-DD"),
                 estimatedHours: task.TaskId?.estimatedHours || "N/A",
                 status: task.status,
@@ -233,7 +239,6 @@ const StatusSheet = () => {
             message.error("Failed to fetch tasks");
         }
     };
-
 
     useEffect(() => {
         if (selectedUser) {
@@ -306,15 +311,25 @@ const StatusSheet = () => {
     };
     const columns = [
         {
-            title: "Task id",
+            title: "Task ID",
             dataIndex: "taskId",
             key: "taskId",
-            sorter: (a, b) => a.projectName.localeCompare(b.projectName), // Sort alphabetically
-            sortDirections: ["ascend", "descend"], // Add ascending and descending options
+            sorter: (a, b) => a.taskId.localeCompare(b.taskId),
+            sortDirections: ["ascend", "descend"],
             render: (text) => (
-                <div
-                    style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}
-                >
+                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
+                    {text}
+                </div>
+            ),
+        },
+        {
+            title: "TaskDetails ID",
+            dataIndex: "taskDetailsId",
+            key: "taskDetailsId",
+            sorter: (a, b) => a.taskDetailsId.localeCompare(b.taskDetailsId),
+            sortDirections: ["ascend", "descend"],
+            render: (text) => (
+                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
                     {text}
                 </div>
             ),
@@ -482,49 +497,6 @@ const StatusSheet = () => {
 
         },
     ];
-
-    const handleCreateProject = async () => {
-        try {
-            setLoading(true);
-
-            const response = await axios.post(
-                `${server}/projects`,
-                {
-                    name: newProjectName,
-                    organizationId,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                }
-            );
-            message.success("Project created successfully!");
-            setNewProjectName("");
-            handleCreateProjectCancel();
-            // Fetch updated projects list
-            await fetchProjects(organizationId);
-        } catch (error) {
-            console.error("Error creating project:", error);
-            message.error("Failed to create project");
-        } finally {
-            setLoading(false);
-        }
-    };
-    const fetchProjects = async (orgId) => {
-        try {
-            const projectsResponse = await axios.get(
-                `${server}/api/${orgId}/projects`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
-            setProjects(projectsResponse.data);
-        } catch (error) {
-            console.error("Error fetching projects:", error);
-            message.error("Failed to fetch projects");
-        }
-    };
     const userMenu = (
         <Menu onClick={(e) => handleUserSelect(e.key)}>
             {users.map((user) => (
@@ -857,6 +829,13 @@ const StatusSheet = () => {
                             </Button>
                         </div>
                     ))}
+
+                    {/* Submit Button */}
+                    {/* <Form.Item>
+                        <Button type="primary" htmlType="submit" className="w-full">
+                            Submit
+                        </Button>
+                    </Form.Item> */}
                     {showSubmitButton && (
                         <Form.Item>
                             <Button type="primary" htmlType="submit" className="w-full">

@@ -676,37 +676,37 @@ async function safeCreate(Model, data, maxRetries = 5) {
   throw new Error(`Failed to create document after ${maxRetries} attempts`);
 }
 
-app.post('/tasks-with-details', async (req, res) => {
-  try {
-    const { taskDetailsData, tasks } = req.body;
+// app.post('/tasks-with-details', async (req, res) => {
+//   try {
+//     const { taskDetailsData, tasks } = req.body;
 
-    const savedTasksWithDetails = [];
+//     const savedTasksWithDetails = [];
 
-    for (const task of tasks) {
-      // Create a new TaskDetails for each task
-      const taskDetails = await safeCreate(TaskDetails, {
-        assignedTo: taskDetailsData.assignedTo,
-        assignedDate: taskDetailsData.assignedDate,
-        estimatedHours: taskDetailsData.estimatedHours,
-      });
+//     for (const task of tasks) {
+//       // Create a new TaskDetails for each task
+//       const taskDetails = await safeCreate(TaskDetails, {
+//         assignedTo: taskDetailsData.assignedTo,
+//         assignedDate: taskDetailsData.assignedDate,
+//         estimatedHours: taskDetailsData.estimatedHours,
+//       });
 
-      // Create a new task with its own TaskDetails
-      const newTask = await safeCreate(NewTasks, {
-        name: task.taskName,
-        assignedBy: task.assignedBy,
-        projectId: task.projectId,
-        TaskId: taskDetails._id,
-        status: "Pending",
-      });
+//       // Create a new task with its own TaskDetails
+//       const newTask = await safeCreate(NewTasks, {
+//         name: task.taskName,
+//         assignedBy: task.assignedBy,
+//         projectId: task.projectId,
+//         TaskId: taskDetails._id,
+//         status: "Pending",
+//       });
 
-      savedTasksWithDetails.push({ task: newTask, taskDetails });
-    }
+//       savedTasksWithDetails.push({ task: newTask, taskDetails });
+//     }
 
-    res.status(201).json({ savedTasksWithDetails });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+//     res.status(201).json({ savedTasksWithDetails });
+//   } catch (err) {
+//     res.status(400).json({ error: err.message });
+//   }
+// });
 
 
 
@@ -774,6 +774,41 @@ app.post('/tasks-with-details', async (req, res) => {
 //       res.status(500).json({ error: err.message });
 //   }
 // });
+
+app.post('/tasks-with-details', async (req, res) => {
+  try {
+    const { taskDetailsData, tasks } = req.body;
+
+    // Create a single TaskDetails object for all tasks
+    const taskDetails = await safeCreate(TaskDetails, {
+      assignedTo: taskDetailsData.assignedTo,
+      assignedDate: taskDetailsData.assignedDate,
+      estimatedHours: taskDetailsData.estimatedHours,
+    });
+
+    const savedTasksWithDetails = [];
+
+    // Loop through each task and assign the same TaskDetails ID
+    for (const task of tasks) {
+      const newTask = await safeCreate(NewTasks, {
+        name: task.taskName,
+        assignedBy: task.assignedBy,
+        projectId: task.projectId,
+        TaskId: taskDetails._id, // Use the same TaskDetails ID
+        status: "Pending",
+      });
+
+      savedTasksWithDetails.push({ task: newTask, taskDetails });
+    }
+
+    res.status(201).json({ savedTasksWithDetails });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
 
 app.get('/tasks-with-details', async (req, res) => {
   try {

@@ -12,6 +12,7 @@ const { Option } = Select;
 
 const StatusSheet = () => {
     const [selectedUser, setSelectedUser] = useState(null);
+    const [inputValue, setInputValue] = useState(''); // Define inputValue state
     const [modalStatus, setModalStatus] = useState("");
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
@@ -70,10 +71,10 @@ const StatusSheet = () => {
         setIsModalVisible(false);
     };
 
-    // Filter tasks based on the search input
-    const filteredData = dataSource.filter((task) =>
-        task.taskId.toString().toLowerCase().includes(searchValue.toLowerCase())
-    );
+    // // Filter tasks based on the search input
+    // const filteredData = dataSource.filter((task) =>
+    //     task.taskId.toString().toLowerCase().includes(searchValue.toLowerCase())
+    // );
 
     const handleExportModalCancel = () => {
         setIsExportModalVisible(false);
@@ -333,35 +334,7 @@ const StatusSheet = () => {
             );
         }
     };
-    // const fetchTasks = async (assignedEmail) => {
-    //     try {
-    //         const response = await axios.get(${server}/tasks-with-details, {
-    //             headers: {
-    //                 Authorization: Bearer ${localStorage.getItem("token")},
-    //             },
-    //             params: {
-    //                 assignedTo: assignedEmail, // Send selected user email as a query param
-    //             },
-    //         });
 
-    //         const formattedData = response.data.map((task) => ({
-    //             key: task._id,
-    //             taskId: task.id,
-    //             taskName: task.name,
-    //             projectName: task.projectName || "N/A",
-    //             assignedBy: task.assignedBy || "N/A",
-    //             assignedTo: task.TaskId?.assignedTo || "N/A", // This should now be the email
-    //             assignedDate: moment(task.TaskId?.assignedDate).format("YYYY-MM-DD"),
-    //             estimatedHours: task.TaskId?.estimatedHours || "N/A",
-    //             status: task.status,
-    //         }));
-
-    //         setDataSource(formattedData);
-    //     } catch (error) {
-    //         console.error("Error fetching tasks:", error);
-    //         message.error("Failed to fetch tasks");
-    //     }
-    // };
     const fetchTasks = async (assignedEmail) => {
         try {
             const response = await axios.get(`${server}/tasks-with-details`, {
@@ -386,7 +359,7 @@ const StatusSheet = () => {
                 status: task.status,
             }));
 
-            const groupedData = groupDataByTaskDetailsId(formattedData);
+            const groupedData = groupDataByAssignedDate(formattedData);
             setDataSource(groupedData);
         } catch (error) {
             console.error("Error fetching tasks:", error);
@@ -394,6 +367,7 @@ const StatusSheet = () => {
         }
     };
 
+    
     useEffect(() => {
         if (selectedUser) {
             fetchTasks(selectedUser.email);
@@ -463,92 +437,37 @@ const StatusSheet = () => {
         form.resetFields();
         form.setFieldsValue({ assignedTo });
     };
-
-    const [inputValue, setInputValue] = useState(''); // Define inputValue state
-    // const [options, setOptions] = useState(users.map((user) => ({
-    //     label: user.username,
-    //     value: user.email,
-    // })));
-
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    const groupDataByTaskDetailsId = (data) => {
+    const groupDataByAssignedDate = (data) => {
         const groupedData = {};
         data.forEach(item => {
-            if (!groupedData[item.taskDetailsId]) {
-                groupedData[item.taskDetailsId] = {
-                    ...item,
-                    tasks: [{ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy }]
+            if (!groupedData[item.assignedDate]) {
+                groupedData[item.assignedDate] = {
+                    assignedDate: item.assignedDate,
+                    tasks: [item],
+                    assignedTo: item.assignedTo,
+                    estimatedHours: item.estimatedHours
                 };
             } else {
-                groupedData[item.taskDetailsId].tasks.push({ taskId: item.taskId, taskName: item.taskName, projectName: item.projectName, assignedBy: item.assignedBy });
+                groupedData[item.assignedDate].tasks.push(item);
             }
         });
         return Object.values(groupedData);
     };
 
-
-
-
-
     const columns = [
-        {
-            title: "TaskDetails ID",
-            dataIndex: "taskDetailsId",
-            key: "taskDetailsId",
-            sorter: (a, b) => a.taskDetailsId.localeCompare(b.taskDetailsId),
-            sortDirections: ["ascend", "descend"],
-            render: (text) => (
-                <div style={{ maxWidth: "100px", overflowX: "auto", whiteSpace: "nowrap", scrollbarWidth: 'none' }}>
-                    {text}
-                </div>
-            ),
-        },
-        {
-            title: "Tasks",
-            dataIndex: "tasks",
-            key: "tasks",
-            sorter: (a, b) => a.taskId.localeCompare(b.taskId),
-            sortDirections: ["ascend", "descend"],
-            render: (tasks) => (
-                <Table
-                    dataSource={tasks}
-                    columns={[
-                        {
-                            title: "Task ID",
-                            dataIndex: "taskId",
-                            key: "taskId",
-                        },
-                        {
-                            title: "Task Name",
-                            dataIndex: "taskName",
-                            key: "taskName",
-                        },
-                        {
-                            title: "Project Name",
-                            dataIndex: "projectName",
-                            key: "projectName",
-                        },
-                        {
-                            title: "Assigned By",
-                            dataIndex: "assignedBy",
-                            key: "assignedBy",
-                        },
-                    ]}
-                    pagination={false}
-                />
-            ),
-        },
-        {
-            title: "Assigned To",
-            dataIndex: "assignedTo",
-            key: "assignedTo",
-        },
         {
             title: "Assigned Date",
             dataIndex: "assignedDate",
             key: "assignedDate",
+            sorter: (a, b) => moment(a.assignedDate).unix() - moment(b.assignedDate).unix(),
             sortDirections: ["ascend", "descend"],
+            render: (text) => (
+                <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
+                    {text}
+                </div>
+            ),
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <DatePicker
@@ -593,57 +512,78 @@ const StatusSheet = () => {
                 const filterDate = moment(value).format('YYYY-MM-DD');
                 return recordDate === filterDate;
             },
-            render: (text) => (
-                <div style={{ maxWidth: "100px", overflow: "auto", whiteSpace: "nowrap" }}>
-                    {text}
-                </div>
-            ),
-            // Add a filtered icon indicator
             filterIcon: filtered => (
                 <CalendarOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
             ),
         },
         {
+            title: "Tasks",
+            dataIndex: "tasks",
+            key: "tasks",
+            align: "center", 
+            render: (tasks) => (
+                <Table
+                    dataSource={tasks}
+                    columns={[
+                        {
+                            title: "Task ID",
+                            dataIndex: "taskId",
+                            key: "taskId",
+                        },
+                        {
+                            title: "Task Name",
+                            dataIndex: "taskName",
+                            key: "taskName",
+                        },
+                        {
+                            title: "Project Name",
+                            dataIndex: "projectName",
+                            key: "projectName",
+                        },
+                        {
+                            title: "Assigned By",
+                            dataIndex: "assignedBy",
+                            key: "assignedBy",
+                        },
+                        {
+                            title: "Status",
+                            dataIndex: "status",
+                            key: "status",
+                            render: (status, record) => (
+                                <Select
+                                    value={status}
+                                    style={{ width: 120 }}
+                                    onChange={(value) => {
+                                        handleChangeStatus(record.key, value);
+                                    }}
+                                    disabled={userRole !== "ADMIN"}
+                                >
+                                    <Option value="pending">Pending</Option>
+                                    <Option value="inprogress">In Progress</Option>
+                                    <Option value="completed">Completed</Option>
+                                </Select>
+                            ),
+                        },
+                    ]}
+                    pagination={false}
+                />
+            ),
+        },
+        {
+            title: "Assigned To",
+            dataIndex: "assignedTo",
+            key: "assignedTo",
+        },
+        {
             title: "Estimated Hours",
             dataIndex: "estimatedHours",
             key: "estimatedHours",
-            sorter: (a, b) => a.estimatedHours - b.estimatedHours, // Sort numerically
+            sorter: (a, b) => a.estimatedHours - b.estimatedHours,
             sortDirections: ["ascend", "descend"],
-        },
-        {
-            title: "Status",
-            dataIndex: "status",
-            key: "status",
-
-            filters: [
-                { text: "Pending", value: "Pending" },
-                { text: "In Progress", value: "inprogress" },
-                { text: "completed", value: "completed" },
-            ],
-            onFilter: (value, record) => record.status === value,
-            render: (status, record) => {
-                return (
-                    <Select
-                        value={status}
-                        style={{ width: 120 }}
-                        onChange={(value) => {
-                            handleChangeStatus(record.key, value); // Call the function with the task ID and new status
-                        }}
-                        disabled={userRole !== "ADMIN"} // Only allow admins to change the status
-                    >
-                        <Option value="pending">Pending</Option>
-                        <Option value="inprogress">In Progress</Option>
-                        <Option value="completed">Completed</Option>
-                    </Select>
-                );
-            },
-
         },
     ];
 
 
-
-    
     const handleCreateProject = async () => {
         try {
             setLoading(true);
@@ -862,10 +802,10 @@ const StatusSheet = () => {
             <div style={{ margin: "0 auto" }} className="dark">
                 {selectedUser ? (
                     // <Table dataSource={filteredData} columns={columns} />
-                    <Table 
-                    dataSource={dataSource} 
-                    columns={columns}
-                />
+                    <Table
+                        dataSource={dataSource}
+                        columns={columns}
+                    />
                 ) : (
                     <p
                         style={{
@@ -1006,52 +946,50 @@ const StatusSheet = () => {
                             </Form.Item>
 
                             <Form.Item
-    label="Assigned By"
-    name={`assignedBy_${index}`}
-    rules={[{ required: true, message: "Please select or enter the assigner" }]}
->
-    <Select
-        placeholder="Select or enter an assigner"
-        dropdownRender={(menu) => (
-            <>
-                {menu}
-                <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px' }}>
-                    <Input
-                        placeholder="Type assigner name"
-                        style={{ flex: 1, marginRight: '8px' }}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                    />
-                    <Button
-                        type="primary"
-                        onClick={() => {
-                            if (inputValue) {
-                                const newOption = { label: inputValue, value: inputValue };
-                                const updatedOptions = [
-                                    ...users.map((user) => ({ label: user.username, value: user.email })),
-                                    newOption,
-                                ];
-                                setOptions(updatedOptions);
-                                form.setFieldValue(`assignedBy_${index}`, inputValue);
-                                setInputValue(''); // Clear the input after adding
-                            }
-                        }}
-                    >
-                        OK
-                    </Button>
-                </div>
-            </>
-        )}
-    >
-        {users.map((user) => (
-            <Select.Option key={user.id} value={user.email}>
-                {user.username}
-            </Select.Option>
-        ))}
-    </Select>
-</Form.Item>
-
-
+                                label="Assigned By"
+                                name={`assignedBy_${index}`}
+                                rules={[{ required: true, message: "Please select or enter the assigner" }]}
+                            >
+                                <Select
+                                    placeholder="Select or enter an assigner"
+                                    dropdownRender={(menu) => (
+                                        <>
+                                            {menu}
+                                            <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px' }}>
+                                                <Input
+                                                    placeholder="Type assigner name"
+                                                    style={{ flex: 1, marginRight: '8px' }}
+                                                    value={inputValue}
+                                                    onChange={(e) => setInputValue(e.target.value)}
+                                                />
+                                                <Button
+                                                    type="primary"
+                                                    onClick={() => {
+                                                        if (inputValue) {
+                                                            const newOption = { label: inputValue, value: inputValue };
+                                                            const updatedOptions = [
+                                                                ...users.map((user) => ({ label: user.username, value: user.email })),
+                                                                newOption,
+                                                            ];
+                                                            setOptions(updatedOptions);
+                                                            form.setFieldValue(`assignedBy_${index}`, inputValue);
+                                                            setInputValue(''); // Clear the input after adding
+                                                        }
+                                                    }}
+                                                >
+                                                    OK
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
+                                >
+                                    {users.map((user) => (
+                                        <Select.Option key={user.id} value={user.email}>
+                                            {user.username}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
                             <Button
                                 type="primary"
                                 danger
@@ -1061,13 +999,6 @@ const StatusSheet = () => {
                             </Button>
                         </div>
                     ))}
-
-                    {/* Submit Button */}
-                    {/* <Form.Item>
-                        <Button type="primary" htmlType="submit" className="w-full">
-                            Submit
-                        </Button>
-                    </Form.Item> */}
                     {showSubmitButton && (
                         <Form.Item>
                             <Button type="primary" htmlType="submit" className="w-full">

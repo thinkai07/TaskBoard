@@ -367,7 +367,7 @@ const StatusSheet = () => {
         }
     };
 
-    
+
     useEffect(() => {
         if (selectedUser) {
             fetchTasks(selectedUser.email);
@@ -397,7 +397,7 @@ const StatusSheet = () => {
         fetchUserEmail();
     }, []);
 
-    // Handle status change
+    // // Handle status change
     const handleChangeStatus = async (taskId, newStatus) => {
         try {
             // Make the PUT request to update the status on the server
@@ -407,7 +407,7 @@ const StatusSheet = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ status: newStatus }), // Pass the new status
+                body: JSON.stringify({ status: newStatus }),
             });
 
             if (!response.ok) {
@@ -418,11 +418,14 @@ const StatusSheet = () => {
 
             // Update the local state (dataSource) directly after status change
             setDataSource((prevDataSource) =>
-                prevDataSource.map((task) =>
-                    task.key === taskId
-                        ? { ...task, status: newStatus }  // Update the status for the matching task
-                        : task // Keep other tasks unchanged
-                )
+                prevDataSource.map((dateGroup) => ({
+                    ...dateGroup,
+                    tasks: dateGroup.tasks.map((task) =>
+                        task.key === taskId
+                            ? { ...task, status: newStatus }
+                            : task
+                    )
+                }))
             );
 
             message.success("Task status updated successfully");
@@ -564,6 +567,7 @@ const StatusSheet = () => {
                                 </Select>
                             ),
                         },
+
                     ]}
                     pagination={false}
                 />
@@ -801,7 +805,6 @@ const StatusSheet = () => {
             {/* Table */}
             <div style={{ margin: "0 auto" }} className="dark">
                 {selectedUser ? (
-                    // <Table dataSource={filteredData} columns={columns} />
                     <Table
                         dataSource={dataSource}
                         columns={columns}

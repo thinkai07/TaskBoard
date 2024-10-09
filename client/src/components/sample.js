@@ -70,6 +70,7 @@ const StatusSheet = () => {
         setShowSubmitButton(false);
         setIsModalVisible(false);
     };
+
     // Fetch user role, organization ID, and projects
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -200,6 +201,8 @@ const StatusSheet = () => {
             message.error("Failed to fetch tasks");
         }
     };
+
+    
     useEffect(() => {
         if (selectedUser) {
             fetchTasks(selectedUser.email);
@@ -229,7 +232,40 @@ const StatusSheet = () => {
         fetchUserEmail();
     }, []);
 
-    // Handle status change
+    // // Handle status change
+    // const handleChangeStatus = async (taskId, newStatus) => {
+    //     try {
+    //         // Make the PUT request to update the status on the server
+    //         const response = await fetch(`${server}/tasks-with-details/${taskId}`, {
+    //             method: "PUT",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //             },
+    //             body: JSON.stringify({ status: newStatus }), // Pass the new status
+    //         });
+
+    //         if (!response.ok) {
+    //             throw new Error("Failed to update status");
+    //         }
+
+    //         const updatedTask = await response.json();
+
+    //         // Update the local state (dataSource) directly after status change
+    //         setDataSource((prevDataSource) =>
+    //             prevDataSource.map((task) =>
+    //                 task.key === taskId
+    //                     ? { ...task, status: newStatus }  // Update the status for the matching task
+    //                     : task // Keep other tasks unchanged
+    //             )
+    //         );
+
+    //         message.success("Task status updated successfully");
+    //     } catch (err) {
+    //         console.error(err.message);
+    //         message.error("Failed to update status");
+    //     }
+    // };
     const handleChangeStatus = async (taskId, newStatus) => {
         try {
             // Make the PUT request to update the status on the server
@@ -239,7 +275,7 @@ const StatusSheet = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ status: newStatus }), // Pass the new status
+                body: JSON.stringify({ status: newStatus }),
             });
 
             if (!response.ok) {
@@ -250,11 +286,14 @@ const StatusSheet = () => {
 
             // Update the local state (dataSource) directly after status change
             setDataSource((prevDataSource) =>
-                prevDataSource.map((task) =>
-                    task.key === taskId
-                        ? { ...task, status: newStatus }  // Update the status for the matching task
-                        : task // Keep other tasks unchanged
-                )
+                prevDataSource.map((dateGroup) => ({
+                    ...dateGroup,
+                    tasks: dateGroup.tasks.map((task) =>
+                        task.key === taskId
+                            ? { ...task, status: newStatus }
+                            : task
+                    )
+                }))
             );
 
             message.success("Task status updated successfully");
@@ -269,8 +308,7 @@ const StatusSheet = () => {
         form.resetFields();
         form.setFieldsValue({ assignedTo });
     };
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+   
     const groupDataByAssignedDate = (data) => {
         const groupedData = {};
         data.forEach(item => {
@@ -633,7 +671,7 @@ const StatusSheet = () => {
             {/* Table */}
             <div style={{ margin: "0 auto" }} className="dark">
                 {selectedUser ? (
-                    // <Table dataSource={filteredData} columns={columns} />
+        
                     <Table
                         dataSource={dataSource}
                         columns={columns}

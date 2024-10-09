@@ -3578,8 +3578,6 @@ app.get("/api/tasks/:taskId/cards", authenticateToken, async (req, res) => {
   }
 });
 
-
-
 app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {
   const { orgId } = req.params;
 
@@ -3647,40 +3645,46 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
       createdDate: moment(card.createdDate)
         .tz("Asia/Kolkata")
         .format("YYYY-MM-DD HH:mm:ss"),
-      assignDate: moment(card.assignDate)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DD HH:mm:ss"),
-      dueDate: moment(card.dueDate)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DD HH:mm:ss"),
-      comments: card.comments.map((comment) => ({
+      assignDate: card.assignDate
+        ? moment(card.assignDate).tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")
+        : null,
+      dueDate: card.dueDate
+        ? moment(card.dueDate).tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")
+        : null,
+
+      comments: card.comments?.map((comment) => ({
         id: comment._id,
         comment: comment.comment,
         commentBy: comment.commentBy,
         createdAt: moment(comment.createdAt)
           .tz("Asia/Kolkata")
           .format("YYYY-MM-DD HH:mm:ss"),
-      })),
-      activities: card.activities.map((activity) => ({
+      })) || [],
+
+      activities: card.activities?.map((activity) => ({
         id: activity._id,
         commentBy: activity.commentBy,
         comment: activity.comment,
         createdAt: moment(activity.createdAt)
           .tz("Asia/Kolkata")
           .format("YYYY-MM-DD HH:mm:ss"),
-      })),
-      taskLogs: card.taskLogs.map((taskLog) => ({
+      })) || [],
+
+      taskLogs: card.taskLogs?.map((taskLog) => ({
         id: taskLog._id,
         hours: taskLog.hours,
         logDate: moment(taskLog.logDate)
           .tz("Asia/Kolkata")
           .format("YYYY-MM-DD HH:mm:ss"),
-        loggedBy: {
-          id: taskLog.loggedBy._id,
-          name: taskLog.loggedBy.name,
-          email: taskLog.loggedBy.email,
-        },
-      })),
+        loggedBy: taskLog.loggedBy
+          ? {
+            id: taskLog.loggedBy._id,
+            name: taskLog.loggedBy.name,
+            email: taskLog.loggedBy.email,
+          }
+          : null,
+      })) || [],
+
     }));
 
     res.status(200).json({ cards: formattedCards });
@@ -3689,6 +3693,117 @@ app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) =
     res.status(500).json({ message: "Error fetching cards" });
   }
 });
+
+
+// app.get("/api/organizations/:orgId/cards", authenticateToken, async (req, res) => {
+//   const { orgId } = req.params;
+
+//   try {
+//     // Find all projects in the specified organization
+//     const projects = await Project.find({ organization: orgId });
+
+//     if (!projects || projects.length === 0) {
+//       return res.status(404).json({ message: "No projects found for the organization" });
+//     }
+
+//     // Extract all project IDs
+//     const projectIds = projects.map((project) => project._id);
+
+//     // Find all cards for these projects
+//     const cards = await Card.find({ project: { $in: projectIds } })
+//       .populate({
+//         path: "task", // Assuming 'task' is the reference field in the Card schema
+//         model: "Task",
+//         select: "_id name", // Select task ID and name if needed
+//       })
+//       .populate({
+//         path: "comments",
+//         model: "Comment",
+//       })
+//       .populate({
+//         path: "activities",
+//         model: "Activity",
+//       })
+//       .populate({
+//         path: "taskLogs",
+//         model: "Tasklogs",
+//         populate: {
+//           path: "loggedBy",
+//           model: "User",
+//           select: "name email",
+//         },
+//       });
+
+//     // Calculate the sum of logged hours for each card
+//     const cardIds = cards.map((card) => card._id);
+//     const logs = await Tasklogs.aggregate([
+//       { $match: { cardId: { $in: cardIds } } },
+//       { $group: { _id: "$cardId", totalHours: { $sum: "$hours" } } },
+//     ]);
+
+//     // Create a map of cardId to total logged hours
+//     const hoursMap = logs.reduce((map, log) => {
+//       map[log._id] = log.totalHours;
+//       return map;
+//     }, {});
+
+//     // Map and format the card details including taskId
+//     const formattedCards = cards.map((card) => ({
+//       id: card._id,
+//       taskId: card.task ? card.task._id : null, // Include taskId if available
+//       name: card.name,
+//       description: card.description,
+//       assignedTo: card.assignedTo,
+//       createdBy: card.createdBy,
+//       status: card.status,
+//       estimatedHours: card.estimatedHours,
+//       utilizedHours: hoursMap[card._id] || 0,
+//       uniqueId: card.uniqueId,
+//       createdDate: moment(card.createdDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       assignDate: moment(card.assignDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       dueDate: moment(card.dueDate)
+//         .tz("Asia/Kolkata")
+//         .format("YYYY-MM-DD HH:mm:ss"),
+//       comments: card.comments.map((comment) => ({
+//         id: comment._id,
+//         comment: comment.comment,
+//         commentBy: comment.commentBy,
+//         createdAt: moment(comment.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       activities: card.activities.map((activity) => ({
+//         id: activity._id,
+//         commentBy: activity.commentBy,
+//         comment: activity.comment,
+//         createdAt: moment(activity.createdAt)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//       })),
+//       taskLogs: card.taskLogs.map((taskLog) => ({
+//         id: taskLog._id,
+//         hours: taskLog.hours,
+//         logDate: moment(taskLog.logDate)
+//           .tz("Asia/Kolkata")
+//           .format("YYYY-MM-DD HH:mm:ss"),
+//         loggedBy: {
+//           id: taskLog.loggedBy._id,
+//           name: taskLog.loggedBy.name,
+//           email: taskLog.loggedBy.email,
+//         },
+//       })),
+//     }));
+
+//     res.status(200).json({ cards: formattedCards });
+//   } catch (error) {
+//     console.error("Error fetching cards:", error);
+//     res.status(500).json({ message: "Error fetching cards" });
+//   }
+// });
 
 
 // Delete a card from a task

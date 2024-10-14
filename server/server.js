@@ -81,6 +81,35 @@ const organizationSchema = new Schema({
   teams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
 });
 
+//timesheeet
+const timesheetSchema = new Schema({
+  // user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  employeeName: { type: String, required: true },
+  employeeID: { type: String, required: true },
+  department: { type: String, required: true },
+  teamLeadName: { type: String, required: true },
+  weekStartDate: { type: Date, required: true },
+  weekEndDate: { type: Date, required: true },
+  days: [
+    {
+      dayOfWeek: { type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], required: true },
+      tasks: [
+        {
+          taskName: { type: String, required: true },
+          taskDescription: { type: String },
+          startTime: { type: String, required: true }, 
+          endTime: { type: String, required: true },
+          breakHours: { type: Number, default: 0 },
+          totalhoursworked: { type: Number, default: 0 },
+          notes: { type: String }
+        }
+      ]
+    }
+  ],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 const ruleSchema = new Schema({
   projectId: [{ type: Schema.Types.ObjectId, ref: "Project" }],
   name: { type: String, required: true },
@@ -389,6 +418,7 @@ const Activity = mongoose.model("Activity", activitySchema);
 const Notification = mongoose.model("Notification", NotificationSchema);
 const Rule = mongoose.model("Rule", ruleSchema);
 const Tasklogs = mongoose.model("Tasklogs", taskLogSchema);
+const TimeSheets = mongoose.model("Timesheets", timesheetSchema);
 module.exports = {
   User,
   Task,
@@ -401,7 +431,8 @@ module.exports = {
   Activity,
   Notification,
   Rule,
-  Tasklogs
+  Tasklogs,
+  TimeSheets
 };
 
 const tempOrganizationSchema = new Schema({
@@ -494,6 +525,44 @@ app.post('/api/users/:id/update-password', authenticateToken, async (req, res) =
     res.status(500).json({ message: "Server error" });
   }
 });
+
+app.post("/api/timesheet", authenticateToken, async (req, res) => {
+  try {
+    const { employeeName, employeeID, department, teamLeadName, weekStartDate, weekEndDate, days } = req.body;
+    const userId = req.user.id;
+
+    // Create new timesheet document
+    const newTimesheet = new TimeSheets({
+      user: userId,
+      employeeName,
+      employeeID,
+      department,
+      teamLeadName,
+      weekStartDate: new Date(weekStartDate),
+      weekEndDate: new Date(weekEndDate),
+      days: days.map(day => ({
+        dayOfWeek: day.dayOfWeek,
+        tasks: day.tasks.map(task => ({
+          taskName: task.taskName,
+          taskDescription: task.taskDescription,
+          startTime: task.startTime,
+          endTime: task.endTime,
+          breakHours: task.breakHours,
+          totalhoursworked: task.totalHoursWorked,
+          notes: task.notes
+        }))
+      }))
+    });
+
+    // Save the timesheet document to the database
+    const savedTimesheet = await newTimesheet.save();
+    res.status(201).json({ message: "Timesheet submitted successfully", TimeSheets: savedTimesheet });
+  } catch (error) {
+    console.error("Error submitting timesheet:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
 
 //organisation register
 app.post("/register", async (req, res) => {
@@ -809,7 +878,7 @@ app.get("/api/cards/user/:userId", async (req, res) => {
 
     // Fetch cards assigned to the user by email
     const cards = await Card.find({ assignedTo: userEmail })
-      .populate({ path: 'project', select: 'name' })
+      .populate({ path: 'project', select: 'name ' })
       .populate({ path: 'task', select: 'name' })
       .select('name assignDate estimatedHours utilizedTime status project task');
 
@@ -840,7 +909,6 @@ app.get("/api/cards/user/:userId", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 
 
 // User data name route
@@ -2265,6 +2333,37 @@ function generateUniqueId() {
 }
 const uniqueId = generateUniqueId();
 console.log(uniqueId);
+
+
+app.get('/api/organization/:organizationId/projects', authenticateToken, async (req, res) => {
+  const { organizationId } = req.params;
+
+  try {
+    const projects = await Project.find({ organization: organizationId });
+    if (!projects.length) {
+      return res.status(404).json({ message: 'No projects found for this organization' });
+    }
+    res.status(200).json({ projects });
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Error fetching projects' });
+  }
+});
+
+app.get('/api/projects/:projectId/tasks', authenticateToken, async (req, res) => {
+  const { projectId } = req.params;
+
+  try {
+    const tasks = await Task.find({ project: projectId });
+    if (!tasks.length) {
+      return res.status(404).json({ message: 'No tasks found for this project' });
+    }
+    res.status(200).json({ tasks });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ message: 'Error fetching tasks' });
+  }
+});
 
 
 

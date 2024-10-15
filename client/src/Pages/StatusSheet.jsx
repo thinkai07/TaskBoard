@@ -33,7 +33,7 @@ const { Option } = Select;
 const StatusSheet = () => {
   const { Panel } = Collapse;
   const [openCollapseKeys, setOpenCollapseKeys] = useState(["0"]); // Track open collapse panels
-
+ 
   const [selectedUser, setSelectedUser] = useState(null);
   const [inputValue, setInputValue] = useState(""); // Define inputValue state
   const [modalStatus, setModalStatus] = useState("");
@@ -645,19 +645,16 @@ const StatusSheet = () => {
   };
 
   const handleCancelRow = (index) => {
-    // Reset the fields of the specific row being removed
     form.resetFields([
-      `projectName_${index + 1}`,
-      `taskName_${index + 1}`,
-      `assignedBy_${index + 1}`,
+      `projectName_${index}`,
+      `taskName_${index}`,
+      `assignedBy_${index}`,
     ]);
-
-    // Create a new copy of rows and remove the row at the specific index
     const newRows = [...rows];
     newRows.splice(index, 1);
     setRows(newRows);
 
-    // Disable the submit button if all rows are removed
+    // Disable submit button if all rows are removed
     if (newRows.length === 0) {
       setShowSubmitButton(false);
     }
@@ -678,6 +675,15 @@ const StatusSheet = () => {
   const areAllTasksCompleted = (tasks) => {
     return tasks.every((task) => task.status === "completed");
   };
+      // Add one default row when modal opens
+      useEffect(() => {
+        if (isModalVisible) {
+            setRows([{}]); // Add one default row when the modal opens
+        } else {
+            setRows([]); // Clear rows when the modal closes
+        }
+    }, [isModalVisible]);
+
 
   return (
     <div style={{ padding: "20px" }}>
@@ -875,7 +881,6 @@ const StatusSheet = () => {
                                   <span>Status</span>
                                   <Checkbox
                                     style={{ marginLeft: 8 }}
-                                    checked={areAllTasksCompleted(tasks)} // Dynamically control checkbox state
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         tasks.forEach((task) => {
@@ -886,7 +891,7 @@ const StatusSheet = () => {
                                         });
                                       }
                                     }}
-                                    disabled={areAllTasksCompleted(tasks)} // Disable if all tasks are already completed
+                                    disabled={areAllTasksCompleted(tasks)}
                                   />
                                 </div>
                               ),
@@ -949,318 +954,180 @@ const StatusSheet = () => {
         )}
       </div>
       {/* Modal for adding new tasks */}
+
+      
       <Modal
-        title="Add New Task"
-        visible={isModalVisible}
-        onCancel={handleModalClose}
-        footer={null}
-        width={800}
-        bodyStyle={{ maxHeight: "500px", overflowY: "scroll", padding: "20px" }}
-        className="rounded-lg shadow-lg"
-      >
-        <Form form={form} layout="vertical" onFinish={handleOk}>
-          {/* Assigned To, Estimated Hours, Assigned Date */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Form.Item
-              label="Assigned To"
-              name="assignedTo"
-              rules={[
-                { required: true, message: "Please enter the assigned email" },
-              ]}
-            >
-              <Input placeholder="Enter email" disabled />
-            </Form.Item>
-            <Form.Item
-              label="Estimated Hours"
-              name="estimatedHours"
-              rules={[
-                {
-                  validator: (_, value) => {
-                    if (!value || (value && parseFloat(value) > 0)) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error("Estimated hours must be greater than 0")
-                    );
-                  },
-                },
-              ]}
-              className="w-full"
-            >
-              <Input
-                type="number"
-                step="0.1"
-                min="0.1"
-                placeholder="Enter estimated hours"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Assigned Date"
-              name="assignedDate"
-              rules={[]}
-              className="w-full"
-            >
-              <DatePicker className="w-full" />
-            </Form.Item>
-          </div>
-
-          {/* Render the initial set of inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-            <Form.Item
-              label="Project Name"
-              name="projectName_0"
-              rules={[{ required: true, message: "Please select a project" }]}
-            >
-              <Select
-                showSearch
-                placeholder="Search or Create Project"
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().includes(input.toLowerCase())
-                }
-                onSelect={handleProjectSelect}
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    <Button
-                      type="link"
-                      onClick={showCreateProjectModal}
-                      className="w-full text-left"
+            title="Add New Task"
+            visible={isModalVisible}
+            onCancel={handleModalClose}
+            footer={null}
+            width={800}
+            bodyStyle={{ maxHeight: "500px", overflowY: "scroll", padding: "20px" }}
+            className="rounded-lg shadow-lg"
+        >
+            <Form form={form} layout="vertical" onFinish={handleOk}>
+                {/* Assigned To, Estimated Hours, Assigned Date */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Form.Item
+                        label="Assigned To"
+                        name="assignedTo"
+                        rules={[{ required: true, message: 'Please enter the assigned email' }]}
                     >
-                      + Create New Project
-                    </Button>
-                  </>
-                )}
-              >
-                {projects.map((project) => (
-                  <Option key={project._id} value={project._id}>
-                    {project.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Task Name"
-              name="taskName_0"
-              rules={[{ required: true, message: "Please enter a task name" }]}
-            >
-              <Input placeholder="Enter task name" />
-            </Form.Item>
-
-            <Form.Item
-              label="Assigned By"
-              name="assignedBy_0"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select or enter the assigner",
-                },
-              ]}
-            >
-              <Select
-                placeholder="Select or enter an assigner"
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "8px 12px",
-                      }}
+                        <Input placeholder="Enter email" disabled />
+                    </Form.Item>
+                    <Form.Item
+                        label="Estimated Hours"
+                        name="estimatedHours"
+                        rules={[
+                            { required: true, message: "Please enter the estimated hours" },
+                            {
+                                validator: (_, value) => {
+                                    if (value && parseFloat(value) > 0) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('Estimated hours must be greater than 0'));
+                                },
+                            },
+                        ]}
                     >
-                      <Input
-                        placeholder="Type assigner name"
-                        style={{ flex: 1, marginRight: "8px" }}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                      />
-                      <Button
-                        type="primary"
-                        onClick={() => {
-                          if (inputValue) {
-                            const newOption = {
-                              label: inputValue,
-                              value: inputValue,
-                            };
-                            const updatedOptions = [
-                              ...users.map((user) => ({
-                                label: user.username,
-                                value: user.email,
-                              })),
-                              newOption,
-                            ];
-                            setOptions(updatedOptions);
-                            form.setFieldValue(`assignedBy_0`, inputValue);
-                            setInputValue(""); // Clear the input after adding
-                          }
-                        }}
-                      >
-                        OK
-                      </Button>
-                    </div>
-                  </>
-                )}
-              >
-                {users.map((user) => (
-                  <Select.Option key={user.id} value={user.email}>
-                    {user.username}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-
-          {/* Dynamically Added Rows */}
-          {rows.map((_, index) => (
-            <div
-              key={index + 1} // Adjusted to start from index 1 for dynamic rows
-              className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center"
-            >
-              <Form.Item
-                label="Project Name"
-                name={`projectName_${index + 1}`}
-                rules={[{ required: true, message: "Please select a project" }]}
-              >
-                <Select
-                  showSearch
-                  placeholder="Search or Create Project"
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  onSelect={handleProjectSelect}
-                  dropdownRender={(menu) => (
-                    <>
-                      {menu}
-                      <Button
-                        type="link"
-                        onClick={showCreateProjectModal}
-                        className="w-full text-left"
-                      >
-                        + Create New Project
-                      </Button>
-                    </>
-                  )}
-                >
-                  {projects.map((project) => (
-                    <Option key={project._id} value={project._id}>
-                      {project.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label="Task Name"
-                name={`taskName_${index + 1}`}
-                rules={[
-                  { required: true, message: "Please enter a task name" },
-                ]}
-              >
-                <Input placeholder="Enter task name" />
-              </Form.Item>
-
-              <Form.Item
-                label="Assigned By"
-                name={`assignedBy_${index + 1}`}
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select or enter the assigner",
-                  },
-                ]}
-              >
-                <Select
-                  placeholder="Select or enter an assigner"
-                  dropdownRender={(menu) => (
-                    <>
-                      {menu}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          padding: "8px 12px",
-                        }}
-                      >
                         <Input
-                          placeholder="Type assigner name"
-                          style={{ flex: 1, marginRight: "8px" }}
-                          value={inputValue}
-                          onChange={(e) => setInputValue(e.target.value)}
+                            type="number"
+                            step="0.1"
+                            min="0.1"
+                            placeholder="Enter estimated hours"
                         />
-                        <Button
-                          type="primary"
-                          onClick={() => {
-                            if (inputValue) {
-                              const newOption = {
-                                label: inputValue,
-                                value: inputValue,
-                              };
-                              const updatedOptions = [
-                                ...users.map((user) => ({
-                                  label: user.username,
-                                  value: user.email,
-                                })),
-                                newOption,
-                              ];
-                              setOptions(updatedOptions);
-                              form.setFieldValue(
-                                `assignedBy_${index + 1}`,
-                                inputValue
-                              );
-                              setInputValue(""); // Clear the input after adding
-                            }
-                          }}
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Assigned Date"
+                        name="assignedDate"
+                        rules={[{ required: true, message: "Please select the assigned date" }]}
+                    >
+                        <DatePicker className="w-full" />
+                    </Form.Item>
+                </div>
+
+                {/* Dynamically Added Rows */}
+                {rows.map((_, index) => (
+                    <div
+                        key={index}
+                        className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center"
+                    >
+                        <Form.Item
+                            label="Project Name"
+                            name={`projectName_${index}`}
+                            rules={[{ required: true, message: "Please select a project" }]}
                         >
-                          OK
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                            <Select
+                                showSearch
+                                placeholder="Search or Create Project"
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().includes(input.toLowerCase())
+                                }
+                                dropdownRender={(menu) => (
+                                    <>
+                                        {menu}
+                                        <Button
+                                            type="link"
+                                            onClick={() => {}}
+                                            className="w-full text-left"
+                                        >
+                                            + Create New Project
+                                        </Button>
+                                    </>
+                                )}
+                            >
+                                {projects.map((project) => (
+                                    <Option key={project._id} value={project._id}>
+                                        {project.name}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Task Name"
+                            name={`taskName_${index}`}
+                            rules={[{ required: true, message: "Please enter a task name" }]}
+                        >
+                            <Input placeholder="Enter task name" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Assigned By"
+                            name={`assignedBy_${index}`}
+                            rules={[{ required: true, message: "Please select or enter the assigner" }]}
+                        >
+                            <Select
+                                placeholder="Select or enter an assigner"
+                                dropdownRender={(menu) => (
+                                    <>
+                                        {menu}
+                                        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px' }}>
+                                            <Input
+                                                placeholder="Type assigner name"
+                                                style={{ flex: 1, marginRight: '8px' }}
+                                                value={inputValue}
+                                                onChange={(e) => setInputValue(e.target.value)}
+                                            />
+                                            <Button
+                                                type="primary"
+                                                onClick={() => {
+                                                    if (inputValue) {
+                                                        const newOption = { label: inputValue, value: inputValue };
+                                                        const updatedOptions = [
+                                                            ...users.map((user) => ({ label: user.username, value: user.email })),
+                                                            newOption,
+                                                        ];
+                                                        setOptions(updatedOptions);
+                                                        form.setFieldValue(`assignedBy_${index}`, inputValue);
+                                                        setInputValue(''); // Clear the input after adding
+                                                    }
+                                                }}
+                                            >
+                                                OK
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            >
+                                {users.map((user) => (
+                                    <Option key={user.id} value={user.email}>
+                                        {user.username}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        {/* Conditionally render the cancel button for all rows except the first */}
+                        {index !== 0 && (
+                            <Button
+                                type="primary"
+                                danger
+                                onClick={() => handleCancelRow(index)}
+                            >
+                                Cancel
+                            </Button>
+                        )}
+                    </div>
+                ))}
+
+                {/* Add Row Button */}
+                <Button
+                    type="dashed"
+                    onClick={() => handleAddRow()}
+                    className="block w-full my-6"
                 >
-                  {users.map((user) => (
-                    <Select.Option key={user.id} value={user.email}>
-                      {user.username}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Button
-                type="primary"
-                danger
-                onClick={() => handleCancelRow(index)} // Remove only the specific row
-              >
-                Cancel
-              </Button>
-            </div>
-          ))}
+                    + Add Task
+                </Button>
 
-          <Button
-            type="dashed"
-            onClick={() => {
-              form
-                .validateFields()
-                .then(() => {
-                  handleAddRow(); // Call handleAddRow only if validation passes
-                })
-                .catch((errorInfo) => {
-                  console.error("Validation Failed:", errorInfo);
-                });
-            }}
-            className="block w-full my-6"
-          >
-            + Add Task
-          </Button>
-
-          {/* Submit Button */}
-          <Form.Item>
-            <Button type="primary" htmlType="submit" className="w-full">
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" className="w-full">
+                        Submit
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
 
       {/* Create Project Modal */}
       <Modal
